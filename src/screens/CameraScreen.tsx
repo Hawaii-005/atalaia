@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  ScrollView,
   Text,
   TouchableOpacity,
   View,
@@ -16,6 +17,7 @@ import Svg, { Path } from 'react-native-svg';
 import { useGcodePreview } from '../hooks/useGcodePreview';
 import * as DocumentPicker from 'expo-document-picker';
 import { uploadGcode } from '../utils/gcodeUpload';
+import { listFilesCommand } from '../utils/commands';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
@@ -43,7 +45,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
   // Keep the display awake while the camera tab is open.
   useKeepAwake();
 
-  const { printers, sendCommand } = usePrinterConnections();
+  const { printers, sendCommand, request } = usePrinterConnections();
   const [selectedId, setSelectedId] = useState<string | undefined>(
     route?.params?.printerId
   );
@@ -280,6 +282,37 @@ export const CameraScreen = ({ navigation, route }: any) => {
     });
   }, [printer, isConnected, lightOn, sendCommand]);
 
+  const [recentes, setRecentes] = useState<{ nome: string; tamanho: number }[]>([]);
+
+  useEffect(() => {
+    if (!isConnected || !printerId) return;
+    let vivo = true;
+    request(printerId, listFilesCommand('/local/', 1, 50))
+      .then((dados: any) => {
+        if (!vivo) return;
+        const lista = (dados?.FileList ?? [])
+          .filter((f: any) => String(f.name ?? '').toLowerCase().endsWith('.gcode'))
+          .sort((a: any, b: any) => (b.CreateTime ?? 0) - (a.CreateTime ?? 0))
+          .slice(0, 3);
+        setRecentes(
+          lista.map((f: any) => ({
+            nome: String(f.name).split('/').pop() ?? '',
+            tamanho: f.FileSize ?? 0,
+          }))
+        );
+      })
+      .catch(() => {});
+    return () => {
+      vivo = false;
+    };
+  }, [isConnected, printerId, request]);
+
+  const tamanhoLegivel = (bytes: number) => {
+    if (!bytes) return '—';
+    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} MB`;
+  };
+
   const streamHtml = useMemo(() => {
     if (!videoHost) {
       return '';
@@ -375,82 +408,88 @@ export const CameraScreen = ({ navigation, route }: any) => {
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
-      <Header
-        title={t('camera.title')}
-        subtitle={
-          isConnected ? t('camera.imagemEmDireto') : t('comum.impressoraDesligada')
-        }
-        rightAction={{ icon: 'refresh', onPress: restartStream }}
-      />
+      {/* Cabeçalho discreto: etiqueta + estado */}
+      <View className="flex-row items-center justify-between px-4 pt-1 pb-3">
+        <View className="flex-row items-center">
+          <Text className="text-[10px] tracking-[2.4px] font-semibold text-ink-soft">
+            {t('camera.title').toUpperCase()}
+          </Text>
+          <View
+            className="w-1.5 h-1.5 rounded-full ml-2"
+            style={{
+              backgroundColor: isConnected
+                ? hexDe(tema.paleta.ok)
+                : hexDe(tema.paleta.perigo),
+            }}
+          />
+        </View>
+        <TouchableOpacity
+          onPress={restartStream}
+          className="w-8 h-8 items-center justify-center rounded-md border border-line"
+          activeOpacity={0.7}
+        >
+          <Ionicons name="refresh" size={15} color={hexDe(tema.paleta.tintaSoft)} />
+        </TouchableOpacity>
+      </View>
 
-      {/* Printer selector */}
-      {printers.length > 1 && (
-        <View className="flex-row px-4 pt-3">
-          {printers.map(p => (
-            <TouchableOpacity
-              key={p.id}
-              onPress={() => setSelectedId(p.id)}
-              className={`rounded-full px-3 py-1 mr-2 border ${
-                p.id === printer.id
-                  ? 'bg-brand border-brand'
-                  : 'bg-canvas-sunken border-line'
-              }`}
-            >
-              <Text
-                className={`text-xs font-semibold ${
-                  p.id === printer.id ? 'text-white' : 'text-ink-soft'
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 28 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Selector de impressora */}
+        {printers.length > 1 && (
+          <View className="flex-row px-4 pb-3">
+            {printers.map(p => (
+              <TouchableOpacity
+                key={p.id}
+                onPress={() => setSelectedId(p.id)}
+                className={`rounded-md border px-3 py-1.5 mr-2 ${
+                  p.id === printer.id ? 'border-brand bg-brand/10' : 'border-line'
                 }`}
               >
-                {p.printerName}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
+                <Text
+                  className={`text-[10px] font-semibold tracking-[1.2px] ${
+                    p.id === printer.id ? 'text-brand-texto' : 'text-ink-soft'
+                  }`}
+                >
+                  {p.printerName.toUpperCase()}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
-      {/* Video */}
-      <View className="flex-1 px-4 pt-3">
+        {/* Cartão de vídeo 16:9 */}
         <View
-          className="flex-1 rounded-xl2 overflow-hidden bg-ink"
+          className="mx-4 rounded-2xl overflow-hidden bg-ink"
+          style={{ aspectRatio: 16 / 9 }}
           onLayout={event => setVideoWidth(event.nativeEvent.layout.width)}
         >
           {isConnected && streamHtml && !fullscreen ? (
-            <View
-              ref={videoRef}
-              collapsable={false}
-              style={
-                capturing && videoWidth
-                  ? {
-                      width: videoWidth,
-                      height: Math.round((videoWidth * 9) / 16),
-                      alignSelf: 'center',
-                    }
-                  : { flex: 1 }
-              }
-            >
-            <WebView
-              key={`${printer.id}-${reloadKey}`}
-              ref={webViewRef}
-              source={{ html: streamHtml, baseUrl: `http://${videoHost}` }}
-              style={{ flex: 1, backgroundColor: '#000' }}
-              javaScriptEnabled
-              domStorageEnabled={false}
-              allowsInlineMediaPlayback
-              mediaPlaybackRequiresUserAction={false}
-              mixedContentMode="always"
-              originWhitelist={['*']}
-              scrollEnabled={false}
-              bounces={false}
-            />
+            <View ref={videoRef} collapsable={false} style={{ flex: 1 }}>
+              <WebView
+                key={`${printer.id}-${reloadKey}`}
+                ref={webViewRef}
+                source={{ html: streamHtml, baseUrl: `http://${videoHost}` }}
+                style={{ flex: 1, backgroundColor: '#000' }}
+                javaScriptEnabled
+                domStorageEnabled={false}
+                allowsInlineMediaPlayback
+                mediaPlaybackRequiresUserAction={false}
+                mixedContentMode="always"
+                originWhitelist={['*']}
+                scrollEnabled={false}
+                bounces={false}
+              />
             </View>
           ) : (
             <View className="flex-1 items-center justify-center">
               {printer.connectionStatus === 'connecting' ? (
-                <ActivityIndicator color={hexDe(tema.paleta.acento)} />
+                <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Ionicons name="videocam-off" size={40} color={hexDe(tema.paleta.tintaMuted)} />
+                <Ionicons name="videocam-off" size={36} color="rgba(255,255,255,0.5)" />
               )}
-              <Text className="text-white/70 mt-2 text-sm text-center px-4">
+              <Text className="text-white/60 mt-2 text-[11px] text-center px-4">
                 {(printer.reconnectAttempt ?? 0) >= 2
                   ? t('camera.aReconectarTentativa', { n: printer.reconnectAttempt ?? 0 })
                   : printer.connectionStatus === 'connecting'
@@ -460,62 +499,85 @@ export const CameraScreen = ({ navigation, route }: any) => {
             </View>
           )}
 
-          {isConnected && streamHtml && (
-            <TouchableOpacity
-              onPress={handleSnapshot}
-              className="absolute bottom-3 right-3 w-9 h-9 rounded-full bg-black/55 items-center justify-center"
-            >
-              <Ionicons name="camera-outline" size={18} color="#FFFFFF" />
-            </TouchableOpacity>
-          )}
-
-          {isConnected && streamHtml && (
-            <TouchableOpacity
-              onPress={() => setFullscreen(true)}
-              className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/55 items-center justify-center"
-            >
-              <Ionicons name="expand" size={18} color="#FFFFFF" />
-            </TouchableOpacity>
-          )}
-
+          {/* Etiqueta em direto */}
           {isConnected && (
-            <View className="absolute top-3 left-3 bg-black/55 rounded-full px-2.5 py-1 flex-row items-center">
+            <View className="absolute top-2.5 left-2.5 bg-black/55 rounded-full px-2 py-1 flex-row items-center">
               <View className="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5" />
-              <Text className="text-white text-[10px] font-bold tracking-widest">
-                {t('comum.emDireto')}
+              <Text className="text-white text-[9px] font-bold tracking-[1.4px]">
+                {t('comum.emDireto').toUpperCase()}
               </Text>
             </View>
           )}
+
+          {/* Acções do vídeo */}
+          {isConnected && streamHtml && (
+            <View className="absolute top-2.5 right-2.5 flex-row">
+              <TouchableOpacity
+                onPress={() => setFullscreen(true)}
+                className="w-8 h-8 rounded-full bg-black/55 items-center justify-center mr-2"
+              >
+                <Ionicons name="expand" size={15} color="#FFFFFF" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleSnapshot}
+                className="w-8 h-8 rounded-full bg-black/55 items-center justify-center"
+              >
+                <Ionicons name="camera-outline" size={15} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Rodapé do vídeo: camada e tempo restante */}
+          {job && (
+            <View className="absolute bottom-2 left-3 right-3 flex-row justify-between">
+              <Text className="text-white text-[10px]">
+                {t('comum.camada', { actual: job.layer, total: job.totalLayers })}
+              </Text>
+              <Text className="text-white text-[10px]">
+                {t('camera.faltam', { tempo: job.remaining })}
+              </Text>
+            </View>
+          )}
+
+          {/* Barra de progresso colada à base */}
+          {job && (
+            <View className="absolute bottom-0 left-0 right-0 h-[3px] bg-white/15">
+              <View
+                className="h-full bg-brand"
+                style={{ width: `${Math.max(2, progress)}%` }}
+              />
+            </View>
+          )}
         </View>
-      </View>
 
-      {/* Controls */}
-      <View className="px-4 pt-4">
-        <View className="flex-row items-center justify-between">
-          <View className="flex-1 pr-3">
-            <Text className="text-lg font-bold text-ink">
-              {printer.printerName}
-            </Text>
-            <Text className="text-xs text-ink-muted mt-0.5">
-              {isConnected ? t('comum.ligada') : t('comum.desligada')} · {printer.ipAddress}
-            </Text>
-          </View>
-
+        {/* Bico · Mesa · Luz */}
+        <View className="flex-row items-center px-4 mt-3">
+          <Text
+            className="text-[11px] text-ink"
+            style={{ fontFamily: 'monospace' }}
+          >
+            {t('comum.bico').toUpperCase()} {nozzle}°C
+          </Text>
+          <Text
+            className="text-[11px] text-ink ml-4"
+            style={{ fontFamily: 'monospace' }}
+          >
+            {t('comum.mesa').toUpperCase()} {bed}°C
+          </Text>
+          <View className="flex-1" />
           <TouchableOpacity
             onPress={toggleLight}
             disabled={!isConnected}
-            className={`flex-row items-center rounded-full border px-4 py-2.5 ${
-              lightOn ? 'bg-state-light border-state-light' : 'bg-canvas-sunken border-line'
-            }`}
+            className={`rounded-md border px-3 py-1.5 ${
+              lightOn
+                ? 'border-state-light bg-state-light/15'
+                : 'border-line bg-canvas-sunken'
+            } ${!isConnected ? 'opacity-40' : ''}`}
+            activeOpacity={0.7}
           >
-            <Ionicons
-              name={lightOn ? 'bulb' : 'bulb-outline'}
-              size={20}
-              color={lightOn ? hexDe(tema.paleta.tintaFixa) : hexDe(tema.paleta.tintaSoft)}
-            />
             <Text
-              className={`ml-2 font-bold text-xs tracking-wide ${
-                lightOn ? 'text-inkFixo' : 'text-ink-soft'
+              className={`text-[10px] font-semibold tracking-[1.2px] ${
+                lightOn ? 'text-state-light' : 'text-ink-soft'
               }`}
             >
               {lightOn ? t('camera.luzLigada') : t('camera.luzDesligada')}
@@ -523,155 +585,112 @@ export const CameraScreen = ({ navigation, route }: any) => {
           </TouchableOpacity>
         </View>
 
-        <View className="flex-row mt-4">
-          <View className="flex-1 bg-canvas-sunken rounded-xl py-3 items-center mr-2">
-            <Text className="text-[10px] tracking-widest text-ink-soft font-semibold">
-              {t('comum.bico').toUpperCase()}
+        {/* Recentes */}
+        <View className="px-4 mt-6">
+          <Text className="text-[10px] tracking-[1.6px] font-semibold text-ink-soft">
+            {t('camera.recentes').toUpperCase()}
+          </Text>
+          {recentes.length === 0 ? (
+            <Text className="text-[11px] text-ink-muted mt-2">
+              {t('camera.semFicheiros')}
             </Text>
-            <Text className="text-xl font-bold text-ink mt-1">
-              {nozzle}
-              <Text className="text-xs font-medium text-ink-muted"> °C</Text>
-            </Text>
-          </View>
-          <View className="flex-1 bg-canvas-sunken rounded-xl py-3 items-center mr-2">
-            <Text className="text-[10px] tracking-widest text-ink-soft font-semibold">
-              {t('comum.mesa').toUpperCase()}
-            </Text>
-            <Text className="text-xl font-bold text-ink mt-1">
-              {bed}
-              <Text className="text-xs font-medium text-ink-muted"> °C</Text>
-            </Text>
-          </View>
-          <View className="flex-1 bg-canvas-sunken rounded-xl py-3 items-center">
-            <Text className="text-[10px] tracking-widest text-ink-soft font-semibold">
-              {t('camera.progresso')}
-            </Text>
-            <Text className="text-xl font-bold text-ink mt-1">
-              {progress > 0 ? `${progress}` : '—'}
-              {progress > 0 && (
-                <Text className="text-xs font-medium text-ink-muted"> %</Text>
-              )}
-            </Text>
-          </View>
+          ) : (
+            recentes.map((f, i) => (
+              <View
+                key={f.nome}
+                className={`flex-row items-center py-2.5 ${
+                  i === 0 ? 'border-t border-line mt-1' : ''
+                } border-b border-line`}
+              >
+                <Text className="flex-1 text-[12px] text-ink" numberOfLines={1}>
+                  {f.nome}
+                </Text>
+                <Text className="text-[11px] text-ink-muted ml-3">
+                  {tamanhoLegivel(f.tamanho)}
+                </Text>
+              </View>
+            ))
+          )}
         </View>
 
-        {/* Current job */}
-        {job ? (
-          <View className="mt-4 bg-canvas-sunken rounded-xl p-4">
-            <View className="flex-row items-center justify-between">
-              <Text
-                className="text-[10px] tracking-widest text-ink-soft font-semibold"
-                numberOfLines={1}
-              >
-                {t('comum.aImprimir').toUpperCase()}
-              </Text>
-              <Text className="text-xs text-ink-soft font-semibold">
-                {job.remaining}
-              </Text>
-            </View>
-            <View className="flex-row items-center mt-2">
-              <View className="w-14 h-14 rounded-lg bg-cartao border border-line items-center justify-center overflow-hidden mr-3">
-                {preview ? (
-                  <Svg viewBox="0 0 100 100" width={52} height={52}>
-                    <Path
-                      d={preview.path}
-                      stroke={hexDe(tema.paleta.tinta)}
-                      strokeWidth={0.6}
-                      fill="none"
-                    />
-                  </Svg>
-                ) : (
-                  <Ionicons name="cube-outline" size={18} color={hexDe(tema.paleta.tintaMuted)} />
-                )}
-              </View>
-              <Text
-                className="flex-1 text-sm font-semibold text-ink"
-                numberOfLines={2}
-              >
-                {job.filename}
-              </Text>
-            </View>
-            <View className="h-1.5 rounded-full bg-line mt-3 overflow-hidden">
-              <View
-                className="h-full rounded-full bg-brand"
-                style={{ width: `${Math.max(2, progress)}%` }}
-              />
-            </View>
-            <View className="flex-row justify-between mt-2">
-              <Text className="text-xs text-ink-muted">
-                {t('comum.camada', { actual: job.layer, total: job.totalLayers })}
-              </Text>
-              <View className="flex-row">
-                <TouchableOpacity
-                  onPress={handlePrintControl}
-                  className="px-3 py-1.5 rounded-lg border border-line mr-2"
-                >
-                  <Text className="text-[11px] font-semibold text-ink">
-                    {printer?.status?.PrintInfo?.Status === 6
-                      ? t('comum.retomar')
-                      : t('comum.pausar')}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={handleStopPrint}
-                  className="px-3 py-1.5 rounded-lg border border-line"
-                >
-                  <Text className="text-[11px] font-semibold text-state-danger">
-                    {t('comum.parar')}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        ) : (
-          <View className="mt-4 bg-canvas-sunken rounded-xl p-4">
-            <Text className="text-xs text-ink-soft font-semibold tracking-widest">
-              {t('camera.inativa')}
+        {/* Pausa · Parar */}
+        <View className="flex-row px-4 mt-6" style={{ gap: 10 }}>
+          <TouchableOpacity
+            onPress={handlePrintControl}
+            disabled={!job}
+            className={`flex-1 h-12 rounded-xl items-center justify-center ${
+              job ? 'bg-brand' : 'bg-line'
+            }`}
+            activeOpacity={0.8}
+          >
+            <Text
+              className={`text-[13px] font-semibold ${
+                job ? 'text-white' : 'text-ink-muted'
+              }`}
+            >
+              {printer?.status?.PrintInfo?.Status === 6
+                ? t('comum.retomar')
+                : t('comum.pausar')}
             </Text>
-            <Text className="text-sm text-ink-muted mt-1">
-              {t('camera.mesaLivre')}
-            </Text>
-          </View>
-        )}
+          </TouchableOpacity>
 
-        <View className="mt-3">
+          <TouchableOpacity
+            onPress={handleStopPrint}
+            disabled={!job}
+            className={`flex-1 h-12 rounded-xl items-center justify-center border ${
+              job ? 'border-state-danger' : 'border-line'
+            }`}
+            activeOpacity={0.8}
+          >
+            <Text
+              className={`text-[13px] font-semibold ${
+                job ? 'text-state-danger' : 'text-ink-muted'
+              }`}
+            >
+              {t('comum.parar')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Enviar · Ficheiros */}
+        <View className="flex-row px-4 mt-3">
           {uploading && (
-            <View className="h-1.5 rounded-full bg-line overflow-hidden mb-2 mx-0.5">
+            <View className="absolute -top-1 left-4 right-4 h-1 rounded-full bg-line overflow-hidden">
               <View
                 className="h-full rounded-full bg-brand"
                 style={{ width: `${Math.max(2, uploadPercent)}%` }}
               />
             </View>
           )}
-          <View className="flex-row">
-            <TouchableOpacity
-              onPress={handleUpload}
-              disabled={uploading}
-              className={`flex-1 ${BT_NEUTRA} py-3 mr-2 ${uploading ? 'opacity-60' : ''}`}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="cloud-upload-outline" size={18} color={hexDe(tema.paleta.tintaSoft)} />
-              <Text className="ml-2 text-ink font-semibold text-[13px]">
-                {uploading ? t('camera.aEnviar', { p: uploadPercent }) : t('camera.enviarGcode')}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() =>
-                navigation.navigate('Printers', {
-                  screen: 'Files',
-                  params: { printerId: printer?.id },
-                })
-              }
-              disabled={uploading}
-              className={`flex-1 ${BT_NEUTRA} py-3 ${uploading ? 'opacity-60' : ''}`}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="folder-open-outline" size={18} color={hexDe(tema.paleta.tintaSoft)} />
-              <Text className="ml-2 text-ink font-semibold text-[13px]">{t('camera.ficheiros')}</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            onPress={handleUpload}
+            disabled={uploading}
+            className={`flex-1 ${BT_NEUTRA} h-10 mr-2 ${uploading ? 'opacity-60' : ''}`}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="cloud-upload-outline" size={15} color={hexDe(tema.paleta.tintaSoft)} />
+            <Text className="ml-2 text-[10px] font-semibold tracking-[1.2px] text-ink-soft">
+              {(uploading ? t('camera.aEnviar', { p: uploadPercent }) : t('camera.enviarGcode')).toUpperCase()}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate('Printers', {
+                screen: 'Files',
+                params: { printerId: printer?.id },
+              })
+            }
+            disabled={uploading}
+            className={`flex-1 ${BT_NEUTRA} h-10 ${uploading ? 'opacity-60' : ''}`}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="folder-open-outline" size={15} color={hexDe(tema.paleta.tintaSoft)} />
+            <Text className="ml-2 text-[10px] font-semibold tracking-[1.2px] text-ink-soft">
+              {t('camera.ficheiros').toUpperCase()}
+            </Text>
+          </TouchableOpacity>
         </View>
-      </View>
+      </ScrollView>
 
       <Modal
         visible={fullscreen}
