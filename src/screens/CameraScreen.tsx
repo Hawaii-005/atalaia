@@ -613,7 +613,17 @@ export const CameraScreen = ({ navigation, route }: any) => {
           )}
         </View>
 
-        <View className="flex-1" />
+        {/* Estado quando não está a imprimir */}
+        {!job && (
+          <View className="mx-4 mt-5 rounded-xl border border-line px-4 py-3">
+            <Text className="text-[10px] tracking-[1.4px] font-semibold text-ink-soft">
+              {t('camera.inativa').toUpperCase()}
+            </Text>
+            <Text className="text-[12px] text-ink-muted mt-1">
+              {t('camera.mesaLivre')}
+            </Text>
+          </View>
+        )}
 
         {/* Pausa · Parar */}
         <View className="flex-row px-4 mt-6" style={{ gap: 10 }}>
