@@ -35,6 +35,7 @@ import { t } from '../i18n';
 import type { ConnectionStatus } from '../types';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
+import { BT_ACENTO, BT_APAGADA, BT_NEUTRA, BT_PERIGO, TX_ACENTO, TX_PERIGO } from '../theme/botoes';
 
 // Etiquetas visíveis para o estado de ligação da impressora (chaves i18n).
 const CONNECTION_LABEL: { [key in ConnectionStatus]: string } = {
@@ -234,9 +235,9 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
           </Text>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
-            className="mt-4 rounded-xl2 bg-brand px-6 py-3"
+            className={`mt-4 px-6 py-3 ${BT_ACENTO}`}
           >
-            <Text className="text-white font-semibold">{t('details.voltar')}</Text>
+            <Text className={TX_ACENTO}>{t('details.voltar')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

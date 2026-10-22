@@ -18,6 +18,7 @@ import { checkLocalNetworkAccess } from '@generac/react-native-local-network-per
 import { t } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
+import { BT_ACENTO, BT_APAGADA, BT_NEUTRA, BT_PERIGO, TX_ACENTO, TX_PERIGO } from '../theme/botoes';
 
 export const HomeScreen = ({ navigation }: any) => {
   const { tema } = useTheme();
@@ -193,12 +194,12 @@ export const HomeScreen = ({ navigation }: any) => {
             </Text>
 
             <TouchableOpacity
-              className="mt-8 rounded-xl2 bg-brand py-4 items-center flex-row justify-center"
+              className={`mt-8 py-4 ${BT_ACENTO}`}
               onPress={() => navigation.navigate('Discovery')}
               activeOpacity={0.85}
             >
-              <Ionicons name="wifi" size={18} color="#FFFFFF" />
-              <Text className="ml-2 text-white font-semibold text-[15px]">
+              <Ionicons name="wifi" size={18} color={hexDe(tema.paleta.acentoTexto)} />
+              <Text className={`ml-2 text-[15px] ${TX_ACENTO}`}>
                 {t('home.analisarRede')}
               </Text>
             </TouchableOpacity>

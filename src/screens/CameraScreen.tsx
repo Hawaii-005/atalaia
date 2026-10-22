@@ -25,6 +25,7 @@ import type { ConnectionStatus } from '../types';
 import { t } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
+import { BT_ACENTO, BT_APAGADA, BT_NEUTRA, BT_PERIGO, TX_ACENTO, TX_PERIGO } from '../theme/botoes';
 
 const LIGHT_COMMAND = 403;
 
@@ -503,8 +504,8 @@ export const CameraScreen = ({ navigation, route }: any) => {
           <TouchableOpacity
             onPress={toggleLight}
             disabled={!isConnected}
-            className={`flex-row items-center rounded-xl px-4 py-3 ${
-              lightOn ? 'bg-state-light' : 'bg-canvas-sunken border border-line'
+            className={`flex-row items-center rounded-full border px-4 py-2.5 ${
+              lightOn ? 'bg-state-light border-state-light' : 'bg-canvas-sunken border-line'
             }`}
           >
             <Ionicons
@@ -646,9 +647,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
             <TouchableOpacity
               onPress={handleUpload}
               disabled={uploading}
-              className={`flex-1 rounded-xl border border-line py-3 items-center flex-row justify-center mr-2 ${
-                uploading ? 'opacity-60' : ''
-              }`}
+              className={`flex-1 ${BT_NEUTRA} py-3 mr-2 ${uploading ? 'opacity-60' : ''}`}
               activeOpacity={0.7}
             >
               <Ionicons name="cloud-upload-outline" size={18} color={hexDe(tema.paleta.tintaSoft)} />
@@ -664,9 +663,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
                 })
               }
               disabled={uploading}
-              className={`flex-1 rounded-xl border border-line py-3 items-center flex-row justify-center ${
-                uploading ? 'opacity-60' : ''
-              }`}
+              className={`flex-1 ${BT_NEUTRA} py-3 ${uploading ? 'opacity-60' : ''}`}
               activeOpacity={0.7}
             >
               <Ionicons name="folder-open-outline" size={18} color={hexDe(tema.paleta.tintaSoft)} />

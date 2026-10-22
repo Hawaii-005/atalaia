@@ -13,6 +13,7 @@ import { Header } from '../components/Header';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { ORDEM_TEMAS, TEMAS, hexDe } from '../theme/temas';
+import { BT_ACENTO, BT_NEUTRA, TX_ACENTO } from '../theme/botoes';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
@@ -138,6 +139,15 @@ const SwitchRow = ({
   );
 };
 
+/** 30000 → "30 s"; 60000 → "1 min" */
+const formatarIntervalo = (ms: number) => {
+  const segundos = Math.round(ms / 1000);
+  return segundos < 60 ? `${segundos} s` : `${segundos / 60} min`;
+};
+
+/** 30 s e depois em minutos */
+const INTERVALOS = [30000, 60000, 120000, 300000];
+
 export const SettingsScreen = () => {
   const { temaId, setTema } = useTheme();
   const { statusIntervalMs, setStatusInterval } = usePrinterConnections();
@@ -252,30 +262,32 @@ export const SettingsScreen = () => {
           <Row
             icon="time-outline"
             label={t('settings.intervalo')}
-            value={`${Math.round(statusIntervalMs / 1000)}s`}
-            onPress={() =>
-              Alert.alert(
-                t('settings.intervalo'),
-                t('settings.intervaloMsg'),
-                [
-                  {
-                    text: t('settings.segundos5'),
-                    onPress: () => setStatusInterval(5000),
-                  },
-                  {
-                    text: t('settings.segundos15'),
-                    onPress: () => setStatusInterval(15000),
-                  },
-                  {
-                    text: t('settings.segundos30'),
-                    onPress: () => setStatusInterval(30000),
-                  },
-                  { text: t('comum.cancelar'), style: 'cancel' },
-                ]
-              )
-            }
+            value={formatarIntervalo(statusIntervalMs)}
             last
           />
+          <View className="flex-row px-4 pb-4" style={{ gap: 8 }}>
+            {INTERVALOS.map(opcao => {
+              const activo = statusIntervalMs === opcao;
+              return (
+                <TouchableOpacity
+                  key={opcao}
+                  onPress={() => setStatusInterval(opcao)}
+                  activeOpacity={0.8}
+                  className={`flex-1 rounded-full border py-2 items-center ${
+                    activo ? BT_ACENTO : BT_NEUTRA
+                  }`}
+                >
+                  <Text
+                    className={`text-[12px] ${
+                      activo ? TX_ACENTO : 'text-ink-soft font-medium'
+                    }`}
+                  >
+                    {formatarIntervalo(opcao)}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </Section>
 
         <Section title={t('settings.seccaoNotif')}>

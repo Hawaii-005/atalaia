@@ -18,6 +18,7 @@ import {
 import { t } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
+import { BT_ACENTO, BT_APAGADA, BT_NEUTRA, BT_PERIGO, TX_ACENTO, TX_PERIGO } from '../theme/botoes';
 
 interface PrinterCardProps {
   printer: Printer;
@@ -218,23 +219,27 @@ export const PrinterCard = ({
                 {canStop && onStopPrint && (
                   <TouchableOpacity
                     onPress={onStopPrint}
-                    className="w-8 h-8 rounded-full bg-state-danger/10 items-center justify-center mr-2"
+                    className={`${BT_PERIGO} px-3 py-1.5 mr-2`}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="stop" size={15} color={hexDe(tema.paleta.perigo)} />
+                    <Ionicons name="stop" size={12} color={hexDe(tema.paleta.perigo)} />
+                    <Text className={`ml-1.5 text-[11px] ${TX_PERIGO}`}>{t('comum.parar')}</Text>
                   </TouchableOpacity>
                 )}
                 {(canPause || canResume) && onPrintControl && (
                   <TouchableOpacity
                     onPress={onPrintControl}
-                    className="w-8 h-8 rounded-full bg-brand-soft items-center justify-center"
+                    className={`${BT_ACENTO} px-3 py-1.5`}
                     activeOpacity={0.7}
                   >
                     <Ionicons
                       name={canResume ? 'play' : 'pause'}
-                      size={15}
+                      size={11}
                       color={hexDe(tema.paleta.acento)}
                     />
+                    <Text className={`ml-1.5 text-[11px] ${TX_ACENTO}`}>
+                      {canResume ? t('comum.retomar') : t('comum.pausar')}
+                    </Text>
                   </TouchableOpacity>
                 )}
               </View>

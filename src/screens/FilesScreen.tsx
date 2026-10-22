@@ -31,6 +31,7 @@ import { custoDe, euros, getPrecoKg, setPrecoKg } from '../utils/precos';
 import { t } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
+import { BT_ACENTO, BT_APAGADA, BT_NEUTRA, BT_PERIGO, TX_ACENTO, TX_PERIGO } from '../theme/botoes';
 
 interface PrinterFile {
   name: string;
@@ -316,10 +317,10 @@ const FileDetails = ({
             </TouchableOpacity>
             <TouchableOpacity
               onPress={onPrint}
-              className="flex-1 h-12 items-center justify-center rounded-xl bg-brand"
+              className={`flex-1 h-12 ${BT_ACENTO}`}
               activeOpacity={0.8}
             >
-              <Text className="text-[14px] font-semibold text-white">
+              <Text className={`text-[14px] ${TX_ACENTO}`}>
                 {t('files.imprimirTitulo')}
               </Text>
             </TouchableOpacity>
@@ -682,12 +683,12 @@ export const FilesScreen = ({ route, navigation }: any) => {
                 <TouchableOpacity
                   onPress={handleRename}
                   disabled={!!ocupado || !novoNome.trim()}
-                  className={`px-4 h-10 items-center justify-center rounded-xl ${
-                    ocupado || !novoNome.trim() ? 'bg-line' : 'bg-brand'
+                  className={`px-4 h-10 ${
+                    ocupado || !novoNome.trim() ? BT_APAGADA : BT_ACENTO
                   }`}
                   activeOpacity={0.8}
                 >
-                  <Text className="text-[13px] font-semibold text-white">
+                  <Text className={`text-[13px] ${TX_ACENTO}`}>
                     {ocupado ?? t('files.renomear')}
                   </Text>
                 </TouchableOpacity>
