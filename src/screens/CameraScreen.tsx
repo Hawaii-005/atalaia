@@ -451,12 +451,10 @@ export const CameraScreen = ({ navigation, route }: any) => {
                 <Ionicons name="videocam-off" size={40} color="#7C8088" />
               )}
               <Text className="text-white/70 mt-2 text-sm text-center px-4">
-                {printer.connectionStatus === 'connecting'
-                  ? printer.reconnectAttempt
-                    ? t('camera.aReconectarTentativa', { n: printer.reconnectAttempt })
-                    : t('camera.aLigarImpressora')
-                  : printer.reconnectAttempt
-                    ? t('camera.aReconectarTentativa', { n: printer.reconnectAttempt })
+                {(printer.reconnectAttempt ?? 0) >= 2
+                  ? t('camera.aReconectarTentativa', { n: printer.reconnectAttempt ?? 0 })
+                  : printer.connectionStatus === 'connecting'
+                    ? t('camera.aLigarImpressora')
                     : t(CONNECTION_LABEL[printer.connectionStatus])}
               </Text>
             </View>

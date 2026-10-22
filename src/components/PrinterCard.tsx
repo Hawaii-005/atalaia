@@ -84,8 +84,8 @@ export const PrinterCard = ({
   const isConnected = printer.connectionStatus === 'connected';
 
   // A reconectar tem prioridade: mostra quantas tentativas já falharam.
-  const statusText = !isConnected && printer.reconnectAttempt
-    ? t('comum.aReconectarTentativa', { n: printer.reconnectAttempt })
+  const statusText = !isConnected && (printer.reconnectAttempt ?? 0) >= 2
+    ? t('comum.aReconectarTentativa', { n: printer.reconnectAttempt ?? 0 })
     : readablePrintStatus === 'idle'
       ? t(STATUS_LABEL[printer.connectionStatus])
       : readablePrintStatus === 'completed'

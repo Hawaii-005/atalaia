@@ -440,7 +440,7 @@ export const PrinterConnectionsProvider = ({
     }, delay);
   };
 
-  const SILENCIO_MAXIMO_MS = 25000;
+  const SILENCIO_MAXIMO_MS = 60000;
 
   const stopWatchdog = (printerId: string) => {
     const timer = watchdogTimersRef.current[printerId];
