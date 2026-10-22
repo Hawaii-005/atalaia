@@ -11,6 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { discoverPrinters } from '../utils/PrinterDiscovery';
 import { AppState, AppStateStatus, Alert } from 'react-native';
 import { Printer, ConnectionStatus, PrinterStatus } from '../types';
+import { descreverAck } from '../utils/errors';
 import { isSdcpCommand, SdcpCommand } from '../utils/commands';
 import {
   CommandValidationError,
@@ -607,17 +608,18 @@ export const PrinterConnectionsProvider = ({
           console.log(`ACK non zero received from ${printer.printerName}`);
           const requestId = data.Data.RequestID;
           const commandName =
-            pendingCommandsRef.current[requestId]?.command || 'Unknown command';
+            pendingCommandsRef.current[requestId]?.command || 'comando';
 
           // Remove from pending commands
           delete pendingCommandsRef.current[requestId];
 
-          // Show alert to user
-          Alert.alert(
-            'Command Rejected',
-            `The command "${commandName}" was not accepted. The manufacturer has blocked this command while printing.`,
-            [{ text: 'OK' }]
+          // Mensagem honesta e em português: o código Ack é o que a máquina
+          // devolveu, sem inventar causas que não foram observadas.
+          const aviso = descreverAck(
+            data.Data.Data.Ack as number,
+            commandName
           );
+          Alert.alert(aviso.titulo, aviso.mensagem, [{ text: 'OK' }]);
         }
       } catch (error) {
         console.log(

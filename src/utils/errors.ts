@@ -75,3 +75,26 @@ export const mensagemDeErro = (erro: unknown): string => {
 
   return texto ? `Algo falhou: ${texto}` : 'Ocorreu um erro inesperado.';
 };
+
+/**
+ * Traduz o código Ack da impressora numa explicação em português.
+ *
+ * Só se afirmam os códigos observados na máquina: 0 = aceite, 1 = recusado,
+ * 2 = recusado por "não encontrado" nos comandos testados. O resto fica
+ * como código cru, sem inventar significado.
+ */
+export const descreverAck = (
+  ack: number,
+  comando: string
+): { titulo: string; mensagem: string } => {
+  const palavras: Record<number, string> = {
+    1: `A impressora recusou "${comando}". Costuma ser o estado dela: por exemplo, retomar quando já não há impressão em pausa, ou parar quando já está parada. Confirma no ecrã da impressora.`,
+    2: `A impressora respondeu a "${comando}" com "não encontrado" — normalmente significa que não há nenhuma tarefa nesse estado. Confirma no ecrã da impressora.`,
+  };
+  return {
+    titulo: 'Comando recusado',
+    mensagem:
+      palavras[ack] ??
+      `A impressora recusou "${comando}" com o código ${ack}. Se o estado ficar preso, corta a corrente na tomada e volta a ligar.`,
+  };
+};
