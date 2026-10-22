@@ -103,6 +103,9 @@ export const FilesScreen = ({ route, navigation }: any) => {
   const { printerId } = route.params ?? {};
   const { printers, request } = usePrinterConnections();
   const printer = printers.find(item => item.id === printerId) ?? printers[0];
+  // Só o id: o objeto do printer muda a cada actualização de estado (1 s) e
+  // isso fazia o useFocusEffect recarregar a lista sem parar.
+  const printerIdAtual = printer?.id;
   const [files, setFiles] = useState<PrinterFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -110,12 +113,12 @@ export const FilesScreen = ({ route, navigation }: any) => {
   const [plateSide, setPlateSide] = useState<0 | 1>(0);
 
   const load = useCallback(async () => {
-    if (!printer) return;
+    if (!printerIdAtual) return;
     setLoading(true);
     setError(null);
     try {
       const data = await request(
-        printer.id,
+        printerIdAtual,
         listFilesCommand('/local/', 1, 100)
       );
       const list: PrinterFile[] = data?.FileList ?? [];
@@ -129,7 +132,7 @@ export const FilesScreen = ({ route, navigation }: any) => {
     } finally {
       setLoading(false);
     }
-  }, [printer, request]);
+  }, [printerIdAtual, request]);
 
   useFocusEffect(
     useCallback(() => {
