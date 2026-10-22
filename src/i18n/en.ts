@@ -71,6 +71,7 @@ const en = {
   'files.coresDica': 'Read from the slicer G-code header',
   'files.coresNenhuma': 'The file declares no filaments.',
   'files.coresTotal': '{n} colours in this file',
+  'files.slotSugerido': 'slot {slot}',
   'files.ordenar': 'Sort',
   'files.ordemNome': 'Name',
   'files.ordemData': 'Date',

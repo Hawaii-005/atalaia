@@ -69,6 +69,7 @@ export default {
   'files.coresDica': 'Lido do cabeçalho do G-code do fatiador',
   'files.coresNenhuma': 'O ficheiro não declara filamentos.',
   'files.coresTotal': '{n} cores neste ficheiro',
+  'files.slotSugerido': 'slot {slot}',
   'files.ordenar': 'Ordenar',
   'files.ordemNome': 'Nome',
   'files.ordemData': 'Data',

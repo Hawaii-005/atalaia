@@ -193,9 +193,12 @@ const FileDetails = ({
                   <Text className="text-[12px] font-semibold text-ink">
                     T{filamento.tool}
                   </Text>
-                  <Text className="text-[12px] text-ink-muted ml-2">
+                  <Text className="text-[12px] text-ink-muted ml-2 flex-1">
                     {filamento.gramas.toFixed(2)} g
                     {filamento.tipo ? ` · ${filamento.tipo}` : ''}
+                  </Text>
+                  <Text className="text-[11px] text-ink-soft">
+                    {t('files.slotSugerido', { slot: filamento.tool + 1 })}
                   </Text>
                 </View>
               ))
