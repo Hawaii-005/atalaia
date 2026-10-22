@@ -433,7 +433,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
       </View>
 
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 28 }}
+        contentContainerStyle={{ paddingBottom: 28, flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Selector de impressora */}
@@ -613,13 +613,15 @@ export const CameraScreen = ({ navigation, route }: any) => {
           )}
         </View>
 
+        <View className="flex-1" />
+
         {/* Pausa · Parar */}
         <View className="flex-row px-4 mt-6" style={{ gap: 10 }}>
           <TouchableOpacity
             onPress={handlePrintControl}
             disabled={!job}
-            className={`flex-1 h-12 rounded-xl items-center justify-center ${
-              job ? 'bg-brand' : 'bg-line'
+            className={`flex-1 h-12 rounded-xl items-center justify-center border ${
+              job ? 'bg-brand border-brand' : 'border-line'
             }`}
             activeOpacity={0.8}
           >
