@@ -12,7 +12,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { descobrirSoUdp, discoverPrinters } from '../utils/PrinterDiscovery';
 import { AppState, AppStateStatus, Alert } from 'react-native';
 import { Printer, ConnectionStatus, PrinterStatus } from '../types';
-import { descreverAck } from '../utils/errors';
+import { descreverAck, PrinterRecusouError } from '../utils/errors';
 import { isSdcpCommand, SdcpCommand } from '../utils/commands';
 import {
   CommandValidationError,
@@ -603,7 +603,15 @@ export const PrinterConnectionsProvider = ({
         if (pending) {
           clearTimeout(pending.timer);
           delete pendingRequestsRef.current[pendingRequestId];
-          pending.resolve(data?.Data?.Data ?? {});
+          const resposta = data?.Data?.Data ?? {};
+          // Ack > 0 = recebeu e recusou. Quem espera pela promessa tem de
+          // saber, senão o ecrã muda como se tivesse funcionado.
+          const ack = (resposta as { Ack?: number }).Ack;
+          if (typeof ack === 'number' && ack > 0) {
+            pending.reject(new PrinterRecusouError(ack, 'comando'));
+          } else {
+            pending.resolve(resposta);
+          }
           return;
         }
 

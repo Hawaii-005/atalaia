@@ -1,4 +1,5 @@
 import { log } from '../utils/log';
+import { mensagemDoErro } from '../utils/errors';
 import {
   View,
   Text,
@@ -58,7 +59,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
   const { tema } = useTheme();
   const route = useRoute();
   const { printerId } = route.params as { printerId: string };
-  const { printers, sendCommand, reconnectAll, removePrinter } =
+  const { printers, sendCommand, request, reconnectAll, removePrinter } =
     usePrinterConnections();
   const printer = printers.find(p => p.id === printerId);
 
@@ -112,20 +113,27 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
 
   // A máquina NÃO muda o Status ao pausar (fica 6, igual a imprimir); o sinal
   // fiável é o CurrentTicks parar de avançar. 6 s parado = em pausa.
-  const handlePrintControl = () => {
+  const handlePrintControl = async () => {
     if (!printer) return;
-    if (emPausa) {
-      sendCommand(
-        printer.id,
-        resumePrintCommand({ id: `resume-${Date.now()}` })
-      );
-      setEmPausa(false);
-      ultimosTicks.current = {
-        valor: ultimosTicks.current.valor,
-        desde: Date.now(),
-      };
-    } else {
-      sendCommand(printer.id, pausePrintCommand({ id: `pause-${Date.now()}` }));
+    try {
+      if (emPausa) {
+        await request(
+          printer.id,
+          resumePrintCommand({ id: `resume-${Date.now()}` })
+        );
+        setEmPausa(false);
+        ultimosTicks.current = {
+          valor: ultimosTicks.current.valor,
+          desde: Date.now(),
+        };
+      } else {
+        await request(
+          printer.id,
+          pausePrintCommand({ id: `pause-${Date.now()}` })
+        );
+      }
+    } catch (erro) {
+      Alert.alert('Comando recusado', mensagemDoErro(erro));
     }
   };
 
@@ -139,11 +147,16 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
         {
           text: t('comum.pararImpressao'),
           style: 'destructive',
-          onPress: () =>
-            sendCommand(
-              printer.id,
-              stopPrintCommand({ id: `cancel-${Date.now()}` })
-            ),
+          onPress: async () => {
+            try {
+              await request(
+                printer.id,
+                stopPrintCommand({ id: `cancel-${Date.now()}` })
+              );
+            } catch (erro) {
+              Alert.alert('Comando recusado', mensagemDoErro(erro));
+            }
+          },
         },
       ]
     );

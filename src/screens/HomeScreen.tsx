@@ -1,4 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { mensagemDoErro } from '../utils/errors';
+import { pausePrintCommand, stopPrintCommand } from '../utils/commands';
 import {
   View,
   ScrollView,
@@ -24,7 +26,7 @@ export const HomeScreen = ({ navigation }: any) => {
   const { tema } = useTheme();
   const [refreshing, setRefreshing] = useState(false);
   const [hasNetworkAccess, setHasNetworkAccess] = useState(true);
-  const { printers, reconnectAll, removePrinter, sendCommand } =
+  const { printers, reconnectAll, removePrinter, sendCommand, request } =
     usePrinterConnections();
 
   const checkNetworkAccess = async () => {
@@ -92,21 +94,14 @@ export const HomeScreen = ({ navigation }: any) => {
     );
   };
 
-  const handlePrintControl = (printerId: string, status: number) => {
-    // Status 6 é "a imprimir", não "em pausa": aqui só se pausa. Retomar
-    // exige saber se os ticks pararam, e isso vive no ecrã de detalhe.
-    const cmd = 129;
-    sendCommand(printerId, {
-      Id: '',
-      Data: {
-        Cmd: cmd,
-        Data: {},
-        RequestID: `pause-${Date.now()}`,
-        MainboardID: '',
-        TimeStamp: Date.now(),
-        From: 1,
-      },
-    });
+  const handlePrintControl = async (printerId: string, _status: number) => {
+    // Aqui só se pausa; retomar vive no ecrã de detalhe (é lá que se sabe
+    // se os ticks pararam). Espera pelo Ack e explica a recusa.
+    try {
+      await request(printerId, pausePrintCommand({ id: `pause-${Date.now()}` }));
+    } catch (erro) {
+      Alert.alert('Comando recusado', mensagemDoErro(erro));
+    }
   };
 
   const handleStopPrint = (printerId: string, name: string) => {
@@ -115,18 +110,16 @@ export const HomeScreen = ({ navigation }: any) => {
       {
         text: t('comum.pararImpressao'),
         style: 'destructive',
-        onPress: () =>
-          sendCommand(printerId, {
-            Id: '',
-            Data: {
-              Cmd: 130,
-              Data: {},
-              RequestID: `cancel-${Date.now()}`,
-              MainboardID: '',
-              TimeStamp: Date.now(),
-              From: 1,
-            },
-          }),
+        onPress: async () => {
+          try {
+            await request(
+              printerId,
+              stopPrintCommand({ id: `cancel-${Date.now()}` })
+            );
+          } catch (erro) {
+            Alert.alert('Comando recusado', mensagemDoErro(erro));
+          }
+        },
       },
     ]);
   };

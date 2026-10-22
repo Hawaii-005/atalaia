@@ -1,4 +1,6 @@
 import { log } from '../utils/log';
+import { mensagemDoErro } from '../utils/errors';
+import { pausePrintCommand, stopPrintCommand } from '../utils/commands';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -152,23 +154,17 @@ export const CameraScreen = ({ navigation, route }: any) => {
     webViewRef.current?.reload();
   }, [printerId, printerName, sendCommand, videoHost]);
 
-  const handlePrintControl = useCallback(() => {
+  const handlePrintControl = useCallback(async () => {
     if (!printer) return;
-    // Status 6 é "a imprimir", não "em pausa": aqui só se pausa. Retomar
-    // exige saber se os ticks pararam, e isso vive no ecrã de detalhe.
-    const cmd = 129;
-    sendCommand(printer.id, {
-      Id: '',
-      Data: {
-        Cmd: cmd,
-        Data: {},
-        RequestID: `pause-${Date.now()}`,
-        MainboardID: '',
-        TimeStamp: Date.now(),
-        From: 1,
-      },
-    });
-  }, [printer, sendCommand]);
+    // Aqui só se pausa; retomar exige saber se os ticks pararam e isso vive
+    // no ecrã de detalhe. O pedido espera pelo Ack: se a máquina recusar,
+    // o utilizador sabe porquê.
+    try {
+      await request(printer.id, pausePrintCommand({ id: `pause-${Date.now()}` }));
+    } catch (erro) {
+      Alert.alert('Comando recusado', mensagemDoErro(erro));
+    }
+  }, [printer, request]);
 
   const handleStopPrint = useCallback(() => {
     if (!printer) return;
@@ -180,22 +176,20 @@ export const CameraScreen = ({ navigation, route }: any) => {
         {
           text: t('comum.pararImpressao'),
           style: 'destructive',
-          onPress: () =>
-            sendCommand(printer.id, {
-              Id: '',
-              Data: {
-                Cmd: 130,
-                Data: {},
-                RequestID: `cancel-${Date.now()}`,
-                MainboardID: '',
-                TimeStamp: Date.now(),
-                From: 1,
-              },
-            }),
+          onPress: async () => {
+            try {
+              await request(
+                printer.id,
+                stopPrintCommand({ id: `cancel-${Date.now()}` })
+              );
+            } catch (erro) {
+              Alert.alert('Comando recusado', mensagemDoErro(erro));
+            }
+          },
         },
       ]
     );
-  }, [printer, sendCommand]);
+  }, [printer, request]);
 
   const handleSnapshot = useCallback(async () => {
     if (!videoRef.current || capturing) {

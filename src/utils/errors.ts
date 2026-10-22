@@ -98,3 +98,28 @@ export const descreverAck = (
       `A impressora recusou "${comando}" com o código ${ack}. Se o estado ficar preso, corta a corrente na tomada e volta a ligar.`,
   };
 };
+
+// A impressora respondeu com Ack > 0: aceitou receber, recusou executar.
+export class PrinterRecusouError extends Error {
+  ack: number;
+  comando: string;
+
+  constructor(ack: number, comando: string) {
+    const aviso = descreverAck(ack, comando);
+    super(aviso.mensagem);
+    this.name = 'PrinterRecusouError';
+    this.ack = ack;
+    this.comando = comando;
+    Object.setPrototypeOf(this, PrinterRecusouError.prototype);
+  }
+}
+
+/** Texto para mostrar ao utilizador, sem stack traces nem jargão. */
+export const mensagemDoErro = (erro: unknown): string => {
+  if (erro instanceof PrinterRecusouError) return erro.message;
+  if (erro instanceof PrinterOfflineError) return erro.message;
+  if (erro instanceof PrinterBusyError) return erro.message;
+  if (erro instanceof PrinterTimeoutError) return erro.message;
+  if (erro instanceof Error && erro.message) return erro.message;
+  return 'Não foi possível completar o comando.';
+};
