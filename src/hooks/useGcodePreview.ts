@@ -122,6 +122,27 @@ export const parseToolpath = (gcode: string): GcodePreview | null => {
   return { path: path.trim(), points: sampled.length };
 };
 
+
+// O servidor da impressora é pequeno: descarregar 20 ficheiros em paralelo
+// satura-o e a lista deixa de responder. Fila com dois de cada vez.
+const MAX_SIMULTANEOS = 2;
+let ativos = 0;
+const espera: (() => void)[] = [];
+
+const comVez = async <T,>(tarefa: () => Promise<T>): Promise<T> => {
+  if (ativos >= MAX_SIMULTANEOS) {
+    await new Promise<void>(resolve => espera.push(resolve));
+  }
+  ativos += 1;
+  try {
+    return await tarefa();
+  } finally {
+    ativos -= 1;
+    const proximo = espera.shift();
+    if (proximo) proximo();
+  }
+};
+
 const buildLocalUrl = (printerIp: string, filename: string) => {
   const clean = filename.replace(/^\/?(local\/)?\/?/, '').replace(/^\//, '');
   return `http://${printerIp}:3030/local/${encodeURIComponent(clean)}`;
@@ -149,7 +170,7 @@ export const useGcodePreview = (
     setLoading(true);
     try {
       // O servidor da impressora responde 416 a pedidos Range — sem cabeçalho.
-      const response = await fetch(url);
+      const response = await comVez(() => fetch(url));
       if (!response.ok) {
         cacheRef.current[url] = null;
         return;
@@ -159,7 +180,7 @@ export const useGcodePreview = (
       cacheRef.current[url] = result;
       setPreview(result);
     } catch (error) {
-      console.log('preview failed', error);
+      console.log('preview failed', error instanceof Error ? error.stack : String(error));
       cacheRef.current[url] = null;
       setPreview(null);
     } finally {
