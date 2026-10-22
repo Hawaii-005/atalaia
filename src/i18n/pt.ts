@@ -229,7 +229,7 @@ export default {
     'A Centauri Carbon concluiu a sua impressão de teste.',
   'settings.notifBloqueadas': 'Notificações bloqueadas',
   'settings.notifBloqueadasMsg':
-    'Permita as notificações da CC Tool nas definições do Android.',
+    'Permita as notificações da Atalaia nas definições do Android.',
   'settings.seccaoSobre': 'SOBRE',
   'settings.versaoApp': 'Versão da aplicação',
   'settings.comunicarProblema': 'Comunicar um problema',
@@ -244,7 +244,7 @@ export default {
   'settings.erroBoasVindas':
     'Não foi possível reiniciar o fluxo de boas-vindas.',
   'settings.avisoComunidade':
-    'A CC Tool é uma aplicação independente, criada pela comunidade, para impressoras Elegoo. Sem qualquer afiliação, apoio ou recomendação da Elegoo.',
+    'A Atalaia é uma aplicação independente, criada pela comunidade, para impressoras Elegoo. Sem qualquer afiliação, apoio ou recomendação da Elegoo.',
 
   // ——— Stats
   'stats.title': 'Estatísticas',
@@ -286,8 +286,8 @@ export default {
   'history.parada': 'Parada',
 
   // ——— Welcome
-  'welcome.overlineBemVindo': 'BEM-VINDO',
-  'welcome.titulo1': 'A sua impressora, no seu bolso',
+  'welcome.overlineBemVindo': 'BEM-VINDO AO ATALAIA',
+  'welcome.titulo1': 'A sua impressora, à vista',
   'welcome.corpo1':
     'Veja a câmara, consulte as temperaturas e pause uma impressão a partir de qualquer ponto da sua rede.',
   'welcome.overlineAviso': 'AVISO',

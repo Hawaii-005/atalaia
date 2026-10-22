@@ -14,7 +14,24 @@ web-build/
 
 # Native build outputs
 ios/
-android/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+*.ipa
+*.apk
+*.aab
+
+# Android: o projeto nativo é versionado (bare workflow), mas não os artefactos
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/keystore.properties
+android/captures/
+
 *.jks
 *.p8
 *.p12

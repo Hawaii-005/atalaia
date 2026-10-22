@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "CC Tool",
-    "slug": "cc-tool",
+    "name": "Atalaia",
+    "slug": "atalaia",
     "plugins": [
       [
         "expo-build-properties",
@@ -32,11 +32,14 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "dev.allisonf.cctool",
+      "bundleIdentifier": "io.github.brunocrazy15.atalaia",
       "infoPlist": {
         "NSLocalNetworkUsageDescription": "This app needs to access your local network to connect to your 3D printers.",
-        "NSBonjourServices": ["_bonjour._tcp", "_lnp._tcp."]
-      }    
+        "NSBonjourServices": [
+          "_bonjour._tcp",
+          "_lnp._tcp."
+        ]
+      }
     },
     "android": {
       "softwareKeyboardLayoutMode": "pan",
@@ -44,11 +47,19 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0B0E14"
       },
-      "package": "dev.allisonf.cctool",
+      "package": "io.github.brunocrazy15.atalaia",
       "versionCode": 72
     },
     "developmentClient": {
       "silenceDeploymentWarnings": true
     }
+  },
+  "name": "Atalaia",
+  "slug": "atalaia",
+  "ios": {
+    "bundleIdentifier": "io.github.brunocrazy15.atalaia"
+  },
+  "android": {
+    "package": "io.github.brunocrazy15.atalaia"
   }
 }

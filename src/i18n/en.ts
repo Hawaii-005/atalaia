@@ -228,7 +228,7 @@ const en = {
   'settings.notificacaoTesteCorpo': 'Centauri Carbon has finished the test print.',
   'settings.notifBloqueadas': 'Notifications blocked',
   'settings.notifBloqueadasMsg':
-    'Allow notifications from CC Tool in the Android settings.',
+    'Allow notifications from Atalaia in the Android settings.',
   'settings.seccaoSobre': 'ABOUT',
   'settings.versaoApp': 'App version',
   'settings.comunicarProblema': 'Report an issue',
@@ -242,7 +242,7 @@ const en = {
   'settings.boasVindasReiniciado': 'The welcome flow has been reset.',
   'settings.erroBoasVindas': 'The welcome flow could not be reset.',
   'settings.avisoComunidade':
-    'CC Tool is an independent, community-built app for Elegoo printers. Not affiliated with, endorsed, or recommended by Elegoo in any way.',
+    'Atalaia is an independent, community-built app for Elegoo printers. Not affiliated with, endorsed, or recommended by Elegoo in any way.',
 
   // ——— Stats
   'stats.title': 'Statistics',
@@ -284,7 +284,7 @@ const en = {
   'history.parada': 'Stopped',
 
   // ——— Welcome
-  'welcome.overlineBemVindo': 'WELCOME',
+  'welcome.overlineBemVindo': 'WELCOME TO ATALAIA',
   'welcome.titulo1': 'Your printer, in your pocket',
   'welcome.corpo1':
     'See the camera, check the temperatures and pause a print from anywhere on your network.',
