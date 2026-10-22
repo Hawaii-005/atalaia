@@ -618,17 +618,32 @@ export const CameraScreen = ({ navigation, route }: any) => {
           </View>
         )}
 
-        <TouchableOpacity
-          onPress={handleUpload}
-          disabled={uploading}
-          className="mt-3 rounded-xl border border-line py-3 items-center flex-row justify-center"
-          activeOpacity={0.7}
-        >
-          <Ionicons name="cloud-upload-outline" size={18} color="#3F444D" />
-          <Text className="ml-2 text-ink font-semibold text-[14px]">
-            {uploading ? `A enviar ${uploadPercent}%` : 'Enviar G-code'}
-          </Text>
-        </TouchableOpacity>
+        <View className="mt-3 flex-row">
+          <TouchableOpacity
+            onPress={handleUpload}
+            disabled={uploading}
+            className="flex-1 rounded-xl border border-line py-3 items-center flex-row justify-center mr-2"
+            activeOpacity={0.7}
+          >
+            <Ionicons name="cloud-upload-outline" size={18} color="#3F444D" />
+            <Text className="ml-2 text-ink font-semibold text-[13px]">
+              {uploading ? `${uploadPercent}%` : 'Enviar G-code'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate('Printers', {
+                screen: 'Files',
+                params: { printerId: printer?.id },
+              })
+            }
+            className="flex-1 rounded-xl border border-line py-3 items-center flex-row justify-center"
+            activeOpacity={0.7}
+          >
+            <Ionicons name="folder-open-outline" size={18} color="#3F444D" />
+            <Text className="ml-2 text-ink font-semibold text-[13px]">Ficheiros</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <Modal

@@ -231,6 +231,17 @@ export const HomeScreen = ({ navigation }: any) => {
                 Histórico de impressões
               </Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              className="py-2 items-center flex-row justify-center"
+              onPress={() => navigation.navigate('Stats')}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="stats-chart-outline" size={16} color="#63676E" />
+              <Text className="ml-1.5 text-ink-muted font-semibold text-[13px]">
+                Estatísticas
+              </Text>
+            </TouchableOpacity>
           </>
         )}
       </ScrollView>

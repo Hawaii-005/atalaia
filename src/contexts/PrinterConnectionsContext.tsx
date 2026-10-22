@@ -18,6 +18,12 @@ interface PrinterConnectionsContextType {
   removePrinter: (id: string) => void;
   reconnectAll: () => void;
   sendCommand: (printerId: string, command: any) => void;
+  request: (
+    printerId: string,
+    cmd: number,
+    payload: any,
+    timeoutMs?: number
+  ) => Promise<any>;
   updatePrinterIp: (id: string, ipAddress: string) => void;
   statusIntervalMs: number;
   setStatusInterval: (ms: number) => Promise<void>;
@@ -67,6 +73,10 @@ export const PrinterConnectionsProvider = ({
   );
   const printersRef = useRef<Printer[]>([]);
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+  const pendingRequestsRef = useRef<{
+    [key: string]: { resolve: (value: any) => void; timer: ReturnType<typeof setTimeout> };
+  }>({});
+
   const pendingCommandsRef = useRef<{
     [key: string]: { command: string; timestamp: number };
   }>({});
@@ -383,7 +393,16 @@ export const PrinterConnectionsProvider = ({
       try {
         const data = JSON.parse(event.data);
 
-        console.log('data', data);
+        const pendingRequestId = data?.Data?.RequestID;
+        const pending = pendingRequestId
+          ? pendingRequestsRef.current[pendingRequestId]
+          : undefined;
+        if (pending) {
+          clearTimeout(pending.timer);
+          delete pendingRequestsRef.current[pendingRequestId];
+          pending.resolve(data?.Data?.Data ?? {});
+          return;
+        }
 
         // Learn the stable hardware id so the printer can be found again after
         // a DHCP change, even if the user renamed it in the app.
@@ -582,6 +601,38 @@ export const PrinterConnectionsProvider = ({
     connectToPrinter(updatedPrinter);
   };
 
+  const request = useCallback(
+    (printerId: string, cmd: number, payload: any, timeoutMs = 8000) =>
+      new Promise<any>((resolve, reject) => {
+        const ws = webSocketsRef.current[printerId];
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+          reject(new Error('Sem ligação à impressora'));
+          return;
+        }
+        const printer = printersRef.current.find(item => item.id === printerId);
+        const requestId = `REQ_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+        const timer = setTimeout(() => {
+          delete pendingRequestsRef.current[requestId];
+          reject(new Error('A impressora não respondeu'));
+        }, timeoutMs);
+        pendingRequestsRef.current[requestId] = { resolve, timer };
+        ws.send(
+          JSON.stringify({
+            Id: 'request',
+            Data: {
+              Cmd: cmd,
+              Data: payload,
+              RequestID: requestId,
+              MainboardID: printer?.mainboardId ?? '',
+              TimeStamp: Math.floor(Date.now() / 1000),
+              From: 1,
+            },
+          })
+        );
+      }),
+    []
+  );
+
   const sendCommand = (printerId: string, command: any) => {
     const ws = webSocketsRef.current[printerId];
     if (ws && ws.readyState === WebSocket.OPEN) {
@@ -684,6 +735,7 @@ export const PrinterConnectionsProvider = ({
         removePrinter,
         reconnectAll,
         sendCommand,
+        request,
         updatePrinterIp,
         statusIntervalMs,
         setStatusInterval: updateStatusInterval,

@@ -40,6 +40,8 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
 
   const [refreshing, setRefreshing] = useState(false);
   const [webViewKey, setWebViewKey] = useState(0);
+  const [speedPercent, setSpeedPercent] = useState(100);
+  const [timelapse, setTimelapse] = useState(false);
   const [fanSpeeds, setFanSpeeds] = useState({
     model: 0,
     chamber: 0,
@@ -184,6 +186,53 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
     });
   };
 
+  const handleSpeedProfile = (percent: number) => {
+    if (!printer) return;
+    setSpeedPercent(percent);
+    sendCommand(printer.id, {
+      Id: `${printer.printerName}-id-${Date.now()}`,
+      Data: {
+        Cmd: 403,
+        Data: { PrintSpeedPct: percent },
+        RequestID: `speed-${percent}-${Date.now()}`,
+        MainboardID: '',
+        TimeStamp: 0,
+        From: 1,
+      },
+    });
+  };
+
+  const handleTimelapse = (enabled: boolean) => {
+    if (!printer) return;
+    setTimelapse(enabled);
+    sendCommand(printer.id, {
+      Id: `${printer.printerName}-id-${Date.now()}`,
+      Data: {
+        Cmd: 387,
+        Data: { Enable: enabled ? 1 : 0 },
+        RequestID: `timelapse-${Date.now()}`,
+        MainboardID: '',
+        TimeStamp: 0,
+        From: 1,
+      },
+    });
+  };
+
+  const handleQuickCommand = (cmd: 132 | 133) => {
+    if (!printer) return;
+    sendCommand(printer.id, {
+      Id: `${printer.printerName}-id-${Date.now()}`,
+      Data: {
+        Cmd: cmd,
+        Data: {},
+        RequestID: `quick-${cmd}-${Date.now()}`,
+        MainboardID: '',
+        TimeStamp: 0,
+        From: 1,
+      },
+    });
+  };
+
   const handleDeletePrinter = () => {
     if (!printer) return;
     Alert.alert(
@@ -276,6 +325,13 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
   ];
 
   const FAN_STEPS = [0, 25, 50, 75, 100];
+
+const SPEED_PROFILES = [
+  { label: 'Silencioso', percent: 50 },
+  { label: 'Normal', percent: 100 },
+  { label: 'Desporto', percent: 130 },
+  { label: 'Ludicrous', percent: 160 },
+];
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
@@ -519,6 +575,98 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
               </View>
             </View>
           ))}
+
+          {/* Velocidade */}
+          <View className="px-4 py-3 border-t border-line">
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center">
+                <View className="w-8 h-8 rounded-lg bg-canvas-sunken items-center justify-center">
+                  <Ionicons name="speedometer-outline" size={16} color="#3F444D" />
+                </View>
+                <Text className="ml-3 text-[14px] font-medium text-ink">Velocidade</Text>
+              </View>
+              <Text className="text-[12px] font-semibold text-ink-soft">
+                {speedPercent}%
+              </Text>
+            </View>
+            <View className="flex-row mt-2.5 ml-11">
+              {SPEED_PROFILES.map(profile => {
+                const active = speedPercent === profile.percent;
+                return (
+                  <TouchableOpacity
+                    key={profile.percent}
+                    disabled={!isConnected}
+                    onPress={() => handleSpeedProfile(profile.percent)}
+                    activeOpacity={0.7}
+                    className={`flex-1 mr-1.5 py-1.5 rounded-lg items-center ${
+                      active ? 'bg-brand' : 'bg-canvas-sunken border border-line'
+                    }`}
+                  >
+                    <Text
+                      className={`text-[10px] font-semibold ${
+                        active ? 'text-white' : 'text-ink-soft'
+                      }`}
+                      numberOfLines={1}
+                    >
+                      {profile.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* Time-lapse */}
+          <View className="px-4 py-3 border-t border-line flex-row items-center justify-between">
+            <View className="flex-row items-center flex-1">
+              <View className="w-8 h-8 rounded-lg bg-canvas-sunken items-center justify-center">
+                <Ionicons name="film-outline" size={16} color={timelapse ? '#3E6AE1' : '#3F444D'} />
+              </View>
+              <View className="ml-3">
+                <Text className="text-[14px] font-medium text-ink">Time-lapse</Text>
+                <Text className="text-[11px] text-ink-muted">
+                  Gravado pela própria impressora
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={timelapse}
+              onValueChange={handleTimelapse}
+              disabled={!isConnected}
+              trackColor={{ false: '#E4E4E4', true: '#3E6AE1' }}
+              thumbColor="#FFFFFF"
+              ios_backgroundColor="#E4E4E4"
+            />
+          </View>
+
+          {/* Emergência */}
+          <View className="px-4 py-3 border-t border-line">
+            <Text className="text-[11px] font-semibold tracking-widest text-ink-muted">
+              DURANTE A IMPRESSÃO
+            </Text>
+            <View className="flex-row mt-2">
+              <TouchableOpacity
+                disabled={!isConnected}
+                onPress={() => handleQuickCommand(133)}
+                className="flex-1 rounded-xl border border-line py-2.5 items-center mr-1.5"
+                activeOpacity={0.7}
+              >
+                <Text className="text-[12px] font-semibold text-ink">
+                  Saltar pré-aquecimento
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                disabled={!isConnected}
+                onPress={() => handleQuickCommand(132)}
+                className="flex-1 rounded-xl border border-line py-2.5 items-center"
+                activeOpacity={0.7}
+              >
+                <Text className="text-[12px] font-semibold text-ink">
+                  Parar filamento
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
 
         {/* Printer */}

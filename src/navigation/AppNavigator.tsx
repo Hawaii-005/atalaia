@@ -2,7 +2,13 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
-import { HomeScreen, SettingsScreen, HistoryScreen } from '../screens';
+import {
+  HomeScreen,
+  SettingsScreen,
+  HistoryScreen,
+  FilesScreen,
+  StatsScreen,
+} from '../screens';
 import { PrinterDetailsScreen } from '../screens/PrinterDetailsScreen';
 import { AddEditPrinterScreen } from '../screens/AddEditPrinterScreen';
 import { DiscoveryScreen } from '../screens/DiscoveryScreen';
@@ -27,6 +33,8 @@ const PrintersStackNavigator = () => (
     <Stack.Screen name="Discovery" component={DiscoveryScreen} />
     <Stack.Screen name="WhereIsIp" component={WhereIsIpScreen} />
     <Stack.Screen name="History" component={HistoryScreen} />
+    <Stack.Screen name="Files" component={FilesScreen} />
+    <Stack.Screen name="Stats" component={StatsScreen} />
   </Stack.Navigator>
 );
 
