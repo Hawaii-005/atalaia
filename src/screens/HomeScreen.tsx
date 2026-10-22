@@ -132,8 +132,10 @@ export const HomeScreen = ({ navigation }: any) => {
   // Impressora em trabalho: alimenta o bloco grande do topo (conceito B)
   const emTrabalho = printers.find(pr => {
     const st = pr.status?.PrintInfo?.Status ?? 0;
-    // 6 e 13 = a imprimir; 8 = parada (o Progress fica com o valor antigo).
-    return st === 6 || st === 13;
+    // 0/7/8 = parada; tudo o resto com ficheiro é trabalho em curso
+    // (6 e 13 a imprimir, 20 também em pausa, 1/16 preparação).
+    const ficheiro = pr.status?.PrintInfo?.Filename;
+    return !!ficheiro && ![0, 7, 8].includes(st);
   });
   const heroInfo = emTrabalho?.status?.PrintInfo;
   const heroProgresso = Math.max(0, Math.min(100, heroInfo?.Progress ?? 0));

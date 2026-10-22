@@ -259,9 +259,12 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
   const isLightOn = printer.status?.LightStatus?.SecondLight === 1;
   const isConnected = printer.connectionStatus === 'connected';
   const printStatus = info?.Status || 0;
-  // Lido da máquina: Status 6 = a imprimir, 8 = parada (mantém Progress antigo),
-  // 13 aparece noutros firmwares. Parada nunca conta como impressão.
-  const isPrinting = printStatus === 6 || printStatus === 13;
+  // Códigos vistos na máquina: 0 parada, 1/16/20 preparação (o 20 também
+  // aparece em pausa), 13 arranque, 6 a imprimir, 5 transição, 7 a parar,
+  // 8 parada. Por isso o critério é ter trabalho e não estar parada/acabada.
+  const codigosParado = [0, 7, 8];
+  const isPrinting =
+    !!info?.Filename && !codigosParado.includes(printStatus);
 
   useEffect(() => {
     const id = setInterval(() => {
