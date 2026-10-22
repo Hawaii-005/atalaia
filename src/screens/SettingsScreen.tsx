@@ -503,14 +503,14 @@ export const SettingsScreen = () => {
             icon="logo-github"
             label="GitHub"
             onPress={() =>
-              openUrl('https://github.com/WalkerFrederick/CC-Tool')
+              openUrl('https://github.com/Hawaii-005/atalaia')
             }
           />
           <Row
             icon="bug-outline"
             label={t('settings.comunicarProblema')}
             onPress={() =>
-              openUrl('https://github.com/WalkerFrederick/CC-Tool/issues')
+              openUrl('https://github.com/Hawaii-005/atalaia/issues')
             }
           />
           <Row icon="document-text-outline" label={t('settings.licenca')} value="MIT" last />

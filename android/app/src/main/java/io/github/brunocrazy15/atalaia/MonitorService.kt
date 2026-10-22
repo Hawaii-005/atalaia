@@ -27,7 +27,7 @@ class MonitorService : Service() {
       Intent(this, MainActivity::class.java),
       PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
     )
-    val titulo = intent?.getStringExtra("titulo") ?: "CC Tool"
+    val titulo = intent?.getStringExtra("titulo") ?: "Atalaia"
     val texto = intent?.getStringExtra("texto") ?: "A acompanhar a impressão"
 
     val notificacao: Notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -67,7 +67,7 @@ class MonitorService : Service() {
   }
 
   companion object {
-    const val CANAL = "cctool-monitor"
+    const val CANAL = "atalaia-monitor"
     const val ID = 4711
   }
 }

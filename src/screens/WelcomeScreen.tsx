@@ -66,7 +66,7 @@ const WelcomeScreen = ({ onComplete }: { onComplete: () => void }) => {
   };
 
   const handleGitHubPress = async () => {
-    const url = 'https://github.com/WalkerFrederick/CC-Tool';
+    const url = 'https://github.com/Hawaii-005/atalaia';
     try {
       if (await Linking.canOpenURL(url)) {
         await Linking.openURL(url);
