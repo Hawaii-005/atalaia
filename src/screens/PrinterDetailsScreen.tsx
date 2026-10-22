@@ -82,6 +82,13 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
         nextAppState === 'active'
       ) {
         setWebViewKey(prevKey => prevKey + 1);
+        // Em segundo plano os timers param: ao voltar, os ticks ficam
+        // "parados" durante minutos e dariam uma pausa falsa. Repor o marco.
+        ultimosTicks.current = {
+          valor: ultimosTicks.current.valor,
+          desde: Date.now(),
+        };
+        setEmPausa(false);
       }
       appState.current = nextAppState;
     };
@@ -244,7 +251,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
     const id = setInterval(() => {
       const st = printer?.status?.PrintInfo;
       const valor = st?.CurrentTicks ?? 0;
-      const emCurso = !!st?.Filename && ![0, 7, 8].includes(st.Status ?? 0);
+      const emCurso = !!st?.Filename && ![0, 7, 8, 9].includes(st.Status ?? 0);
       if (valor !== ultimosTicks.current.valor) {
         ultimosTicks.current = { valor, desde: Date.now() };
         setEmPausa(false);
@@ -282,7 +289,8 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
   // Códigos vistos na máquina: 0 parada, 1/16/20 preparação (o 20 também
   // aparece em pausa), 13 arranque, 6 a imprimir, 5 transição, 7 a parar,
   // 8 parada. Por isso o critério é ter trabalho e não estar parada/acabada.
-  const codigosParado = [0, 7, 8];
+  // 9 = terminada (o firmware mantém ficheiro e progresso).
+  const codigosParado = [0, 7, 8, 9];
   const isPrinting =
     !!info?.Filename && !codigosParado.includes(printStatus);
   const estado = classificarEstado(info, emPausa);

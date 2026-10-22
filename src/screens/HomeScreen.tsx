@@ -137,7 +137,7 @@ export const HomeScreen = ({ navigation }: any) => {
     // 0/7/8 = parada; tudo o resto com ficheiro é trabalho em curso
     // (6 e 13 a imprimir, 20 também em pausa, 1/16 preparação).
     const ficheiro = pr.status?.PrintInfo?.Filename;
-    return !!ficheiro && ![0, 7, 8].includes(st);
+    return !!ficheiro && ![0, 7, 8, 9].includes(st);
   });
   const heroInfo = emTrabalho?.status?.PrintInfo;
   const heroProgresso = Math.max(0, Math.min(100, heroInfo?.Progress ?? 0));
