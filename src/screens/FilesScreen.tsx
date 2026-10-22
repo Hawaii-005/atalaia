@@ -136,7 +136,14 @@ const FileDetails = ({
   }, []);
 
   const totalGramas = filamentos.reduce((soma, f) => soma + f.gramas, 0);
-  const custo = custoDe(totalGramas, precoKg);
+  // O valor escrito conta logo: não se espera que o campo perca o foco.
+  const precoEscrito = Number.parseFloat(
+    precoTexto.replace(',', '.').replace(/[^0-9.]/g, '')
+  );
+  const precoEfectivo = Number.isFinite(precoEscrito)
+    ? precoEscrito
+    : precoKg;
+  const custo = custoDe(totalGramas, precoEfectivo);
 
   return (
     <Modal transparent animationType="slide" visible onRequestClose={onClose}>
@@ -219,7 +226,13 @@ const FileDetails = ({
               </Text>
               <TextInput
                 value={precoTexto}
-                onChangeText={definirPrecoTexto}
+                onChangeText={texto => {
+                  definirPrecoTexto(texto);
+                  const valor = Number.parseFloat(
+                    texto.replace(',', '.').replace(/[^0-9.]/g, '')
+                  );
+                  if (Number.isFinite(valor)) definirPrecoKg(valor);
+                }}
                 onEndEditing={async () => {
                   const valor = Number.parseFloat(
                     precoTexto.replace(',', '.').replace(/[^0-9.]/g, '')

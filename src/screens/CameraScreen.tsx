@@ -305,13 +305,17 @@ export const CameraScreen = ({ navigation, route }: any) => {
         var lost = '${dicaPerdido}';
         var noVideo = '${dicaSemVideo}';
         var retry;
+        var espera = 5000;
         function load() { img.src = '${url}?t=' + Date.now(); }
-        img.onload = function () { hint.style.display = 'none'; };
+        img.onload = function () { hint.style.display = 'none'; espera = 5000; };
         img.onerror = function () {
           hint.style.display = 'block';
           hint.textContent = lost;
           clearTimeout(retry);
-          retry = setTimeout(load, 2000);
+          // Recuo progressivo: bater na impressora a cada 2 s esgotava os
+          // slots de vídeo e a câmara só voltava com um corte de corrente.
+          retry = setTimeout(load, espera);
+          espera = Math.min(espera * 2, 20000);
         };
         clearTimeout(retry);
         retry = setTimeout(function () {
