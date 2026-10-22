@@ -382,6 +382,15 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
               }}
             >
               {printer.videoUrl && isConnected ? (
+                <View
+                  style={{
+                    width: ANEL_TAM - 2 * (ANEL_TRACO + 7),
+                    height: ANEL_TAM - 2 * (ANEL_TRACO + 7),
+                    borderRadius: ANEL_TAM,
+                    overflow: 'hidden',
+                    backgroundColor: '#000',
+                  }}
+                >
                 <WebView
                   key={webViewKey}
                   source={{
@@ -391,8 +400,6 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                   style={{
                     width: ANEL_TAM - 2 * (ANEL_TRACO + 7),
                     height: ANEL_TAM - 2 * (ANEL_TRACO + 7),
-                    borderRadius: ANEL_TAM,
-                    overflow: 'hidden',
                     backgroundColor: '#000',
                   }}
                   javaScriptEnabled
@@ -407,6 +414,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                   onError={e => console.log('DETAIL_WV_ERR', JSON.stringify(e.nativeEvent))}
                   onLoadEnd={() => console.log('DETAIL_WV_LOADED')}
                 />
+                </View>
               ) : (
                 <Ionicons name="videocam-off" size={26} color="rgba(255,255,255,0.45)" />
               )}
