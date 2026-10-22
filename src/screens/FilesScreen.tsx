@@ -188,17 +188,17 @@ const FileDetails = ({
             {/* Pré-visualização */}
             <View className="mt-3">
               {loading ? (
-                <View className="h-52 rounded-xl border border-line bg-cartao items-center justify-center">
+                <View className="items-center justify-center" style={{ height: 200 }}>
                   <ActivityIndicator color={hexDe(tema.paleta.acento)} />
                 </View>
               ) : preview ? (
-                <View className="rounded-xl border border-line bg-cartao items-center justify-center" style={{ height: 208 }}>
-                  <Svg viewBox="0 0 100 100" width={192} height={192}>
-                    <Path d={preview.path} stroke={hexDe(tema.paleta.tinta)} strokeWidth={0.5} fill="none" />
+                <View className="items-center justify-center" style={{ height: 200 }}>
+                  <Svg viewBox="0 0 100 100" width={200} height={200}>
+                    <Path d={preview.path} stroke={hexDe(tema.paleta.tinta)} strokeWidth={0.45} fill="none" />
                   </Svg>
                 </View>
               ) : (
-                <View className="h-52 rounded-xl border border-line bg-cartao items-center justify-center">
+                <View className="items-center justify-center" style={{ height: 200 }}>
                   <Ionicons name="cube-outline" size={40} color={hexDe(tema.paleta.tintaMuted)} />
                 </View>
               )}
