@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../components/Header';
 import { Ionicons } from '@expo/vector-icons';
+import Svg, { Circle } from 'react-native-svg';
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { WebView } from 'react-native-webview';
 import { useRoute } from '@react-navigation/native';
@@ -38,6 +39,11 @@ import { hexDe } from '../theme/temas';
 import { BT_ACENTO, BT_APAGADA, BT_NEUTRA, BT_PERIGO, TX_ACENTO, TX_PERIGO } from '../theme/botoes';
 
 // Etiquetas visíveis para o estado de ligação da impressora (chaves i18n).
+const ANEL_TAM = 196;
+const ANEL_TRACO = 8;
+const ANEL_RAIO = (ANEL_TAM - ANEL_TRACO) / 2;
+const ANEL_CIRC = 2 * Math.PI * ANEL_RAIO;
+
 const CONNECTION_LABEL: { [key in ConnectionStatus]: string } = {
   connected: 'comum.ligada',
   connecting: 'comum.aLigar',
@@ -251,6 +257,20 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
   const canResume = printStatus === 6;
   const isPrinting = printStatus === 13 || printStatus === 6;
 
+  const restanteSegundos = Math.max(
+    0,
+    Math.round((info?.TotalTicks ?? 0) - (info?.CurrentTicks ?? 0))
+  );
+  const horaFim =
+    restanteSegundos > 0
+      ? (() => {
+          const fim = new Date(Date.now() + restanteSegundos * 1000);
+          return `${String(fim.getHours()).padStart(2, '0')}:${String(
+            fim.getMinutes()
+          ).padStart(2, '0')}`;
+        })()
+      : null;
+
   const temperatures = [
     {
       label: 'comum.bico',
@@ -325,151 +345,149 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* Camera */}
-        <TouchableOpacity
-          activeOpacity={0.9}
-          onPress={() =>
-            navigation.navigate('Camera', { printerId: printer.id })
-          }
-          className="rounded-xl2 overflow-hidden bg-ink"
-          style={{ aspectRatio: 16 / 9 }}
-        >
-          {printer.videoUrl && isConnected ? (
-            <WebView
-              key={webViewKey}
-              source={{ uri: 'http://' + printer.videoUrl }}
-              style={{ flex: 1, backgroundColor: '#000' }}
-              javaScriptEnabled={false}
-              domStorageEnabled={false}
-              allowsInlineMediaPlayback
-              mediaPlaybackRequiresUserAction={false}
-              scrollEnabled={false}
-              bounces={false}
-              pointerEvents="none"
-            />
-          ) : (
-            <View className="flex-1 items-center justify-center">
-              <Ionicons name="videocam-off" size={32} color={hexDe(tema.paleta.tintaMuted)} />
-              <Text className="mt-2 text-[12px] text-white/60">
-                {isConnected
-                  ? t('details.aEsperaVideo')
-                  : t('comum.impressoraDesligada')}
-              </Text>
-            </View>
-          )}
-
-          {isConnected && (
-            <View className="absolute top-3 left-3 flex-row items-center rounded-full bg-black/55 px-2.5 py-1">
-              <View className="w-1.5 h-1.5 rounded-full bg-[#FF4757] mr-1.5" />
-              <Text className="text-white text-[10px] font-bold tracking-widest">
-                {t('comum.emDireto')}
-              </Text>
-            </View>
-          )}
-          <View className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/55 items-center justify-center">
-            <Ionicons name="expand" size={16} color="#FFFFFF" />
-          </View>
-        </TouchableOpacity>
-
-        {/* Print job */}
-        {isConnected && isPrinting && (
-          <View className="mt-4 rounded-xl2 border border-line bg-cartao p-4">
-            <View className="flex-row items-start justify-between">
-              <Text className="text-[10px] tracking-widest font-semibold text-ink-soft">
-                {printStatus === 6
-                  ? t('comum.emPausa').toUpperCase()
-                  : t('comum.aImprimir').toUpperCase()}
-              </Text>
-              <Text className="text-[26px] font-bold text-ink leading-none">
-                {progress}
-                <Text className="text-[13px] font-semibold text-ink-muted">
-                  %
-                </Text>
-              </Text>
-            </View>
-
-            <Text
-              className="mt-2 text-[12px] text-ink-soft"
-              numberOfLines={1}
-              style={{ fontFamily: 'monospace' }}
-            >
-              {info?.Filename || t('details.semFicheiro')}
-            </Text>
-
-            <View className="mt-3 h-[5px] rounded-full bg-line overflow-hidden">
-              <View
-                className="h-full rounded-full bg-brand"
-                style={{ width: `${Math.max(2, progress)}%` }}
+        {/* Anel de progresso com a câmara dentro */}
+        <View className="items-center mt-1">
+          <View style={{ width: ANEL_TAM, height: ANEL_TAM }}>
+            <Svg width={ANEL_TAM} height={ANEL_TAM}>
+              <Circle
+                cx={ANEL_TAM / 2}
+                cy={ANEL_TAM / 2}
+                r={ANEL_RAIO}
+                stroke={hexDe(tema.paleta.linha)}
+                strokeWidth={ANEL_TRACO}
+                fill="none"
               />
-            </View>
+              <Circle
+                cx={ANEL_TAM / 2}
+                cy={ANEL_TAM / 2}
+                r={ANEL_RAIO}
+                stroke={hexDe(tema.paleta.acento)}
+                strokeWidth={ANEL_TRACO}
+                fill="none"
+                strokeLinecap="round"
+                strokeDasharray={`${ANEL_CIRC} ${ANEL_CIRC}`}
+                strokeDashoffset={ANEL_CIRC * (1 - Math.max(0, Math.min(100, progress)) / 100)}
+                transform={`rotate(-90 ${ANEL_TAM / 2} ${ANEL_TAM / 2})`}
+              />
+            </Svg>
 
-            <View className="flex-row justify-between mt-2.5">
-              <Text className="text-[12px] text-ink-muted">
-                {t('comum.camada', {
-                  actual: info?.CurrentLayer ?? 0,
-                  total: info?.TotalLayer ?? 0,
-                })}
-              </Text>
-              <Text className="text-[12px] text-ink-muted">
-                {t('comum.restantes', { t: remaining })}
-              </Text>
-            </View>
-
-            <View className="flex-row mt-4">
-              {(canPause || canResume) && (
-                <TouchableOpacity
-                  onPress={handlePrintControl}
-                  className="flex-1 rounded-xl2 border border-line py-3 mr-2 flex-row items-center justify-center"
-                  activeOpacity={0.7}
-                >
-                  <Ionicons
-                    name={canResume ? 'play' : 'pause'}
-                    size={15}
-                    color={hexDe(tema.paleta.tinta)}
-                  />
-                  <Text className="ml-1.5 text-[13px] font-semibold text-ink">
-                    {canResume ? t('comum.retomar') : t('comum.pausar')}
-                  </Text>
-                </TouchableOpacity>
+            <View
+              className="absolute overflow-hidden items-center justify-center"
+              style={{
+                top: ANEL_TRACO + 7,
+                left: ANEL_TRACO + 7,
+                right: ANEL_TRACO + 7,
+                bottom: ANEL_TRACO + 7,
+                borderRadius: ANEL_TAM,
+                backgroundColor: '#000',
+              }}
+            >
+              {printer.videoUrl && isConnected ? (
+                <WebView
+                  key={webViewKey}
+                  source={{ uri: 'http://' + printer.videoUrl }}
+                  style={{ flex: 1, width: '100%', backgroundColor: '#000' }}
+                  javaScriptEnabled={false}
+                  domStorageEnabled={false}
+                  allowsInlineMediaPlayback
+                  mediaPlaybackRequiresUserAction={false}
+                  scrollEnabled={false}
+                  bounces={false}
+                  pointerEvents="none"
+                />
+              ) : (
+                <Ionicons
+                  name="videocam-off"
+                  size={26}
+                  color="rgba(255,255,255,0.45)"
+                />
               )}
-              <TouchableOpacity
-                onPress={handleStopPrint}
-                className="flex-1 rounded-xl2 border border-line py-3 flex-row items-center justify-center"
-                activeOpacity={0.7}
+
+              <View
+                className="absolute inset-0 items-center justify-center"
+                pointerEvents="none"
               >
-                <Ionicons name="stop" size={15} color={hexDe(tema.paleta.perigo)} />
-                <Text className="ml-1.5 text-[13px] font-semibold text-state-danger">
-                  {t('comum.parar')}
+                <View className="px-2.5 py-1 rounded-lg bg-black/35">
+                  <Text
+                    className="text-white font-bold"
+                    style={{ fontFamily: 'monospace', fontSize: 32, lineHeight: 36 }}
+                  >
+                    {progress}
+                    <Text style={{ fontSize: 13 }}> %</Text>
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          <Text
+            className="mt-3 text-[24px] font-semibold text-ink"
+            style={{ fontFamily: 'monospace' }}
+          >
+            {isPrinting ? remaining : '—'}
+          </Text>
+          <Text className="mt-0.5 text-[11px] text-ink-muted">
+            {isPrinting && horaFim
+              ? t('details.restantesFim', { hora: horaFim })
+              : t('camera.inativa')}
+          </Text>
+        </View>
+
+        {/* Cápsulas de telemetria */}
+        <View className="flex-row mt-5" style={{ gap: 8 }}>
+          <View className="flex-1 border border-line rounded-lg px-3 py-2">
+            <Text className="text-[9px] tracking-[1.2px] font-semibold text-ink-soft">
+              {t('comum.bico').toUpperCase()}
+            </Text>
+            <Text className="mt-0.5 text-[17px] font-bold text-ink" style={{ fontFamily: 'monospace' }}>
+              {(printer.status?.TempOfNozzle ?? 0).toFixed(0)}°
+            </Text>
+          </View>
+          <View className="flex-1 border border-line rounded-lg px-3 py-2">
+            <Text className="text-[9px] tracking-[1.2px] font-semibold text-ink-soft">
+              {t('comum.mesa').toUpperCase()}
+            </Text>
+            <Text className="mt-0.5 text-[17px] font-bold text-ink" style={{ fontFamily: 'monospace' }}>
+              {(printer.status?.TempOfHotbed ?? 0).toFixed(0)}°
+            </Text>
+          </View>
+          <View className="flex-1 border border-line rounded-lg px-3 py-2">
+            <Text className="text-[9px] tracking-[1.2px] font-semibold text-ink-soft">
+              {t('comum.camadaTitulo').toUpperCase()}
+            </Text>
+            <Text className="mt-0.5 text-[17px] font-bold text-ink" style={{ fontFamily: 'monospace' }}>
+              {info?.CurrentLayer ?? 0}/{info?.TotalLayer ?? 0}
+            </Text>
+          </View>
+        </View>
+
+        {/* Acções de impressão */}
+        {isConnected && isPrinting && (
+          <View className="flex-row mt-3" style={{ gap: 10 }}>
+            {(canPause || canResume) && (
+              <TouchableOpacity
+                onPress={handlePrintControl}
+                className="flex-1 h-11 rounded-xl bg-brand items-center justify-center flex-row"
+                activeOpacity={0.8}
+              >
+                <Ionicons name={canResume ? 'play' : 'pause'} size={15} color="#FFFFFF" />
+                <Text className="ml-1.5 text-[13px] font-semibold text-white">
+                  {canResume ? t('comum.retomar') : t('comum.pausar')}
                 </Text>
               </TouchableOpacity>
-            </View>
+            )}
+            <TouchableOpacity
+              onPress={handleStopPrint}
+              className="flex-1 h-11 rounded-xl border border-state-danger items-center justify-center flex-row"
+              activeOpacity={0.8}
+            >
+              <Ionicons name="stop" size={15} color={hexDe(tema.paleta.perigo)} />
+              <Text className="ml-1.5 text-[13px] font-semibold text-state-danger">
+                {t('comum.parar')}
+              </Text>
+            </TouchableOpacity>
           </View>
         )}
-
-        {/* Temperatures */}
-        <View className="mt-4 flex-row">
-          {temperatures.map((tile, index) => (
-            <View
-              key={tile.label}
-              className={`flex-1 rounded-xl2 bg-canvas-sunken py-3 px-3 ${
-                index < temperatures.length - 1 ? 'mr-2' : ''
-              }`}
-            >
-              <Text className="text-[9px] tracking-widest font-semibold text-ink-soft">
-                {t(tile.label).toUpperCase()}
-              </Text>
-              <Text className="mt-1 text-[19px] font-bold text-ink">
-                {tile.value.toFixed(0)}
-                <Text className="text-[11px] font-medium text-ink-muted">
-                  °
-                </Text>
-              </Text>
-              <Text className="text-[11px] text-ink-muted">
-                {t('details.alvo', { t: tile.target.toFixed(0) })}
-              </Text>
-            </View>
-          ))}
-        </View>
 
         {/* Controls */}
         <View className="mt-4 rounded-xl2 border border-line bg-cartao">
