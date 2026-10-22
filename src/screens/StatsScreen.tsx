@@ -13,6 +13,11 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Header } from '../components/Header';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { PrintRecord, loadHistory } from '../utils/printHistory';
+import {
+  printHistoryCommand,
+  printHistoryDetailCommand,
+} from '../utils/commands';
+import { mensagemDeErro } from '../utils/errors';
 
 interface TaskDetail {
   TaskId: string;
@@ -48,7 +53,9 @@ const StatCard = ({
       {label}
     </Text>
     <Text className="text-[20px] font-bold text-ink mt-1">{value}</Text>
-    {hint ? <Text className="text-[11px] text-ink-muted mt-0.5">{hint}</Text> : null}
+    {hint ? (
+      <Text className="text-[11px] text-ink-muted mt-0.5">{hint}</Text>
+    ) : null}
   </View>
 );
 
@@ -70,16 +77,19 @@ export const StatsScreen = ({ navigation }: any) => {
       return;
     }
     try {
-      const idsPayload = await request(printer.id, 320, {});
+      const idsPayload = await request(printer.id, printHistoryCommand());
       const ids: string[] = idsPayload?.HistoryData ?? [];
       if (ids.length === 0) {
         setTasks([]);
       } else {
-        const detail = await request(printer.id, 321, { Id: ids.slice(0, 80) });
+        const detail = await request(
+          printer.id,
+          printHistoryDetailCommand(ids.slice(0, 80))
+        );
         setTasks(detail?.HistoryDetailList ?? []);
       }
     } catch (e) {
-      setError(String(e));
+      setError(mensagemDeErro(e));
     } finally {
       setLoading(false);
     }
@@ -98,7 +108,10 @@ export const StatsScreen = ({ navigation }: any) => {
     const actual = Math.max(0, (task.EndTime ?? 0) - (task.BeginTime ?? 0));
     return sum + (planned || actual);
   }, 0);
-  const totalLayers = tasks.reduce((sum, t) => sum + (t.AlreadyPrintLayer ?? 0), 0);
+  const totalLayers = tasks.reduce(
+    (sum, t) => sum + (t.AlreadyPrintLayer ?? 0),
+    0
+  );
 
   const byMonth = local.reduce<Record<string, number>>((acc, record) => {
     const date = new Date(record.startedAt);
@@ -137,7 +150,11 @@ export const StatsScreen = ({ navigation }: any) => {
             NA IMPRESSORA
           </Text>
           <View className="flex-row mb-2">
-            <StatCard label="TRABALHOS" value={String(tasks.length)} hint="no histórico" />
+            <StatCard
+              label="TRABALHOS"
+              value={String(tasks.length)}
+              hint="no histórico"
+            />
             <View className="w-2" />
             <StatCard
               label="CONCLUÍDOS"
@@ -146,9 +163,17 @@ export const StatsScreen = ({ navigation }: any) => {
             />
           </View>
           <View className="flex-row mb-5">
-            <StatCard label="TEMPO" value={hours(totalSeconds)} hint="impressão somada" />
+            <StatCard
+              label="TEMPO"
+              value={hours(totalSeconds)}
+              hint="impressão somada"
+            />
             <View className="w-2" />
-            <StatCard label="CAMADAS" value={String(totalLayers)} hint="impressas" />
+            <StatCard
+              label="CAMADAS"
+              value={String(totalLayers)}
+              hint="impressas"
+            />
           </View>
 
           <Text className="text-[11px] font-semibold tracking-widest text-ink-muted mb-2">
@@ -162,7 +187,9 @@ export const StatsScreen = ({ navigation }: any) => {
             ) : (
               months.map(month => (
                 <View key={month} className="flex-row items-center mb-2">
-                  <Text className="text-[11px] text-ink-muted w-16">{month}</Text>
+                  <Text className="text-[11px] text-ink-muted w-16">
+                    {month}
+                  </Text>
                   <View className="flex-1 h-2 rounded-full bg-canvas-sunken overflow-hidden">
                     <View
                       className="h-full bg-brand"
@@ -196,7 +223,10 @@ export const StatsScreen = ({ navigation }: any) => {
                 </View>
               )}
               <View className="flex-1 ml-3">
-                <Text className="text-[12px] font-semibold text-ink" numberOfLines={1}>
+                <Text
+                  className="text-[12px] font-semibold text-ink"
+                  numberOfLines={1}
+                >
                   {(task.TaskName ?? '').split('/').pop()}
                 </Text>
                 <Text className="text-[11px] text-ink-muted">

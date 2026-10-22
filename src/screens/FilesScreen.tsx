@@ -15,6 +15,14 @@ import Svg, { Path } from 'react-native-svg';
 import { Header } from '../components/Header';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { useGcodePreview } from '../hooks/useGcodePreview';
+import {
+  listFilesCommand,
+  startPrintCommand,
+  deleteFilesCommand,
+  descreverAck,
+  ackDaResposta,
+} from '../utils/commands';
+import { mensagemDeErro } from '../utils/errors';
 
 interface PrinterFile {
   name: string;
@@ -24,16 +32,6 @@ interface PrinterFile {
 }
 
 const PREVIEW_LIMIT = 15 * 1024 * 1024;
-
-const PRINT_ACK: Record<number, string> = {
-  1: 'A impressora está ocupada.',
-  2: 'O ficheiro não existe na impressora.',
-  3: 'O MD5 do ficheiro não confere.',
-  4: 'A impressora não conseguiu abrir o ficheiro.',
-  5: 'Resolução inválida para esta impressora.',
-  6: 'Formato de ficheiro desconhecido.',
-  7: 'Modelo desconhecido.',
-};
 
 const formatSize = (bytes?: number) => {
   if (!bytes) return '—';
@@ -64,7 +62,12 @@ const FileRow = ({
       <View className="w-14 h-14 rounded-lg bg-white border border-line items-center justify-center overflow-hidden">
         {preview ? (
           <Svg viewBox="0 0 100 100" width={52} height={52}>
-            <Path d={preview.path} stroke="#171A20" strokeWidth={0.6} fill="none" />
+            <Path
+              d={preview.path}
+              stroke="#171A20"
+              strokeWidth={0.6}
+              fill="none"
+            />
           </Svg>
         ) : (
           <Ionicons name="cube-outline" size={18} color="#9AA0A6" />
@@ -74,7 +77,9 @@ const FileRow = ({
         <Text className="text-[13px] font-semibold text-ink" numberOfLines={2}>
           {label}
         </Text>
-        <Text className="text-[11px] text-ink-muted mt-1">{formatSize(size)}</Text>
+        <Text className="text-[11px] text-ink-muted mt-1">
+          {formatSize(size)}
+        </Text>
       </View>
       <TouchableOpacity
         onPress={onPrint}
@@ -109,7 +114,10 @@ export const FilesScreen = ({ route, navigation }: any) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await request(printer.id, 258, { Url: '/local/', Page: 1, Limit: 100 });
+      const data = await request(
+        printer.id,
+        listFilesCommand('/local/', 1, 100)
+      );
       const list: PrinterFile[] = data?.FileList ?? [];
       setFiles(
         list
@@ -117,7 +125,7 @@ export const FilesScreen = ({ route, navigation }: any) => {
           .sort((a, b) => a.name.localeCompare(b.name))
       );
     } catch (e) {
-      setError(String(e));
+      setError(mensagemDeErro(e));
     } finally {
       setLoading(false);
     }
@@ -137,28 +145,20 @@ export const FilesScreen = ({ route, navigation }: any) => {
         text: 'Imprimir',
         onPress: async () => {
           try {
-            const response = await request(
-              printer.id,
-              128,
-              {
-                Filename: file.name,
-                StartLayer: 0,
-                Calibration_switch: bedLevel ? 1 : 0,
-                PrintPlatformType: plateSide,
-                Tlp_Switch: 0,
-                slot_map: [],
-              },
-              15000
-            );
-            const ack = Number(response?.Ack ?? 0);
+            const comando = startPrintCommand(file.name, {
+              nivelar: bedLevel,
+              lado: plateSide,
+            });
+            const response = await request(printer.id, comando, 15000);
+            const ack = ackDaResposta(response) ?? 0;
             if (ack !== 0) {
-              Alert.alert('Não arrancou', PRINT_ACK[ack] ?? `Código ${ack}`);
+              Alert.alert('Não arrancou', descreverAck(ack));
               return;
             }
             Alert.alert('A arrancar', `${label} vai começar.`);
             navigation.navigate('Printers');
           } catch (e) {
-            Alert.alert('Não arrancou', String(e));
+            Alert.alert('Não arrancou', mensagemDeErro(e));
           }
         },
       },
@@ -174,10 +174,18 @@ export const FilesScreen = ({ route, navigation }: any) => {
         style: 'destructive',
         onPress: async () => {
           try {
-            await request(printer.id, 259, { FileList: [file.name], FolderList: [] });
+            const response = await request(
+              printer.id,
+              deleteFilesCommand([file.name])
+            );
+            const ack = ackDaResposta(response) ?? 0;
+            if (ack !== 0) {
+              Alert.alert('Não apagou', descreverAck(ack));
+              return;
+            }
             setFiles(prev => prev.filter(item => item.name !== file.name));
           } catch (e) {
-            Alert.alert('Não apagou', String(e));
+            Alert.alert('Não apagou', mensagemDeErro(e));
           }
         },
       },
@@ -200,9 +208,16 @@ export const FilesScreen = ({ route, navigation }: any) => {
       ) : error ? (
         <View className="flex-1 items-center justify-center px-8">
           <Ionicons name="alert-circle-outline" size={36} color="#C62828" />
-          <Text className="text-[13px] text-ink-muted mt-3 text-center">{error}</Text>
-          <TouchableOpacity onPress={load} className="mt-4 px-4 py-2 rounded-lg border border-line">
-            <Text className="text-[13px] font-semibold text-ink">Tentar de novo</Text>
+          <Text className="text-[13px] text-ink-muted mt-3 text-center">
+            {error}
+          </Text>
+          <TouchableOpacity
+            onPress={load}
+            className="mt-4 px-4 py-2 rounded-lg border border-line"
+          >
+            <Text className="text-[13px] font-semibold text-ink">
+              Tentar de novo
+            </Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -212,7 +227,9 @@ export const FilesScreen = ({ route, navigation }: any) => {
         >
           <View className="flex-row items-center justify-between px-4 py-3 border-b border-line">
             <View className="flex-1 pr-3">
-              <Text className="text-[13px] font-semibold text-ink">Lado da mesa</Text>
+              <Text className="text-[13px] font-semibold text-ink">
+                Lado da mesa
+              </Text>
               <Text className="text-[11px] text-ink-muted mt-0.5">
                 A = texturada · B = lisa
               </Text>
