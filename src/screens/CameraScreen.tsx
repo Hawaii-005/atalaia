@@ -281,119 +281,38 @@ export const CameraScreen = ({ navigation, route }: any) => {
       return '';
     }
     const url = `http://${videoHost}:3031/video`;
-    // Lê o fluxo MJPEG com fetch (uma só ligação), extrai as tramas JPEG e
-    // desenha-as num canvas com uma <img> temporária — createImageBitmap não
-    // existe em WebViews antigas. A última trama fica à vista e a religação é
-    // silenciosa: nada de "fluxo perdido".
+    // A impressora aceita UMA ligação de vídeo de cada vez e não a liberta
+    // depressa: qualquer ciclo de recarregamentos acaba em HTTP 500 e a câmara
+    // só volta com um corte de corrente. Portanto: uma <img> carregada uma vez,
+    // sem mensagens, e nova tentativa só se o browser der erro (com recuo).
     return `<!DOCTYPE html>
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <style>
       html, body { margin: 0; padding: 0; background: #000; height: 100%; overflow: hidden; }
-      canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-      #hint { position: absolute; top: 10px; left: 0; right: 0; text-align: center; color: #9CA3AF;
-              font: 12px -apple-system, Roboto, sans-serif; display: none; }
+      img { width: 100%; height: 100%; object-fit: cover; display: block; }
     </style>
   </head>
   <body>
-    <canvas id="c"></canvas>
-    <div id="hint"></div>
+    <img id="v" src="${url}" />
     <script>
       (function () {
-        var c = document.getElementById('c');
-        var ctx = c.getContext('2d', { alpha: false });
-        var hint = document.getElementById('hint');
-        var url = '${url}';
-        var vivo = true, ctrl = null, semTrama = null, primeira = false, ultimo = 0;
-
-        function desenhar(bytes) {
-          var blob = new Blob([bytes], { type: 'image/jpeg' });
-          var endereco = URL.createObjectURL(blob);
-          var im = new Image();
-          im.onload = function () {
-            if (c.width !== im.width || c.height !== im.height) {
-              c.width = im.width;
-              c.height = im.height;
-            }
-            ctx.drawImage(im, 0, 0, c.width, c.height);
-            URL.revokeObjectURL(endereco);
-            if (!primeira) { primeira = true; hint.style.display = 'none'; }
-          };
-          im.onerror = function () { URL.revokeObjectURL(endereco); };
-          im.src = endereco;
-        }
-
-        function cortar() { try { if (ctrl) ctrl.abort(); } catch (e) {} }
-
-        function vigiar() {
-          clearTimeout(semTrama);
-          semTrama = setTimeout(function () { cortar(); }, 6000);
-        }
-
-        async function ciclo() {
+        var im = document.getElementById('v');
+        var espera = 20000;
+        var vivo = true;
+        im.onload = function () { espera = 20000; };
+        im.onerror = function () {
           if (!vivo) return;
-          ctrl = new AbortController();
-          vigiar();
-          try {
-            var res = await fetch(url + '?t=' + Date.now(), {
-              signal: ctrl.signal,
-              cache: 'no-store',
-            });
-            if (!res.body) throw new Error('sem corpo');
-            var leitor = res.body.getReader();
-            var resto = new Uint8Array(0);
-            for (;;) {
-              var r = await leitor.read();
-              if (r.done) break;
-              vigiar();
-              var dados = new Uint8Array(resto.length + r.value.length);
-              dados.set(resto, 0);
-              dados.set(r.value, resto.length);
-              resto = dados;
-
-              var consumido = 0;
-              for (;;) {
-                var ini = -1, fim = -1, i, j;
-                for (i = consumido; i < resto.length - 1; i += 1) {
-                  if (resto[i] === 0xFF && resto[i + 1] === 0xD8) { ini = i; break; }
-                }
-                if (ini < 0) break;
-                for (j = ini + 2; j < resto.length - 1; j += 1) {
-                  if (resto[j] === 0xFF && resto[j + 1] === 0xD9) { fim = j + 2; break; }
-                }
-                if (fim < 0) { consumido = ini; break; }
-                var agora = Date.now();
-                if (agora - ultimo >= 70) {
-                  ultimo = agora;
-                  desenhar(resto.subarray(ini, fim));
-                }
-                consumido = fim;
-              }
-              resto = consumido > 0 ? resto.subarray(consumido) : resto;
-              if (resto.length > 4194304) resto = new Uint8Array(0);
-            }
-          } catch (e) {
-            // ligação cortada ou parada: volta a tentar em silêncio
-          }
-          clearTimeout(semTrama);
-          if (vivo) setTimeout(ciclo, 700);
-        }
-
-        setTimeout(function () {
-          if (!primeira) {
-            hint.textContent = '${t('camera.hintALigar')}';
-            hint.style.display = 'block';
-          }
-        }, 4000);
-
+          setTimeout(function () {
+            if (vivo) im.src = '${url}?t=' + Date.now();
+          }, espera);
+          espera = Math.min(espera * 2, 60000);
+        };
         window.addEventListener('pagehide', function () {
           vivo = false;
-          clearTimeout(semTrama);
-          cortar();
+          im.removeAttribute('src');
         });
-
-        ciclo();
       })();
     </script>
   </body>
