@@ -22,9 +22,13 @@ import {
 import {
   pausePrintCommand,
   resumePrintCommand,
+  startPrintCommand,
   stopPrintCommand,
 } from '../utils/commands';
 import * as Notifications from 'expo-notifications';
+import { ItemFila, carregarFila, gravarFila } from '../utils/fila';
+import { notify } from '../utils/notifications';
+import { mensagemDoErro } from '../utils/errors';
 
 interface PrinterConnectionsContextType {
   printers: Printer[];
@@ -43,6 +47,11 @@ interface PrinterConnectionsContextType {
   ) => Promise<any>;
   updatePrinterIp: (id: string, ipAddress: string) => void;
   statusIntervalMs: number;
+  fila: ItemFila[];
+  filaAuto: boolean;
+  adicionarAFila: (item: ItemFila) => void;
+  removerDaFila: (id: string) => void;
+  definirFilaAuto: (ligada: boolean) => void;
   setStatusInterval: (ms: number) => Promise<void>;
 }
 
@@ -82,6 +91,10 @@ export const PrinterConnectionsProvider = ({
   children: ReactNode;
 }) => {
   const [printers, setPrinters] = useState<Printer[]>([]);
+  const [fila, setFila] = useState<ItemFila[]>([]);
+  const [filaAuto, setFilaAuto] = useState(false);
+  const filaRef = useRef<ItemFila[]>([]);
+  const estadoAnteriorRef = useRef<Record<string, number | undefined>>({});
   const webSocketsRef = useRef<{ [key: string]: WebSocket }>({});
   const statusTimersRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
   // Vigia de silêncio: se a impressora não enviar nada neste tempo, a ligação
@@ -946,6 +959,67 @@ export const PrinterConnectionsProvider = ({
   }, [request]);
 
 
+  // ---------- Fila de impressão ----------
+  useEffect(() => {
+    carregarFila().then(lista => {
+      filaRef.current = lista;
+      setFila(lista);
+    });
+    AsyncStorage.getItem('filaAuto')
+      .then(valor => setFilaAuto(valor === '1'))
+      .catch(() => undefined);
+  }, []);
+
+  const adicionarAFila = useCallback((item: ItemFila) => {
+    const nova = [...filaRef.current, item];
+    filaRef.current = nova;
+    setFila(nova);
+    gravarFila(nova);
+  }, []);
+
+  const removerDaFila = useCallback((id: string) => {
+    const nova = filaRef.current.filter(item => item.id !== id);
+    filaRef.current = nova;
+    setFila(nova);
+    gravarFila(nova);
+  }, []);
+
+  const definirFilaAuto = useCallback((ligada: boolean) => {
+    setFilaAuto(ligada);
+    AsyncStorage.setItem('filaAuto', ligada ? '1' : '0').catch(() => undefined);
+  }, []);
+
+  // Só arranca com a fila ligada, e só quando a máquina termina (Status 9).
+  useEffect(() => {
+    printers.forEach(printer => {
+      const estado = printer.status?.PrintInfo?.Status;
+      const anterior = estadoAnteriorRef.current[printer.id];
+      estadoAnteriorRef.current[printer.id] = estado;
+      if (!filaAuto || anterior !== 9 || estado !== 9) return;
+
+      const proximo = filaRef.current.find(item => item.printerId === printer.id);
+      if (!proximo) return;
+
+      removerDaFila(proximo.id);
+      request(printer.id, startPrintCommand(proximo.name, { nivelar: false, lado: 0 }))
+        .then(() => {
+          notify(
+            'A arrancar o próximo',
+            `${printer.printerName} começou ${proximo.label}.`,
+            { printerId: printer.id }
+          );
+        })
+        .catch(async (erro: unknown) => {
+          await notify(
+            'Não arrancou',
+            `${proximo.label}: ${mensagemDoErro(erro)}`,
+            { printerId: printer.id }
+          );
+        });
+    });
+  }, [printers, filaAuto, request, removerDaFila]);
+
+
   const sendCommand = (printerId: string, command: SdcpCommand<unknown>) => {
     // Erro de programação: rejeita já, sem tocar na rede.
     if (!isSdcpCommand(command)) {
@@ -1064,6 +1138,11 @@ export const PrinterConnectionsProvider = ({
         updatePrinterIp,
         statusIntervalMs,
         setStatusInterval: updateStatusInterval,
+        fila,
+        filaAuto,
+        adicionarAFila,
+        removerDaFila,
+        definirFilaAuto,
       }}
     >
       {children}

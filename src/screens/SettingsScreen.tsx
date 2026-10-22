@@ -150,7 +150,8 @@ const INTERVALOS = [30000, 60000, 120000, 300000];
 
 export const SettingsScreen = () => {
   const { temaId, setTema } = useTheme();
-  const { statusIntervalMs, setStatusInterval } = usePrinterConnections();
+  const { statusIntervalMs, setStatusInterval, filaAuto, fila, definirFilaAuto } =
+    usePrinterConnections();
   const [notificationPrefs, setNotificationPrefs] =
     useState<NotificationPrefs>(DEFAULT_PREFS);
 
@@ -318,6 +319,17 @@ export const SettingsScreen = () => {
             description={t('settings.notifDesligadaDesc')}
             value={notificationPrefs.offline}
             onChange={value => updateNotificationPref('offline', value)}
+          />
+          <SwitchRow
+            icon="list-outline"
+            label={t('settings.filaAuto')}
+            description={
+              fila.length > 0
+                ? t('settings.filaAutoDescN', { n: fila.length })
+                : t('settings.filaAutoDesc')
+            }
+            value={filaAuto}
+            onChange={definirFilaAuto}
           />
           <Row
             icon="notifications-outline"

@@ -68,6 +68,8 @@ export default {
 
   // ——— Files
   'files.title': 'Ficheiros',
+  'files.filaTitulo': 'Fila de impressão',
+  'files.filaAdicionado': 'Trabalho adicionado à fila.',
   'files.enviar': 'Enviar G-code',
   'files.aEnviar': 'A enviar…',
   'files.enviado': 'Enviado',
@@ -197,6 +199,9 @@ export default {
   'settings.segundos5': '5 segundos',
   'settings.segundos15': '15 segundos',
   'settings.segundos30': '30 segundos',
+  'settings.filaAuto': 'Arrancar o próximo automaticamente',
+  'settings.filaAutoDesc': 'Quando um trabalho acaba, começa o próximo da fila.',
+  'settings.filaAutoDescN': 'Na fila: {n}. Quando um trabalho acaba, começa o próximo.',
   'settings.seccaoNotif': 'NOTIFICAÇÕES',
   'settings.notifConcluida': 'Impressão concluída',
   'settings.notifConcluidaDesc': 'Quando uma impressão termina',
@@ -257,6 +262,10 @@ export default {
   'history.limparMsg': 'Isto apaga o registo de todas as impressões.',
   'history.limpar': 'Limpar',
   'history.semImpressoes': 'Ainda sem impressões',
+  'history.reimprimirTitulo': 'Reimprimir',
+  'history.ficheiroSumiu': 'Esse ficheiro já não está na impressora. Envia-o de novo a partir de Ficheiros.',
+  'history.aReimprimir': 'A impressora vai começar.',
+  'history.semImpressora': 'Não há impressora ligada.',
   'history.semImpressoesDica': 'As impressões aparecem aqui quando começarem.',
   'history.miniaturasDica':
     'As miniaturas são desenhadas a partir do G-code guardado na impressora.',

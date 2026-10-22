@@ -110,6 +110,7 @@ const FileDetails = ({
   onChangePlateSide,
   onClose,
   onPrint,
+  onAddToQueue,
   onDelete,
   onRename,
 }: {
@@ -121,6 +122,7 @@ const FileDetails = ({
   onChangePlateSide: (lado: 0 | 1) => void;
   onClose: () => void;
   onPrint: () => void;
+  onAddToQueue: () => void;
   onDelete: () => void;
   onRename: () => void;
 }) => {
@@ -358,6 +360,13 @@ const FileDetails = ({
               <Ionicons name="trash-outline" size={18} color={hexDe(tema.paleta.perigo)} />
             </TouchableOpacity>
             <TouchableOpacity
+              onPress={onAddToQueue}
+              className="h-12 w-12 items-center justify-center rounded-md border-[1.5px] border-line bg-canvas-sunken"
+              activeOpacity={0.7}
+            >
+              <Ionicons name="list-outline" size={18} color={hexDe(tema.paleta.tinta)} />
+            </TouchableOpacity>
+            <TouchableOpacity
               onPress={onPrint}
               className={`flex-1 h-12 ${BT_ACENTO}`}
               activeOpacity={0.8}
@@ -377,7 +386,7 @@ const FileDetails = ({
 export const FilesScreen = ({ route, navigation }: any) => {
   const { tema } = useTheme();
   const { printerId } = route.params ?? {};
-  const { printers, request } = usePrinterConnections();
+  const { printers, request, adicionarAFila } = usePrinterConnections();
   const printer = printers.find(item => item.id === printerId) ?? printers[0];
   // Só o id: o objeto do printer muda a cada actualização de estado (1 s) e
   // isso fazia o useFocusEffect recarregar a lista sem parar.
@@ -733,6 +742,17 @@ export const FilesScreen = ({ route, navigation }: any) => {
           plateSide={plateSide}
           onChangePlateSide={setPlateSide}
           onClose={() => setSelecionado(null)}
+          onAddToQueue={() => {
+            if (!printer) return;
+            adicionarAFila({
+              id: `${Date.now()}-${selecionado.name}`,
+              printerId: printer.id,
+              name: selecionado.name,
+              label: selecionado.name.split('/').pop() ?? selecionado.name,
+            });
+            setSelecionado(null);
+            Alert.alert(t('files.filaTitulo'), t('files.filaAdicionado'));
+          }}
           onPrint={() => {
             const alvo = selecionado;
             setSelecionado(null);

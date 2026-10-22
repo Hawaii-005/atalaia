@@ -20,6 +20,14 @@ import {
 } from '../utils/printHistory';
 import { t, idiomaActual } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
+import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
+import {
+  ackDaResposta,
+  descreverAck,
+  listFilesCommand,
+  startPrintCommand,
+} from '../utils/commands';
+import { mensagemDeErro } from '../utils/errors';
 import { hexDe } from '../theme/temas';
 
 // Etiquetas visíveis para o desfecho de cada impressão (chaves i18n).
@@ -40,7 +48,13 @@ const formatDate = (timestamp: number) => {
   });
 };
 
-const HistoryRow = ({ record }: { record: PrintRecord }) => {
+const HistoryRow = ({
+  record,
+  onReprint,
+}: {
+  record: PrintRecord;
+  onReprint: () => void;
+}) => {
   const { tema } = useTheme();
   const { preview } = useGcodePreview(record.printerIp, record.filename);
   const name = record.filename.split('/').pop() ?? record.filename;
@@ -67,6 +81,13 @@ const HistoryRow = ({ record }: { record: PrintRecord }) => {
           })}
         </Text>
       </View>
+      <TouchableOpacity
+        onPress={onReprint}
+        className="h-9 w-9 items-center justify-center rounded-md border border-line mr-2"
+        activeOpacity={0.7}
+      >
+        <Ionicons name="refresh" size={15} color={hexDe(tema.paleta.tintaSoft)} />
+      </TouchableOpacity>
       <View
         className={`px-2 py-1 rounded-md ${
           record.outcome === 'completed'
@@ -94,7 +115,49 @@ const HistoryRow = ({ record }: { record: PrintRecord }) => {
 
 export const HistoryScreen = ({ navigation }: any) => {
   const { tema } = useTheme();
+  const { printers, request } = usePrinterConnections();
   const [records, setRecords] = useState<PrintRecord[]>([]);
+
+  // Reimprimir só com o ficheiro ainda na máquina: o histórico guarda o nome,
+  // não o ficheiro. Se já não estiver lá, diz-se isso em vez de falhar em silêncio.
+  const reimprimir = useCallback(
+    async (record: PrintRecord) => {
+      const base = record.filename.split('/').pop() ?? record.filename;
+      const printer =
+        printers.find(p => p.ipAddress === record.printerIp) ?? printers[0];
+      if (!printer) {
+        Alert.alert(t('history.reimprimirTitulo'), t('history.semImpressora'));
+        return;
+      }
+      try {
+        const dados = await request(
+          printer.id,
+          listFilesCommand('/local/', 1, 100)
+        );
+        const lista: { name: string }[] = dados?.FileList ?? [];
+        const alvo = lista.find(f => f.name.endsWith(`/${base}`));
+        if (!alvo) {
+          Alert.alert(t('history.reimprimirTitulo'), t('history.ficheiroSumiu'));
+          return;
+        }
+        const resposta = await request(
+          printer.id,
+          startPrintCommand(alvo.name, { nivelar: false, lado: 0 }),
+          15000
+        );
+        const ack = ackDaResposta(resposta) ?? 0;
+        if (ack !== 0) {
+          Alert.alert(t('history.reimprimirTitulo'), descreverAck(ack));
+          return;
+        }
+        Alert.alert(t('history.reimprimirTitulo'), t('history.aReimprimir'));
+        navigation.navigate('Printers');
+      } catch (erro) {
+        Alert.alert(t('history.reimprimirTitulo'), mensagemDeErro(erro));
+      }
+    },
+    [printers, request, navigation]
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -154,7 +217,11 @@ export const HistoryScreen = ({ navigation }: any) => {
         ) : (
           <View className="bg-canvas-sunken rounded-xl overflow-hidden">
             {records.map(record => (
-              <HistoryRow key={record.id} record={record} />
+              <HistoryRow
+                key={record.id}
+                record={record}
+                onReprint={() => reimprimir(record)}
+              />
             ))}
           </View>
         )}

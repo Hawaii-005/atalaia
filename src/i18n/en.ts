@@ -70,6 +70,8 @@ const en = {
 
   // ——— Files
   'files.title': 'Files',
+  'files.filaTitulo': 'Print queue',
+  'files.filaAdicionado': 'Job added to the queue.',
   'files.enviar': 'Upload G-code',
   'files.aEnviar': 'Uploading…',
   'files.enviado': 'Uploaded',
@@ -198,6 +200,9 @@ const en = {
   'settings.segundos5': '5 seconds',
   'settings.segundos15': '15 seconds',
   'settings.segundos30': '30 seconds',
+  'settings.filaAuto': 'Start the next job automatically',
+  'settings.filaAutoDesc': 'When a job finishes, the next in the queue starts.',
+  'settings.filaAutoDescN': 'In the queue: {n}. When a job finishes, the next starts.',
   'settings.seccaoNotif': 'NOTIFICATIONS',
   'settings.notifConcluida': 'Print completed',
   'settings.notifConcluidaDesc': 'When a print finishes',
@@ -255,6 +260,10 @@ const en = {
   'history.limparMsg': 'This deletes the record of every print.',
   'history.limpar': 'Clear',
   'history.semImpressoes': 'No prints yet',
+  'history.reimprimirTitulo': 'Reprint',
+  'history.ficheiroSumiu': 'That file is no longer on the printer. Upload it again from Files.',
+  'history.aReimprimir': 'The printer is starting.',
+  'history.semImpressora': 'No printer connected.',
   'history.semImpressoesDica': 'Prints appear here once they start.',
   'history.miniaturasDica':
     'Thumbnails are drawn from the G-code stored on the printer.',
