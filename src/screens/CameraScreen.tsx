@@ -238,9 +238,15 @@ export const CameraScreen = ({ navigation, route }: any) => {
     setUploading(true);
     setUploadPercent(0);
     try {
-      await uploadGcode(printer.ipAddress, asset.uri, asset.name, progress => {
-        setUploadPercent(Math.round((progress.sent / progress.total) * 100));
-      });
+      await uploadGcode(
+        printer.ipAddress,
+        asset.uri,
+        asset.name,
+        (enviado, total) => {
+          // Bloco aceite pela impressora: actualiza a barra e a percentagem.
+          setUploadPercent(Math.round((enviado / total) * 100));
+        }
+      );
       Alert.alert('Enviado', `${asset.name} está na memória da impressora.`);
     } catch (error) {
       Alert.alert('Falhou o envio', String(error));
@@ -436,10 +442,14 @@ export const CameraScreen = ({ navigation, route }: any) => {
               ) : (
                 <Ionicons name="videocam-off" size={40} color="#7C8088" />
               )}
-              <Text className="text-white/70 mt-2 text-sm">
+              <Text className="text-white/70 mt-2 text-sm text-center px-4">
                 {printer.connectionStatus === 'connecting'
-                  ? 'A ligar à impressora...'
-                  : `Impressora ${CONNECTION_LABEL[printer.connectionStatus]}`}
+                  ? printer.reconnectAttempt
+                    ? `A reconectar (tentativa ${printer.reconnectAttempt})...`
+                    : 'A ligar à impressora...'
+                  : printer.reconnectAttempt
+                    ? `A reconectar (tentativa ${printer.reconnectAttempt})...`
+                    : `Impressora ${CONNECTION_LABEL[printer.connectionStatus]}`}
               </Text>
             </View>
           )}
@@ -618,31 +628,46 @@ export const CameraScreen = ({ navigation, route }: any) => {
           </View>
         )}
 
-        <View className="mt-3 flex-row">
-          <TouchableOpacity
-            onPress={handleUpload}
-            disabled={uploading}
-            className="flex-1 rounded-xl border border-line py-3 items-center flex-row justify-center mr-2"
-            activeOpacity={0.7}
-          >
-            <Ionicons name="cloud-upload-outline" size={18} color="#3F444D" />
-            <Text className="ml-2 text-ink font-semibold text-[13px]">
-              {uploading ? `${uploadPercent}%` : 'Enviar G-code'}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() =>
-              navigation.navigate('Printers', {
-                screen: 'Files',
-                params: { printerId: printer?.id },
-              })
-            }
-            className="flex-1 rounded-xl border border-line py-3 items-center flex-row justify-center"
-            activeOpacity={0.7}
-          >
-            <Ionicons name="folder-open-outline" size={18} color="#3F444D" />
-            <Text className="ml-2 text-ink font-semibold text-[13px]">Ficheiros</Text>
-          </TouchableOpacity>
+        <View className="mt-3">
+          {uploading && (
+            <View className="h-1.5 rounded-full bg-line overflow-hidden mb-2 mx-0.5">
+              <View
+                className="h-full rounded-full bg-brand"
+                style={{ width: `${Math.max(2, uploadPercent)}%` }}
+              />
+            </View>
+          )}
+          <View className="flex-row">
+            <TouchableOpacity
+              onPress={handleUpload}
+              disabled={uploading}
+              className={`flex-1 rounded-xl border border-line py-3 items-center flex-row justify-center mr-2 ${
+                uploading ? 'opacity-60' : ''
+              }`}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="cloud-upload-outline" size={18} color="#3F444D" />
+              <Text className="ml-2 text-ink font-semibold text-[13px]">
+                {uploading ? `A enviar ${uploadPercent}%` : 'Enviar G-code'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate('Printers', {
+                  screen: 'Files',
+                  params: { printerId: printer?.id },
+                })
+              }
+              disabled={uploading}
+              className={`flex-1 rounded-xl border border-line py-3 items-center flex-row justify-center ${
+                uploading ? 'opacity-60' : ''
+              }`}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="folder-open-outline" size={18} color="#3F444D" />
+              <Text className="ml-2 text-ink font-semibold text-[13px]">Ficheiros</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 

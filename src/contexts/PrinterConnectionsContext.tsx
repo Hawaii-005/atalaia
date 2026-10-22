@@ -84,10 +84,21 @@ export const PrinterConnectionsProvider = ({
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
   const pendingRequestsRef = useRef<{
     [key: string]: {
+      printerId: string;
       resolve: (value: any) => void;
+      reject: (error: Error) => void;
       timer: ReturnType<typeof setTimeout>;
     };
   }>({});
+
+  // Reconexão automática: temporizadores por impressora, nº de tentativas e
+  // marca de fecho intencional (não reconectar quando fomos nós que fechámos).
+  const reconnectTimersRef = useRef<{ [key: string]: ReturnType<typeof setTimeout> }>(
+    {}
+  );
+  const reconnectAttemptsRef = useRef<{ [key: string]: number }>({});
+  const intentionalCloseRef = useRef<{ [key: string]: boolean }>({});
+
 
   const pendingCommandsRef = useRef<{
     [key: string]: { command: string; timestamp: number };
@@ -119,6 +130,10 @@ export const PrinterConnectionsProvider = ({
     loadPrinters();
 
     return () => {
+      // Sem reconexões nem pedidos órfãos depois do unmount.
+      Object.values(reconnectTimersRef.current).forEach(timer =>
+        clearTimeout(timer)
+      );
       Object.values(webSocketsRef.current).forEach(ws => ws.close());
       Object.values(statusTimersRef.current).forEach(timer =>
         clearInterval(timer)
@@ -143,10 +158,25 @@ export const PrinterConnectionsProvider = ({
         console.log(
           'App came to foreground, reconnecting disconnected printers...'
         );
+        // Fecho em segundo plano conta como recomeço: sem tentativas acumuladas.
+        Object.keys(reconnectAttemptsRef.current).forEach(id => {
+          delete reconnectAttemptsRef.current[id];
+        });
         // Small delay to ensure app is fully active
         setTimeout(() => {
+          printersRef.current
+            .filter(p => p.reconnectAttempt)
+            .forEach(p => clearReconnectAttempt(p.id));
           reconnectDisconnectedPrinters();
         }, 1000);
+      }
+
+      if (nextAppState.match(/inactive|background/)) {
+        // Em segundo plano não há reconexões: cancelar temporizadores pendentes.
+        Object.values(reconnectTimersRef.current).forEach(timer =>
+          clearTimeout(timer)
+        );
+        reconnectTimersRef.current = {};
       }
 
       appStateRef.current = nextAppState;
@@ -345,11 +375,78 @@ export const PrinterConnectionsProvider = ({
     }
   };
 
+  // Espera crescente para reconexão: 2 s, 4 s, 8 s, 16 s, depois fixa em 30 s.
+  const reconnectDelay = (attempt: number) =>
+    Math.min(2000 * Math.pow(2, attempt - 1), 30000);
+
+  const clearReconnectTimer = (printerId: string) => {
+    const timer = reconnectTimersRef.current[printerId];
+    if (timer) {
+      clearTimeout(timer);
+      delete reconnectTimersRef.current[printerId];
+    }
+  };
+
+  // Limpa o aviso "A reconectar" do estado mostrado nos ecrãs.
+  const clearReconnectAttempt = (printerId: string) => {
+    setPrinters(prevPrinters => {
+      const target = prevPrinters.find(p => p.id === printerId);
+      if (!target?.reconnectAttempt) {
+        return prevPrinters;
+      }
+      const updated = prevPrinters.map(p =>
+        p.id === printerId ? { ...p, reconnectAttempt: undefined } : p
+      );
+      printersRef.current = updated;
+      return updated;
+    });
+  };
+
+  // Agenda a próxima tentativa de reconexão. Lê sempre os dados recentes da
+  // impressora, porque o IP pode ter sido curado enquanto esperava.
+  const scheduleReconnect = (printer: Printer) => {
+    // Em segundo plano não se reconecta; volta no próximo primeiro plano.
+    if (AppState.currentState.match(/inactive|background/)) {
+      return;
+    }
+    clearReconnectTimer(printer.id);
+    const attempt = (reconnectAttemptsRef.current[printer.id] ?? 0) + 1;
+    reconnectAttemptsRef.current[printer.id] = attempt;
+    const delay = reconnectDelay(attempt);
+    console.log(
+      `A reconectar ${printer.printerName} (tentativa ${attempt}) em ${delay} ms`
+    );
+
+    setPrinters(prevPrinters => {
+      const updated = prevPrinters.map(p =>
+        p.id === printer.id ? { ...p, reconnectAttempt: attempt } : p
+      );
+      printersRef.current = updated;
+      return updated;
+    });
+
+    reconnectTimersRef.current[printer.id] = setTimeout(() => {
+      delete reconnectTimersRef.current[printer.id];
+      const fresh = printersRef.current.find(p => p.id === printer.id);
+      if (fresh) {
+        connectToPrinter(fresh);
+      }
+    }, delay);
+  };
+
+  // Fecho pedido pela app: não deve disparar reconexão automática.
+  const markIntentionalClose = (printerId: string) => {
+    intentionalCloseRef.current[printerId] = true;
+  };
+
   const connectToPrinter = (printer: Printer) => {
     // If a websocket for this printer already exists, close it before creating a new one.
     if (webSocketsRef.current[printer.id]) {
+      markIntentionalClose(printer.id);
       webSocketsRef.current[printer.id].close();
     }
+    clearReconnectTimer(printer.id);
+    intentionalCloseRef.current[printer.id] = false;
 
     updatePrinterStatus(printer.id, 'connecting');
     const ws = new WebSocket(`ws://${printer.ipAddress}/websocket`);
@@ -365,6 +462,10 @@ export const PrinterConnectionsProvider = ({
       clearTimeout(timeout);
       console.log(`Connected to printer: ${printer.printerName}`);
       updatePrinterStatus(printer.id, 'connected');
+
+      // Ligação estabelecida: repor tentativas de reconexão e limpar o aviso.
+      delete reconnectAttemptsRef.current[printer.id];
+      clearReconnectAttempt(printer.id);
 
       // Set initial lastUpdate when connected
       setPrinters(prevPrinters => {
@@ -483,6 +584,9 @@ export const PrinterConnectionsProvider = ({
     };
 
     ws.onerror = (error: unknown) => {
+      if (webSocketsRef.current[printer.id] !== ws) {
+        return; // Socket antigo que já foi substituído.
+      }
       clearTimeout(timeout);
       console.error(`error for ${printer.printerName}:`, error);
       if (
@@ -502,8 +606,33 @@ export const PrinterConnectionsProvider = ({
       console.log(
         `Disconnected from printer: ${printer.printerName}, code: ${event.code}, reason: ${event.reason}`
       );
+
+      // Fecho de um socket antigo (substituído) não reinicia a lógica de ligação.
+      if (webSocketsRef.current[printer.id] !== ws) {
+        return;
+      }
+
       stopStatusTimer(printer.id);
       healPrinterIp(printer);
+
+      // Pedidos pendentes nesta ligação não ficam pendurados.
+      Object.keys(pendingRequestsRef.current).forEach(key => {
+        const pending = pendingRequestsRef.current[key];
+        if (pending.printerId !== printer.id) {
+          return;
+        }
+        clearTimeout(pending.timer);
+        delete pendingRequestsRef.current[key];
+        pending.reject(new PrinterOfflineError());
+      });
+
+      // Fecho pedido pela app (desligar impressora, mudar IP): sem reconexão.
+      const wasIntentional = intentionalCloseRef.current[printer.id];
+      delete intentionalCloseRef.current[printer.id];
+      if (wasIntentional) {
+        return;
+      }
+
       setPrinters(prev => {
         const printerToUpdate = prev.find(p => p.id === printer.id);
         if (
@@ -521,6 +650,9 @@ export const PrinterConnectionsProvider = ({
         }
         return prev;
       });
+
+      // Ligação caiu sem ordem nossa: reconectar com espera crescente.
+      scheduleReconnect(printer);
     };
 
     webSocketsRef.current[printer.id] = ws;
@@ -555,6 +687,11 @@ export const PrinterConnectionsProvider = ({
   };
 
   const removePrinter = (id: string) => {
+    // Fecho intencional: matar temporizadores antes de fechar o socket.
+    clearReconnectTimer(id);
+    delete reconnectAttemptsRef.current[id];
+    delete intentionalCloseRef.current[id];
+    markIntentionalClose(id);
     const ws = webSocketsRef.current[id];
     if (ws) {
       ws.close();
@@ -589,6 +726,9 @@ export const PrinterConnectionsProvider = ({
 
     const existingSocket = webSocketsRef.current[id];
     if (existingSocket) {
+      // Fecho intencional: a nova ligação é criada a seguir.
+      clearReconnectTimer(id);
+      markIntentionalClose(id);
       try {
         existingSocket.close();
       } catch (e) {
@@ -636,10 +776,16 @@ export const PrinterConnectionsProvider = ({
         const printer = printersRef.current.find(item => item.id === printerId);
         const requestId = `REQ_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
         const timer = setTimeout(() => {
+          // Tempo esgotado: limpar o pedido para não vazar memória.
           delete pendingRequestsRef.current[requestId];
           reject(new PrinterTimeoutError());
         }, timeoutMs);
-        pendingRequestsRef.current[requestId] = { resolve, timer };
+        pendingRequestsRef.current[requestId] = {
+          printerId,
+          resolve,
+          reject,
+          timer,
+        };
         ws.send(
           JSON.stringify({
             Id: 'request',
@@ -696,7 +842,11 @@ export const PrinterConnectionsProvider = ({
 
   const reconnectAll = () => {
     console.log('Reconnecting to all printers...');
-    printers.forEach(connectToPrinter);
+    // Reconexão manual recomeça o ciclo de tentativas.
+    printers.forEach(printer => {
+      delete reconnectAttemptsRef.current[printer.id];
+      connectToPrinter(printer);
+    });
   };
 
   const reconnectDisconnectedPrinters = () => {
@@ -721,6 +871,8 @@ export const PrinterConnectionsProvider = ({
         console.log(
           `Attempting to reconnect to ${printer.printerName} (${printer.connectionStatus})`
         );
+        // Volta ao primeiro plano: ciclo de tentativas recomeça.
+        delete reconnectAttemptsRef.current[printer.id];
         connectToPrinter(printer);
       });
     } else {

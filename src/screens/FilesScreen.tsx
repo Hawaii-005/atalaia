@@ -184,6 +184,8 @@ export const FilesScreen = ({ route, navigation }: any) => {
             const ack = ackDaResposta(response) ?? 0;
             if (ack !== 0) {
               Alert.alert('Não apagou', descreverAck(ack));
+              // Recarrega: o estado real da lista pode ter mudado.
+              load();
               return;
             }
             setFiles(prev => prev.filter(item => item.name !== file.name));
