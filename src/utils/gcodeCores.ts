@@ -54,30 +54,24 @@ export const normalizarCor = (valor?: string): string | undefined => {
 export const filamentosDoCabecalho = (
   gcode: string
 ): FilamentoDoFicheiro[] => {
-  // O cabeçalho do Orca vive nas primeiras centenas de linhas; não vale a pena
-  // varrer o ficheiro todo.
-  const cabecalho = gcode.split('\n', 400);
-  let cores: string[] = [];
-  let gramas: string[] = [];
-  let tipos: string[] = [];
-
-  for (const linha of cabecalho) {
-    const limpa = linha.trim();
-    if (!limpa.startsWith(';')) continue;
-    const semComentario = limpa.replace(/^;\s*/, '');
-    const igual = semComentario.indexOf('=');
-    if (igual === -1) continue;
-    const chave = semComentario.slice(0, igual).trim().toLowerCase();
-    const valor = semComentario.slice(igual + 1).trim();
-
-    if (chave === 'filament_colour' || chave === 'filament_color') {
-      cores = separar(valor);
-    } else if (chave === 'filament used [g]') {
-      gramas = separar(valor);
-    } else if (chave === 'filament_type') {
-      tipos = separar(valor).map(t => t.replace(/^"|"$/g, ''));
+  // O bloco de configuração do Orca não está no início do ficheiro: vem depois
+  // da miniatura embutida, pelo que é preciso varrer o texto todo. Fica-se com
+  // a última ocorrência de cada chave.
+  const ultimo = (chave: string): string[] => {
+    const padrao = new RegExp(`^;\\s*(?:${chave})\\s*=\\s*(.+)$`, 'gim');
+    let valor: string[] = [];
+    let encontrado: RegExpExecArray | null;
+    while ((encontrado = padrao.exec(gcode)) !== null) {
+      valor = separar(encontrado[1]);
     }
-  }
+    return valor;
+  };
+
+  const cores = ultimo('filament_colour|filament_color');
+  const gramas = ultimo('filament used \\[g\\]');
+  const tipos = ultimo('filament_type').map(parte =>
+    parte.replace(/^"|"$/g, '')
+  );
 
   const total = Math.max(cores.length, gramas.length, tipos.length);
   const resultado: FilamentoDoFicheiro[] = [];
