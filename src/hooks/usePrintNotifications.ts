@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 import { getPrintStatus, Printer, PrintStatus } from '../types';
 import { finishRecord, startRecord } from '../utils/printHistory';
 import {
@@ -64,8 +65,13 @@ export const usePrintNotifications = (printers: Printer[]) => {
 
       if (previous) {
         // Connection lost mid-print.
+        // Uma perda de ligação enquanto a app está em segundo plano é normal
+        // (o Android suspende o socket): não vale a pena avisar. Só se avisa
+        // com a app à frente e com um trabalho a decorrer.
+        const appAVista = AppState.currentState === 'active';
         if (
           prefs.offline &&
+          appAVista &&
           previous.connected &&
           !connected &&
           previous.status === 'printing'

@@ -179,11 +179,10 @@ export const PrinterConnectionsProvider = ({
       }
 
       if (nextAppState.match(/inactive|background/)) {
-        // Em segundo plano não há reconexões: cancelar temporizadores pendentes.
-        Object.values(reconnectTimersRef.current).forEach(timer =>
-          clearTimeout(timer)
-        );
-        reconnectTimersRef.current = {};
+        // Em segundo plano a ligação mantém-se e as reconexões continuam, para
+        // não aparecer a impressora como "Desligada" só por se sair da app. Os
+        // avisos ficam calados (ver usePrintNotifications).
+        console.log('App em segundo plano: ligações mantidas.');
       }
 
       appStateRef.current = nextAppState;
