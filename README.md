@@ -2,6 +2,8 @@
 
 # Atalaia
 
+**Português** · [English](#english)
+
 **A tua impressora, à vista.** Aplicação Android para controlar e vigiar a **Elegoo Centauri Carbon** a partir da rede onde ela está — sem conta, sem nuvem, sem servidor pelo meio.
 
 A impressora fala SDCP por WebSocket (`ws://<ip>:3030/websocket`) e a câmara serve MJPEG em `http://<ip>:3031/video`. A app liga-se directamente a esses dois endereços. Nada sai da tua rede, excepto quando escolhes a ligação remota por Tailscale.
@@ -149,3 +151,141 @@ MIT — ver [LICENSE](LICENSE).
 - Original: **CC-Tool**, de Frederick Walker, também MIT. Sem ele, este fork não existia.
 - Protocolo SDCP documentado pela comunidade Elegoo.
 - Atalaia é um projecto independente, sem afiliação com a Elegoo.
+
+---
+
+# English
+
+**Your printer, in sight.** An Android app to control and watch the **Elegoo Centauri Carbon** from the network it lives on — no account, no cloud, no server in between.
+
+The printer speaks SDCP over WebSocket (`ws://<ip>:3030/websocket`) and the camera serves MJPEG at `http://<ip>:3031/video`. The app talks to those two addresses directly. Nothing leaves your network, except when you choose the remote connection over Tailscale.
+
+This project started as a fork of [CC-Tool](https://github.com/WalkerFrederick/CC-Tool) and went well past the original: new name, new identity, new scope. Not affiliated with, endorsed or recommended by Elegoo in any way.
+
+## Screenshots
+
+Same images as above — the interface is localised, so the Portuguese shots show exactly what the app looks like in Portuguese.
+
+| Home | Detail |
+|---|---|
+| ![Home](docs/img/inicio.png) | ![Detail](docs/img/detalhe.png) |
+
+| Camera | Settings |
+|---|---|
+| ![Camera](docs/img/camara.png) | ![Settings](docs/img/definicoes.png) |
+
+## What it does
+
+**Connection**
+- Automatic discovery over UDP (`M99999` on port 3000) and manual entry of an IP or hostname.
+- Optional alternate address per printer, used when the main one does not answer (e.g. Tailscale, away from home).
+- Reconnection with backoff, no duplicate sockets, and timers cleaned up on exit.
+- Every print request waits for the `Ack`; a refusal is shown in plain language instead of being swallowed.
+
+**State**
+- Firmware state map: idle, preparing, heating, levelling, printing, paused, stopping, finished.
+- Pause detected from stalled ticks, not just the status code (the firmware uses `20` for both pause *and* levelling).
+- “Last known state at HH:MM” banner when the link drops — instead of numbers that look live.
+- Nozzle, bed and chamber temperatures; current layer; progress; time left.
+
+**Printing**
+- Send G-code from the phone over HTTP in 1 MB chunks, with a timeout and temporary-file cleanup.
+- List, preview and print files on the machine; detail screen with thumbnail, colours, layers and cost.
+- Print queue with **optional** auto-start (off by default).
+- Pause, resume, stop; chamber light; fan percentages; PLA / ABS / quiet presets.
+- Reprint from history, checking first that the file is still on the machine.
+
+**Watching**
+- Notifications with buttons: **Pause**, **Stop** and **View camera**, even with the app in the background.
+- Foreground service while printing, so Android does not kill the app mid-job.
+- Progress milestones, completion, pause and printer-offline (the latter only mid-job).
+
+**Camera**
+- Live video inside a progress ring, with fullscreen and photo capture.
+- Data-saving mode: one photo every 2 seconds instead of ~1 MB/s of MJPEG.
+
+**Organisation**
+- Four themes (Grafite, Papel, Vidro, Nord) built only from tokens: colour, typography, radius and density.
+- Portuguese and English, falling back to Portuguese when a key is missing.
+- Local history with outcome, duration, grams and cost; aggregate statistics.
+- Configurable price per kilogram; per-part cost computed from grams.
+- Backup: export and restore printers and settings as JSON.
+
+## What changed from CC-Tool
+
+This fork is not a coat of paint over the original: it inherited the protocol and structure, then was rewritten from the inside, version after version (1.13 → 2.0.0).
+
+- **Its own identity**: name, icon (a watchtower with a beacon), splash, texts and welcome screens. The old name and branding are gone from the interface.
+- **New Android package** (`io.github.brunocrazy15.atalaia`), so it neither collides with the original nor inherits its signature.
+- **Camera rebuilt**: SVG progress ring with the video inside, circular crop, fullscreen and 16:9 capture.
+- **Actionable notifications** by category, with buttons that do not open the app.
+- **Print queue** persisted, with optional auto-start and a warning when a job fails to start.
+- **Protocol errors translated**: every `Ack` has an explanation and a suggestion.
+- **Cheaper networking**: single-datagram discovery, single-flight, and IP healing limited to the foreground and never while printing.
+- **Estimated consumption**: when the slicer does not declare `filament used [g]`, the G-code E values are summed and converted to grams using the material density.
+- **Themes as tokens**, not parallel screens.
+- **Tests** for the pure functions that have already caused bugs (states, pause, Ack, consumption).
+- **Foreground service** and a small Kotlin bridge.
+- **Backup** and **remote mode**.
+- **Logs only in development** and no `console.log` in release.
+
+## Protocol (summary)
+
+| Command | Purpose |
+|---|---|
+| `128` | Start a file (`Filename` exactly as returned by `258`) |
+| `129` / `131` / `130` | Pause / resume / stop |
+| `258` | List files |
+| `257` | Rename (the firmware accepts it and does nothing — the app works around it on the client) |
+| `320` / `321` | History: id list and detail |
+| `403` | Fans (`TargetFanSpeed`) and light (`LightStatus.SecondLight`) |
+
+Status codes observed on firmware 1.4.49: `0` idle · `1/16/20` preparing, heating, levelling (**20 also means paused**) · `13` layer change · `5` transition · `6` printing · `7` stopping · `8` stopped · `9` finished.
+
+## Building
+
+You need Node, JDK 21 and the Android SDK (build-tools 35).
+
+```bash
+npm install
+cd android && ./gradlew assembleRelease
+```
+
+Signing reads `android/keystore.properties` (not in the repository):
+
+```
+storeFile=/path/to/atalaia.keystore
+storePassword=...
+keyAlias=atalaia
+keyPassword=...
+```
+
+Without that file the build falls back to the Android debug key.
+
+Tests:
+
+```bash
+npm test
+```
+
+## Known limitations
+
+- **Android only.** The iOS project exists on paper but has never been tested or signed.
+- **The printer does not authenticate.** Anyone on the same network can talk to it; the app does not invent security the protocol lacks. Do not expose port 3030 to the internet — use Tailscale or a VPN.
+- **Grams are an estimate** when they do not come from the slicer; the firmware reports `EstFilamentLength` as zero and the history carries no consumption.
+- **Free space is not in `Cmd 258`** — the app does not show it because it cannot know it.
+- **Temperature control** is not implemented (the stock firmware exposes no usable command).
+- **Pause/resume** depends on the machine's internal state; when it gets stuck, power-cycling the smart plug is what clears it.
+- **Renaming** is done on the client (download, upload, delete), not through the protocol.
+
+## Privacy
+
+No accounts, no telemetry, no analytics. Printers, history, price per kilogram and preferences are stored locally. The only traffic is to the printer, at the address you configure.
+
+## Licence and credits
+
+MIT — see [LICENSE](LICENSE).
+
+- Original: **CC-Tool**, by Frederick Walker, also MIT. Without it this fork would not exist.
+- SDCP protocol documented by the Elegoo community.
+- Atalaia is an independent project, not affiliated with Elegoo.

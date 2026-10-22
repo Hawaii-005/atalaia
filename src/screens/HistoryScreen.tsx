@@ -52,17 +52,14 @@ const formatDate = (timestamp: number) => {
 const HistoryRow = ({
   record,
   onReprint,
-  comConsumo,
 }: {
   record: PrintRecord;
   onReprint: () => void;
-  comConsumo: boolean;
 }) => {
-  // Só os primeiros registos descarregam o G-code: uma lista inteira a pedir
-  // ficheiros à impressora era tráfego a mais.
-  const { filamentos, consumo } = useGcodePreview(
-    comConsumo ? record.printerIp : undefined,
-    comConsumo ? record.filename : undefined
+  // Um só pedido por linha: o mesmo texto dá a miniatura, as cores e as gramas.
+  const { preview, filamentos, consumo } = useGcodePreview(
+    record.printerIp,
+    record.filename
   );
   const [precoKg, setPrecoKg] = useState(0);
   useEffect(() => {
@@ -72,7 +69,6 @@ const HistoryRow = ({
   const gramas = doCabecalho > 0 ? doCabecalho : (consumo?.gramas ?? 0);
   const custo = gramas > 0 ? custoDe(gramas, precoKg) : 0;
   const { tema } = useTheme();
-  const { preview } = useGcodePreview(record.printerIp, record.filename);
   const name = record.filename.split('/').pop() ?? record.filename;
 
   return (
@@ -234,12 +230,11 @@ export const HistoryScreen = ({ navigation }: any) => {
           </View>
         ) : (
           <View className="bg-canvas-sunken rounded-xl overflow-hidden">
-            {records.map((record, indice) => (
+            {records.map(record => (
               <HistoryRow
                 key={record.id}
                 record={record}
                 onReprint={() => reimprimir(record)}
-                comConsumo={indice < 3}
               />
             ))}
           </View>
