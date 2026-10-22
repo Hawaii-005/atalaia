@@ -1,3 +1,4 @@
+import { enderecoDe } from '../utils/rede';
 import { useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { getPrintStatus, Printer, PrintStatus } from '../types';
@@ -65,7 +66,7 @@ export const usePrintNotifications = (printers: Printer[]) => {
       if (connected && nowPrinting && !wasPrinting) {
         startRecord({
           printerName: printer.printerName,
-          printerIp: printer.ipAddress,
+          printerIp: enderecoDe(printer),
           filename,
           totalLayers: info?.TotalLayer,
           outcome: 'printing',
@@ -114,7 +115,7 @@ export const usePrintNotifications = (printers: Printer[]) => {
               `${printer.printerName} pausou ${filename}.`,
               { printerId: printer.id },
               'em-pausa',
-              printer.ipAddress
+              enderecoDe(printer)
             );
           }
           if (status === 'stopped' && prefs.paused) {
@@ -123,7 +124,7 @@ export const usePrintNotifications = (printers: Printer[]) => {
               `${printer.printerName} parou ${filename}.`,
               { printerId: printer.id },
               'em-curso',
-              printer.ipAddress
+              enderecoDe(printer)
             );
           }
         }

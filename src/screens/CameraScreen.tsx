@@ -1,3 +1,4 @@
+import { enderecoDe } from '../utils/rede';
 import { log } from '../utils/log';
 import { mensagemDoErro } from '../utils/errors';
 import { pausePrintCommand, stopPrintCommand } from '../utils/commands';
@@ -93,7 +94,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
   }, [printers, selectedId]);
 
   const isConnected = printer?.connectionStatus === 'connected';
-  const videoHost = printer?.ipAddress;
+  const videoHost = printer ? enderecoDe(printer) : undefined;
   const printerId = printer?.id;
   const printerName = printer?.printerName;
   const lastVideoRequestRef = useRef<string>('');
@@ -242,7 +243,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
     setUploadPercent(0);
     try {
       await uploadGcode(
-        printer.ipAddress,
+        enderecoDe(printer),
         asset.uri,
         asset.name,
         (enviado, total) => {
@@ -380,7 +381,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
         }
       : null;
 
-  const { preview } = useGcodePreview(printer?.ipAddress, job?.filename);
+  const { preview } = useGcodePreview(printer ? enderecoDe(printer) : undefined, job?.filename);
 
   if (!printer) {
     return (

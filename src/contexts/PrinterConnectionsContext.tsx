@@ -35,7 +35,8 @@ interface PrinterConnectionsContextType {
   addPrinter: (
     printerName: string,
     ipAddress: string,
-    mainboardId?: string
+    mainboardId?: string,
+    alternateIp?: string
   ) => void;
   removePrinter: (id: string) => void;
   reconnectAll: () => void;
@@ -406,6 +407,11 @@ export const PrinterConnectionsProvider = ({
    * minute and reconnect silently if the same machine answers elsewhere.
    */
   const healPrinterIp = async (printer: Printer) => {
+    // Pelo Tailscale não se "cura" IP: a rede é outra e a descoberta UDP
+    // só vê a rede local.
+    if (printer.activeIp && printer.activeIp !== printer.ipAddress) {
+      return;
+    }
     // Curar o IP é barato por UDP, mas não a qualquer momento: só com a app
     // à frente, nunca a meio de uma impressão e no máximo a cada 5 minutos.
     if (AppState.currentState !== 'active') {
@@ -555,18 +561,44 @@ export const PrinterConnectionsProvider = ({
     intentionalCloseRef.current[printer.id] = false;
 
     updatePrinterStatus(printer.id, 'connecting');
-    const ws = new WebSocket(`ws://${printer.ipAddress}/websocket`);
+    // LAN primeiro; se houver um endereço alternativo (Tailscale) e a LAN não
+    // responder, tenta-se esse antes de desistir.
+    const alvo = printer.activeIp ?? printer.ipAddress;
+    const ws = new WebSocket(`ws://${alvo}/websocket`);
 
     const timeout = setTimeout(() => {
-      log(`Connection to ${printer.printerName} timed out.`);
+      log(`Connection to ${printer.printerName} timed out on ${alvo}.`);
       updatePrinterStatus(printer.id, 'timeout');
       ws.close();
+      if (printer.alternateIp && alvo !== printer.alternateIp) {
+        const comAlternativo: Printer = {
+          ...printer,
+          activeIp: printer.alternateIp,
+        };
+        setPrinters(prev => {
+          const lista = prev.map(p =>
+            p.id === printer.id ? comAlternativo : p
+          );
+          printersRef.current = lista;
+          return lista;
+        });
+        connectToPrinter(comAlternativo);
+        return;
+      }
       healPrinterIp(printer);
     }, CONNECTION_TIMEOUT);
 
     ws.onopen = () => {
       clearTimeout(timeout);
-      log(`Connected to printer: ${printer.printerName}`);
+      log(`Connected to printer: ${printer.printerName} (${alvo})`);
+      // Guardar por onde se ligou, para câmara, ficheiros e envio usarem o mesmo.
+      setPrinters(prev => {
+        const lista = prev.map(p =>
+          p.id === printer.id ? { ...p, activeIp: alvo } : p
+        );
+        printersRef.current = lista;
+        return lista;
+      });
       updatePrinterStatus(printer.id, 'connected');
 
       // Ligação estabelecida: repor tentativas de reconexão e limpar o aviso.
@@ -780,12 +812,14 @@ export const PrinterConnectionsProvider = ({
   const addPrinter = (
     printerName: string,
     ipAddress: string,
-    mainboardId?: string
+    mainboardId?: string,
+    alternateIp?: string
   ) => {
     const newPrinter: Printer = {
       id: generateId(),
       printerName,
       ipAddress,
+      alternateIp: alternateIp?.trim() || undefined,
       connectionStatus: 'connecting',
       mainboardId,
     };
@@ -1059,10 +1093,17 @@ export const PrinterConnectionsProvider = ({
 
   const reconnectAll = () => {
     log('Reconnecting to all printers...');
-    // Reconexão manual recomeça o ciclo de tentativas.
+    // Reconexão manual recomeça no endereço principal: se entretanto voltou a
+    // casa, é a LAN que se deve tentar primeiro.
     printers.forEach(printer => {
       delete reconnectAttemptsRef.current[printer.id];
-      connectToPrinter(printer);
+      const semAlternativo: Printer = { ...printer, activeIp: undefined };
+      setPrinters(prev => {
+        const lista = prev.map(p => (p.id === printer.id ? semAlternativo : p));
+        printersRef.current = lista;
+        return lista;
+      });
+      connectToPrinter(semAlternativo);
     });
   };
 

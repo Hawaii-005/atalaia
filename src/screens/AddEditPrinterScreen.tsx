@@ -13,6 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { checkLocalNetworkPermission } from '../utils/LocalNetworkUtils';
+import { eTailscale } from '../utils/rede';
 import { t } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
@@ -20,11 +21,13 @@ import { hexDe } from '../theme/temas';
 interface FormData {
   printerName: string;
   ipAddress: string;
+  alternateIp: string;
 }
 
 interface FormErrors {
   printerName?: string;
   ipAddress?: string;
+  alternateIp?: string;
 }
 
 const validationSchema = yup.object().shape({
@@ -43,6 +46,7 @@ export const AddEditPrinterScreen = () => {
   const [formData, setFormData] = useState<FormData>({
     printerName: '',
     ipAddress: '',
+    alternateIp: '',
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -59,12 +63,24 @@ export const AddEditPrinterScreen = () => {
     setIsSubmitting(true);
     try {
       await validationSchema.validate(formData, { abortEarly: false });
-      const hasNetworkAccess = await checkLocalNetworkPermission();
-      if (!hasNetworkAccess) {
-        setIsSubmitting(false);
-        return;
+      // Fora de casa (Tailscale) a permissão de rede local do Android não se
+      // aplica: nesse caso não se bloqueia a gravação.
+      const porTailscale =
+        eTailscale(formData.ipAddress.trim()) ||
+        eTailscale(formData.alternateIp.trim());
+      if (!porTailscale) {
+        const hasNetworkAccess = await checkLocalNetworkPermission();
+        if (!hasNetworkAccess) {
+          setIsSubmitting(false);
+          return;
+        }
       }
-      addPrinter(formData.printerName.trim(), formData.ipAddress.trim());
+      addPrinter(
+        formData.printerName.trim(),
+        formData.ipAddress.trim(),
+        undefined,
+        formData.alternateIp.trim() || undefined
+      );
       navigation.goBack();
     } catch (validationErrors: any) {
       const newErrors: FormErrors = {};
@@ -161,6 +177,28 @@ export const AddEditPrinterScreen = () => {
               {t('addPrinter.ipDica')}
             </Text>
           )}
+        </View>
+
+        <View className="mt-5">
+          <Text className="text-[12px] font-medium text-ink-soft mb-1.5">
+            {t('addPrinter.ipAlternativo')}
+          </Text>
+          <TextInput
+            className={fieldClass('alternateIp')}
+            placeholder={t('addPrinter.ipAlternativoPlaceholder')}
+            placeholderTextColor={hexDe(tema.paleta.tintaMuted)}
+            value={formData.alternateIp}
+            onChangeText={value => handleInputChange('alternateIp', value)}
+            onFocus={() => setFocused('alternateIp')}
+            onBlur={() => setFocused(null)}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="numbers-and-punctuation"
+            style={{ fontFamily: 'monospace' }}
+          />
+          <Text className="mt-1.5 text-[11px] text-ink-muted">
+            {t('addPrinter.ipAlternativoDica')}
+          </Text>
         </View>
 
         <TouchableOpacity

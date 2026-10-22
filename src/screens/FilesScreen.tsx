@@ -1,3 +1,4 @@
+import { enderecoDe } from '../utils/rede';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
@@ -451,11 +452,11 @@ export const FilesScreen = ({ route, navigation }: any) => {
       // A impressora não aceita renomear por comando: copia-se o ficheiro com
       // o nome novo e apaga-se o original.
       const descarga = await FileSystem.downloadAsync(
-        `http://${printer.ipAddress}:3030${aRenomear.name}`,
+        `http://${enderecoDe(printer)}:3030${aRenomear.name}`,
         destino
       );
       if (descarga.status !== 200) throw new Error('descarga');
-      await uploadGcode(printer.ipAddress, destino, nomeFinal);
+      await uploadGcode(enderecoDe(printer), destino, nomeFinal);
       await request(printer.id, deleteFilesCommand([aRenomear.name]), 12000);
       setARenomear(null);
       await load();
@@ -510,7 +511,7 @@ export const FilesScreen = ({ route, navigation }: any) => {
     const asset = picked.assets[0];
     try {
       setOcupado(`${t('files.aEnviar')} 0%`);
-      await uploadGcode(printer.ipAddress, asset.uri, asset.name, (enviado, total) => {
+      await uploadGcode(enderecoDe(printer), asset.uri, asset.name, (enviado, total) => {
         setOcupado(`${t('files.aEnviar')} ${Math.round((enviado / total) * 100)}%`);
       });
       await load();
@@ -724,7 +725,7 @@ export const FilesScreen = ({ route, navigation }: any) => {
                 <FileRow
                   key={file.name}
                   file={file}
-                  printerIp={printer?.ipAddress ?? ''}
+                  printerIp={enderecoDe(printer)}
                   onOpen={() => setSelecionado(file)}
                 />
               ))}
@@ -736,7 +737,7 @@ export const FilesScreen = ({ route, navigation }: any) => {
       {selecionado && (
         <FileDetails
           file={selecionado}
-          printerIp={printer?.ipAddress ?? ''}
+          printerIp={enderecoDe(printer)}
           bedLevel={bedLevel}
           onChangeBedLevel={setBedLevel}
           plateSide={plateSide}

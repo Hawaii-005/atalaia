@@ -1,3 +1,4 @@
+import { enderecoDe } from '../utils/rede';
 import { log } from '../utils/log';
 import { mensagemDoErro } from '../utils/errors';
 import {
@@ -404,7 +405,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
         title={formatTextMaxEllipsis(printer.printerName, 26)}
         subtitle={
           isConnected
-            ? `${printer.ipAddress} · ${t('comum.ligada')}`
+            ? `${enderecoDe(printer)} · ${t('comum.ligada')}`
             : printer.reconnectAttempt
               ? t('details.aReconectarUpper', { n: printer.reconnectAttempt })
               : t(CONNECTION_LABEL[printer.connectionStatus]).toUpperCase()
@@ -490,8 +491,8 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                 <WebView
                   key={webViewKey}
                   source={{
-                    html: `<html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;padding:0;background:#000;height:100%;overflow:hidden}img{width:100%;height:100%;object-fit:cover;display:block}</style></head><body><img src="http://${printer.ipAddress}:3031/video" /></body></html>`,
-                    baseUrl: `http://${printer.ipAddress}`,
+                    html: `<html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;padding:0;background:#000;height:100%;overflow:hidden}img{width:100%;height:100%;object-fit:cover;display:block}</style></head><body><img src="http://${enderecoDe(printer)}:3031/video" /></body></html>`,
+                    baseUrl: `http://${enderecoDe(printer)}`,
                   }}
                   style={{
                     width: ANEL_TAM - 2 * (ANEL_TRACO + 7),
@@ -820,7 +821,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
               </Text>
             </View>
             <Text className="text-[12px] text-ink-muted">
-              {printer.ipAddress}
+              {enderecoDe(printer)}
             </Text>
           </View>
           <TouchableOpacity

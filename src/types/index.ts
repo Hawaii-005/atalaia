@@ -149,5 +149,7 @@ export interface Printer {
   lastUpdate?: number; // Timestamp of last status update
   videoUrl?: string; // Video stream URL
   mainboardId?: string; // Stable hardware id, used to find the printer after its IP changes
+  alternateIp?: string; // Endereço alternativo (ex.: via Tailscale, fora de casa)
+  activeIp?: string; // Endereço que está a funcionar agora (LAN ou alternativo)
   reconnectAttempt?: number; // Tentativa actual de reconexão (presente só a reconectar)
 }
