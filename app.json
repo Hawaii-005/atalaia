@@ -12,7 +12,7 @@
         }
       ]
     ],
-    "version": "1.25.1",
+    "version": "1.25.2",
     "web": {
       "favicon": "./assets/favicon.png"
     },

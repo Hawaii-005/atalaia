@@ -93,13 +93,15 @@ export const HomeScreen = ({ navigation }: any) => {
   };
 
   const handlePrintControl = (printerId: string, status: number) => {
-    const cmd = status === 6 ? 131 : 129;
+    // Status 6 é "a imprimir", não "em pausa": aqui só se pausa. Retomar
+    // exige saber se os ticks pararam, e isso vive no ecrã de detalhe.
+    const cmd = 129;
     sendCommand(printerId, {
       Id: '',
       Data: {
         Cmd: cmd,
         Data: {},
-        RequestID: `${cmd === 131 ? 'resume' : 'pause'}-${Date.now()}`,
+        RequestID: `pause-${Date.now()}`,
         MainboardID: '',
         TimeStamp: Date.now(),
         From: 1,

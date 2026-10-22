@@ -153,14 +153,15 @@ export const CameraScreen = ({ navigation, route }: any) => {
 
   const handlePrintControl = useCallback(() => {
     if (!printer) return;
-    const status = printer.status?.PrintInfo?.Status || 0;
-    const cmd = status === 6 ? 131 : 129;
+    // Status 6 é "a imprimir", não "em pausa": aqui só se pausa. Retomar
+    // exige saber se os ticks pararam, e isso vive no ecrã de detalhe.
+    const cmd = 129;
     sendCommand(printer.id, {
       Id: '',
       Data: {
         Cmd: cmd,
         Data: {},
-        RequestID: `${cmd === 131 ? 'resume' : 'pause'}-${Date.now()}`,
+        RequestID: `pause-${Date.now()}`,
         MainboardID: '',
         TimeStamp: Date.now(),
         From: 1,
