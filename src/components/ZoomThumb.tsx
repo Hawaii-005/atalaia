@@ -1,5 +1,12 @@
-import React, { useMemo, useRef, useState } from 'react';
-import { Animated, PanResponder, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import Animated, {
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
@@ -7,11 +14,7 @@ import { t } from '../i18n';
 
 const MIN = 1;
 const MAX = 8;
-
-const distancia = (a: { pageX: number; pageY: number }, b: { pageX: number; pageY: number }) =>
-  Math.hypot(a.pageX - b.pageX, a.pageY - b.pageY);
-
-const limitar = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+const limitar = (v: number) => Math.min(MAX, Math.max(MIN, v));
 
 type Props = {
   /** caminho SVG do contorno do modelo */
@@ -21,118 +24,108 @@ type Props = {
 };
 
 /**
- * Miniatura do G-code com zoom por pinca (dois dedos) e arrasto quando ampliada.
- * O desenho é vectorial, por isso ampliar não perde nitidez.
+ * Miniatura do G-code com zoom por pinca e arrasto. Usa o gesture-handler
+ * nativo — o PanResponder era engolido pelo ScrollView do painel.
+ * O desenho é vectorial: ampliar não perde nitidez.
  */
 export const ZoomThumb = ({ path, altura = 240 }: Props) => {
   const { tema } = useTheme();
-  const escala = useRef(new Animated.Value(1)).current;
-  const desvioX = useRef(new Animated.Value(0)).current;
-  const desvioY = useRef(new Animated.Value(0)).current;
-  const actual = useRef({ escala: 1, x: 0, y: 0 });
-  const inicio = useRef({ escala: 1, x: 0, y: 0, pinca: 0, x0: 0, y0: 0 });
+  const escala = useSharedValue(1);
+  const guardada = useSharedValue(1);
+  const desvioX = useSharedValue(0);
+  const desvioY = useSharedValue(0);
+  const guardadoX = useSharedValue(0);
+  const guardadoY = useSharedValue(0);
   const [nivel, setNivel] = useState(1);
 
-  const aplicar = () => {
-    escala.setValue(actual.current.escala);
-    desvioX.setValue(actual.current.x);
-    desvioY.setValue(actual.current.y);
-  };
-
   const repor = () => {
-    actual.current = { escala: 1, x: 0, y: 0 };
-    inicio.current.pinca = 0;
+    escala.value = withTiming(1, { duration: 160 });
+    desvioX.value = withTiming(0, { duration: 160 });
+    desvioY.value = withTiming(0, { duration: 160 });
+    guardada.value = 1;
+    guardadoX.value = 0;
+    guardadoY.value = 0;
     setNivel(1);
-    Animated.parallel([
-      Animated.spring(escala, { toValue: 1, useNativeDriver: true }),
-      Animated.spring(desvioX, { toValue: 0, useNativeDriver: true }),
-      Animated.spring(desvioY, { toValue: 0, useNativeDriver: true }),
-    ]).start();
   };
 
-  const responder = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: () => true,
-        // dois dedos ganham sempre ao ScrollView que envolve o painel
-        onMoveShouldSetPanResponderCapture: event =>
-          event.nativeEvent.touches.length >= 2,
-        onPanResponderGrant: event => {
-          const toques = event.nativeEvent.touches;
-          inicio.current = {
-            escala: actual.current.escala,
-            x: actual.current.x,
-            y: actual.current.y,
-            pinca: toques.length >= 2 ? distancia(toques[0], toques[1]) : 0,
-            x0: toques[0]?.pageX ?? 0,
-            y0: toques[0]?.pageY ?? 0,
-          };
-        },
-        onPanResponderMove: (event, gesto) => {
-          const toques = event.nativeEvent.touches;
-          if (toques.length >= 2) {
-            const d = distancia(toques[0], toques[1]);
-            if (!inicio.current.pinca) {
-              inicio.current.pinca = d;
-              inicio.current.escala = actual.current.escala;
-            }
-            const s = limitar(
-              (inicio.current.escala * d) / (inicio.current.pinca || d),
-              MIN,
-              MAX
-            );
-            actual.current.escala = s;
-            escala.setValue(s);
-            return;
-          }
-          if (toques.length === 1 && actual.current.escala > 1) {
-            actual.current.x = inicio.current.x + gesto.dx;
-            actual.current.y = inicio.current.y + gesto.dy;
-            desvioX.setValue(actual.current.x);
-            desvioY.setValue(actual.current.y);
-          }
-        },
-        onPanResponderRelease: () => {
-          inicio.current.pinca = 0;
-          setNivel(actual.current.escala);
-          if (actual.current.escala < 1.05) {
-            repor();
-          }
-        },
-        onPanResponderTerminate: () => {
-          inicio.current.pinca = 0;
-          setNivel(actual.current.escala);
-        },
-      }),
-    []
-  );
+  const pinca = Gesture.Pinch()
+    .onUpdate(evento => {
+      escala.value = limitar(guardada.value * evento.scale);
+    })
+    .onEnd(() => {
+      if (escala.value < 1.05) {
+        escala.value = withTiming(1, { duration: 160 });
+        desvioX.value = withTiming(0, { duration: 160 });
+        desvioY.value = withTiming(0, { duration: 160 });
+        guardada.value = 1;
+        guardadoX.value = 0;
+        guardadoY.value = 0;
+        runOnJS(setNivel)(1);
+      } else {
+        guardada.value = escala.value;
+        runOnJS(setNivel)(escala.value);
+      }
+    });
+
+  const arrasto = Gesture.Pan()
+    .averageTouches(true)
+    .minPointers(1)
+    .onUpdate(evento => {
+      if (escala.value <= 1) return;
+      desvioX.value = guardadoX.value + evento.translationX;
+      desvioY.value = guardadoY.value + evento.translationY;
+    })
+    .onEnd(() => {
+      guardadoX.value = desvioX.value;
+      guardadoY.value = desvioY.value;
+    });
+
+  const duploToque = Gesture.Tap()
+    .numberOfTaps(2)
+    .onEnd(() => {
+      if (escala.value > 1.05) {
+        escala.value = withTiming(1, { duration: 160 });
+        desvioX.value = withTiming(0, { duration: 160 });
+        desvioY.value = withTiming(0, { duration: 160 });
+        guardada.value = 1;
+        guardadoX.value = 0;
+        guardadoY.value = 0;
+        runOnJS(setNivel)(1);
+      } else {
+        escala.value = withTiming(3, { duration: 180 });
+        guardada.value = 3;
+        runOnJS(setNivel)(3);
+      }
+    });
+
+  const gestos = Gesture.Simultaneous(pinca, arrasto, duploToque);
+
+  const estilo = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: desvioX.value },
+      { translateY: desvioY.value },
+      { scale: escala.value },
+    ],
+  }));
 
   return (
-    <View>
+    <GestureHandlerRootView>
       <View
         className="w-full rounded-xl border border-line bg-cartao overflow-hidden items-center justify-center"
         style={{ height: altura }}
-        {...responder.panHandlers}
       >
-        <Animated.View
-          style={{
-            transform: [
-              { translateX: desvioX },
-              { translateY: desvioY },
-              { scale: escala },
-            ],
-          }}
-        >
-          <Svg viewBox="0 0 100 100" width={altura - 16} height={altura - 16}>
-            <Path
-              d={path}
-              stroke={hexDe(tema.paleta.tinta)}
-              strokeWidth={0.5}
-              fill="none"
-            />
-          </Svg>
-        </Animated.View>
+        <GestureDetector gesture={gestos}>
+          <Animated.View style={estilo}>
+            <Svg viewBox="0 0 100 100" width={altura - 16} height={altura - 16}>
+              <Path
+                d={path}
+                stroke={hexDe(tema.paleta.tinta)}
+                strokeWidth={0.5}
+                fill="none"
+              />
+            </Svg>
+          </Animated.View>
+        </GestureDetector>
 
         {nivel > 1.05 && (
           <TouchableOpacity
@@ -149,6 +142,6 @@ export const ZoomThumb = ({ path, altura = 240 }: Props) => {
       <Text className="text-[10px] text-ink-muted mt-1.5 text-center">
         {t('files.dicaZoom')}
       </Text>
-    </View>
+    </GestureHandlerRootView>
   );
 };
