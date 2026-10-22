@@ -103,6 +103,7 @@ export const PrinterConnectionsProvider = ({
   );
   const reconnectAttemptsRef = useRef<{ [key: string]: number }>({});
   const intentionalCloseRef = useRef<{ [key: string]: boolean }>({});
+  const timerPrimeiroPlano = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 
   const pendingCommandsRef = useRef<{
@@ -191,8 +192,13 @@ export const PrinterConnectionsProvider = ({
         Object.keys(reconnectAttemptsRef.current).forEach(id => {
           delete reconnectAttemptsRef.current[id];
         });
-        // Small delay to ensure app is fully active
-        setTimeout(() => {
+        // Small delay to ensure app is fully active. Guardado para poder
+        // ser cancelado se a app fechar entretanto.
+        if (timerPrimeiroPlano.current) {
+          clearTimeout(timerPrimeiroPlano.current);
+        }
+        timerPrimeiroPlano.current = setTimeout(() => {
+          timerPrimeiroPlano.current = null;
           printersRef.current
             .filter(p => p.reconnectAttempt)
             .forEach(p => clearReconnectAttempt(p.id));
@@ -217,6 +223,10 @@ export const PrinterConnectionsProvider = ({
 
     return () => {
       subscription?.remove();
+      if (timerPrimeiroPlano.current) {
+        clearTimeout(timerPrimeiroPlano.current);
+        timerPrimeiroPlano.current = null;
+      }
     };
   }, []);
 
