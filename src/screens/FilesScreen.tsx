@@ -7,6 +7,8 @@ import {
   Alert,
   ActivityIndicator,
   Switch,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -43,13 +45,11 @@ const formatSize = (bytes?: number) => {
 const FileRow = ({
   file,
   printerIp,
-  onPrint,
-  onDelete,
+  onOpen,
 }: {
   file: PrinterFile;
   printerIp: string;
-  onPrint?: () => void;
-  onDelete: () => void;
+  onOpen: () => void;
 }) => {
   const size = file.FileSize ?? file.totalSize ?? file.usedSize ?? 0;
   const { preview } = useGcodePreview(
@@ -59,7 +59,11 @@ const FileRow = ({
   const label = file.name.split('/').pop() ?? file.name;
 
   return (
-    <View className="flex-row items-center px-4 py-3 border-b border-line">
+    <TouchableOpacity
+      onPress={onOpen}
+      activeOpacity={0.7}
+      className="flex-row items-center px-4 py-3 border-b border-line"
+    >
       <View className="w-14 h-14 rounded-lg bg-white border border-line items-center justify-center overflow-hidden">
         {preview ? (
           <Svg viewBox="0 0 100 100" width={52} height={52}>
@@ -82,21 +86,170 @@ const FileRow = ({
           {formatSize(size)}
         </Text>
       </View>
-      <TouchableOpacity
-        onPress={onPrint}
-        className="w-9 h-9 items-center justify-center rounded-lg bg-brand-soft mr-1"
-        activeOpacity={0.7}
-      >
-        <Ionicons name="play" size={16} color="#3E6AE1" />
-      </TouchableOpacity>
-      <TouchableOpacity
-        onPress={onDelete}
-        className="w-9 h-9 items-center justify-center rounded-lg"
-        activeOpacity={0.7}
-      >
-        <Ionicons name="trash-outline" size={17} color="#C62828" />
-      </TouchableOpacity>
-    </View>
+      <Ionicons name="chevron-forward" size={18} color="#9AA0A6" />
+    </TouchableOpacity>
+  );
+};
+
+const FileDetails = ({
+  file,
+  printerIp,
+  bedLevel,
+  onChangeBedLevel,
+  plateSide,
+  onChangePlateSide,
+  onClose,
+  onPrint,
+  onDelete,
+}: {
+  file: PrinterFile;
+  printerIp: string;
+  bedLevel: boolean;
+  onChangeBedLevel: (valor: boolean) => void;
+  plateSide: 0 | 1;
+  onChangePlateSide: (lado: 0 | 1) => void;
+  onClose: () => void;
+  onPrint: () => void;
+  onDelete: () => void;
+}) => {
+  const size = file.FileSize ?? file.totalSize ?? file.usedSize ?? 0;
+  const { preview, filamentos, loading } = useGcodePreview(
+    size && size < PREVIEW_LIMIT ? printerIp : undefined,
+    file.name
+  );
+  const label = file.name.split('/').pop() ?? file.name;
+
+  return (
+    <Modal transparent animationType="slide" visible onRequestClose={onClose}>
+      <View className="flex-1 justify-end" style={{ backgroundColor: 'rgba(23,26,32,0.45)' }}>
+        <View className="bg-canvas rounded-t-2xl px-4 pt-4 pb-6">
+          <View className="flex-row items-start">
+            <View className="flex-1 pr-3">
+              <Text className="text-[15px] font-bold text-ink" numberOfLines={2}>
+                {label}
+              </Text>
+              <Text className="text-[12px] text-ink-muted mt-1">
+                {formatSize(size)}
+                {filamentos.length > 1
+                  ? ` · ${t('files.coresTotal', { n: filamentos.length })}`
+                  : ''}
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={onClose}
+              className="w-9 h-9 items-center justify-center rounded-lg border border-line"
+              activeOpacity={0.7}
+            >
+              <Ionicons name="close" size={18} color="#171A20" />
+            </TouchableOpacity>
+          </View>
+
+          <View className="items-center justify-center mt-4 h-48 rounded-xl bg-white border border-line">
+            {loading ? (
+              <ActivityIndicator color="#3E6AE1" />
+            ) : preview ? (
+              <Svg viewBox="0 0 100 100" width={180} height={180}>
+                <Path d={preview.path} stroke="#171A20" strokeWidth={0.5} fill="none" />
+              </Svg>
+            ) : (
+              <Ionicons name="cube-outline" size={40} color="#9AA0A6" />
+            )}
+          </View>
+
+          <View className="mt-4">
+            <Text className="text-[12px] font-semibold text-ink">
+              {t('files.cores')}
+            </Text>
+            {filamentos.length === 0 ? (
+              <Text className="text-[12px] text-ink-muted mt-1">
+                {t('files.coresNenhuma')}
+              </Text>
+            ) : (
+              filamentos.map(filamento => (
+                <View key={filamento.tool} className="flex-row items-center mt-2">
+                  <View
+                    className="w-5 h-5 rounded-full border border-line mr-2"
+                    style={{ backgroundColor: filamento.cor ?? '#E4E4E4' }}
+                  />
+                  <Text className="text-[12px] font-semibold text-ink">
+                    T{filamento.tool}
+                  </Text>
+                  <Text className="text-[12px] text-ink-muted ml-2">
+                    {filamento.gramas.toFixed(2)} g
+                    {filamento.tipo ? ` · ${filamento.tipo}` : ''}
+                  </Text>
+                </View>
+              ))
+            )}
+          </View>
+
+          <View className="flex-row items-center justify-between mt-4 pt-3 border-t border-line">
+            <View className="flex-1 pr-3">
+              <Text className="text-[12px] font-semibold text-ink">
+                {t('files.ladoMesa')}
+              </Text>
+            </View>
+            <View className="flex-row">
+              {([0, 1] as const).map(side => (
+                <TouchableOpacity
+                  key={side}
+                  onPress={() => onChangePlateSide(side)}
+                  activeOpacity={0.7}
+                  className={`w-9 h-9 items-center justify-center rounded-lg mr-1.5 border ${
+                    plateSide === side ? 'bg-brand border-brand' : 'border-line'
+                  }`}
+                >
+                  <Text
+                    className={`text-[13px] font-semibold ${
+                      plateSide === side ? 'text-white' : 'text-ink-soft'
+                    }`}
+                  >
+                    {side === 0 ? 'A' : 'B'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <View className="flex-row items-center justify-between mt-2">
+            <View className="flex-1 pr-3">
+              <Text className="text-[12px] font-semibold text-ink">
+                {t('files.nivelarAntes')}
+              </Text>
+              <Text className="text-[11px] text-ink-muted mt-0.5">
+                {t('files.nivelarDica')}
+              </Text>
+            </View>
+            <Switch
+              value={bedLevel}
+              onValueChange={onChangeBedLevel}
+              trackColor={{ false: '#E4E4E4', true: '#3E6AE1' }}
+              thumbColor="#FFFFFF"
+              ios_backgroundColor="#E4E4E4"
+            />
+          </View>
+
+          <View className="flex-row mt-5">
+            <TouchableOpacity
+              onPress={onDelete}
+              className="h-12 px-4 items-center justify-center rounded-xl border border-line mr-2"
+              activeOpacity={0.7}
+            >
+              <Ionicons name="trash-outline" size={18} color="#C62828" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={onPrint}
+              className="flex-1 h-12 items-center justify-center rounded-xl bg-brand"
+              activeOpacity={0.8}
+            >
+              <Text className="text-[14px] font-semibold text-white">
+                {t('files.imprimirTitulo')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
   );
 };
 
@@ -112,6 +265,7 @@ export const FilesScreen = ({ route, navigation }: any) => {
   const [error, setError] = useState<string | null>(null);
   const [bedLevel, setBedLevel] = useState(false);
   const [plateSide, setPlateSide] = useState<0 | 1>(0);
+  const [selecionado, setSelecionado] = useState<PrinterFile | null>(null);
 
   const load = useCallback(async () => {
     if (!printerIdAtual) return;
@@ -297,13 +451,34 @@ export const FilesScreen = ({ route, navigation }: any) => {
                   key={file.name}
                   file={file}
                   printerIp={printer?.ipAddress ?? ''}
-                  onPrint={() => handlePrint(file)}
-                  onDelete={() => handleDelete(file)}
+                  onOpen={() => setSelecionado(file)}
                 />
               ))}
             </View>
           )}
         </ScrollView>
+      )}
+
+      {selecionado && (
+        <FileDetails
+          file={selecionado}
+          printerIp={printer?.ipAddress ?? ''}
+          bedLevel={bedLevel}
+          onChangeBedLevel={setBedLevel}
+          plateSide={plateSide}
+          onChangePlateSide={setPlateSide}
+          onClose={() => setSelecionado(null)}
+          onPrint={() => {
+            const alvo = selecionado;
+            setSelecionado(null);
+            handlePrint(alvo);
+          }}
+          onDelete={() => {
+            const alvo = selecionado;
+            setSelecionado(null);
+            handleDelete(alvo);
+          }}
+        />
       )}
     </SafeAreaView>
   );

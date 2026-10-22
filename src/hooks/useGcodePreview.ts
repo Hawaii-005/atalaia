@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import {
+  FilamentoDoFicheiro,
+  filamentosDoCabecalho,
+} from '../utils/gcodeCores';
+
 export interface GcodePreview {
   path: string;
   points: number;
@@ -151,10 +156,17 @@ const buildLocalUrl = (printerIp: string, filename: string) => {
 export const useGcodePreview = (
   printerIp?: string,
   filename?: string
-): { preview: GcodePreview | null; loading: boolean } => {
+): {
+  preview: GcodePreview | null;
+  filamentos: FilamentoDoFicheiro[];
+  loading: boolean;
+} => {
   const [preview, setPreview] = useState<GcodePreview | null>(null);
+  const [filamentos, setFilamentos] = useState<FilamentoDoFicheiro[]>([]);
   const [loading, setLoading] = useState(false);
-  const cacheRef = useRef<Record<string, GcodePreview | null>>({});
+  const cacheRef = useRef<
+    Record<string, { preview: GcodePreview | null; filamentos: FilamentoDoFicheiro[] }>
+  >({});
 
   const url = useMemo(() => {
     if (!printerIp || !filename) return '';
@@ -163,8 +175,10 @@ export const useGcodePreview = (
 
   const load = useCallback(async () => {
     if (!url) return;
-    if (cacheRef.current[url] !== undefined) {
-      setPreview(cacheRef.current[url]);
+    const guardado = cacheRef.current[url];
+    if (guardado !== undefined) {
+      setPreview(guardado.preview);
+      setFilamentos(guardado.filamentos);
       return;
     }
     setLoading(true);
@@ -172,17 +186,21 @@ export const useGcodePreview = (
       // O servidor da impressora responde 416 a pedidos Range — sem cabeçalho.
       const response = await comVez(() => fetch(url));
       if (!response.ok) {
-        cacheRef.current[url] = null;
+        cacheRef.current[url] = { preview: null, filamentos: [] };
         return;
       }
       const text = await response.text();
       const result = parseToolpath(text);
-      cacheRef.current[url] = result;
+      // As cores vêm do mesmo texto: não há segundo download.
+      const cores = filamentosDoCabecalho(text);
+      cacheRef.current[url] = { preview: result, filamentos: cores };
       setPreview(result);
+      setFilamentos(cores);
     } catch (error) {
       console.log('preview failed', error instanceof Error ? error.stack : String(error));
-      cacheRef.current[url] = null;
+      cacheRef.current[url] = { preview: null, filamentos: [] };
       setPreview(null);
+      setFilamentos([]);
     } finally {
       setLoading(false);
     }
@@ -192,5 +210,5 @@ export const useGcodePreview = (
     load();
   }, [load]);
 
-  return { preview, loading };
+  return { preview, filamentos, loading };
 };

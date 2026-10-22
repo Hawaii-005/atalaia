@@ -67,6 +67,10 @@ const en = {
   // ——— Files
   'files.title': 'Files',
   'files.tentarDeNovo': 'Try again',
+  'files.cores': 'Filaments in this file',
+  'files.coresDica': 'Read from the slicer G-code header',
+  'files.coresNenhuma': 'The file declares no filaments.',
+  'files.coresTotal': '{n} colours in this file',
   'files.ladoMesa': 'Plate side',
   'files.ladoMesaDica': 'A = textured · B = smooth',
   'files.nivelarAntes': 'Level the bed first',

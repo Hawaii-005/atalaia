@@ -65,6 +65,10 @@ export default {
   // ——— Files
   'files.title': 'Ficheiros',
   'files.tentarDeNovo': 'Tentar de novo',
+  'files.cores': 'Filamentos neste ficheiro',
+  'files.coresDica': 'Lido do cabeçalho do G-code do fatiador',
+  'files.coresNenhuma': 'O ficheiro não declara filamentos.',
+  'files.coresTotal': '{n} cores neste ficheiro',
   'files.ladoMesa': 'Lado da mesa',
   'files.ladoMesaDica': 'A = texturada · B = lisa',
   'files.nivelarAntes': 'Nivelar a mesa antes',
