@@ -153,56 +153,91 @@ const FileDetails = ({
 
   return (
     <Modal transparent animationType="slide" visible onRequestClose={onClose}>
-      <View className="flex-1 justify-end" style={{ backgroundColor: 'rgba(23,26,32,0.45)' }}>
-        <View className="bg-canvas rounded-t-2xl px-4 pt-4 pb-6">
-          <View className="flex-row items-start">
-            <View className="flex-1 pr-3">
-              <Text className="text-[15px] font-bold text-ink" numberOfLines={2}>
-                {label}
-              </Text>
-              <Text className="text-[12px] text-ink-muted mt-1">
-                {formatSize(size)}
-                {filamentos.length > 1
-                  ? ` · ${t('files.coresTotal', { n: filamentos.length })}`
-                  : ''}
-              </Text>
+      <View className="flex-1 justify-end" style={{ backgroundColor: 'rgba(0,0,0,0.55)' }}>
+        <View className="bg-canvas rounded-t-2xl" style={{ maxHeight: '92%' }}>
+          <View className="items-center pt-2.5 pb-1">
+            <View className="w-10 h-1 rounded-full bg-line" />
+          </View>
+
+          <ScrollView
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 12 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Cabeçalho */}
+            <View className="flex-row items-start">
+              <View className="flex-1 pr-3">
+                <Text className="text-[15px] font-bold text-ink" numberOfLines={2}>
+                  {label}
+                </Text>
+                <Text className="text-[12px] text-ink-muted mt-1">
+                  {formatSize(size)}
+                  {filamentos.length > 1
+                    ? ` · ${t('files.coresTotal', { n: filamentos.length })}`
+                    : ''}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={onClose}
+                className="w-9 h-9 items-center justify-center rounded-lg border border-line"
+                activeOpacity={0.7}
+              >
+                <Ionicons name="close" size={18} color={hexDe(tema.paleta.tinta)} />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              onPress={onClose}
-              className="w-9 h-9 items-center justify-center rounded-lg border border-line"
-              activeOpacity={0.7}
-            >
-              <Ionicons name="close" size={18} color={hexDe(tema.paleta.tinta)} />
-            </TouchableOpacity>
-          </View>
 
-          <View className="mt-4">
-            {loading ? (
-              <View className="h-60 rounded-xl border border-line bg-cartao items-center justify-center">
-                <ActivityIndicator color={hexDe(tema.paleta.acento)} />
-              </View>
-            ) : preview ? (
-              <ZoomThumb path={preview.path} altura={240} />
-            ) : (
-              <View className="h-60 rounded-xl border border-line bg-cartao items-center justify-center">
-                <Ionicons name="cube-outline" size={40} color={hexDe(tema.paleta.tintaMuted)} />
-              </View>
-            )}
-          </View>
+            {/* Pré-visualização */}
+            <View className="mt-3">
+              {loading ? (
+                <View className="h-52 rounded-xl border border-line bg-cartao items-center justify-center">
+                  <ActivityIndicator color={hexDe(tema.paleta.acento)} />
+                </View>
+              ) : preview ? (
+                <ZoomThumb path={preview.path} altura={208} />
+              ) : (
+                <View className="h-52 rounded-xl border border-line bg-cartao items-center justify-center">
+                  <Ionicons name="cube-outline" size={40} color={hexDe(tema.paleta.tintaMuted)} />
+                </View>
+              )}
+            </View>
 
-          <View className="mt-4">
-            <Text className="text-[12px] font-semibold text-ink">
-              {t('files.cores')}
+            {/* Resumo em três células */}
+            <View className="flex-row mt-3" style={{ gap: 8 }}>
+              {[
+                { rotulo: t('files.total'), valor: `${totalGramas.toFixed(1).replace('.', ',')} g` },
+                { rotulo: t('files.custo'), valor: custo > 0 ? `≈ ${euros(custo)}` : '—' },
+                {
+                  rotulo: t('files.filamentos'),
+                  valor: String(filamentos.length || 0),
+                },
+              ].map(celula => (
+                <View
+                  key={celula.rotulo}
+                  className="flex-1 border border-line rounded-md px-2.5 py-2"
+                >
+                  <Text className="text-[9px] tracking-[1.2px] font-semibold text-ink-soft">
+                    {celula.rotulo.toUpperCase()}
+                  </Text>
+                  <Text className="text-[15px] font-bold text-ink mt-0.5" numberOfLines={1}>
+                    {celula.valor}
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+            {/* Filamentos */}
+            <Text className="text-[10px] tracking-[1.4px] font-semibold text-ink-soft mt-5">
+              {t('files.cores').toUpperCase()}
             </Text>
             {filamentos.length === 0 ? (
-              <Text className="text-[12px] text-ink-muted mt-1">
+              <Text className="text-[12px] text-ink-muted mt-1.5">
                 {t('files.coresNenhuma')}
               </Text>
             ) : (
               filamentos.map(filamento => (
-                <View key={filamento.tool} className="flex-row items-center mt-2">
+                <View key={filamento.tool} className="flex-row items-center mt-2.5">
                   <View
-                    className="w-5 h-5 rounded-full border border-line mr-2"
+                    className="w-4 h-4 rounded-full border border-line mr-2"
                     style={{ backgroundColor: filamento.cor ?? hexDe(tema.paleta.linha) }}
                   />
                   <Text className="text-[12px] font-semibold text-ink">
@@ -218,17 +253,9 @@ const FileDetails = ({
                 </View>
               ))
             )}
-            {filamentos.length > 0 && (
-              <View className="flex-row items-center justify-between mt-3 pt-2 border-t border-line">
-                <Text className="text-[12px] text-ink-soft">
-                  {t('files.total')}: {totalGramas.toFixed(1).replace('.', ',')} g
-                </Text>
-                <Text className="text-[12px] font-semibold text-ink">
-                  {custo > 0 ? `≈ ${euros(custo)}` : '—'}
-                </Text>
-              </View>
-            )}
-            <View className="flex-row items-center justify-between mt-2">
+
+            {/* Preço por quilo */}
+            <View className="flex-row items-center justify-between mt-3 pt-3 border-t border-line">
               <Text className="text-[12px] text-ink-soft flex-1">
                 {t('files.precoKg')}
               </Text>
@@ -255,65 +282,73 @@ const FileDetails = ({
                 className="w-24 h-9 px-3 rounded-lg border border-line text-[12px] text-ink text-right"
               />
             </View>
-          </View>
 
-          <View className="flex-row items-center justify-between mt-4 pt-3 border-t border-line">
-            <View className="flex-1 pr-3">
-              <Text className="text-[12px] font-semibold text-ink">
-                {t('files.ladoMesa')}
-              </Text>
-            </View>
-            <View className="flex-row">
-              {([0, 1] as const).map(side => (
-                <TouchableOpacity
-                  key={side}
-                  onPress={() => onChangePlateSide(side)}
-                  activeOpacity={0.7}
-                  className={`w-9 h-9 items-center justify-center rounded-lg mr-1.5 border ${
-                    plateSide === side ? 'bg-brand border-brand' : 'border-line'
-                  }`}
-                >
-                  <Text
-                    className={`text-[13px] font-semibold ${
-                      plateSide === side ? 'text-white' : 'text-ink-soft'
-                    }`}
-                  >
-                    {side === 0 ? 'A' : 'B'}
+            {/* Impressão */}
+            <Text className="text-[10px] tracking-[1.4px] font-semibold text-ink-soft mt-5">
+              {t('files.impressao').toUpperCase()}
+            </Text>
+            <View className="border border-line rounded-md mt-2">
+              <View className="flex-row items-center justify-between px-3 py-2.5">
+                <Text className="text-[12px] text-ink flex-1">
+                  {t('files.ladoMesa')}
+                </Text>
+                <View className="flex-row">
+                  {([0, 1] as const).map(side => (
+                    <TouchableOpacity
+                      key={side}
+                      onPress={() => onChangePlateSide(side)}
+                      activeOpacity={0.7}
+                      className={`w-9 h-8 items-center justify-center rounded-md mr-1.5 border ${
+                        plateSide === side ? 'bg-brand border-brand' : 'border-line'
+                      }`}
+                    >
+                      <Text
+                        className={`text-[12px] font-semibold ${
+                          plateSide === side ? 'text-white' : 'text-ink-soft'
+                        }`}
+                      >
+                        {side === 0 ? 'A' : 'B'}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <View className="flex-row items-center justify-between px-3 py-2.5 border-t border-line">
+                <View className="flex-1 pr-3">
+                  <Text className="text-[12px] text-ink">
+                    {t('files.nivelarAntes')}
                   </Text>
-                </TouchableOpacity>
-              ))}
+                  <Text className="text-[10px] text-ink-muted mt-0.5">
+                    {t('files.nivelarDica')}
+                  </Text>
+                </View>
+                <Switch
+                  value={bedLevel}
+                  onValueChange={onChangeBedLevel}
+                  trackColor={{ false: hexDe(tema.paleta.linha), true: hexDe(tema.paleta.acento) }}
+                  thumbColor="#FFFFFF"
+                  ios_backgroundColor={hexDe(tema.paleta.linha)}
+                />
+              </View>
             </View>
-          </View>
+          </ScrollView>
 
-          <View className="flex-row items-center justify-between mt-2">
-            <View className="flex-1 pr-3">
-              <Text className="text-[12px] font-semibold text-ink">
-                {t('files.nivelarAntes')}
-              </Text>
-              <Text className="text-[11px] text-ink-muted mt-0.5">
-                {t('files.nivelarDica')}
-              </Text>
-            </View>
-            <Switch
-              value={bedLevel}
-              onValueChange={onChangeBedLevel}
-              trackColor={{ false: hexDe(tema.paleta.linha), true: hexDe(tema.paleta.acento) }}
-              thumbColor="#FFFFFF"
-              ios_backgroundColor={hexDe(tema.paleta.linha)}
-            />
-          </View>
-
-          <View className="flex-row mt-5">
+          {/* Acções fixas */}
+          <View
+            className="flex-row items-center px-4 pt-3 border-t border-line"
+            style={{ gap: 8, paddingBottom: 18 }}
+          >
             <TouchableOpacity
               onPress={onRename}
-              className="h-12 w-12 items-center justify-center rounded-xl border border-line mr-2"
+              className="h-12 w-12 items-center justify-center rounded-md border-[1.5px] border-line bg-canvas-sunken"
               activeOpacity={0.7}
             >
               <Ionicons name="pencil-outline" size={18} color={hexDe(tema.paleta.tinta)} />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={onDelete}
-              className="h-12 px-4 items-center justify-center rounded-xl border border-line mr-2"
+              className="h-12 w-12 items-center justify-center rounded-md border-[1.5px] border-line bg-canvas-sunken"
               activeOpacity={0.7}
             >
               <Ionicons name="trash-outline" size={18} color={hexDe(tema.paleta.perigo)} />
@@ -323,7 +358,8 @@ const FileDetails = ({
               className={`flex-1 h-12 ${BT_ACENTO}`}
               activeOpacity={0.8}
             >
-              <Text className={`text-[14px] ${TX_ACENTO}`}>
+              <Ionicons name="print-outline" size={16} color={hexDe(tema.paleta.acentoTexto)} style={{ marginRight: 8 }} />
+              <Text className={`text-[12px] ${TX_ACENTO}`}>
                 {t('files.imprimirTitulo')}
               </Text>
             </TouchableOpacity>
