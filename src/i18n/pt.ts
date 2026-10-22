@@ -93,8 +93,6 @@ export default {
   'files.impressao': 'Impressão',
   'files.custo': 'Custo',
   'files.filamentos': 'Filamentos',
-  'files.dicaZoom': 'Aproxime com dois dedos',
-  'files.reporZoom': 'repor',
   'files.imprimirTitulo': 'Imprimir',
   'files.imprimirMsg': 'Começar a imprimir {nome}?',
   'files.naoArrancou': 'Não arrancou',

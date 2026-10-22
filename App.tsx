@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Platform, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { vars } from 'nativewind';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 import { hexDe } from './src/theme/temas';
@@ -111,16 +110,14 @@ function AppLogic() {
 function RaizTematica() {
   const { vars: variaveisTema, tema } = useTheme();
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <View
-        style={[
-          { flex: 1, backgroundColor: hexDe(tema.paleta.fundo) },
-          vars(variaveisTema),
-        ]}
-      >
-        <AppLogic />
-      </View>
-    </GestureHandlerRootView>
+    <View
+      style={[
+        { flex: 1, backgroundColor: hexDe(tema.paleta.fundo) },
+        vars(variaveisTema),
+      ]}
+    >
+      <AppLogic />
+    </View>
   );
 }
 

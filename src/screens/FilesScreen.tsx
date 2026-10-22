@@ -31,7 +31,6 @@ import { custoDe, euros, getPrecoKg, setPrecoKg } from '../utils/precos';
 import { t } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
-import { ZoomThumb } from '../components/ZoomThumb';
 import { BT_ACENTO, BT_APAGADA, BT_NEUTRA, BT_PERIGO, TX_ACENTO, TX_PERIGO } from '../theme/botoes';
 
 interface PrinterFile {
@@ -193,7 +192,11 @@ const FileDetails = ({
                   <ActivityIndicator color={hexDe(tema.paleta.acento)} />
                 </View>
               ) : preview ? (
-                <ZoomThumb path={preview.path} altura={208} />
+                <View className="rounded-xl border border-line bg-cartao items-center justify-center" style={{ height: 208 }}>
+                  <Svg viewBox="0 0 100 100" width={192} height={192}>
+                    <Path d={preview.path} stroke={hexDe(tema.paleta.tinta)} strokeWidth={0.5} fill="none" />
+                  </Svg>
+                </View>
               ) : (
                 <View className="h-52 rounded-xl border border-line bg-cartao items-center justify-center">
                   <Ionicons name="cube-outline" size={40} color={hexDe(tema.paleta.tintaMuted)} />

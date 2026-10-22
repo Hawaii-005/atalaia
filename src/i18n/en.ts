@@ -95,8 +95,6 @@ const en = {
   'files.impressao': 'Print',
   'files.custo': 'Cost',
   'files.filamentos': 'Filaments',
-  'files.dicaZoom': 'Pinch with two fingers',
-  'files.reporZoom': 'reset',
   'files.imprimirTitulo': 'Print',
   'files.imprimirMsg': 'Start printing {nome}?',
   'files.naoArrancou': "Didn't start",
