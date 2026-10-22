@@ -373,24 +373,28 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
             </Svg>
 
             <View
-              className="absolute overflow-hidden items-center justify-center"
+              className="absolute items-center justify-center"
               style={{
                 top: ANEL_TRACO + 7,
                 left: ANEL_TRACO + 7,
-                right: ANEL_TRACO + 7,
-                bottom: ANEL_TRACO + 7,
-                borderRadius: ANEL_TAM,
-                backgroundColor: '#000',
+                width: ANEL_TAM - 2 * (ANEL_TRACO + 7),
+                height: ANEL_TAM - 2 * (ANEL_TRACO + 7),
               }}
             >
               {printer.videoUrl && isConnected ? (
                 <WebView
                   key={webViewKey}
                   source={{
-                    html: `<html><body style="margin:0;background:#000;overflow:hidden"><img src="http://${printer.ipAddress}:3031/video" style="width:100%;height:100%;object-fit:cover" /></body></html>`,
+                    html: `<html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;padding:0;background:#000;height:100%;overflow:hidden}img{width:100%;height:100%;object-fit:cover;display:block}</style></head><body><img src="http://${printer.ipAddress}:3031/video" /></body></html>`,
                     baseUrl: `http://${printer.ipAddress}`,
                   }}
-                  style={{ flex: 1, width: '100%', backgroundColor: '#000' }}
+                  style={{
+                    width: ANEL_TAM - 2 * (ANEL_TRACO + 7),
+                    height: ANEL_TAM - 2 * (ANEL_TRACO + 7),
+                    borderRadius: ANEL_TAM,
+                    overflow: 'hidden',
+                    backgroundColor: '#000',
+                  }}
                   javaScriptEnabled
                   domStorageEnabled={false}
                   allowsInlineMediaPlayback
@@ -399,17 +403,16 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                   originWhitelist={['*']}
                   scrollEnabled={false}
                   bounces={false}
+                  onHttpError={e => console.log('DETAIL_HTTP_ERR', JSON.stringify(e.nativeEvent))}
+                  onError={e => console.log('DETAIL_WV_ERR', JSON.stringify(e.nativeEvent))}
+                  onLoadEnd={() => console.log('DETAIL_WV_LOADED')}
                 />
               ) : (
-                <Ionicons
-                  name="videocam-off"
-                  size={26}
-                  color="rgba(255,255,255,0.45)"
-                />
+                <Ionicons name="videocam-off" size={26} color="rgba(255,255,255,0.45)" />
               )}
 
               <View
-                className="absolute inset-0 items-center justify-center"
+                className="absolute items-center justify-center"
                 pointerEvents="none"
               >
                 <View className="px-2.5 py-1 rounded-lg bg-black/35">
