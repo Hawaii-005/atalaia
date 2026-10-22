@@ -4,6 +4,8 @@
 
 **Português** · [English](#english)
 
+**[Descarregar o APK](https://github.com/Hawaii-005/atalaia/releases/latest)** · [Releases](https://github.com/Hawaii-005/atalaia/releases) · [Problemas](https://github.com/Hawaii-005/atalaia/issues)
+
 **A tua impressora, à vista.** Aplicação Android para controlar e vigiar a **Elegoo Centauri Carbon** a partir da rede onde ela está — sem conta, sem nuvem, sem servidor pelo meio.
 
 A impressora fala SDCP por WebSocket (`ws://<ip>:3030/websocket`) e a câmara serve MJPEG em `http://<ip>:3031/video`. A app liga-se directamente a esses dois endereços. Nada sai da tua rede, excepto quando escolhes a ligação remota por Tailscale.
@@ -155,6 +157,8 @@ MIT — ver [LICENSE](LICENSE).
 ---
 
 # English
+
+**[Download the APK](https://github.com/Hawaii-005/atalaia/releases/latest)** · [Releases](https://github.com/Hawaii-005/atalaia/releases) · [Issues](https://github.com/Hawaii-005/atalaia/issues)
 
 **Your printer, in sight.** An Android app to control and watch the **Elegoo Centauri Carbon** from the network it lives on — no account, no cloud, no server in between.
 
