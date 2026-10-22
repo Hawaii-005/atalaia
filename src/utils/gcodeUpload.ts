@@ -29,11 +29,6 @@ const decodeBase64 = (input: string): Uint8Array => {
   return bytes;
 };
 
-export interface UploadProgress {
-  sent: number;
-  total: number;
-}
-
 const newTransferId = () => {
   const hex = '0123456789abcdef';
   let id = '';
@@ -43,11 +38,15 @@ const newTransferId = () => {
   return id;
 };
 
+/**
+ * Envia o ficheiro em blocos. `onProgresso` é chamado após cada bloco
+ * aceite pela impressora, com os bytes já enviados e o total.
+ */
 export const uploadGcode = async (
   printerIp: string,
   uri: string,
   filename: string,
-  onProgress?: (progress: UploadProgress) => void
+  onProgresso?: (enviado: number, total: number) => void
 ): Promise<void> => {
   const info = await FileSystem.getInfoAsync(uri, { size: true });
   const total = (info as { size?: number }).size ?? 0;
@@ -109,6 +108,6 @@ export const uploadGcode = async (
     }
 
     index += 1;
-    onProgress?.({ sent: position + length, total });
+    onProgresso?.(position + length, total);
   }
 };

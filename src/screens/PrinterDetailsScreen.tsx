@@ -301,7 +301,9 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
         subtitle={
           isConnected
             ? `${printer.ipAddress} · Ligada`
-            : CONNECTION_LABEL[printer.connectionStatus].toUpperCase()
+            : printer.reconnectAttempt
+              ? `A RECONECTAR (TENTATIVA ${printer.reconnectAttempt})`
+              : CONNECTION_LABEL[printer.connectionStatus].toUpperCase()
         }
         onBack={() => navigation.goBack()}
       />
