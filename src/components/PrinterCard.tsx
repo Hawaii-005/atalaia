@@ -16,6 +16,7 @@ import {
   formatTicksToReadableTime,
 } from '../utils/FormatUtils';
 import { t } from '../i18n';
+import Svg, { Circle } from 'react-native-svg';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 import { BT_ACENTO, BT_APAGADA, BT_NEUTRA, BT_PERIGO, TX_ACENTO, TX_PERIGO } from '../theme/botoes';
@@ -30,6 +31,8 @@ interface PrinterCardProps {
   onStopPrint?: () => void;
   showPrintControls?: boolean;
 }
+
+const MEDALHA = 58;
 
 const STATUS_DOT: { [key in ConnectionStatus]: string } = {
   connected: '#1F9D55',
@@ -102,6 +105,9 @@ export const PrinterCard = ({
               ? t('comum.parada')
               : t('comum.aImprimir');
 
+  const percentual =
+    readablePrintStatus === 'completed' ? 100 : Math.max(0, Math.min(100, progress));
+
   return (
     <TouchableOpacity
       className="rounded-xl2 border border-line bg-cartao p-4"
@@ -109,7 +115,48 @@ export const PrinterCard = ({
       activeOpacity={onPress ? 0.7 : 1}
     >
       {/* Identity */}
-      <View className="flex-row items-start">
+      <View className="flex-row items-center">
+        <View style={{ width: MEDALHA, height: MEDALHA }} className="mr-3">
+          <Svg width={MEDALHA} height={MEDALHA}>
+            <Circle
+              cx={MEDALHA / 2}
+              cy={MEDALHA / 2}
+              r={MEDALHA / 2 - 3}
+              stroke={hexDe(tema.paleta.linha)}
+              strokeWidth={3}
+              fill="none"
+            />
+            <Circle
+              cx={MEDALHA / 2}
+              cy={MEDALHA / 2}
+              r={MEDALHA / 2 - 3}
+              stroke={STATUS_DOT[printer.connectionStatus]}
+              strokeWidth={3}
+              fill="none"
+              strokeDasharray={`${2 * Math.PI * (MEDALHA / 2 - 3)} ${2 * Math.PI * (MEDALHA / 2 - 3)}`}
+              strokeDashoffset={
+                2 * Math.PI * (MEDALHA / 2 - 3) * (1 - Math.min(100, Math.max(0, percentual)) / 100)
+              }
+              strokeLinecap="round"
+              transform={`rotate(-90 ${MEDALHA / 2} ${MEDALHA / 2})`}
+              opacity={isPrinting || readablePrintStatus === 'completed' ? 1 : 0.35}
+            />
+          </Svg>
+          <View className="absolute inset-0 items-center justify-center">
+            {isPrinting || readablePrintStatus === 'completed' ? (
+              <Text className="text-[13px] font-bold text-ink">
+                {readablePrintStatus === 'completed' ? 100 : progress}%
+              </Text>
+            ) : (
+              <Ionicons
+                name="print-outline"
+                size={17}
+                color={hexDe(tema.paleta.tintaMuted)}
+              />
+            )}
+          </View>
+        </View>
+
         <View className="flex-1 pr-3">
           <Text className="text-[17px] font-semibold text-ink" numberOfLines={1}>
             {formatTextMaxEllipsis(printer.printerName, 22)}
@@ -197,22 +244,7 @@ export const PrinterCard = ({
             </View>
           )}
 
-          <View className="mt-3">
-            <Progress.Bar
-              progress={readablePrintStatus === 'completed' ? 1 : progress / 100}
-              width={null}
-              height={5}
-              color={hexDe(tema.paleta.acento)}
-              unfilledColor={hexDe(tema.paleta.linha)}
-              borderWidth={0}
-              borderRadius={3}
-            />
-          </View>
-
-          <View className="flex-row items-center justify-between mt-2">
-            <Text className="text-xs font-semibold text-ink-soft">
-              {readablePrintStatus === 'completed' ? 100 : progress}%
-            </Text>
+          <View className="flex-row items-center justify-between mt-3">
 
             {showPrintControls && (
               <View className="flex-row">
