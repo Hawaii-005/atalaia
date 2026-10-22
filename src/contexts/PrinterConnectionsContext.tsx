@@ -76,6 +76,10 @@ export const PrinterConnectionsProvider = ({
   const [printers, setPrinters] = useState<Printer[]>([]);
   const webSocketsRef = useRef<{ [key: string]: WebSocket }>({});
   const statusTimersRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
+  // Vigia de silêncio: se a impressora não enviar nada neste tempo, a ligação
+  // TCP pode estar morta sem `onclose` (foi desligada da corrente, Wi-Fi caiu).
+  const lastMessageRef = useRef<{ [key: string]: number }>({});
+  const watchdogTimersRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
   const statusIntervalRef = useRef(DEFAULT_STATUS_INTERVAL);
   const [statusIntervalMs, setStatusIntervalMs] = useState(
     DEFAULT_STATUS_INTERVAL
@@ -136,6 +140,9 @@ export const PrinterConnectionsProvider = ({
       );
       Object.values(webSocketsRef.current).forEach(ws => ws.close());
       Object.values(statusTimersRef.current).forEach(timer =>
+        clearInterval(timer)
+      );
+      Object.values(watchdogTimersRef.current).forEach(timer =>
         clearInterval(timer)
       );
     };
@@ -434,6 +441,44 @@ export const PrinterConnectionsProvider = ({
     }, delay);
   };
 
+  const SILENCIO_MAXIMO_MS = 25000;
+
+  const stopWatchdog = (printerId: string) => {
+    const timer = watchdogTimersRef.current[printerId];
+    if (timer) {
+      clearInterval(timer);
+      delete watchdogTimersRef.current[printerId];
+    }
+  };
+
+  // Sem mensagens durante SILENCIO_MAXIMO_MS, assume-se ligação morta: fechar o
+  // socket faz o `onclose` correr a reconexão normal.
+  const startWatchdog = (printer: Printer, ws: WebSocket) => {
+    stopWatchdog(printer.id);
+    lastMessageRef.current[printer.id] = Date.now();
+    watchdogTimersRef.current[printer.id] = setInterval(() => {
+      if (webSocketsRef.current[printer.id] !== ws) {
+        stopWatchdog(printer.id);
+        return;
+      }
+      const ultimo = lastMessageRef.current[printer.id] ?? 0;
+      if (Date.now() - ultimo < SILENCIO_MAXIMO_MS) {
+        return;
+      }
+      console.log(
+        `Sem resposta de ${printer.printerName} há ${Math.round(
+          (Date.now() - ultimo) / 1000
+        )} s: a fechar para reconectar.`
+      );
+      stopWatchdog(printer.id);
+      try {
+        ws.close();
+      } catch (e) {
+        console.error('Falha ao fechar o socket inactivo:', e);
+      }
+    }, 5000);
+  };
+
   // Fecho pedido pela app: não deve disparar reconexão automática.
   const markIntentionalClose = (printerId: string) => {
     intentionalCloseRef.current[printerId] = true;
@@ -501,9 +546,11 @@ export const PrinterConnectionsProvider = ({
 
       // Start periodic status updates
       startStatusTimer(printer);
+      startWatchdog(printer, ws);
     };
 
     ws.onmessage = event => {
+      lastMessageRef.current[printer.id] = Date.now();
       try {
         const data = JSON.parse(event.data);
 
@@ -598,6 +645,7 @@ export const PrinterConnectionsProvider = ({
         updatePrinterStatus(printer.id, 'error');
       }
       stopStatusTimer(printer.id);
+      stopWatchdog(printer.id);
       healPrinterIp(printer);
     };
 
@@ -613,6 +661,7 @@ export const PrinterConnectionsProvider = ({
       }
 
       stopStatusTimer(printer.id);
+      stopWatchdog(printer.id);
       healPrinterIp(printer);
 
       // Pedidos pendentes nesta ligação não ficam pendurados.
@@ -689,6 +738,7 @@ export const PrinterConnectionsProvider = ({
   const removePrinter = (id: string) => {
     // Fecho intencional: matar temporizadores antes de fechar o socket.
     clearReconnectTimer(id);
+    stopWatchdog(id);
     delete reconnectAttemptsRef.current[id];
     delete intentionalCloseRef.current[id];
     markIntentionalClose(id);
