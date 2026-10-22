@@ -129,6 +129,23 @@ export const HomeScreen = ({ navigation }: any) => {
     ]);
   };
 
+  // Impressora em trabalho: alimenta o bloco grande do topo (conceito B)
+  const emTrabalho = printers.find(pr => {
+    const st = pr.status?.PrintInfo?.Status ?? 0;
+    return st === 3 || st === 6 || st === 13 || (pr.status?.PrintInfo?.Progress ?? 0) > 0;
+  });
+  const heroInfo = emTrabalho?.status?.PrintInfo;
+  const heroProgresso = Math.max(0, Math.min(100, heroInfo?.Progress ?? 0));
+  const heroRestanteSeg = Math.max(
+    0,
+    Math.round((heroInfo?.TotalTicks ?? 0) - (heroInfo?.CurrentTicks ?? 0))
+  );
+  const heroRestante =
+    heroRestanteSeg >= 3600
+      ? `${Math.floor(heroRestanteSeg / 3600)}h ${Math.round((heroRestanteSeg % 3600) / 60)}m`
+      : `${Math.round(heroRestanteSeg / 60)}m`;
+  const heroVent = emTrabalho?.status?.CurrentFanSpeed;
+
   const onlineCount = printers.filter(
     p => p.connectionStatus === 'connected'
   ).length;
@@ -177,6 +194,52 @@ export const HomeScreen = ({ navigation }: any) => {
               {t('home.avisoRedeLocal')}
             </Text>
           </TouchableOpacity>
+        )}
+
+        {emTrabalho && (
+          <View className="mb-5">
+            <View className="flex-row items-end justify-between">
+              <Text
+                className="text-[54px] leading-[58px] font-bold text-ink"
+                style={{ fontFamily: 'monospace' }}
+              >
+                {heroProgresso}
+                <Text className="text-[18px] text-ink-muted"> %</Text>
+              </Text>
+              <View className="items-end pb-2 flex-1 pl-4">
+                <Text className="text-[11px] text-ink-soft" numberOfLines={1}>
+                  {String(heroInfo?.Filename ?? '').split('/').pop()}
+                </Text>
+                <Text className="text-[11px] text-ink-muted mt-0.5">
+                  {t('comum.camada', {
+                    actual: heroInfo?.CurrentLayer ?? 0,
+                    total: heroInfo?.TotalLayer ?? 0,
+                  })}
+                  {' · '}
+                  {t('camera.faltam', { tempo: heroRestante })}
+                </Text>
+              </View>
+            </View>
+
+            <View className="h-1.5 rounded-full bg-line mt-2 overflow-hidden">
+              <View
+                className="h-full bg-brand"
+                style={{ width: `${Math.max(2, heroProgresso)}%` }}
+              />
+            </View>
+
+            <View className="flex-row items-center justify-between mt-2.5">
+              <Text className="text-[11px] text-ink" style={{ fontFamily: 'monospace' }}>
+                {t('comum.bico').toUpperCase()} {(emTrabalho?.status?.TempOfNozzle ?? 0).toFixed(0)}°
+              </Text>
+              <Text className="text-[11px] text-ink" style={{ fontFamily: 'monospace' }}>
+                {t('comum.mesa').toUpperCase()} {(emTrabalho?.status?.TempOfHotbed ?? 0).toFixed(0)}°
+              </Text>
+              <Text className="text-[11px] text-ink-soft" style={{ fontFamily: 'monospace' }}>
+                {t('home.ventoinhas').toUpperCase()} {heroVent?.ModelFan ?? 0}/{(heroVent?.BoxFan ?? 0)}/{(heroVent?.AuxiliaryFan ?? 0)}%
+              </Text>
+            </View>
+          </View>
         )}
 
         {printers.length === 0 ? (

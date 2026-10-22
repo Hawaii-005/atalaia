@@ -41,6 +41,7 @@ const en = {
 
   // ——— Home
   'home.title': 'Printers',
+  'home.ventoinhas': 'Fans',
   'home.semImpressoras': 'No printers yet',
   'home.aReconectarMsg':
     '{nome}: attempt {n}. A reconnect is already being attempted automatically.',

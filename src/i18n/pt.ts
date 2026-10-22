@@ -39,6 +39,7 @@ export default {
 
   // ——— Home
   'home.title': 'Impressoras',
+  'home.ventoinhas': 'Ventoinhas',
   'home.semImpressoras': 'Ainda não há impressoras',
   'home.aReconectarMsg':
     '{nome}: tentativa {n}. Já está a ser tentado automaticamente.',
