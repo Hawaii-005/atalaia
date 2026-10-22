@@ -1,3 +1,4 @@
+import { log } from './log';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const KEY = 'printHistory';
@@ -24,7 +25,7 @@ export const loadHistory = async (): Promise<PrintRecord[]> => {
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
   } catch (error) {
-    console.log('could not load print history', error);
+    log('could not load print history', error);
     return [];
   }
 };
@@ -33,7 +34,7 @@ const saveHistory = async (records: PrintRecord[]) => {
   try {
     await AsyncStorage.setItem(KEY, JSON.stringify(records.slice(0, MAX_RECORDS)));
   } catch (error) {
-    console.log('could not save print history', error);
+    log('could not save print history', error);
   }
 };
 

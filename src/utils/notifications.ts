@@ -1,3 +1,4 @@
+import { log } from './log';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
@@ -51,7 +52,7 @@ export const prepareNotifications = async () => {
     const asked = await Notifications.requestPermissionsAsync();
     return asked.granted;
   } catch (error) {
-    console.log('notifications setup failed', error);
+    log('notifications setup failed', error);
     return false;
   }
 };
@@ -70,7 +71,7 @@ export const saveNotificationPrefs = async (prefs: NotificationPrefs) => {
   try {
     await AsyncStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
   } catch (error) {
-    console.log('could not save notification prefs', error);
+    log('could not save notification prefs', error);
   }
 };
 
@@ -98,6 +99,6 @@ export const notify = async (
           : null,
     });
   } catch (error) {
-    console.log('could not schedule notification', error);
+    log('could not schedule notification', error);
   }
 };

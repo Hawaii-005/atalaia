@@ -1,3 +1,4 @@
+import { log } from '../utils/log';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -200,7 +201,7 @@ export const useGcodePreview = (
       setPreview(result);
       setFilamentos(cores);
     } catch (error) {
-      console.log('preview failed', error instanceof Error ? error.stack : String(error));
+      log('preview failed', error instanceof Error ? error.stack : String(error));
       cacheRef.current[url] = { preview: null, filamentos: [] };
       if (cancelado.atual) return;
       setPreview(null);

@@ -1,3 +1,4 @@
+import { log } from '../utils/log';
 import {
   View,
   Text,
@@ -449,9 +450,9 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                   originWhitelist={['*']}
                   scrollEnabled={false}
                   bounces={false}
-                  onHttpError={e => console.log('DETAIL_HTTP_ERR', JSON.stringify(e.nativeEvent))}
-                  onError={e => console.log('DETAIL_WV_ERR', JSON.stringify(e.nativeEvent))}
-                  onLoadEnd={() => console.log('DETAIL_WV_LOADED')}
+                  onHttpError={e => log('DETAIL_HTTP_ERR', JSON.stringify(e.nativeEvent))}
+                  onError={e => log('DETAIL_WV_ERR', JSON.stringify(e.nativeEvent))}
+                  onLoadEnd={() => log('DETAIL_WV_LOADED')}
                 />
                 </View>
               ) : (

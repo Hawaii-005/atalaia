@@ -51,7 +51,12 @@ export const t = (
   chave: string,
   params?: Record<string, string | number>
 ): string => {
+  // Se a chave não existir no idioma corrente, cai para português em vez de
+  // mostrar a chave crua ao utilizador.
   let valor = tabelas[idiomCorrente]?.[chave];
+  if (valor === undefined && idiomCorrente !== 'pt') {
+    valor = tabelas.pt?.[chave];
+  }
   if (valor === undefined) {
     if (__DEV__) {
       console.warn(`[i18n] chave em falta: ${chave}`);

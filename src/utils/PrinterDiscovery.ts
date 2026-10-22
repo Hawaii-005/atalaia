@@ -1,3 +1,4 @@
+import { log } from './log';
 import * as Network from 'expo-network';
 import { Buffer } from 'buffer';
 import dgram from 'react-native-udp';
@@ -101,7 +102,7 @@ const udpDiscovery = (subnet: string | null): Promise<DiscoveredPrinter[]> =>
       } catch {
         // ignore
       }
-      console.log('[discovery] udp encontrou', found.size);
+      log('[discovery] udp encontrou', found.size);
       resolve(Array.from(found.values()));
     };
 
@@ -162,17 +163,42 @@ export const getLocalSubnet = async (): Promise<string | null> => {
   }
 };
 
+let emCurso: Promise<DiscoveredPrinter[]> | null = null;
+
+/**
+ * Descoberta barata: um único datagrama UDP, sem tocar nos 254 endereços.
+ * É o que se usa para "curar" o IP quando a ligação cai — uma varredura
+ * completa a cada queda é tráfego que a rede doméstica não merece.
+ */
+export const descobrirSoUdp = async (): Promise<DiscoveredPrinter[]> => {
+  const subnet = await getLocalSubnet();
+  return udpDiscovery(subnet);
+};
+
 /**
  * Sweeps the local /24 for printers listening on the SDCP port (3030).
  * Runs in batches so the phone is not asked to open 254 sockets at once.
+ * Só uma varredura de cada vez: chamadas simultâneas partilham o resultado.
  */
 export const discoverPrinters = async (
+  onProgress?: (scanned: number, total: number) => void
+): Promise<DiscoveredPrinter[]> => {
+  if (emCurso) {
+    return emCurso;
+  }
+  emCurso = descobrirComVarredura(onProgress).finally(() => {
+    emCurso = null;
+  });
+  return emCurso;
+};
+
+const descobrirComVarredura = async (
   onProgress?: (scanned: number, total: number) => void
 ): Promise<DiscoveredPrinter[]> => {
   const subnet = await getLocalSubnet();
   if (!subnet) {
     throw new Error(
-      'Could not read your Wi-Fi address. Make sure the phone is on the same Wi-Fi as the printer.'
+      'Não consegui ler o endereço do Wi-Fi. Confirma que o telemóvel está na mesma rede da impressora.'
     );
   }
 

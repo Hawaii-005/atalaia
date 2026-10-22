@@ -1,3 +1,4 @@
+import { log } from '../utils/log';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -71,7 +72,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
             : ScreenOrientation.OrientationLock.PORTRAIT_UP
         );
       } catch (error) {
-        console.log('orientation lock failed', error);
+        log('orientation lock failed', error);
       }
     };
     lock();
