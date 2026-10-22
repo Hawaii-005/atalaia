@@ -5,6 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { HomeScreen, SettingsScreen } from '../screens';
 import { PrinterDetailsScreen } from '../screens/PrinterDetailsScreen';
 import { AddEditPrinterScreen } from '../screens/AddEditPrinterScreen';
+import { DiscoveryScreen } from '../screens/DiscoveryScreen';
+import { CameraScreen } from '../screens/CameraScreen';
 import WhereIsIpScreen from '../screens/WhereIsIpScreen';
 import PrinterIcon from '../components/icons/PrinterIcon';
 import { useTheme } from '../contexts/ThemeContext';
@@ -22,6 +24,7 @@ const PrintersStackNavigator = () => (
     <Stack.Screen name="Home" component={HomeScreen} />
     <Stack.Screen name="PrinterDetails" component={PrinterDetailsScreen} />
     <Stack.Screen name="AddEditPrinter" component={AddEditPrinterScreen} />
+    <Stack.Screen name="Discovery" component={DiscoveryScreen} />
     <Stack.Screen name="WhereIsIp" component={WhereIsIpScreen} />
   </Stack.Navigator>
 );
@@ -41,6 +44,14 @@ export const AppNavigator = () => {
                 color={color}
               />
             );
+          } else if (route.name === 'Camera') {
+            return (
+              <Ionicons
+                name={focused ? 'videocam' : 'videocam-outline'}
+                size={size}
+                color={color}
+              />
+            );
           } else if (route.name === 'Settings') {
             return (
               <Ionicons
@@ -53,14 +64,23 @@ export const AppNavigator = () => {
             return <Ionicons name="help-outline" size={size} color={color} />;
           }
         },
-        tabBarActiveTintColor: '#3B82F6',
-        tabBarInactiveTintColor: colorScheme === 'dark' ? '#9CA3AF' : '#6B7280',
+        tabBarActiveTintColor: '#3E6AE1',
+        tabBarInactiveTintColor: '#9AA0A6',
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: '600',
+          letterSpacing: 0.6,
+          marginTop: 2,
+        },
         headerShown: false,
+        tabBarHideOnKeyboard: true,
         tabBarStyle: {
-          backgroundColor: colorScheme === 'dark' ? '#111827' : '#f1f5f9',
-          paddingBottom: 5,
-          paddingTop: 5,
-          height: 80,
+          backgroundColor: colorScheme === 'dark' ? '#111827' : '#FFFFFF',
+          borderTopWidth: 1,
+          borderTopColor: colorScheme === 'dark' ? '#1F2937' : '#E4E4E4',
+          paddingBottom: 6,
+          paddingTop: 6,
+          height: 66,
         },
       })}
     >
@@ -69,6 +89,13 @@ export const AppNavigator = () => {
         component={PrintersStackNavigator}
         options={{
           title: 'Printers',
+        }}
+      />
+      <Tab.Screen
+        name="Camera"
+        component={CameraScreen}
+        options={{
+          title: 'Camera',
         }}
       />
       <Tab.Screen

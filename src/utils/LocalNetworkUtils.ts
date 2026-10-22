@@ -38,9 +38,9 @@ export const checkLocalNetworkPermission = async (): Promise<boolean> => {
 
     return true;
   } catch (error) {
-    console.error('Error checking local network access:', error);
+    console.error('Errorr checking local network access:', error);
     Alert.alert(
-      'Network Access Error',
+      'Network Access Errorr',
       'Unable to verify local network access. Please ensure you have granted the necessary permissions.',
       [{ text: 'OK' }]
     );

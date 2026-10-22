@@ -12,7 +12,7 @@
         }
       ]
     ],
-    "version": "1.0.5",
+    "version": "1.6.5",
     "web": {
       "favicon": "./assets/favicon.png"
     },
@@ -25,7 +25,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#FFFFFF"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -42,10 +42,10 @@
       "softwareKeyboardLayoutMode": "pan",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#0B0E14"
       },
       "package": "dev.allisonf.cctool",
-      "versionCode": 7
+      "versionCode": 36
     },
     "developmentClient": {
       "silenceDeploymentWarnings": true

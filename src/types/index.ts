@@ -99,8 +99,9 @@ export const isResumable = (status: number): boolean => {
 };
 
 export const isStoppable = (status: number): boolean => {
-  // Can stop when printing, preparing, or paused
-  return status === 6;
+  // Can stop when preparing (3), paused (6) or printing (13).
+  // Upstream only allowed 6, so Stop never showed during a print.
+  return status === 3 || status === 6 || status === 13;
 };
 
 export interface PrinterStatus {
@@ -128,4 +129,5 @@ export interface Printer {
   status?: PrinterStatus;
   lastUpdate?: number; // Timestamp of last status update
   videoUrl?: string; // Video stream URL
+  mainboardId?: string; // Stable hardware id, used to find the printer after its IP changes
 }

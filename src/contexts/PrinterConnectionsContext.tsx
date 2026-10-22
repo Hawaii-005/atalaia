@@ -1,21 +1,26 @@
 import React, {
   createContext,
   useState,
+  useCallback,
   useEffect,
   useContext,
   ReactNode,
   useRef,
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { discoverPrinters } from '../utils/PrinterDiscovery';
 import { AppState, AppStateStatus, Alert } from 'react-native';
 import { Printer, ConnectionStatus, PrinterStatus } from '../types';
 
 interface PrinterConnectionsContextType {
   printers: Printer[];
-  addPrinter: (printerName: string, ipAddress: string) => void;
+  addPrinter: (printerName: string, ipAddress: string, mainboardId?: string) => void;
   removePrinter: (id: string) => void;
   reconnectAll: () => void;
   sendCommand: (printerId: string, command: any) => void;
+  updatePrinterIp: (id: string, ipAddress: string) => void;
+  statusIntervalMs: number;
+  setStatusInterval: (ms: number) => Promise<void>;
 }
 
 const PrinterConnectionsContext = createContext<
@@ -28,7 +33,7 @@ const generateId = () => {
 };
 
 const CONNECTION_TIMEOUT = 3000; // 3 seconds
-const STATUS_UPDATE_INTERVAL = 31000; // 30 seconds
+const DEFAULT_STATUS_INTERVAL = 31000; // 30 seconds
 
 // Helper function to get readable command names
 const getCommandName = (cmdCode: number): string => {
@@ -56,6 +61,10 @@ export const PrinterConnectionsProvider = ({
   const [printers, setPrinters] = useState<Printer[]>([]);
   const webSocketsRef = useRef<{ [key: string]: WebSocket }>({});
   const statusTimersRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
+  const statusIntervalRef = useRef(DEFAULT_STATUS_INTERVAL);
+  const [statusIntervalMs, setStatusIntervalMs] = useState(
+    DEFAULT_STATUS_INTERVAL
+  );
   const printersRef = useRef<Printer[]>([]);
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
   const pendingCommandsRef = useRef<{
@@ -135,10 +144,11 @@ export const PrinterConnectionsProvider = ({
     const savePrinters = async () => {
       try {
         const printersToSave = printers.map(
-          ({ id, printerName, ipAddress }) => ({
+          ({ id, printerName, ipAddress, mainboardId }) => ({
             id,
             printerName,
             ipAddress,
+            mainboardId,
           })
         );
         await AsyncStorage.setItem('printers', JSON.stringify(printersToSave));
@@ -255,7 +265,7 @@ export const PrinterConnectionsProvider = ({
         );
         stopStatusTimer(printer.id);
       }
-    }, STATUS_UPDATE_INTERVAL);
+    }, statusIntervalRef.current);
 
     console.log(`Created timer ${timer} for ${printer.id}`);
     statusTimersRef.current[printer.id] = timer;
@@ -279,6 +289,39 @@ export const PrinterConnectionsProvider = ({
     }
   };
 
+  const ipHealRef = useRef<{ [key: string]: number }>({});
+
+  /**
+   * The printer gets its address from DHCP, so it can come back on a different
+   * IP after a reboot. When a connection drops, rescan the network once a
+   * minute and reconnect silently if the same machine answers elsewhere.
+   */
+  const healPrinterIp = async (printer: Printer) => {
+    const lastAttempt = ipHealRef.current[printer.id] ?? 0;
+    if (Date.now() - lastAttempt < 60000) {
+      return;
+    }
+    ipHealRef.current[printer.id] = Date.now();
+
+    try {
+      const discovered = await discoverPrinters();
+      const match = discovered.find(
+        d =>
+          (!!printer.mainboardId && d.mainboardId === printer.mainboardId) ||
+          d.name.trim().toLowerCase() === printer.printerName.trim().toLowerCase()
+      );
+
+      if (match && match.ip !== printer.ipAddress) {
+        console.log(
+          `Auto-healed ${printer.printerName}: ${printer.ipAddress} -> ${match.ip}`
+        );
+        updatePrinterIp(printer.id, match.ip);
+      }
+    } catch (error) {
+      console.log('Auto IP heal failed', error);
+    }
+  };
+
   const connectToPrinter = (printer: Printer) => {
     // If a websocket for this printer already exists, close it before creating a new one.
     if (webSocketsRef.current[printer.id]) {
@@ -292,6 +335,7 @@ export const PrinterConnectionsProvider = ({
       console.log(`Connection to ${printer.printerName} timed out.`);
       updatePrinterStatus(printer.id, 'timeout');
       ws.close();
+      healPrinterIp(printer);
     }, CONNECTION_TIMEOUT);
 
     ws.onopen = () => {
@@ -340,6 +384,23 @@ export const PrinterConnectionsProvider = ({
         const data = JSON.parse(event.data);
 
         console.log('data', data);
+
+        // Learn the stable hardware id so the printer can be found again after
+        // a DHCP change, even if the user renamed it in the app.
+        const mainboardId = data?.Data?.MainboardID;
+        if (mainboardId) {
+          setPrinters(prev => {
+            const target = prev.find(p => p.id === printer.id);
+            if (!target || target.mainboardId === mainboardId) {
+              return prev;
+            }
+            const updated = prev.map(p =>
+              p.id === printer.id ? { ...p, mainboardId } : p
+            );
+            printersRef.current = updated;
+            return updated;
+          });
+        }
 
         if (data.Status) {
           console.log(
@@ -401,6 +462,7 @@ export const PrinterConnectionsProvider = ({
         updatePrinterStatus(printer.id, 'error');
       }
       stopStatusTimer(printer.id);
+      healPrinterIp(printer);
     };
 
     ws.onclose = event => {
@@ -409,6 +471,7 @@ export const PrinterConnectionsProvider = ({
         `Disconnected from printer: ${printer.printerName}, code: ${event.code}, reason: ${event.reason}`
       );
       stopStatusTimer(printer.id);
+      healPrinterIp(printer);
       setPrinters(prev => {
         const printerToUpdate = prev.find(p => p.id === printer.id);
         if (
@@ -431,12 +494,17 @@ export const PrinterConnectionsProvider = ({
     webSocketsRef.current[printer.id] = ws;
   };
 
-  const addPrinter = (printerName: string, ipAddress: string) => {
+  const addPrinter = (
+    printerName: string,
+    ipAddress: string,
+    mainboardId?: string
+  ) => {
     const newPrinter: Printer = {
       id: generateId(),
       printerName,
       ipAddress,
       connectionStatus: 'connecting',
+      mainboardId,
     };
 
     setPrinters(prevPrinters => {
@@ -475,6 +543,43 @@ export const PrinterConnectionsProvider = ({
         AsyncStorage.setItem('printers', JSON.stringify(filteredPrinters));
       }
     });
+  };
+
+  const updatePrinterIp = (id: string, ipAddress: string) => {
+    const printer = printersRef.current.find(p => p.id === id);
+    if (!printer || printer.ipAddress === ipAddress) {
+      return;
+    }
+
+    console.log(`Updating ${printer.printerName} IP ${printer.ipAddress} -> ${ipAddress}`);
+
+    const existingSocket = webSocketsRef.current[id];
+    if (existingSocket) {
+      try {
+        existingSocket.close();
+      } catch (e) {
+        console.log('Failed to close old socket', e);
+      }
+      delete webSocketsRef.current[id];
+    }
+    stopStatusTimer(id);
+
+    const updatedPrinter: Printer = {
+      ...printer,
+      ipAddress,
+      connectionStatus: 'connecting',
+      videoUrl: undefined,
+    };
+
+    setPrinters(prevPrinters => {
+      const updatedPrinters = prevPrinters.map(p =>
+        p.id === id ? updatedPrinter : p
+      );
+      printersRef.current = updatedPrinters;
+      return updatedPrinters;
+    });
+
+    connectToPrinter(updatedPrinter);
   };
 
   const sendCommand = (printerId: string, command: any) => {
@@ -542,9 +647,47 @@ export const PrinterConnectionsProvider = ({
     }
   };
 
+  const updateStatusInterval = useCallback(
+    async (ms: number) => {
+      statusIntervalRef.current = ms;
+      setStatusIntervalMs(ms);
+      try {
+        await AsyncStorage.setItem('statusIntervalMs', String(ms));
+      } catch (error) {
+        console.log('could not save status interval', error);
+      }
+      // restart timers so the new value applies immediately
+      printersRef.current
+        .filter(printer => printer.connectionStatus === 'connected')
+        .forEach(printer => startStatusTimer(printer));
+    },
+    [startStatusTimer]
+  );
+
+  useEffect(() => {
+    AsyncStorage.getItem('statusIntervalMs')
+      .then(stored => {
+        const parsed = Number(stored);
+        if (parsed && parsed >= 3000) {
+          statusIntervalRef.current = parsed;
+          setStatusIntervalMs(parsed);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <PrinterConnectionsContext.Provider
-      value={{ printers, addPrinter, removePrinter, reconnectAll, sendCommand }}
+      value={{
+        printers,
+        addPrinter,
+        removePrinter,
+        reconnectAll,
+        sendCommand,
+        updatePrinterIp,
+        statusIntervalMs,
+        setStatusInterval: updateStatusInterval,
+      }}
     >
       {children}
     </PrinterConnectionsContext.Provider>

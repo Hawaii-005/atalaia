@@ -25,6 +25,7 @@
     "expo-build-properties": "~0.14.8",
     "expo-dev-client": "^5.2.4",
     "expo-navigation-bar": "~4.2.7",
+    "expo-network": "~7.1.5",
     "expo-status-bar": "~2.2.3",
     "nativewind": "latest",
     "react": "19.0.0",
@@ -40,7 +41,13 @@
     "react-native-web": "^0.20.0",
     "react-native-webview": "^13.15.0",
     "uuid": "^11.1.0",
-    "yup": "^1.6.1"
+    "yup": "^1.6.1",
+    "expo-screen-orientation": "~8.1.7",
+    "expo-notifications": "~0.31.5",
+    "expo-keep-awake": "~14.1.4",
+    "expo-media-library": "~17.1.7",
+    "expo-file-system": "~18.1.11",
+    "react-native-view-shot": "4.0.3"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

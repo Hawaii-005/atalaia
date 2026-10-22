@@ -28,13 +28,13 @@ const validationSchema = yup.object().shape({
   printerName: yup
     .string()
     .required('Printer name is required')
-    .min(2, 'Printer name must be at least 2 characters')
-    .max(50, 'Printer name must be less than 50 characters'),
+    .min(2, 'At least 2 characters')
+    .max(50, 'Less than 50 characters'),
   ipAddress: yup.string().required('IP address is required'),
 });
 
 export const AddEditPrinterScreen = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const { addPrinter } = usePrinterConnections();
   const [formData, setFormData] = useState<FormData>({
     printerName: '',
@@ -42,33 +42,29 @@ export const AddEditPrinterScreen = () => {
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [focused, setFocused] = useState<keyof FormData | null>(null);
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
   };
 
   const handleSubmit = async () => {
-    console.log('handleSubmit', formData);
     setIsSubmitting(true);
     try {
       await validationSchema.validate(formData, { abortEarly: false });
-
-      // Check local network access on iOS before adding printer
       const hasNetworkAccess = await checkLocalNetworkPermission();
       if (!hasNetworkAccess) {
         setIsSubmitting(false);
         return;
       }
-
-      addPrinter(formData.printerName, formData.ipAddress);
+      addPrinter(formData.printerName.trim(), formData.ipAddress.trim());
       navigation.goBack();
     } catch (validationErrors: any) {
       const newErrors: FormErrors = {};
-      validationErrors.inner.forEach((error: any) => {
+      validationErrors.inner?.forEach((error: any) => {
         newErrors[error.path as keyof FormErrors] = error.message;
       });
       setErrors(newErrors);
@@ -77,100 +73,115 @@ export const AddEditPrinterScreen = () => {
     }
   };
 
+  const fieldClass = (field: keyof FormData) =>
+    `rounded-xl border bg-white px-4 py-3.5 text-[15px] text-ink ${
+      errors[field]
+        ? 'border-[#C62828]'
+        : focused === field
+          ? 'border-brand'
+          : 'border-line'
+    }`;
+
+  const canSave = formData.printerName.length >= 2 && formData.ipAddress.length > 0;
+
   return (
-    <SafeAreaView
-      edges={['top']}
-      className="flex-1 bg-slate-100 dark:bg-gray-900"
-    >
-      <Header title="Add/Edit Printer" subtitle="Add or edit a printer" />
-      <ScrollView className="flex-1 bg-slate-200 dark:bg-gray-800">
-        <View className="p-2">
-          {/* Back Button */}
-          <TouchableOpacity
-            className="flex-row items-center mb-2 p-2"
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="arrow-back" size={24} color="#374151" />
-            <Text className="ml-2 text-gray-700 dark:text-gray-200 font-medium">
-              BACK
+    <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
+      <Header
+        title="Add Printer"
+        subtitle="Manual setup"
+        onBack={() => navigation.goBack()}
+      />
+
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View className="rounded-xl2 border border-line bg-white p-4">
+          <Text className="text-[10px] tracking-widest font-semibold text-ink-soft">
+            PRINTER
+          </Text>
+
+          <Text className="mt-4 mb-1.5 text-[12px] font-medium text-ink-soft">
+            Name
+          </Text>
+          <TextInput
+            className={fieldClass('printerName')}
+            placeholder="Centauri Carbon"
+            placeholderTextColor="#9AA0A6"
+            value={formData.printerName}
+            onChangeText={value => handleInputChange('printerName', value)}
+            onFocus={() => setFocused('printerName')}
+            onBlur={() => setFocused(null)}
+            autoCapitalize="words"
+            autoCorrect={false}
+          />
+          {errors.printerName && (
+            <Text className="mt-1.5 text-[12px] text-[#C62828]">
+              {errors.printerName}
             </Text>
-          </TouchableOpacity>
+          )}
 
-          {/* Form Container */}
-          <View className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-300 dark:border-gray-700">
-            <Text className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-6">
-              Printer Information
+          <View className="mt-4 flex-row items-center justify-between mb-1.5">
+            <Text className="text-[12px] font-medium text-ink-soft">
+              IP address or hostname
             </Text>
-
-            {/* Printer Name Input */}
-            <View className="mb-4">
-              <Text className="text-gray-700 dark:text-gray-200 font-medium mb-2 text-lg">
-                Printer Name
-              </Text>
-              <TextInput
-                className={`border rounded-lg px-4 py-4 text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800 ${
-                  errors.printerName
-                    ? 'border-red-500'
-                    : 'border-gray-300 dark:border-gray-600'
-                }`}
-                placeholder="Enter printer name"
-                placeholderTextColor="#9CA3AF"
-                value={formData.printerName}
-                onChangeText={value => handleInputChange('printerName', value)}
-                autoCapitalize="words"
-              />
-              {errors.printerName && (
-                <Text className="text-red-500 text-sm mt-1">
-                  {errors.printerName}
-                </Text>
-              )}
-            </View>
-
-            {/* IP Address Input */}
-            <View className="mb-6">
-              <View className="flex-row justify-between items-center mb-2">
-                <Text className="text-gray-700 dark:text-gray-200 font-medium text-lg">
-                  IP Address or Hostname
-                </Text>
-                <TouchableOpacity
-                  onPress={() => navigation.navigate('WhereIsIp' as never)}
-                >
-                  <Text className="text-blue-500 text-sm">Where is this?</Text>
-                </TouchableOpacity>
-              </View>
-              <TextInput
-                className={`border rounded-lg px-4 py-4 text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800 ${
-                  errors.ipAddress
-                    ? 'border-red-500'
-                    : 'border-gray-300 dark:border-gray-600'
-                }`}
-                placeholder="192.168.1.100"
-                placeholderTextColor="#9CA3AF"
-                value={formData.ipAddress}
-                onChangeText={value => handleInputChange('ipAddress', value)}
-                autoCapitalize="none"
-              />
-              {errors.ipAddress && (
-                <Text className="text-red-500 text-sm mt-1">
-                  {errors.ipAddress}
-                </Text>
-              )}
-            </View>
-
-            {/* Submit Button */}
             <TouchableOpacity
-              className={`rounded-lg py-4 px-4 ${
-                isSubmitting ? 'bg-gray-400' : 'bg-blue-500'
-              }`}
-              onPress={handleSubmit}
-              disabled={isSubmitting}
+              onPress={() => navigation.navigate('WhereIsIp')}
+              activeOpacity={0.7}
             >
-              <Text className="text-white text-center font-bold text-lg">
-                {isSubmitting ? 'Saving...' : 'SAVE'}
+              <Text className="text-[12px] font-semibold text-brand">
+                Where is this?
               </Text>
             </TouchableOpacity>
           </View>
+          <TextInput
+            className={fieldClass('ipAddress')}
+            placeholder="192.168.1.9"
+            placeholderTextColor="#9AA0A6"
+            value={formData.ipAddress}
+            onChangeText={value => handleInputChange('ipAddress', value)}
+            onFocus={() => setFocused('ipAddress')}
+            onBlur={() => setFocused(null)}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="numbers-and-punctuation"
+            style={{ fontFamily: 'monospace' }}
+          />
+          {errors.ipAddress ? (
+            <Text className="mt-1.5 text-[12px] text-[#C62828]">
+              {errors.ipAddress}
+            </Text>
+          ) : (
+            <Text className="mt-1.5 text-[11px] text-ink-muted">
+              Find it on the printer screen: Settings → Network.
+            </Text>
+          )}
         </View>
+
+        <TouchableOpacity
+          onPress={handleSubmit}
+          disabled={isSubmitting}
+          activeOpacity={0.85}
+          className={`mt-4 rounded-xl2 py-4 items-center ${
+            canSave && !isSubmitting ? 'bg-brand' : 'bg-[#C9CFDD]'
+          }`}
+        >
+          <Text className="text-[15px] font-semibold text-white">
+            {isSubmitting ? 'Saving…' : 'Save printer'}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Discovery')}
+          activeOpacity={0.7}
+          className="mt-3 py-3 flex-row items-center justify-center"
+        >
+          <Ionicons name="wifi" size={16} color="#3F444D" />
+          <Text className="ml-2 text-[13px] font-semibold text-ink-soft">
+            Scan the network instead
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );

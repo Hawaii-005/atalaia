@@ -15,66 +15,26 @@ import { PrinterCard } from '../components/PrinterCard';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { Ionicons } from '@expo/vector-icons';
 import { checkLocalNetworkAccess } from '@generac/react-native-local-network-permission';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const HomeScreen = ({ navigation }: any) => {
   const [refreshing, setRefreshing] = useState(false);
   const [hasNetworkAccess, setHasNetworkAccess] = useState(true);
-  const [showSurvey, setShowSurvey] = useState(true);
-  const { printers, reconnectAll, removePrinter } = usePrinterConnections();
+  const { printers, reconnectAll, removePrinter, sendCommand } =
+    usePrinterConnections();
 
-  // Check local network access when component mounts
   const checkNetworkAccess = async () => {
     const hasAccess = await checkLocalNetworkAccess();
     setHasNetworkAccess(hasAccess);
   };
 
-  const handleSurveyPress = async () => {
-    const url =
-      'https://docs.google.com/forms/d/e/1FAIpQLSfGm5E6OpePT1nECJaQ_uffvfMTWsw4JDxzsDC6T8nNyjVoww/viewform?usp=header';
-    try {
-      const supported = await Linking.canOpenURL(url);
-      if (supported) {
-        await Linking.openURL(url);
-      } else {
-        Alert.alert('Error', 'Cannot open survey link');
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to open survey link');
-    }
-  };
-
-  const handleDismissSurvey = async () => {
-    try {
-      await AsyncStorage.setItem('surveyDismissed', 'true');
-      setShowSurvey(false);
-    } catch (error) {
-      console.error('Failed to save survey dismissal state:', error);
-      // Still hide the survey even if saving fails
-      setShowSurvey(false);
-    }
-  };
   useEffect(() => {
-    const loadSurveyState = async () => {
-      try {
-        const surveyDismissed = await AsyncStorage.getItem('surveyDismissed');
-        if (surveyDismissed === 'true') {
-          setShowSurvey(false);
-        }
-      } catch (error) {
-        console.error('Failed to load survey state:', error);
-      }
-    };
-
     checkNetworkAccess();
-    loadSurveyState();
   }, []);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     reconnectAll();
     checkNetworkAccess();
-    // Keep the timeout to give visual feedback on the refresh control
     setTimeout(() => setRefreshing(false), 1000);
   }, [reconnectAll]);
 
@@ -82,139 +42,184 @@ export const HomeScreen = ({ navigation }: any) => {
     const printer = printers.find(p => p.id === printerId);
     if (printer?.connectionStatus === 'connected') {
       navigation.navigate('PrinterDetails', { printerId });
-    } else {
-      Alert.alert(
-        'Printer Offline',
-        `${printer?.printerName} is not connected. What would you like to do?`,
-        [
-          {
-            text: 'Cancel',
-            style: 'cancel',
-          },
-          {
-            text: 'Delete Printer',
-            style: 'destructive',
-            onPress: () => {
-              Alert.alert(
-                'Delete Printer',
-                `Are you sure you want to delete ${printer?.printerName}? This action cannot be undone.`,
-                [
-                  {
-                    text: 'Cancel',
-                    style: 'cancel',
-                  },
-                  {
-                    text: 'Delete',
-                    style: 'destructive',
-                    onPress: () => {
-                      if (printer) {
-                        removePrinter(printer.id);
-                      }
-                    },
-                  },
-                ]
-              );
-            },
-          },
-        ]
-      );
+      return;
     }
+    Alert.alert(
+      'Printer offline',
+      `${printer?.printerName} is not connected. You can delete it and add it again.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Delete printer',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Delete printer',
+              `Remove ${printer?.printerName}? This cannot be undone.`,
+              [
+                { text: 'Cancelar', style: 'cancel' },
+                {
+                  text: 'Delete',
+                  style: 'destructive',
+                  onPress: () => printer && removePrinter(printer.id),
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
   };
 
+  const handlePrintControl = (printerId: string, status: number) => {
+    const cmd = status === 6 ? 131 : 129;
+    sendCommand(printerId, {
+      Id: '',
+      Data: {
+        Cmd: cmd,
+        Data: {},
+        RequestID: `${cmd === 131 ? 'resume' : 'pause'}-${Date.now()}`,
+        MainboardID: '',
+        TimeStamp: Date.now(),
+        From: 1,
+      },
+    });
+  };
+
+  const handleStopPrint = (printerId: string, name: string) => {
+    Alert.alert('Cancelar impressão', `Stop the print on ${name}?`, [
+      { text: 'Keep printing', style: 'cancel' },
+      {
+        text: 'Stop Print',
+        style: 'destructive',
+        onPress: () =>
+          sendCommand(printerId, {
+            Id: '',
+            Data: {
+              Cmd: 130,
+              Data: {},
+              RequestID: `cancel-${Date.now()}`,
+              MainboardID: '',
+              TimeStamp: Date.now(),
+              From: 1,
+            },
+          }),
+      },
+    ]);
+  };
+
+  const onlineCount = printers.filter(
+    p => p.connectionStatus === 'connected'
+  ).length;
+
+  const subtitle =
+    printers.length === 0
+      ? 'No printers yet'
+      : `${printers.length} printer${printers.length === 1 ? '' : 's'} · ${onlineCount} online`;
+
   return (
-    <SafeAreaView
-      edges={['top']}
-      className="flex-1 bg-slate-100 dark:bg-gray-900"
-    >
+    <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
       <Header
         title="Printers"
-        subtitle="Manage your printers"
+        subtitle={subtitle}
         rightAction={{
-          icon: 'add',
-          onPress: () => navigation.navigate('AddEditPrinter'),
+          icon: 'wifi',
+          onPress: () => navigation.navigate('Discovery'),
         }}
       />
 
-      {/* Local Network Access Disclaimer */}
-
       <ScrollView
-        className="flex-1 bg-slate-200 dark:bg-gray-800"
+        className="flex-1 bg-canvas"
+        contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#3E6AE1"
+          />
         }
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ flexGrow: 1 }}
       >
         {printers.length > 0 && !hasNetworkAccess && (
-          <View className="mx-2 mt-2 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-            <View className="flex-row items-start">
-              <Ionicons
-                name="warning-outline"
-                size={20}
-                color="#D97706"
-                className="mt-0.5"
-              />
-              <View className="ml-2 flex-1">
-                <Text className="text-sm text-yellow-800 dark:text-yellow-200 leading-5">
-                  We need access to local networking to connect to your
-                  printers. Please enable local network access in{' '}
-                  <Text
-                    className="underline font-semibold"
-                    onPress={() => Linking.openSettings()}
-                  >
-                    Settings
-                  </Text>
-                  .
-                </Text>
-              </View>
-            </View>
-          </View>
+          <TouchableOpacity
+            className="mb-4 rounded-xl2 bg-[#FFF8E8] border border-[#F2E1B8] p-4 flex-row"
+            onPress={() => Linking.openSettings()}
+          >
+            <Ionicons name="warning-outline" size={18} color="#8A6100" />
+            <Text className="ml-2 flex-1 text-[13px] leading-[19px] text-[#6B4E00]">
+              Local network access is off, so printers can&apos;t be reached.
+              Open Settings to allow it.
+            </Text>
+          </TouchableOpacity>
         )}
 
         {printers.length === 0 ? (
-          // Getting Started Card
-          <View className="flex-1 items-center justify-center p-6">
-            <View className="bg-white dark:bg-gray-900 rounded-lg p-8 border border-gray-300 dark:border-gray-700 max-w-sm w-full">
-              <View className="items-center mb-6">
-                <View className="w-32 h-32 bg-blue-100 dark:bg-blue-900/50 rounded-full items-center justify-center mb-12 mt-6">
-                  <Image
-                    source={require('../../assets/CC.png')}
-                    className="w-20 h-20"
-                    resizeMode="contain"
-                  />
-                </View>
-                <Text className="text-4xl font-bold text-gray-800 dark:text-gray-200 mb-4 text-center">
-                  Getting Started
-                </Text>
-                <Text className="text-gray-600 dark:text-gray-400 text-center leading-6">
-                  Get started by adding your first printer to monitor your
-                  prints.
-                </Text>
-              </View>
+          <View className="flex-1 pt-10">
+            <Image
+              source={require('../../assets/CC.png')}
+              className="w-24 h-24 self-center"
+              resizeMode="contain"
+            />
+            <Text className="mt-6 text-[22px] font-bold text-ink text-center">
+              No printers yet
+            </Text>
+            <Text className="mt-2 text-[13px] leading-[20px] text-ink-muted text-center px-6">
+              Your printer answers on the same Wi-Fi. Scan the network and it
+              will be found automatically.
+            </Text>
 
-              <TouchableOpacity
-                className="bg-blue-500 rounded-lg py-4 px-6 items-center mt-4"
-                onPress={() => navigation.navigate('AddEditPrinter')}
-              >
-                <Text className="text-white font-bold text-lg">
-                  ADD PRINTER
-                </Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              className="mt-8 rounded-xl2 bg-brand py-4 items-center flex-row justify-center"
+              onPress={() => navigation.navigate('Discovery')}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="wifi" size={18} color="#FFFFFF" />
+              <Text className="ml-2 text-white font-semibold text-[15px]">
+                Scan network
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              className="mt-3 py-3 items-center"
+              onPress={() => navigation.navigate('AddEditPrinter')}
+              activeOpacity={0.7}
+            >
+              <Text className="text-ink-soft font-semibold text-[14px]">
+                Add it manually instead
+              </Text>
+            </TouchableOpacity>
           </View>
         ) : (
-          // Printer Cards
           <>
             {printers.map(printer => (
-              <View className="w-full p-2 pb-0" key={printer.id}>
+              <View key={printer.id} className="mb-3">
                 <PrinterCard
-                  showTemps={false}
-                  key={printer.id}
                   printer={printer}
+                  showPrintControls
+                  onPrintControl={() =>
+                    handlePrintControl(
+                      printer.id,
+                      printer.status?.PrintInfo?.Status || 0
+                    )
+                  }
+                  onStopPrint={() =>
+                    handleStopPrint(printer.id, printer.printerName)
+                  }
                   onPress={() => handlePrinterPress(printer.id)}
                 />
               </View>
             ))}
+
+            <TouchableOpacity
+              className="mt-2 rounded-xl2 border border-line py-3.5 items-center flex-row justify-center"
+              onPress={() => navigation.navigate('AddEditPrinter')}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="add" size={18} color="#3F444D" />
+              <Text className="ml-1.5 text-ink-soft font-semibold text-[14px]">
+                Add Printer
+              </Text>
+            </TouchableOpacity>
           </>
         )}
       </ScrollView>

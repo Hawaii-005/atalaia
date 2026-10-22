@@ -3,7 +3,12 @@ import { Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
-import { PrinterConnectionsProvider } from './src/contexts/PrinterConnectionsContext';
+import {
+  PrinterConnectionsProvider,
+  usePrinterConnections,
+} from './src/contexts/PrinterConnectionsContext';
+import { usePrintNotifications } from './src/hooks/usePrintNotifications';
+import { prepareNotifications } from './src/utils/notifications';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
@@ -17,6 +22,12 @@ import './global.css';
 
 function AppContent() {
   const { colorScheme } = useTheme();
+  const { printers } = usePrinterConnections();
+  usePrintNotifications(printers);
+
+  useEffect(() => {
+    prepareNotifications();
+  }, []);
 
   const MyDarkTheme = {
     ...DarkTheme,
@@ -25,7 +36,7 @@ function AppContent() {
       background: '#111827',
       card: '#1f2937',
       text: '#f9fafb',
-      border: '#374151',
+      border: '#3F444D',
     },
   };
 
@@ -33,16 +44,16 @@ function AppContent() {
     ...DefaultTheme,
     colors: {
       ...DefaultTheme.colors,
-      background: '#f1f5f9',
+      background: '#FFFFFF',
       card: '#ffffff',
-      text: '#111827',
-      border: '#e5e7eb',
+      text: '#171A20',
+      border: '#E4E4E4',
     },
   };
 
   useEffect(() => {
     if (Platform.OS === 'android') {
-      const barColor = colorScheme === 'dark' ? '#111827' : '#f1f5f9';
+      const barColor = colorScheme === 'dark' ? '#111827' : '#FFFFFF';
       NavigationBar.setBackgroundColorAsync(barColor);
       NavigationBar.setButtonStyleAsync(
         colorScheme === 'dark' ? 'light' : 'dark'

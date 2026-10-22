@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  StyleSheet,
   SafeAreaView,
   Image,
   Linking,
@@ -11,20 +10,46 @@ import {
 } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../contexts/ThemeContext';
 import { StatusBar } from 'expo-status-bar';
+import { useTheme } from '../contexts/ThemeContext';
+
+const SLIDES = [
+  {
+    overline: 'WELCOME',
+    title: 'Your printer, in your pocket',
+    body: 'Watch the camera, read temperatures and pause a print from anywhere on your network.',
+    icon: null,
+  },
+  {
+    overline: 'DISCLAIMER',
+    title: 'Not affiliated with Elegoo',
+    body: 'This is an independent, community-made client. Your printer talks to it directly over your local network — nothing goes through us.',
+    icon: 'shield-checkmark-outline',
+  },
+  {
+    overline: 'OPEN SOURCE',
+    title: 'Community built',
+    body: 'MIT licensed and developed in the open. Bug reports and pull requests are welcome.',
+    icon: 'code-slash-outline',
+  },
+];
 
 const WelcomeScreen = ({ onComplete }: { onComplete: () => void }) => {
   const { colorScheme } = useTheme();
-  const isDarkMode = colorScheme === 'dark';
-  const styles = getStyles(isDarkMode);
-
+  const isDark = colorScheme === 'dark';
   const pagerRef = React.useRef<PagerView>(null);
   const [page, setPage] = React.useState(0);
 
+  // Drives both the pager and local state: relying on onPageSelected alone
+  // left the flow stuck on Android, so the last slide never completed.
+  const goTo = (next: number) => {
+    setPage(next);
+    pagerRef.current?.setPage(next);
+  };
+
   const handleNext = () => {
-    if (page < 2) {
-      pagerRef.current?.setPage(page + 1);
+    if (page < SLIDES.length - 1) {
+      goTo(page + 1);
     } else {
       onComplete();
     }
@@ -32,216 +57,119 @@ const WelcomeScreen = ({ onComplete }: { onComplete: () => void }) => {
 
   const handleBack = () => {
     if (page > 0) {
-      pagerRef.current?.setPage(page - 1);
+      goTo(page - 1);
     }
   };
 
   const handleGitHubPress = async () => {
     const url = 'https://github.com/WalkerFrederick/CC-Tool';
     try {
-      const supported = await Linking.canOpenURL(url);
-      if (supported) {
+      if (await Linking.canOpenURL(url)) {
         await Linking.openURL(url);
-      } else {
-        Alert.alert('Error', 'Cannot open GitHub link');
       }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to open GitHub link');
+    } catch {
+      Alert.alert('Error', 'Could not open the link.');
     }
   };
 
+  const isLast = page === SLIDES.length - 1;
+
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
+    <SafeAreaView style={{ flex: 1 }} className="bg-canvas">
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+
       <PagerView
-        style={styles.pagerView}
+        style={{ flex: 1 }}
         initialPage={0}
         ref={pagerRef}
         onPageSelected={e => setPage(e.nativeEvent.position)}
-        scrollEnabled={true}
+        scrollEnabled
       >
-        <View style={styles.page} key="1">
-          <Image
-            source={require('../../assets/CC.png')}
-            style={{
-              width: 120,
-              height: 120,
-              marginLeft: 5,
-              resizeMode: 'contain',
-              marginBottom: 24,
-            }}
-          />
-          <Text className="text-gray-500 dark:text-white text-4xl text-center font-bold mb-6">
-            Welcome to CC Tool
-          </Text>
-          <Text className="text-gray-500 dark:text-gray-400 text-4xl text-center mb-2">
-            The Open Source
-          </Text>
-          <Text className="text-gray-500 dark:text-gray-400 text-4xl text-center">
-            Companion app for the CC
-          </Text>
-        </View>
-        <View style={styles.page} key="2">
-          <Ionicons
-            className="pl-2 pb-8"
-            name="alert-circle"
-            size={120}
-            color="#3B82F6"
-          />
-          <Text className="text-gray-500 dark:text-white text-4xl text-center font-bold mb-6">
-            Quick Disclaimer
-          </Text>
-          <Text className="text-gray-500 dark:text-gray-400 text-4xl text-center mb-2">
-            We are not
-          </Text>
-          <Text className="text-gray-500 dark:text-gray-400 text-4xl text-center mb-2">
-            associated with
-          </Text>
-          <Text className="text-gray-500 dark:text-gray-400 text-4xl text-center mb-12">
-            any manufacturer.
-          </Text>
-          <Text className="text-gray-500 dark:text-gray-400 text-4xl text-center font-black">
-            This is a community project.
-          </Text>
-        </View>
-        <View style={styles.page} key="3">
-          <Ionicons
-            className="pl-2 pb-8"
-            name="logo-github"
-            size={120}
-            color="#3B82F6"
-          />
-          <Text className="text-gray-500 dark:text-white text-4xl text-center font-bold mb-4">
-            Show Support,
-          </Text>
-          <Text className="text-gray-500 dark:text-white text-4xl text-center font-bold mb-4">
-            Get Help,
-          </Text>
-          <Text className="text-gray-500 dark:text-white text-4xl text-center font-bold mb-6">
-            Request Features,
-          </Text>
-          <Text className="text-gray-500 dark:text-white text-4xl text-center font-bold mb-6">
-            Contribute
-          </Text>
-
-          <TouchableOpacity
-            className="bg-gray-800 dark:bg-white rounded-lg py-4 px-6 mt-4 flex-row items-center"
-            onPress={handleGitHubPress}
-          >
-            <Ionicons
-              name="logo-github"
-              size={20}
-              color={isDarkMode ? '#000' : '#FFF'}
-            />
-            <Text className="text-white dark:text-black font-bold ml-2">
-              Visit on GitHub
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </PagerView>
-      <View style={styles.indicatorContainer}>
-        {[...Array(3).keys()].map(i => (
+        {SLIDES.map(slide => (
           <View
-            key={i}
-            style={[
-              styles.indicator,
-              {
-                backgroundColor:
-                  i === page ? '#3B82F6' : isDarkMode ? '#4B5563' : '#D1D5DB',
-              },
-            ]}
+            key={slide.title}
+            style={{ flex: 1 }}
+            className="px-8 justify-center"
+          >
+            <View className="items-center">
+              {slide.icon ? (
+                <View className="w-[88px] h-[88px] rounded-[26px] bg-brand-soft items-center justify-center">
+                  <Ionicons
+                    name={slide.icon as any}
+                    size={38}
+                    color="#3E6AE1"
+                  />
+                </View>
+              ) : (
+                <Image
+                  source={require('../../assets/CC.png')}
+                  style={{ width: 88, height: 88 }}
+                  resizeMode="contain"
+                />
+              )}
+
+              <Text className="mt-8 text-[10px] tracking-widest font-semibold text-ink-soft">
+                {slide.overline}
+              </Text>
+              <Text className="mt-2 text-[26px] leading-[32px] font-bold text-ink text-center">
+                {slide.title}
+              </Text>
+              <Text className="mt-3 text-[14px] leading-[21px] text-ink-muted text-center">
+                {slide.body}
+              </Text>
+
+              {slide.overline === 'OPEN SOURCE' && (
+                <TouchableOpacity
+                  onPress={handleGitHubPress}
+                  className="mt-6 flex-row items-center rounded-xl2 border border-line px-4 py-2.5"
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="logo-github" size={16} color="#171A20" />
+                  <Text className="ml-2 text-[13px] font-semibold text-ink">
+                    View on GitHub
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        ))}
+      </PagerView>
+
+      <View className="flex-row justify-center items-center pb-6">
+        {SLIDES.map((slide, index) => (
+          <View
+            key={slide.title}
+            className={`h-1.5 rounded-full mx-1 ${
+              index === page ? 'w-6 bg-brand' : 'w-1.5 bg-[#D6D8DB]'
+            }`}
           />
         ))}
       </View>
-      <View style={styles.buttonContainer}>
+
+      <View className="flex-row px-6 pb-6">
         {page > 0 && (
-          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-            <Text style={styles.buttonText}>Back</Text>
+          <TouchableOpacity
+            onPress={handleBack}
+            className="flex-1 mr-2 rounded-xl2 border border-line py-3.5 items-center"
+            activeOpacity={0.7}
+          >
+            <Text className="text-[15px] font-semibold text-ink-soft">
+              Back
+            </Text>
           </TouchableOpacity>
         )}
-        <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-          <Text style={styles.buttonText}>
-            {page === 2 ? 'Finish' : 'Next'}
+        <TouchableOpacity
+          onPress={handleNext}
+          className="flex-1 rounded-xl2 bg-brand py-3.5 items-center"
+          activeOpacity={0.85}
+        >
+          <Text className="text-[15px] font-semibold text-white">
+            {isLast ? 'Get started' : 'Next'}
           </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 };
-
-const getStyles = (isDarkMode: boolean) =>
-  StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: isDarkMode ? '#1F2937' : '#F3F4F6',
-    },
-    pagerView: {
-      flex: 1,
-    },
-    page: {
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 30,
-    },
-    title: {
-      fontSize: 28,
-      fontWeight: 'bold',
-      color: isDarkMode ? '#F9FAFB' : '#1F2937',
-      marginTop: 20,
-      textAlign: 'center',
-    },
-    subtitle: {
-      fontSize: 18,
-      color: isDarkMode ? '#D1D5DB' : '#4B5563',
-      marginTop: 10,
-      textAlign: 'center',
-    },
-    description: {
-      fontSize: 16,
-      color: isDarkMode ? '#9CA3AF' : '#6B7280',
-      marginTop: 20,
-      textAlign: 'center',
-      lineHeight: 24,
-    },
-    indicatorContainer: {
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 20,
-    },
-    indicator: {
-      height: 10,
-      width: 10,
-      borderRadius: 5,
-      marginHorizontal: 5,
-    },
-    buttonContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      paddingHorizontal: 20,
-      paddingBottom: 20,
-    },
-    nextButton: {
-      backgroundColor: '#3B82F6',
-      paddingVertical: 15,
-      borderRadius: 10,
-      alignItems: 'center',
-      flex: 1,
-      marginLeft: 5,
-    },
-    backButton: {
-      backgroundColor: '#6B7280',
-      paddingVertical: 15,
-      borderRadius: 10,
-      alignItems: 'center',
-      flex: 1,
-      marginRight: 5,
-    },
-    buttonText: {
-      color: '#FFFFFF',
-      fontSize: 16,
-      fontWeight: 'bold',
-    },
-  });
 
 export default WelcomeScreen;

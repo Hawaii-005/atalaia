@@ -1,12 +1,11 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import '../../global.css';
-import { useTheme } from '../contexts/ThemeContext';
 
 interface HeaderProps {
   title: string;
   subtitle?: string;
+  onBack?: () => void;
   leftAction?: {
     icon: string;
     onPress: () => void;
@@ -18,52 +17,60 @@ interface HeaderProps {
   className?: string;
 }
 
+/**
+ * Page header: title on the left, optional back chevron, optional action on the
+ * right. No brand mark here — the icon already carries it.
+ */
 export const Header: React.FC<HeaderProps> = ({
   title,
   subtitle,
+  onBack,
+  leftAction,
   rightAction,
   className = '',
 }) => {
-  const { colorScheme } = useTheme();
+  const leadingIcon = onBack ? 'chevron-back' : leftAction?.icon;
+  const leadingPress = onBack ?? leftAction?.onPress;
+
   return (
-    <View className={`${className}`}>
-      <View className="flex-row items-center justify-between bg-slate-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-4">
-        <Image
-          source={require('../../assets/CC.png')}
-          className="w-12 h-12"
-          resizeMode="contain"
-        />
-        {/* Title Section with Logo - Centered */}
+    <View
+      className={`flex-row items-center bg-canvas border-b border-line px-4 py-3 ${className}`}
+    >
+      {leadingPress && leadingIcon && (
+        <TouchableOpacity
+          onPress={leadingPress}
+          className="w-9 h-9 -ml-2 mr-1 items-center justify-center rounded-xl"
+          activeOpacity={0.6}
+        >
+          <Ionicons name={leadingIcon as any} size={22} color="#171A20" />
+        </TouchableOpacity>
+      )}
 
-        <View className="flex-1 items-center">
-          <Text className="text-2xl font-bold text-gray-800 dark:text-gray-200">
-            CC Tool
+      <View className="flex-1">
+        <Text
+          className="text-[22px] font-bold text-ink tracking-tight"
+          numberOfLines={1}
+        >
+          {title}
+        </Text>
+        {!!subtitle && (
+          <Text className="text-xs text-ink-muted mt-0.5" numberOfLines={1}>
+            {subtitle}
           </Text>
-          {subtitle && (
-            <Text className="text-md text-gray-600 dark:text-gray-400">
-              {title}
-            </Text>
-          )}
-        </View>
-
-        {/* Right Action */}
-        <View className="w-12 h-12 items-center justify-center">
-          {rightAction ? (
-            <TouchableOpacity
-              onPress={rightAction.onPress}
-              className="h-12 w-12 items-center justify-center bg-gray-200 dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-600"
-            >
-              <Ionicons
-                name={rightAction.icon as any}
-                size={24}
-                color={colorScheme === 'dark' ? '#D1D5DB' : '#374151'}
-              />
-            </TouchableOpacity>
-          ) : (
-            <View className="h-12 w-12" />
-          )}
-        </View>
+        )}
       </View>
+
+      {rightAction ? (
+        <TouchableOpacity
+          onPress={rightAction.onPress}
+          className="w-10 h-10 rounded-xl bg-canvas-sunken items-center justify-center"
+          activeOpacity={0.6}
+        >
+          <Ionicons name={rightAction.icon as any} size={20} color="#171A20" />
+        </TouchableOpacity>
+      ) : (
+        <View className="w-1" />
+      )}
     </View>
   );
 };
