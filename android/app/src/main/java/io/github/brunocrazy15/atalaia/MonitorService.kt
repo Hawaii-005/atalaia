@@ -50,7 +50,7 @@ class MonitorService : Service() {
     }
 
     startForeground(ID, notificacao)
-    return START_STICKY
+    return START_NOT_STICKY
   }
 
   private fun criarCanal() {

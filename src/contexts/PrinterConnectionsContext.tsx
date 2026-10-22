@@ -93,6 +93,7 @@ export const PrinterConnectionsProvider = ({
 }) => {
   const [printers, setPrinters] = useState<Printer[]>([]);
   const [fila, setFila] = useState<ItemFila[]>([]);
+  const [hidratado, setHidratado] = useState(false);
   const [filaAuto, setFilaAuto] = useState(false);
   const filaRef = useRef<ItemFila[]>([]);
   const estadoAnteriorRef = useRef<Record<string, number | undefined>>({});
@@ -151,6 +152,8 @@ export const PrinterConnectionsProvider = ({
         }
       } catch (e) {
         console.error('Failed to load printers from storage', e);
+      } finally {
+        setHidratado(true);
       }
     };
 
@@ -255,10 +258,11 @@ export const PrinterConnectionsProvider = ({
     const savePrinters = async () => {
       try {
         const printersToSave = printers.map(
-          ({ id, printerName, ipAddress, mainboardId }) => ({
+          ({ id, printerName, ipAddress, alternateIp, mainboardId }) => ({
             id,
             printerName,
             ipAddress,
+            alternateIp,
             mainboardId,
           })
         );
@@ -268,10 +272,12 @@ export const PrinterConnectionsProvider = ({
       }
     };
 
+    // Antes de a leitura terminar, gravar apagava o que estava guardado.
+    if (!hidratado) return;
     // Gravar sempre, mesmo lista vazia: senão remover a última impressora
     // deixa a lista antiga no AsyncStorage e ela volta no arranque seguinte.
     savePrinters();
-  }, [printers]);
+  }, [printers, hidratado]);
 
   const updatePrinterStatus = (
     id: string,
@@ -890,6 +896,9 @@ export const PrinterConnectionsProvider = ({
     const updatedPrinter: Printer = {
       ...printer,
       ipAddress,
+      // O endereço que estava a funcionar era o antigo: não pode sobreviver
+      // à mudança, senão a app volta a ligar-se ao IP morto.
+      activeIp: undefined,
       connectionStatus: 'connecting',
       videoUrl: undefined,
     };
@@ -1046,20 +1055,25 @@ export const PrinterConnectionsProvider = ({
     AsyncStorage.setItem('filaAuto', ligada ? '1' : '0').catch(() => undefined);
   }, []);
 
-  // Só arranca com a fila ligada, e só quando a máquina termina (Status 9).
+  // Só arranca com a fila ligada e na transição para "terminada" (9). Sem a
+  // transição disparava em cada actualização de estado com 9.
+  const aArrancarRef = useRef<Record<string, boolean>>({});
   useEffect(() => {
     printers.forEach(printer => {
       const estado = printer.status?.PrintInfo?.Status;
       const anterior = estadoAnteriorRef.current[printer.id];
       estadoAnteriorRef.current[printer.id] = estado;
-      if (!filaAuto || anterior !== 9 || estado !== 9) return;
+      if (!filaAuto || anterior === estado || anterior !== 9 || estado !== 9) return;
+      if (aArrancarRef.current[printer.id]) return;
 
       const proximo = filaRef.current.find(item => item.printerId === printer.id);
       if (!proximo) return;
 
-      removerDaFila(proximo.id);
+      aArrancarRef.current[printer.id] = true;
       request(printer.id, startPrintCommand(proximo.name, { nivelar: false, lado: 0 }))
         .then(() => {
+          // Só sai da fila depois de a máquina aceitar: se falhar, fica lá.
+          removerDaFila(proximo.id);
           notify(
             'A arrancar o próximo',
             `${printer.printerName} começou ${proximo.label}.`,
@@ -1072,6 +1086,9 @@ export const PrinterConnectionsProvider = ({
             `${proximo.label}: ${mensagemDoErro(erro)}`,
             { printerId: printer.id }
           );
+        })
+        .finally(() => {
+          aArrancarRef.current[printer.id] = false;
         });
     });
   }, [printers, filaAuto, request, removerDaFila]);

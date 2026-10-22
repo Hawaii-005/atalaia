@@ -26,6 +26,7 @@ import { listFilesCommand } from '../utils/commands';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
+import { useIsFocused } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { Header } from '../components/Header';
@@ -50,12 +51,13 @@ const CONNECTION_LABEL: Record<ConnectionStatus, string> = {
  * Modo poupança: uma fotografia a cada 2 s em vez do MJPEG (~1 MB/s).
  * Serve para quando estás fora de casa, por Tailscale ou dados móveis.
  */
-const SnapshotAoVivo = ({ host }: { host: string }) => {
+const SnapshotAoVivo = ({ host, activo }: { host: string; activo: boolean }) => {
   const [tick, setTick] = useState(0);
   useEffect(() => {
+    if (!activo) return;
     const id = setInterval(() => setTick(valor => valor + 1), 2000);
     return () => clearInterval(id);
-  }, []);
+  }, [activo]);
   return (
     <Image
       source={{ uri: `http://${host}:3031/snapshot?t=${tick}` }}
@@ -78,6 +80,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
   const [lastLightPress, setLastLightPress] = useState(0);
   const [reloadKey, setReloadKey] = useState(0);
   const [pouparDados, setPouparDados] = useState(false);
+  const emFoco = useIsFocused();
   const [fullscreen, setFullscreen] = useState(false);
 
   // Preferência de poupança de dados (Definições → modo remoto).
@@ -494,7 +497,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
           {isConnected && streamHtml && !fullscreen ? (
             <View ref={videoRef} collapsable={false} style={{ flex: 1 }}>
               {pouparDados ? (
-                <SnapshotAoVivo host={videoHost ?? ''} />
+                <SnapshotAoVivo host={videoHost ?? ''} activo={emFoco} />
               ) : (
               <WebView
                 key={`${printer.id}-${reloadKey}`}
@@ -742,7 +745,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
       >
         <View className="flex-1 bg-black">
           {pouparDados ? (
-            <SnapshotAoVivo host={videoHost ?? ''} />
+            <SnapshotAoVivo host={videoHost ?? ''} activo={emFoco} />
           ) : (
           <WebView
             source={{ html: fullscreenHtml, baseUrl: `http://${videoHost}` }}
