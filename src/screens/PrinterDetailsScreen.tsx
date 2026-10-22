@@ -476,7 +476,9 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
               {t('comum.camadaTitulo').toUpperCase()}
             </Text>
             <Text className="mt-0.5 text-[17px] font-bold text-ink" style={{ fontFamily: 'monospace' }}>
-              {info?.CurrentLayer ?? 0}/{info?.TotalLayer ?? 0}
+              {isPrinting && (info?.TotalLayer ?? 0) > 0
+                ? `${info?.CurrentLayer ?? 0}/${info?.TotalLayer ?? 0}`
+                : '—'}
             </Text>
           </View>
         </View>
