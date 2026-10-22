@@ -12,6 +12,7 @@ export default {
   'comum.fechar': 'Fechar',
   'comum.retomar': 'Retomar',
   'comum.pausar': 'Pausar',
+  'estado.emPausa': 'EM PAUSA',
   'comum.parar': 'Parar',
   'comum.cancelarImpressao': 'Cancelar impressão',
   'comum.interrompeImpressao':

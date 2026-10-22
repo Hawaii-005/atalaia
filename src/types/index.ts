@@ -67,42 +67,61 @@ export type PrintStatus =
   | 'stopped'
   | 'unknown';
 
+// Códigos lidos da Centauri Carbon (firmware 1.4.49):
+// 0 parada · 1/16/20 preparação (o 20 também aparece em pausa) · 13 arranque
+// de camada · 5 transição · 6 a imprimir · 7 a parar · 8 parada (mantém
+// Progress antigo) · 9 terminada.
+// A pausa NÃO tem código próprio: mantém o 6 e o CurrentTicks é que pára.
 export const getPrintStatus = (status: number): PrintStatus => {
   switch (status) {
     case 0:
       return 'idle';
+    case 1:
+    case 16:
+    case 20:
+      return 'preparing';
+    case 5:
     case 6:
-      return 'paused';
+    case 13:
+      return 'printing';
+    case 7:
     case 8:
       return 'stopped';
     case 9:
       return 'completed';
-    case 16:
-    case 1:
-    case 20:
-      return 'preparing';
-    case 13:
-      return 'printing';
     default:
       return 'unknown';
   }
 };
 
-export const isPausable = (status: number): boolean => {
-  // Can pause when printing
-  return status === 13;
+/** Estado real, juntando o código da máquina e o sinal de ticks parados. */
+export const classificarEstado = (
+  printInfo: PrintInfo | undefined,
+  ticksParados: boolean
+): PrintStatus => {
+  if (!printInfo?.Filename) {
+    return printInfo?.Status === 7 || printInfo?.Status === 8
+      ? 'stopped'
+      : 'idle';
+  }
+  if (ticksParados) {
+    const base = getPrintStatus(printInfo.Status);
+    if (base === 'printing' || base === 'preparing') return 'paused';
+  }
+  return getPrintStatus(printInfo.Status);
 };
 
-export const isResumable = (status: number): boolean => {
-  // Can resume when paused
-  return status === 6;
-};
+/** Dá para pausar enquanto está a imprimir. */
+export const isPausable = (status: number): boolean =>
+  status === 6 || status === 13;
 
-export const isStoppable = (status: number): boolean => {
-  // Can stop when preparing (3), paused (6) or printing (13).
-  // Upstream only allowed 6, so Stop never showed during a print.
-  return status === 3 || status === 6 || status === 13;
-};
+/** Só faz sentido retomar quando a app detectou pausa (ticks parados). */
+export const isResumable = (status: number): boolean =>
+  status === 6 || status === 13 || status === 20;
+
+/** Qualquer trabalho em curso pode ser parado. */
+export const isStoppable = (status: number): boolean =>
+  status === 1 || status === 6 || status === 13 || status === 16 || status === 20;
 
 export interface PrinterStatus {
   CurrentStatus: number[];

@@ -34,6 +34,7 @@ import {
 } from '../utils/commands';
 import { t } from '../i18n';
 import type { ConnectionStatus } from '../types';
+import { classificarEstado } from '../types';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 import { BT_ACENTO, BT_APAGADA, BT_NEUTRA, BT_PERIGO, TX_ACENTO, TX_PERIGO } from '../theme/botoes';
@@ -265,6 +266,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
   const codigosParado = [0, 7, 8];
   const isPrinting =
     !!info?.Filename && !codigosParado.includes(printStatus);
+  const estado = classificarEstado(info, emPausa);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -389,7 +391,9 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                 cx={ANEL_TAM / 2}
                 cy={ANEL_TAM / 2}
                 r={ANEL_RAIO}
-                stroke={hexDe(tema.paleta.acento)}
+                stroke={hexDe(
+                  estado === 'paused' ? tema.paleta.aviso : tema.paleta.acento
+                )}
                 strokeWidth={ANEL_TRACO}
                 fill="none"
                 strokeLinecap="round"
@@ -470,9 +474,11 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
             {isPrinting ? remaining : '—'}
           </Text>
           <Text className="mt-0.5 text-[11px] text-ink-muted">
-            {isPrinting && horaFim
-              ? t('details.restantesFim', { hora: horaFim })
-              : t('camera.inativa')}
+            {estado === 'paused'
+              ? t('estado.emPausa')
+              : isPrinting && horaFim
+                ? t('details.restantesFim', { hora: horaFim })
+                : t('camera.inativa')}
           </Text>
         </View>
 

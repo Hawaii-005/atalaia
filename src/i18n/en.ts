@@ -15,6 +15,7 @@ const en = {
   'comum.fechar': 'Close',
   'comum.retomar': 'Resume',
   'comum.pausar': 'Pause',
+  'estado.emPausa': 'PAUSED',
   'comum.parar': 'Stop',
   'comum.cancelarImpressao': 'Cancel print',
   'comum.interrompeImpressao': 'This stops the print and cannot be undone.',
