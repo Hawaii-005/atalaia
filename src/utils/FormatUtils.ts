@@ -1,6 +1,7 @@
 /**
  * Format utilities for common text formatting operations
  */
+import { t } from '../i18n';
 
 /**
  * Formats a timestamp into a human-readable "time ago" string
@@ -25,7 +26,7 @@ export const formatTimeAgo = (
   } else if (seconds > 5) {
     return `${seconds}s ago`;
   } else {
-    return 'Agora mesmo';
+    return t('comum.agoraMesmo');
   }
 };
 

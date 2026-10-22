@@ -12,25 +12,29 @@ import PagerView from 'react-native-pager-view';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '../contexts/ThemeContext';
+import { t } from '../i18n';
 
 const SLIDES = [
   {
-    overline: 'BEM-VINDO',
-    title: 'A sua impressora, no seu bolso',
-    body: 'Veja a câmara, consulte as temperaturas e pause uma impressão a partir de qualquer ponto da sua rede.',
+    overlineKey: 'welcome.overlineBemVindo',
+    titleKey: 'welcome.titulo1',
+    bodyKey: 'welcome.corpo1',
     icon: null,
+    github: false,
   },
   {
-    overline: 'AVISO',
-    title: 'Sem afiliação com a Elegoo',
-    body: 'É uma aplicação independente, criada pela comunidade. A sua impressora comunica com ela diretamente através da rede local — nada passa por nós.',
+    overlineKey: 'welcome.overlineAviso',
+    titleKey: 'welcome.titulo2',
+    bodyKey: 'welcome.corpo2',
     icon: 'shield-checkmark-outline',
+    github: false,
   },
   {
-    overline: 'CÓDIGO ABERTO',
-    title: 'Criado pela comunidade',
-    body: 'Sob licença MIT e com desenvolvimento aberto. Avisos de erros e contribuições são bem-vindos.',
+    overlineKey: 'welcome.overlineCodigoAberto',
+    titleKey: 'welcome.titulo3',
+    bodyKey: 'welcome.corpo3',
     icon: 'code-slash-outline',
+    github: true,
   },
 ];
 
@@ -68,7 +72,7 @@ const WelcomeScreen = ({ onComplete }: { onComplete: () => void }) => {
         await Linking.openURL(url);
       }
     } catch {
-      Alert.alert('Erro', 'Não foi possível abrir a ligação.');
+      Alert.alert(t('comum.erro'), t('comum.erroLigacao'));
     }
   };
 
@@ -87,7 +91,7 @@ const WelcomeScreen = ({ onComplete }: { onComplete: () => void }) => {
       >
         {SLIDES.map(slide => (
           <View
-            key={slide.title}
+            key={slide.titleKey}
             style={{ flex: 1 }}
             className="px-8 justify-center"
           >
@@ -109,16 +113,16 @@ const WelcomeScreen = ({ onComplete }: { onComplete: () => void }) => {
               )}
 
               <Text className="mt-8 text-[10px] tracking-widest font-semibold text-ink-soft">
-                {slide.overline}
+                {t(slide.overlineKey)}
               </Text>
               <Text className="mt-2 text-[26px] leading-[32px] font-bold text-ink text-center">
-                {slide.title}
+                {t(slide.titleKey)}
               </Text>
               <Text className="mt-3 text-[14px] leading-[21px] text-ink-muted text-center">
-                {slide.body}
+                {t(slide.bodyKey)}
               </Text>
 
-              {slide.overline === 'CÓDIGO ABERTO' && (
+              {slide.github && (
                 <TouchableOpacity
                   onPress={handleGitHubPress}
                   className="mt-6 flex-row items-center rounded-xl2 border border-line px-4 py-2.5"
@@ -126,7 +130,7 @@ const WelcomeScreen = ({ onComplete }: { onComplete: () => void }) => {
                 >
                   <Ionicons name="logo-github" size={16} color="#171A20" />
                   <Text className="ml-2 text-[13px] font-semibold text-ink">
-                    Ver no GitHub
+                    {t('welcome.verGithub')}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -138,7 +142,7 @@ const WelcomeScreen = ({ onComplete }: { onComplete: () => void }) => {
       <View className="flex-row justify-center items-center pb-6">
         {SLIDES.map((slide, index) => (
           <View
-            key={slide.title}
+            key={slide.titleKey}
             className={`h-1.5 rounded-full mx-1 ${
               index === page ? 'w-6 bg-brand' : 'w-1.5 bg-[#D6D8DB]'
             }`}
@@ -154,7 +158,7 @@ const WelcomeScreen = ({ onComplete }: { onComplete: () => void }) => {
             activeOpacity={0.7}
           >
             <Text className="text-[15px] font-semibold text-ink-soft">
-              Anterior
+              {t('welcome.anterior')}
             </Text>
           </TouchableOpacity>
         )}
@@ -164,7 +168,7 @@ const WelcomeScreen = ({ onComplete }: { onComplete: () => void }) => {
           activeOpacity={0.85}
         >
           <Text className="text-[15px] font-semibold text-white">
-            {isLast ? 'Começar' : 'Seguinte'}
+            {isLast ? t('welcome.comecar') : t('welcome.seguinte')}
           </Text>
         </TouchableOpacity>
       </View>

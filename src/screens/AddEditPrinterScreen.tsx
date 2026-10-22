@@ -13,6 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { checkLocalNetworkPermission } from '../utils/LocalNetworkUtils';
+import { t } from '../i18n';
 
 interface FormData {
   printerName: string;
@@ -27,10 +28,10 @@ interface FormErrors {
 const validationSchema = yup.object().shape({
   printerName: yup
     .string()
-    .required('O nome da impressora é obrigatório')
-    .min(2, 'Pelo menos 2 caracteres')
-    .max(50, 'Menos de 50 caracteres'),
-  ipAddress: yup.string().required('O endereço IP é obrigatório'),
+    .required(t('addPrinter.nomeObrigatorio'))
+    .min(2, t('addPrinter.nomeMinimo'))
+    .max(50, t('addPrinter.nomeMaximo')),
+  ipAddress: yup.string().required(t('addPrinter.ipObrigatorio')),
 });
 
 export const AddEditPrinterScreen = () => {
@@ -87,8 +88,8 @@ export const AddEditPrinterScreen = () => {
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
       <Header
-        title="Adicionar impressora"
-        subtitle="Configuração manual"
+        title={t('addPrinter.title')}
+        subtitle={t('addPrinter.configManual')}
         onBack={() => navigation.goBack()}
       />
 
@@ -99,11 +100,11 @@ export const AddEditPrinterScreen = () => {
       >
         <View className="rounded-xl2 border border-line bg-white p-4">
           <Text className="text-[10px] tracking-widest font-semibold text-ink-soft">
-            IMPRESSORA
+            {t('addPrinter.seccaoImpressora')}
           </Text>
 
           <Text className="mt-4 mb-1.5 text-[12px] font-medium text-ink-soft">
-            Nome
+            {t('addPrinter.nome')}
           </Text>
           <TextInput
             className={fieldClass('printerName')}
@@ -124,14 +125,14 @@ export const AddEditPrinterScreen = () => {
 
           <View className="mt-4 flex-row items-center justify-between mb-1.5">
             <Text className="text-[12px] font-medium text-ink-soft">
-              Endereço IP ou nome do anfitrião
+              {t('addPrinter.enderecoIp')}
             </Text>
             <TouchableOpacity
               onPress={() => navigation.navigate('WhereIsIp')}
               activeOpacity={0.7}
             >
               <Text className="text-[12px] font-semibold text-brand">
-                Onde encontrar?
+                {t('addPrinter.ondeEncontrar')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -154,7 +155,7 @@ export const AddEditPrinterScreen = () => {
             </Text>
           ) : (
             <Text className="mt-1.5 text-[11px] text-ink-muted">
-              Encontra-o no ecrã da impressora: Definições → Rede.
+              {t('addPrinter.ipDica')}
             </Text>
           )}
         </View>
@@ -168,7 +169,7 @@ export const AddEditPrinterScreen = () => {
           }`}
         >
           <Text className="text-[15px] font-semibold text-white">
-            {isSubmitting ? 'A guardar…' : 'Guardar impressora'}
+            {isSubmitting ? t('addPrinter.aGuardar') : t('addPrinter.guardar')}
           </Text>
         </TouchableOpacity>
 
@@ -179,7 +180,7 @@ export const AddEditPrinterScreen = () => {
         >
           <Ionicons name="wifi" size={16} color="#3F444D" />
           <Text className="ml-2 text-[13px] font-semibold text-ink-soft">
-            Analisar a rede
+            {t('addPrinter.analisarRede')}
           </Text>
         </TouchableOpacity>
       </ScrollView>

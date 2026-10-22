@@ -16,6 +16,7 @@ import { CameraScreen } from '../screens/CameraScreen';
 import WhereIsIpScreen from '../screens/WhereIsIpScreen';
 import PrinterIcon from '../components/icons/PrinterIcon';
 import { useTheme } from '../contexts/ThemeContext';
+import { t } from '../i18n';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -97,21 +98,21 @@ export const AppNavigator = () => {
         name="Printers"
         component={PrintersStackNavigator}
         options={{
-          title: 'Impressoras',
+          title: t('home.title'),
         }}
       />
       <Tab.Screen
         name="Camera"
         component={CameraScreen}
         options={{
-          title: 'Câmara',
+          title: t('camera.title'),
         }}
       />
       <Tab.Screen
         name="Settings"
         component={SettingsScreen}
         options={{
-          title: 'Definições',
+          title: t('settings.title'),
         }}
       />
     </Tab.Navigator>

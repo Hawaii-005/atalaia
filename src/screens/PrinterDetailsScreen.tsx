@@ -20,7 +20,6 @@ import {
   formatTextMaxEllipsis,
   formatTicksToReadableTime,
 } from '~/utils/FormatUtils';
-import type { ConnectionStatus } from '../types';
 import {
   pausePrintCommand,
   resumePrintCommand,
@@ -32,14 +31,16 @@ import {
   timelapseCommand,
   type SdcpCommand,
 } from '../utils/commands';
+import { t } from '../i18n';
+import type { ConnectionStatus } from '../types';
 
-// Etiquetas visíveis para o estado de ligação da impressora.
+// Etiquetas visíveis para o estado de ligação da impressora (chaves i18n).
 const CONNECTION_LABEL: { [key in ConnectionStatus]: string } = {
-  connected: 'Ligada',
-  connecting: 'A ligar',
-  disconnected: 'Desligada',
-  error: 'Erro',
-  timeout: 'Tempo esgotado',
+  connected: 'comum.ligada',
+  connecting: 'comum.aLigar',
+  disconnected: 'comum.desligada',
+  error: 'comum.erro',
+  timeout: 'comum.tempoEsgotado',
 };
 
 export const PrinterDetailsScreen = ({ navigation }: any) => {
@@ -106,12 +107,12 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
   const handleStopPrint = () => {
     if (!printer) return;
     Alert.alert(
-      'Cancelar impressão',
-      'Esta ação interrompe a impressão e é irreversível.',
+      t('comum.cancelarImpressao'),
+      t('comum.interrompeImpressao'),
       [
-        { text: 'Continuar a impressão', style: 'cancel' },
+        { text: t('comum.continuarImpressao'), style: 'cancel' },
         {
-          text: 'Parar impressão',
+          text: t('comum.pararImpressao'),
           style: 'destructive',
           onPress: () =>
             sendCommand(
@@ -197,12 +198,12 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
   const handleDeletePrinter = () => {
     if (!printer) return;
     Alert.alert(
-      'Desassociar impressora',
-      `Remover ${printer.printerName}? Esta ação é irreversível.`,
+      t('details.desassociar'),
+      t('details.desassociarMsg', { nome: printer.printerName }),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('comum.cancelar'), style: 'cancel' },
         {
-          text: 'Desassociar',
+          text: t('details.desassociar'),
           style: 'destructive',
           onPress: () => {
             removePrinter(printer.id);
@@ -223,16 +224,16 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
   if (!printer) {
     return (
       <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
-        <Header title="Impressora" onBack={() => navigation.goBack()} />
+        <Header title={t('details.title')} onBack={() => navigation.goBack()} />
         <View className="flex-1 items-center justify-center px-6">
           <Text className="text-ink-muted text-center">
-            Esta impressora já não está disponível.
+            {t('details.jaNaoDisponivel')}
           </Text>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             className="mt-4 rounded-xl2 bg-brand px-6 py-3"
           >
-            <Text className="text-white font-semibold">Voltar</Text>
+            <Text className="text-white font-semibold">{t('details.voltar')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -248,17 +249,17 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
 
   const temperatures = [
     {
-      label: 'BICO',
+      label: 'comum.bico',
       value: printer.status?.TempOfNozzle ?? 0,
       target: printer.status?.TempTargetNozzle ?? 0,
     },
     {
-      label: 'MESA',
+      label: 'comum.mesa',
       value: printer.status?.TempOfHotbed ?? 0,
       target: printer.status?.TempTargetHotbed ?? 0,
     },
     {
-      label: 'CÂMARA',
+      label: 'comum.camara',
       value: printer.status?.TempOfBox ?? 0,
       target: printer.status?.TempTargetBox ?? 0,
     },
@@ -267,19 +268,19 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
   const fanRows = [
     {
       key: 'model' as const,
-      label: 'Ventoinha do modelo',
+      label: t('details.ventoinhaModelo'),
       icon: 'cube-outline',
       speed: fanSpeeds.model,
     },
     {
       key: 'chamber' as const,
-      label: 'Ventoinha da câmara',
+      label: t('details.ventoinhaCamara'),
       icon: 'thermometer-outline',
       speed: fanSpeeds.chamber,
     },
     {
       key: 'side' as const,
-      label: 'Ventoinha lateral',
+      label: t('details.ventoinhaLateral'),
       icon: 'layers-outline',
       speed: fanSpeeds.side,
     },
@@ -288,10 +289,10 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
   const FAN_STEPS = [0, 25, 50, 75, 100];
 
   const SPEED_PROFILES = [
-    { label: 'Silencioso', percent: 50 },
-    { label: 'Normal', percent: 100 },
-    { label: 'Desporto', percent: 130 },
-    { label: 'Ludicrous', percent: 160 },
+    { label: t('details.silencioso'), percent: 50 },
+    { label: t('details.normal'), percent: 100 },
+    { label: t('details.desporto'), percent: 130 },
+    { label: t('details.ludicrous'), percent: 160 },
   ];
 
   return (
@@ -300,10 +301,10 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
         title={formatTextMaxEllipsis(printer.printerName, 26)}
         subtitle={
           isConnected
-            ? `${printer.ipAddress} · Ligada`
+            ? `${printer.ipAddress} · ${t('comum.ligada')}`
             : printer.reconnectAttempt
-              ? `A RECONECTAR (TENTATIVA ${printer.reconnectAttempt})`
-              : CONNECTION_LABEL[printer.connectionStatus].toUpperCase()
+              ? t('details.aReconectarUpper', { n: printer.reconnectAttempt })
+              : t(CONNECTION_LABEL[printer.connectionStatus]).toUpperCase()
         }
         onBack={() => navigation.goBack()}
       />
@@ -346,7 +347,9 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
             <View className="flex-1 items-center justify-center">
               <Ionicons name="videocam-off" size={32} color="#7C8088" />
               <Text className="mt-2 text-[12px] text-white/60">
-                {isConnected ? 'À espera do vídeo' : 'Impressora desligada'}
+                {isConnected
+                  ? t('details.aEsperaVideo')
+                  : t('comum.impressoraDesligada')}
               </Text>
             </View>
           )}
@@ -355,7 +358,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
             <View className="absolute top-3 left-3 flex-row items-center rounded-full bg-black/55 px-2.5 py-1">
               <View className="w-1.5 h-1.5 rounded-full bg-[#FF4757] mr-1.5" />
               <Text className="text-white text-[10px] font-bold tracking-widest">
-                EM DIRETO
+                {t('comum.emDireto')}
               </Text>
             </View>
           )}
@@ -369,7 +372,9 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
           <View className="mt-4 rounded-xl2 border border-line bg-white p-4">
             <View className="flex-row items-start justify-between">
               <Text className="text-[10px] tracking-widest font-semibold text-ink-soft">
-                {printStatus === 6 ? 'EM PAUSA' : 'A IMPRIMIR'}
+                {printStatus === 6
+                  ? t('comum.emPausa').toUpperCase()
+                  : t('comum.aImprimir').toUpperCase()}
               </Text>
               <Text className="text-[26px] font-bold text-ink leading-none">
                 {progress}
@@ -384,7 +389,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
               numberOfLines={1}
               style={{ fontFamily: 'monospace' }}
             >
-              {info?.Filename || 'Sem ficheiro'}
+              {info?.Filename || t('details.semFicheiro')}
             </Text>
 
             <View className="mt-3 h-[5px] rounded-full bg-[#DCDCDC] overflow-hidden">
@@ -396,10 +401,13 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
 
             <View className="flex-row justify-between mt-2.5">
               <Text className="text-[12px] text-ink-muted">
-                Camada {info?.CurrentLayer ?? 0}/{info?.TotalLayer ?? 0}
+                {t('comum.camada', {
+                  actual: info?.CurrentLayer ?? 0,
+                  total: info?.TotalLayer ?? 0,
+                })}
               </Text>
               <Text className="text-[12px] text-ink-muted">
-                {remaining} restantes
+                {t('comum.restantes', { t: remaining })}
               </Text>
             </View>
 
@@ -416,7 +424,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                     color="#171A20"
                   />
                   <Text className="ml-1.5 text-[13px] font-semibold text-ink">
-                    {canResume ? 'Retomar' : 'Pausar'}
+                    {canResume ? t('comum.retomar') : t('comum.pausar')}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -427,7 +435,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
               >
                 <Ionicons name="stop" size={15} color="#C62828" />
                 <Text className="ml-1.5 text-[13px] font-semibold text-[#C62828]">
-                  Parar
+                  {t('comum.parar')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -444,7 +452,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
               }`}
             >
               <Text className="text-[9px] tracking-widest font-semibold text-ink-soft">
-                {tile.label}
+                {t(tile.label).toUpperCase()}
               </Text>
               <Text className="mt-1 text-[19px] font-bold text-ink">
                 {tile.value.toFixed(0)}
@@ -453,7 +461,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                 </Text>
               </Text>
               <Text className="text-[11px] text-ink-muted">
-                alvo {tile.target.toFixed(0)}°
+                {t('details.alvo', { t: tile.target.toFixed(0) })}
               </Text>
             </View>
           ))}
@@ -462,7 +470,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
         {/* Controls */}
         <View className="mt-4 rounded-xl2 border border-line bg-white">
           <Text className="px-4 pt-4 pb-1 text-[10px] tracking-widest font-semibold text-ink-soft">
-            CONTROLOS
+            {t('details.controlos')}
           </Text>
 
           {/* Light */}
@@ -476,7 +484,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                 />
               </View>
               <Text className="ml-3 text-[14px] font-medium text-ink">
-                Luz da impressora
+                {t('details.luzImpressora')}
               </Text>
             </View>
             <Switch
@@ -551,7 +559,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                   />
                 </View>
                 <Text className="ml-3 text-[14px] font-medium text-ink">
-                  Velocidade
+                  {t('details.velocidade')}
                 </Text>
               </View>
               <Text className="text-[12px] font-semibold text-ink-soft">
@@ -599,10 +607,10 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
               </View>
               <View className="ml-3">
                 <Text className="text-[14px] font-medium text-ink">
-                  Time-lapse
+                  {t('details.timelapse')}
                 </Text>
                 <Text className="text-[11px] text-ink-muted">
-                  Gravado pela própria impressora
+                  {t('details.gravadoImpressora')}
                 </Text>
               </View>
             </View>
@@ -619,7 +627,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
           {/* Emergência */}
           <View className="px-4 py-3 border-t border-line">
             <Text className="text-[11px] font-semibold tracking-widest text-ink-muted">
-              DURANTE A IMPRESSÃO
+              {t('details.duranteImpressao')}
             </Text>
             <View className="flex-row mt-2">
               <TouchableOpacity
@@ -629,7 +637,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                 activeOpacity={0.7}
               >
                 <Text className="text-[12px] font-semibold text-ink">
-                  Saltar pré-aquecimento
+                  {t('details.saltarPreaquecimento')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -639,7 +647,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                 activeOpacity={0.7}
               >
                 <Text className="text-[12px] font-semibold text-ink">
-                  Parar filamento
+                  {t('details.pararFilamento')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -649,13 +657,13 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
         {/* Printer */}
         <View className="mt-4 rounded-xl2 border border-line bg-white">
           <Text className="px-4 pt-4 pb-1 text-[10px] tracking-widest font-semibold text-ink-soft">
-            IMPRESSORA
+            {t('details.seccaoImpressora')}
           </Text>
           <View className="flex-row items-center justify-between px-4 py-3 border-t border-line">
             <View>
-              <Text className="text-[13px] font-medium text-ink">Ligação</Text>
+              <Text className="text-[13px] font-medium text-ink">{t('details.ligacao')}</Text>
               <Text className="text-[11px] text-ink-muted">
-                Direta por LAN · SDCP
+                {t('details.diretaLan')}
               </Text>
             </View>
             <Text className="text-[12px] text-ink-muted">
@@ -669,7 +677,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
           >
             <Ionicons name="trash-outline" size={16} color="#C62828" />
             <Text className="ml-2 text-[13px] font-semibold text-[#C62828]">
-              Desassociar impressora
+              {t('details.desassociar')}
             </Text>
           </TouchableOpacity>
         </View>

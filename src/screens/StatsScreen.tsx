@@ -18,6 +18,7 @@ import {
   printHistoryDetailCommand,
 } from '../utils/commands';
 import { mensagemDeErro } from '../utils/errors';
+import { t } from '../i18n';
 
 interface TaskDetail {
   TaskId: string;
@@ -30,11 +31,12 @@ interface TaskDetail {
   SliceInformation?: { print_time?: number; total_layer_numbers?: number };
 }
 
+// Etiquetas visíveis para o estado de cada tarefa (chaves i18n).
 const STATUS_LABEL: Record<number, string> = {
-  0: 'Outro',
-  1: 'Concluída',
-  2: 'Erro',
-  3: 'Parada',
+  0: 'stats.statusOutro',
+  1: 'stats.statusConcluida',
+  2: 'stats.statusErro',
+  3: 'stats.statusParada',
 };
 
 const hours = (seconds: number) => `${Math.round(seconds / 360) / 10}h`;
@@ -125,8 +127,8 @@ export const StatsScreen = ({ navigation }: any) => {
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
       <Header
-        title="Estatísticas"
-        subtitle={printer ? printer.printerName : 'Sem impressora'}
+        title={t('stats.title')}
+        subtitle={printer ? printer.printerName : t('comum.semImpressora')}
         onBack={() => navigation.goBack()}
         rightAction={{ icon: 'refresh', onPress: load }}
       />
@@ -147,42 +149,42 @@ export const StatsScreen = ({ navigation }: any) => {
           ) : null}
 
           <Text className="text-[11px] font-semibold tracking-widest text-ink-muted mb-2">
-            NA IMPRESSORA
+            {t('stats.naImpressora')}
           </Text>
           <View className="flex-row mb-2">
             <StatCard
-              label="TRABALHOS"
+              label={t('stats.trabalhos')}
               value={String(tasks.length)}
-              hint="no histórico"
+              hint={t('stats.noHistorico')}
             />
             <View className="w-2" />
             <StatCard
-              label="CONCLUÍDOS"
+              label={t('stats.concluidos')}
               value={String(completed)}
-              hint={`${stopped} parados`}
+              hint={t('stats.parados', { n: stopped })}
             />
           </View>
           <View className="flex-row mb-5">
             <StatCard
-              label="TEMPO"
+              label={t('stats.tempo')}
               value={hours(totalSeconds)}
-              hint="impressão somada"
+              hint={t('stats.impressaoSomada')}
             />
             <View className="w-2" />
             <StatCard
-              label="CAMADAS"
+              label={t('stats.camadas')}
               value={String(totalLayers)}
-              hint="impressas"
+              hint={t('stats.impressas')}
             />
           </View>
 
           <Text className="text-[11px] font-semibold tracking-widest text-ink-muted mb-2">
-            POR MÊS (registos desta app)
+            {t('stats.porMes')}
           </Text>
           <View className="rounded-xl border border-line p-3 mb-5">
             {months.length === 0 ? (
               <Text className="text-[12px] text-ink-muted">
-                Ainda sem impressões registadas nesta app.
+                {t('stats.semRegistos')}
               </Text>
             ) : (
               months.map(month => (
@@ -205,7 +207,7 @@ export const StatsScreen = ({ navigation }: any) => {
           </View>
 
           <Text className="text-[11px] font-semibold tracking-widest text-ink-muted mb-2">
-            ÚLTIMOS TRABALHOS
+            {t('stats.ultimosTrabalhos')}
           </Text>
           {tasks.slice(0, 8).map(task => (
             <View
@@ -230,7 +232,10 @@ export const StatsScreen = ({ navigation }: any) => {
                   {(task.TaskName ?? '').split('/').pop()}
                 </Text>
                 <Text className="text-[11px] text-ink-muted">
-                  {STATUS_LABEL[task.TaskStatus] ?? 'Outro'} ·{' '}
+                  {t(
+                    STATUS_LABEL[task.TaskStatus] ?? 'stats.statusOutro'
+                  )}{' '}
+                  ·{' '}
                   {hours(
                     task.SliceInformation?.print_time ??
                       Math.max(0, (task.EndTime ?? 0) - (task.BeginTime ?? 0))
@@ -246,7 +251,7 @@ export const StatsScreen = ({ navigation }: any) => {
             activeOpacity={0.7}
           >
             <Text className="text-[13px] font-semibold text-brand">
-              Ver histórico completo
+              {t('stats.verHistoricoCompleto')}
             </Text>
           </TouchableOpacity>
         </ScrollView>

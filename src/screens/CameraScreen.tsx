@@ -22,16 +22,17 @@ import { WebView } from 'react-native-webview';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { Header } from '../components/Header';
 import type { ConnectionStatus } from '../types';
+import { t } from '../i18n';
 
 const LIGHT_COMMAND = 403;
 
-// Etiquetas visíveis para o estado de ligação da impressora.
+// Etiquetas visíveis para o estado de ligação da impressora (chaves i18n).
 const CONNECTION_LABEL: Record<ConnectionStatus, string> = {
-  connected: 'ligada',
-  connecting: 'a ligar',
-  disconnected: 'desligada',
-  error: 'com erro',
-  timeout: 'sem resposta',
+  connected: 'camera.impLigada',
+  connecting: 'camera.impALigar',
+  disconnected: 'camera.impDesligada',
+  error: 'camera.impComErro',
+  timeout: 'camera.impSemResposta',
 };
 
 export const CameraScreen = ({ navigation, route }: any) => {
@@ -164,12 +165,12 @@ export const CameraScreen = ({ navigation, route }: any) => {
   const handleStopPrint = useCallback(() => {
     if (!printer) return;
     Alert.alert(
-      'Cancelar impressão',
-      'Esta ação interrompe a impressão e é irreversível.',
+      t('comum.cancelarImpressao'),
+      t('comum.interrompeImpressao'),
       [
-        { text: 'Continuar a impressão', style: 'cancel' },
+        { text: t('comum.continuarImpressao'), style: 'cancel' },
         {
-          text: 'Parar impressão',
+          text: t('comum.pararImpressao'),
           style: 'destructive',
           onPress: () =>
             sendCommand(printer.id, {
@@ -196,8 +197,8 @@ export const CameraScreen = ({ navigation, route }: any) => {
       const permission = await MediaLibrary.requestPermissionsAsync();
       if (!permission.granted) {
         Alert.alert(
-          'É necessário acesso à galeria',
-          'Permita o acesso às fotografias para guardar as capturas.'
+          t('camera.acessoGaleria'),
+          t('camera.acessoGaleriaMsg')
         );
         return;
       }
@@ -212,9 +213,9 @@ export const CameraScreen = ({ navigation, route }: any) => {
 
       const uri = await captureRef(videoRef, { format: 'jpg', quality: 0.92 });
       await MediaLibrary.saveToLibraryAsync(uri);
-      Alert.alert('Guardado', 'Captura guardada na galeria.');
+      Alert.alert(t('camera.guardado'), t('camera.guardadoMsg'));
     } catch (error) {
-      Alert.alert('Não foi possível capturar', String(error));
+      Alert.alert(t('camera.erroCaptura'), String(error));
     } finally {
       setCapturing(false);
       webViewRef.current?.injectJavaScript(
@@ -247,9 +248,9 @@ export const CameraScreen = ({ navigation, route }: any) => {
           setUploadPercent(Math.round((enviado / total) * 100));
         }
       );
-      Alert.alert('Enviado', `${asset.name} está na memória da impressora.`);
+      Alert.alert(t('camera.enviado'), t('camera.enviadoMsg', { nome: asset.name }));
     } catch (error) {
-      Alert.alert('Falhou o envio', String(error));
+      Alert.alert(t('camera.falhouEnvio'), String(error));
     } finally {
       setUploading(false);
     }
@@ -280,6 +281,9 @@ export const CameraScreen = ({ navigation, route }: any) => {
       return '';
     }
     const url = `http://${videoHost}:3031/video`;
+    const dicaALigar = t('camera.hintALigar');
+    const dicaPerdido = t('camera.hintPerdido');
+    const dicaSemVideo = t('camera.hintSemVideo');
     return `<!DOCTYPE html>
 <html>
   <head>
@@ -293,23 +297,25 @@ export const CameraScreen = ({ navigation, route }: any) => {
   </head>
   <body>
     <img id="stream" src="${url}" />
-    <div id="hint">a ligar...</div>
+    <div id="hint">${dicaALigar}</div>
     <script>
       (function () {
         var img = document.getElementById('stream');
         var hint = document.getElementById('hint');
+        var lost = '${dicaPerdido}';
+        var noVideo = '${dicaSemVideo}';
         var retry;
         function load() { img.src = '${url}?t=' + Date.now(); }
         img.onload = function () { hint.style.display = 'none'; };
         img.onerror = function () {
           hint.style.display = 'block';
-          hint.textContent = 'fluxo de vídeo perdido - a religar...';
+          hint.textContent = lost;
           clearTimeout(retry);
           retry = setTimeout(load, 2000);
         };
         clearTimeout(retry);
         retry = setTimeout(function () {
-          if (!img.naturalWidth) { hint.textContent = 'sem vídeo - a tentar novamente...'; load(); }
+          if (!img.naturalWidth) { hint.textContent = noVideo; load(); }
         }, 6000);
       })();
     </script>
@@ -340,8 +346,8 @@ export const CameraScreen = ({ navigation, route }: any) => {
           totalLayers: info.TotalLayer ?? 0,
           remaining:
             remainingHours > 0
-              ? `${remainingHours}h ${remainingMinutes}m restantes`
-              : `${remainingMinutes}m restantes`,
+              ? `${remainingHours}h ${t('camera.minutos', { n: remainingMinutes })}`
+              : t('camera.minutos', { n: remainingMinutes }),
         }
       : null;
 
@@ -355,13 +361,13 @@ export const CameraScreen = ({ navigation, route }: any) => {
       >
         <Ionicons name="videocam-off" size={48} color="#7C8088" />
         <Text className="mt-3 text-ink text-center">
-          Ainda não há impressoras adicionadas.
+          {t('camera.semImpressoras')}
         </Text>
         <TouchableOpacity
           className="mt-4 bg-brand rounded-xl px-6 py-3"
           onPress={() => navigation?.navigate('Printers')}
         >
-          <Text className="text-white font-bold">IR PARA IMPRESSORAS</Text>
+          <Text className="text-white font-bold">{t('camera.irParaImpressoras')}</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -370,8 +376,10 @@ export const CameraScreen = ({ navigation, route }: any) => {
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
       <Header
-        title="Câmara"
-        subtitle={isConnected ? 'Imagem em direto' : 'Impressora desligada'}
+        title={t('camera.title')}
+        subtitle={
+          isConnected ? t('camera.imagemEmDireto') : t('comum.impressoraDesligada')
+        }
         rightAction={{ icon: 'refresh', onPress: restartStream }}
       />
 
@@ -445,11 +453,11 @@ export const CameraScreen = ({ navigation, route }: any) => {
               <Text className="text-white/70 mt-2 text-sm text-center px-4">
                 {printer.connectionStatus === 'connecting'
                   ? printer.reconnectAttempt
-                    ? `A reconectar (tentativa ${printer.reconnectAttempt})...`
-                    : 'A ligar à impressora...'
+                    ? t('camera.aReconectarTentativa', { n: printer.reconnectAttempt })
+                    : t('camera.aLigarImpressora')
                   : printer.reconnectAttempt
-                    ? `A reconectar (tentativa ${printer.reconnectAttempt})...`
-                    : `Impressora ${CONNECTION_LABEL[printer.connectionStatus]}`}
+                    ? t('camera.aReconectarTentativa', { n: printer.reconnectAttempt })
+                    : t(CONNECTION_LABEL[printer.connectionStatus])}
               </Text>
             </View>
           )}
@@ -476,7 +484,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
             <View className="absolute top-3 left-3 bg-black/55 rounded-full px-2.5 py-1 flex-row items-center">
               <View className="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5" />
               <Text className="text-white text-[10px] font-bold tracking-widest">
-                EM DIRETO
+                {t('comum.emDireto')}
               </Text>
             </View>
           )}
@@ -491,7 +499,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
               {printer.printerName}
             </Text>
             <Text className="text-xs text-ink-muted mt-0.5">
-              {isConnected ? 'Ligada' : 'Desligada'} · {printer.ipAddress}
+              {isConnected ? t('comum.ligada') : t('comum.desligada')} · {printer.ipAddress}
             </Text>
           </View>
 
@@ -512,7 +520,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
                 lightOn ? 'text-ink' : 'text-ink-soft'
               }`}
             >
-              {lightOn ? 'LUZ LIGADA' : 'LUZ DESLIGADA'}
+              {lightOn ? t('camera.luzLigada') : t('camera.luzDesligada')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -520,7 +528,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
         <View className="flex-row mt-4">
           <View className="flex-1 bg-canvas-sunken rounded-xl py-3 items-center mr-2">
             <Text className="text-[10px] tracking-widest text-ink-soft font-semibold">
-              BICO
+              {t('comum.bico').toUpperCase()}
             </Text>
             <Text className="text-xl font-bold text-ink mt-1">
               {nozzle}
@@ -529,7 +537,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
           </View>
           <View className="flex-1 bg-canvas-sunken rounded-xl py-3 items-center mr-2">
             <Text className="text-[10px] tracking-widest text-ink-soft font-semibold">
-              MESA
+              {t('comum.mesa').toUpperCase()}
             </Text>
             <Text className="text-xl font-bold text-ink mt-1">
               {bed}
@@ -538,7 +546,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
           </View>
           <View className="flex-1 bg-canvas-sunken rounded-xl py-3 items-center">
             <Text className="text-[10px] tracking-widest text-ink-soft font-semibold">
-              PROGRESSO
+              {t('camera.progresso')}
             </Text>
             <Text className="text-xl font-bold text-ink mt-1">
               {progress > 0 ? `${progress}` : '—'}
@@ -557,7 +565,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
                 className="text-[10px] tracking-widest text-ink-soft font-semibold"
                 numberOfLines={1}
               >
-                A IMPRIMIR
+                {t('comum.aImprimir').toUpperCase()}
               </Text>
               <Text className="text-xs text-ink-soft font-semibold">
                 {job.remaining}
@@ -593,7 +601,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
             </View>
             <View className="flex-row justify-between mt-2">
               <Text className="text-xs text-ink-muted">
-                Camada {job.layer}/{job.totalLayers}
+                {t('comum.camada', { actual: job.layer, total: job.totalLayers })}
               </Text>
               <View className="flex-row">
                 <TouchableOpacity
@@ -602,8 +610,8 @@ export const CameraScreen = ({ navigation, route }: any) => {
                 >
                   <Text className="text-[11px] font-semibold text-ink">
                     {printer?.status?.PrintInfo?.Status === 6
-                      ? 'Retomar'
-                      : 'Pausar'}
+                      ? t('comum.retomar')
+                      : t('comum.pausar')}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -611,7 +619,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
                   className="px-3 py-1.5 rounded-lg border border-line"
                 >
                   <Text className="text-[11px] font-semibold text-[#C62828]">
-                    Parar
+                    {t('comum.parar')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -620,10 +628,10 @@ export const CameraScreen = ({ navigation, route }: any) => {
         ) : (
           <View className="mt-4 bg-canvas-sunken rounded-xl p-4">
             <Text className="text-xs text-ink-soft font-semibold tracking-widest">
-              INATIVA
+              {t('camera.inativa')}
             </Text>
             <Text className="text-sm text-ink-muted mt-1">
-              Nenhuma impressão em curso. A mesa está livre.
+              {t('camera.mesaLivre')}
             </Text>
           </View>
         )}
@@ -648,7 +656,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
             >
               <Ionicons name="cloud-upload-outline" size={18} color="#3F444D" />
               <Text className="ml-2 text-ink font-semibold text-[13px]">
-                {uploading ? `A enviar ${uploadPercent}%` : 'Enviar G-code'}
+                {uploading ? t('camera.aEnviar', { p: uploadPercent }) : t('camera.enviarGcode')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -665,7 +673,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
               activeOpacity={0.7}
             >
               <Ionicons name="folder-open-outline" size={18} color="#3F444D" />
-              <Text className="ml-2 text-ink font-semibold text-[13px]">Ficheiros</Text>
+              <Text className="ml-2 text-ink font-semibold text-[13px]">{t('camera.ficheiros')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -694,7 +702,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
           <View className="absolute top-4 left-4 flex-row items-center bg-black/55 rounded-full px-3 py-1.5">
             <View className="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5" />
             <Text className="text-white text-[10px] font-bold tracking-widest">
-              EM DIRETO · {progress}%
+              {t('comum.emDiretoPct', { p: progress })}
             </Text>
           </View>
 
