@@ -255,7 +255,8 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
   const printStatus = info?.Status || 0;
   const canPause = printStatus === 13;
   const canResume = printStatus === 6;
-  const isPrinting = printStatus === 13 || printStatus === 6;
+  const isPrinting =
+    printStatus === 3 || printStatus === 6 || printStatus === 13 || progress > 0;
 
   const restanteSegundos = Math.max(
     0,
@@ -385,15 +386,19 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
               {printer.videoUrl && isConnected ? (
                 <WebView
                   key={webViewKey}
-                  source={{ uri: 'http://' + printer.videoUrl }}
+                  source={{
+                    html: `<html><body style="margin:0;background:#000;overflow:hidden"><img src="http://${printer.ipAddress}:3031/video" style="width:100%;height:100%;object-fit:cover" /></body></html>`,
+                    baseUrl: `http://${printer.ipAddress}`,
+                  }}
                   style={{ flex: 1, width: '100%', backgroundColor: '#000' }}
-                  javaScriptEnabled={false}
+                  javaScriptEnabled
                   domStorageEnabled={false}
                   allowsInlineMediaPlayback
                   mediaPlaybackRequiresUserAction={false}
+                  mixedContentMode="always"
+                  originWhitelist={['*']}
                   scrollEnabled={false}
                   bounces={false}
-                  pointerEvents="none"
                 />
               ) : (
                 <Ionicons
