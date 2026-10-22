@@ -281,46 +281,113 @@ export const CameraScreen = ({ navigation, route }: any) => {
       return '';
     }
     const url = `http://${videoHost}:3031/video`;
-    const dicaALigar = t('camera.hintALigar');
-    const dicaPerdido = t('camera.hintPerdido');
-    const dicaSemVideo = t('camera.hintSemVideo');
+    // O <img> antigo nunca avisava quando o servidor parava de enviar tramas e
+    // mostrava "fluxo perdido" durante segundos. Aqui as tramas JPEG são lidas
+    // de um fetch contínuo, desenhadas num canvas e a ligação é refeita em
+    // silêncio sempre que ficam 6 s sem tramas — sem texto no ecrã.
     return `<!DOCTYPE html>
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <style>
       html, body { margin: 0; padding: 0; background: #000; height: 100%; overflow: hidden; }
-      img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      canvas { width: 100%; height: 100%; object-fit: cover; display: block; }
       #hint { position: absolute; top: 10px; left: 0; right: 0; text-align: center; color: #9CA3AF;
-              font: 12px -apple-system, Roboto, sans-serif; }
+              font: 12px -apple-system, Roboto, sans-serif; display: none; }
     </style>
   </head>
   <body>
-    <img id="stream" src="${url}" />
-    <div id="hint">${dicaALigar}</div>
+    <canvas id="c"></canvas>
+    <div id="hint"></div>
     <script>
       (function () {
-        var img = document.getElementById('stream');
+        var c = document.getElementById('c');
+        var ctx = c.getContext('2d', { alpha: false });
         var hint = document.getElementById('hint');
-        var lost = '${dicaPerdido}';
-        var noVideo = '${dicaSemVideo}';
-        var retry;
-        var espera = 5000;
-        function load() { img.src = '${url}?t=' + Date.now(); }
-        img.onload = function () { hint.style.display = 'none'; espera = 5000; };
-        img.onerror = function () {
-          hint.style.display = 'block';
-          hint.textContent = lost;
-          clearTimeout(retry);
-          // Recuo progressivo: bater na impressora a cada 2 s esgotava os
-          // slots de vídeo e a câmara só voltava com um corte de corrente.
-          retry = setTimeout(load, espera);
-          espera = Math.min(espera * 2, 20000);
-        };
-        clearTimeout(retry);
-        retry = setTimeout(function () {
-          if (!img.naturalWidth) { hint.textContent = noVideo; load(); }
-        }, 6000);
+        var url = '${url}';
+        var vivo = true, ctrl = null, semTrama = null, primeira = false;
+        var ultimoDesenho = 0;
+
+        function aviso(txt) { hint.textContent = txt; hint.style.display = 'block'; }
+        function esconder() { hint.style.display = 'none'; }
+
+        function desenhar(blob) {
+          createImageBitmap(blob).then(function (bmp) {
+            if (c.width !== bmp.width || c.height !== bmp.height) {
+              c.width = bmp.width;
+              c.height = bmp.height;
+            }
+            ctx.drawImage(bmp, 0, 0);
+            if (bmp.close) bmp.close();
+            if (!primeira) { primeira = true; esconder(); }
+          }).catch(function () {});
+        }
+
+        function cortar() {
+          try { if (ctrl) ctrl.abort(); } catch (e) {}
+        }
+
+        async function ciclo() {
+          if (!vivo) return;
+          ctrl = new AbortController();
+          var reiniciar = false;
+          semTrama = setTimeout(function () { reiniciar = true; cortar(); }, 6000);
+          try {
+            var res = await fetch(url + '?t=' + Date.now(), {
+              signal: ctrl.signal,
+              cache: 'no-store',
+            });
+            if (!res.ok || !res.body) throw new Error('sem corpo');
+            var leitor = res.body.getReader();
+            var resto = new Uint8Array(0);
+            while (vivo && !reiniciar) {
+              var r = await leitor.read();
+              if (r.done) break;
+              clearTimeout(semTrama);
+              semTrama = setTimeout(function () { reiniciar = true; cortar(); }, 6000);
+
+              var dados = new Uint8Array(resto.length + r.value.length);
+              dados.set(resto, 0);
+              dados.set(r.value, resto.length);
+              resto = dados;
+
+              var consumido = 0;
+              for (;;) {
+                var ini = -1, fim = -1, i, j;
+                for (i = consumido; i < resto.length - 1; i += 1) {
+                  if (resto[i] === 0xFF && resto[i + 1] === 0xD8) { ini = i; break; }
+                }
+                if (ini < 0) break;
+                for (j = ini + 2; j < resto.length - 1; j += 1) {
+                  if (resto[j] === 0xFF && resto[j + 1] === 0xD9) { fim = j + 2; break; }
+                }
+                if (fim < 0) { consumido = ini; break; }
+                var agora = Date.now();
+                if (agora - ultimoDesenho >= 60) {
+                  ultimoDesenho = agora;
+                  desenhar(new Blob([resto.subarray(ini, fim)], { type: 'image/jpeg' }));
+                }
+                consumido = fim;
+              }
+              resto = consumido > 0 ? resto.subarray(consumido) : resto;
+              if (resto.length > 4194304) resto = new Uint8Array(0);
+            }
+          } catch (e) {
+            // ligação cortada: volta a tentar abaixo, em silêncio
+          }
+          clearTimeout(semTrama);
+          if (!vivo) return;
+          setTimeout(ciclo, 700);
+        }
+
+        window.addEventListener('pagehide', function () {
+          vivo = false;
+          clearTimeout(semTrama);
+          cortar();
+        });
+        setTimeout(function () { if (!primeira) aviso('${t('camera.hintALigar')}'); }, 4000);
+        setTimeout(function () { if (!primeira) aviso('${t('camera.hintSemVideo')}'); }, 20000);
+        ciclo();
       })();
     </script>
   </body>
