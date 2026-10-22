@@ -258,8 +258,9 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
   const printStatus = info?.Status || 0;
   const canPause = !pausadoPorMim;
   const canResume = pausadoPorMim;
-  const isPrinting =
-    printStatus === 3 || printStatus === 6 || printStatus === 13 || progress > 0;
+  // Lido da máquina: Status 6 = a imprimir, 8 = parada (mantém Progress antigo),
+  // 13 aparece noutros firmwares. Parada nunca conta como impressão.
+  const isPrinting = printStatus === 6 || printStatus === 13;
 
   const restanteSegundos = Math.max(
     0,
