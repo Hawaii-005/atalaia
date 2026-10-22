@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -21,6 +21,7 @@ import {
 import { t, idiomaActual } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
+import { custoDe, euros, getPrecoKg } from '../utils/precos';
 import {
   ackDaResposta,
   descreverAck,
@@ -51,10 +52,25 @@ const formatDate = (timestamp: number) => {
 const HistoryRow = ({
   record,
   onReprint,
+  comConsumo,
 }: {
   record: PrintRecord;
   onReprint: () => void;
+  comConsumo: boolean;
 }) => {
+  // Só os primeiros registos descarregam o G-code: uma lista inteira a pedir
+  // ficheiros à impressora era tráfego a mais.
+  const { filamentos, consumo } = useGcodePreview(
+    comConsumo ? record.printerIp : undefined,
+    comConsumo ? record.filename : undefined
+  );
+  const [precoKg, setPrecoKg] = useState(0);
+  useEffect(() => {
+    getPrecoKg().then(setPrecoKg).catch(() => undefined);
+  }, []);
+  const doCabecalho = filamentos.reduce((soma, f) => soma + f.gramas, 0);
+  const gramas = doCabecalho > 0 ? doCabecalho : (consumo?.gramas ?? 0);
+  const custo = gramas > 0 ? custoDe(gramas, precoKg) : 0;
   const { tema } = useTheme();
   const { preview } = useGcodePreview(record.printerIp, record.filename);
   const name = record.filename.split('/').pop() ?? record.filename;
@@ -83,7 +99,9 @@ const HistoryRow = ({
       </View>
       <TouchableOpacity
         onPress={onReprint}
-        className="h-9 w-9 items-center justify-center rounded-md border border-line mr-2"
+        className="h-11 w-11 items-center justify-center rounded-md border border-line mr-2"
+        accessibilityRole="button"
+        accessibilityLabel={t('history.reimprimirTitulo')}
         activeOpacity={0.7}
       >
         <Ionicons name="refresh" size={15} color={hexDe(tema.paleta.tintaSoft)} />
@@ -216,11 +234,12 @@ export const HistoryScreen = ({ navigation }: any) => {
           </View>
         ) : (
           <View className="bg-canvas-sunken rounded-xl overflow-hidden">
-            {records.map(record => (
+            {records.map((record, indice) => (
               <HistoryRow
                 key={record.id}
                 record={record}
                 onReprint={() => reimprimir(record)}
+                comConsumo={indice < 3}
               />
             ))}
           </View>

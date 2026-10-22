@@ -91,3 +91,74 @@ export const filamentosDoCabecalho = (
 /** true quando o ficheiro usa mais do que uma ferramenta. */
 export const eMulticolor = (filamentos: FilamentoDoFicheiro[]): boolean =>
   filamentos.length > 1;
+
+// ---------------------------------------------------------------------------
+// Consumo de filamento
+// ---------------------------------------------------------------------------
+
+const DENSIDADES: Record<string, number> = {
+  PLA: 1.24,
+  PETG: 1.27,
+  ABS: 1.04,
+  ASA: 1.07,
+  TPU: 1.21,
+  PA: 1.14,
+  PC: 1.21,
+};
+
+export interface Consumo {
+  gramas: number;
+  metros: number;
+  material: string;
+}
+
+/** Lê o material do cabeçalho; sem pista, assume PLA. */
+export const materialDoCabecalho = (texto: string): string => {
+  const achado = texto.match(/filament_type\s*[=:]\s*([A-Za-z+]+)/i);
+  const bruto = achado?.[1]?.toUpperCase();
+  if (bruto && DENSIDADES[bruto]) return bruto;
+  return 'PLA';
+};
+
+/**
+ * Soma o filamento extrudido no G-code (só o E, não as viagens).
+ * Valor estimado: retrações e purgas entram no cálculo com o sinal real.
+ */
+export const consumoDoGcode = (texto: string, diametro = 1.75): Consumo => {
+  const material = materialDoCabecalho(texto);
+  const densidade = DENSIDADES[material] ?? 1.24;
+  let absoluto = true;
+  let ultimoE = 0;
+  let total = 0;
+
+  for (const linha of texto.split('\n')) {
+    if (linha.startsWith('M82')) {
+      absoluto = true;
+      continue;
+    }
+    if (linha.startsWith('M83')) {
+      absoluto = false;
+      continue;
+    }
+    const e = linha.indexOf('E');
+    if (e === -1 || linha.indexOf('G1') !== 0) continue;
+    // Só interessa quando há movimento de extrusão.
+    const valor = Number.parseFloat(linha.slice(e + 1));
+    if (!Number.isFinite(valor)) continue;
+    if (absoluto) {
+      total += valor - ultimoE;
+      ultimoE = valor;
+    } else {
+      total += valor;
+    }
+  }
+
+  const area = Math.PI * (diametro / 2) ** 2; // mm²
+  const mm = Math.max(total, 0);
+  const cm3 = (mm * area) / 1000;
+  return {
+    gramas: cm3 * densidade,
+    metros: mm / 1000,
+    material,
+  };
+};

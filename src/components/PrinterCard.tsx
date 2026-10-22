@@ -287,6 +287,8 @@ export const PrinterCard = ({
                 {onToggleLight && (
                   <TouchableOpacity
                     onPress={onToggleLight}
+                    accessibilityRole="button"
+                    accessibilityLabel={luzLigada ? 'Desligar luz' : 'Ligar luz'}
                     className={`${luzLigada ? BT_ACENTO : BT_NEUTRA} px-2.5 py-1.5 mr-2`}
                     activeOpacity={0.7}
                   >
@@ -300,6 +302,8 @@ export const PrinterCard = ({
                 {onOpenCamera && (
                   <TouchableOpacity
                     onPress={onOpenCamera}
+                    accessibilityRole="button"
+                    accessibilityLabel="Abrir câmara"
                     className={`${BT_NEUTRA} px-2.5 py-1.5`}
                     activeOpacity={0.7}
                   >

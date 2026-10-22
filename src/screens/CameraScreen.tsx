@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
+  Image,
   Modal,
   ScrollView,
   Text,
@@ -25,6 +26,7 @@ import { listFilesCommand } from '../utils/commands';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { Header } from '../components/Header';
 import type { ConnectionStatus } from '../types';
@@ -44,6 +46,25 @@ const CONNECTION_LABEL: Record<ConnectionStatus, string> = {
   timeout: 'camera.impSemResposta',
 };
 
+/**
+ * Modo poupança: uma fotografia a cada 2 s em vez do MJPEG (~1 MB/s).
+ * Serve para quando estás fora de casa, por Tailscale ou dados móveis.
+ */
+const SnapshotAoVivo = ({ host }: { host: string }) => {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick(valor => valor + 1), 2000);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <Image
+      source={{ uri: `http://${host}:3031/snapshot?t=${tick}` }}
+      style={{ flex: 1, backgroundColor: '#000' }}
+      resizeMode="cover"
+    />
+  );
+};
+
 export const CameraScreen = ({ navigation, route }: any) => {
   const { tema } = useTheme();
   // Keep the display awake while the camera tab is open.
@@ -56,7 +77,15 @@ export const CameraScreen = ({ navigation, route }: any) => {
   const [lightOn, setLightOn] = useState(false);
   const [lastLightPress, setLastLightPress] = useState(0);
   const [reloadKey, setReloadKey] = useState(0);
+  const [pouparDados, setPouparDados] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
+
+  // Preferência de poupança de dados (Definições → modo remoto).
+  useEffect(() => {
+    AsyncStorage.getItem('modoRemoto')
+      .then(valor => setPouparDados(valor === '1'))
+      .catch(() => undefined);
+  }, []);
   const webViewRef = useRef<WebView>(null);
   const videoRef = useRef<View>(null);
   const [videoWidth, setVideoWidth] = useState(0);
@@ -464,6 +493,9 @@ export const CameraScreen = ({ navigation, route }: any) => {
         >
           {isConnected && streamHtml && !fullscreen ? (
             <View ref={videoRef} collapsable={false} style={{ flex: 1 }}>
+              {pouparDados ? (
+                <SnapshotAoVivo host={videoHost ?? ''} />
+              ) : (
               <WebView
                 key={`${printer.id}-${reloadKey}`}
                 ref={webViewRef}
@@ -478,6 +510,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
                 scrollEnabled={false}
                 bounces={false}
               />
+              )}
             </View>
           ) : (
             <View className="flex-1 items-center justify-center">
@@ -708,6 +741,9 @@ export const CameraScreen = ({ navigation, route }: any) => {
         supportedOrientations={['landscape', 'portrait']}
       >
         <View className="flex-1 bg-black">
+          {pouparDados ? (
+            <SnapshotAoVivo host={videoHost ?? ''} />
+          ) : (
           <WebView
             source={{ html: fullscreenHtml, baseUrl: `http://${videoHost}` }}
             style={{ flex: 1, backgroundColor: '#000' }}
@@ -720,6 +756,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
             scrollEnabled={false}
             bounces={false}
           />
+          )}
 
           <View className="absolute top-4 left-4 flex-row items-center bg-black/55 rounded-full px-3 py-1.5">
             <View className="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5" />

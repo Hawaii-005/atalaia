@@ -129,7 +129,7 @@ const FileDetails = ({
 }) => {
   const { tema } = useTheme();
   const size = file.FileSize ?? file.totalSize ?? file.usedSize ?? 0;
-  const { preview, filamentos, loading } = useGcodePreview(
+  const { preview, filamentos, consumo, loading } = useGcodePreview(
     size && size < PREVIEW_LIMIT ? printerIp : undefined,
     file.name
   );
@@ -144,7 +144,9 @@ const FileDetails = ({
     });
   }, []);
 
-  const totalGramas = filamentos.reduce((soma, f) => soma + f.gramas, 0);
+  const gramasDoCabecalho = filamentos.reduce((soma, f) => soma + f.gramas, 0);
+  // Sem `filament used [g]` no cabeçalho, conta-se o E do próprio G-code.
+  const totalGramas = gramasDoCabecalho > 0 ? gramasDoCabecalho : (consumo?.gramas ?? 0);
   // O valor escrito conta logo: não se espera que o campo perca o foco.
   const precoEscrito = Number.parseFloat(
     precoTexto.replace(',', '.').replace(/[^0-9.]/g, '')
@@ -211,7 +213,13 @@ const FileDetails = ({
             {/* Resumo em três células */}
             <View className="flex-row mt-3" style={{ gap: 8 }}>
               {[
-                { rotulo: t('files.total'), valor: `${totalGramas.toFixed(1).replace('.', ',')} g` },
+                {
+                  rotulo: t('files.total'),
+                  valor:
+                    totalGramas > 0
+                      ? `${totalGramas.toFixed(1).replace('.', ',')} g`
+                      : '—',
+                },
                 { rotulo: t('files.custo'), valor: custo > 0 ? `≈ ${euros(custo)}` : '—' },
                 {
                   rotulo: t('files.filamentos'),
@@ -362,6 +370,8 @@ const FileDetails = ({
             </TouchableOpacity>
             <TouchableOpacity
               onPress={onAddToQueue}
+              accessibilityRole="button"
+              accessibilityLabel={t('files.filaTitulo')}
               className="h-12 w-12 items-center justify-center rounded-md border-[1.5px] border-line bg-canvas-sunken"
               activeOpacity={0.7}
             >

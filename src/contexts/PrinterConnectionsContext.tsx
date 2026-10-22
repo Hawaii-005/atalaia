@@ -10,7 +10,7 @@ import React, {
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { descobrirSoUdp, discoverPrinters } from '../utils/PrinterDiscovery';
-import { AppState, AppStateStatus, Alert } from 'react-native';
+import { AppState, NativeModules, AppStateStatus, Alert } from 'react-native';
 import { Printer, ConnectionStatus, PrinterStatus } from '../types';
 import { descreverAck, PrinterRecusouError } from '../utils/errors';
 import { isSdcpCommand, SdcpCommand } from '../utils/commands';
@@ -992,6 +992,29 @@ export const PrinterConnectionsProvider = ({
     return () => inscricao.remove();
   }, [request]);
 
+
+  // ---------- Serviço em primeiro plano ----------
+  // Enquanto há impressão, o Android pode matar a app e os avisos morrem com
+  // ela. Uma notificação fixa do serviço evita isso; para quando acaba.
+  const monitorActivoRef = useRef(false);
+  useEffect(() => {
+    const emCurso = printers.some(printer => {
+      const info = printer.status?.PrintInfo;
+      if (!info?.Filename) return false;
+      return ![0, 7, 8, 9].includes(info.Status ?? 0);
+    });
+    const servico = NativeModules.MonitorServico;
+    if (!servico) return;
+    if (emCurso && !monitorActivoRef.current) {
+      monitorActivoRef.current = true;
+      servico
+        .iniciar('A imprimir', 'A app está a acompanhar a impressão')
+        .catch(() => undefined);
+    } else if (!emCurso && monitorActivoRef.current) {
+      monitorActivoRef.current = false;
+      servico.parar().catch(() => undefined);
+    }
+  }, [printers]);
 
   // ---------- Fila de impressão ----------
   useEffect(() => {

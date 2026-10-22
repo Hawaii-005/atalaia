@@ -2,7 +2,9 @@ import { log } from '../utils/log';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
+  Consumo,
   FilamentoDoFicheiro,
+  consumoDoGcode,
   filamentosDoCabecalho,
 } from '../utils/gcodeCores';
 
@@ -160,13 +162,22 @@ export const useGcodePreview = (
 ): {
   preview: GcodePreview | null;
   filamentos: FilamentoDoFicheiro[];
+  consumo: Consumo | null;
   loading: boolean;
 } => {
   const [preview, setPreview] = useState<GcodePreview | null>(null);
   const [filamentos, setFilamentos] = useState<FilamentoDoFicheiro[]>([]);
+  const [consumo, setConsumo] = useState<Consumo | null>(null);
   const [loading, setLoading] = useState(false);
   const cacheRef = useRef<
-    Record<string, { preview: GcodePreview | null; filamentos: FilamentoDoFicheiro[] }>
+    Record<
+      string,
+      {
+        preview: GcodePreview | null;
+        filamentos: FilamentoDoFicheiro[];
+        consumo: Consumo | null;
+      }
+    >
   >({});
 
   const url = useMemo(() => {
@@ -180,6 +191,7 @@ export const useGcodePreview = (
     if (guardado !== undefined) {
       setPreview(guardado.preview);
       setFilamentos(guardado.filamentos);
+      setConsumo(guardado.consumo);
       return;
     }
     setLoading(true);
@@ -188,7 +200,7 @@ export const useGcodePreview = (
       const response = await comVez(() => fetch(url));
       if (cancelado.atual) return;
       if (!response.ok) {
-        cacheRef.current[url] = { preview: null, filamentos: [] };
+        cacheRef.current[url] = { preview: null, filamentos: [], consumo: null };
         return;
       }
       const text = await response.text();
@@ -196,16 +208,19 @@ export const useGcodePreview = (
       const result = parseToolpath(text);
       // As cores vêm do mesmo texto: não há segundo download.
       const cores = filamentosDoCabecalho(text);
-      cacheRef.current[url] = { preview: result, filamentos: cores };
+      const gasto = consumoDoGcode(text);
+      cacheRef.current[url] = { preview: result, filamentos: cores, consumo: gasto };
       if (cancelado.atual) return;
       setPreview(result);
       setFilamentos(cores);
+      setConsumo(gasto);
     } catch (error) {
       log('preview failed', error instanceof Error ? error.stack : String(error));
-      cacheRef.current[url] = { preview: null, filamentos: [] };
+      cacheRef.current[url] = { preview: null, filamentos: [], consumo: null };
       if (cancelado.atual) return;
       setPreview(null);
       setFilamentos([]);
+      setConsumo(null);
     } finally {
       if (!cancelado.atual) setLoading(false);
     }
@@ -220,5 +235,5 @@ export const useGcodePreview = (
     };
   }, [load]);
 
-  return { preview, filamentos, loading };
+  return { preview, filamentos, consumo, loading };
 };

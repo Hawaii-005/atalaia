@@ -16,6 +16,8 @@ import { ORDEM_TEMAS, TEMAS, hexDe } from '../theme/temas';
 import { BT_ACENTO, BT_NEUTRA, TX_ACENTO } from '../theme/botoes';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as FileSystem from 'expo-file-system';
+import * as DocumentPicker from 'expo-document-picker';
 import Constants from 'expo-constants';
 import {
   DEFAULT_PREFS,
@@ -139,6 +141,39 @@ const SwitchRow = ({
   );
 };
 
+const AcaoRow = ({
+  icon,
+  label,
+  description,
+  onPress,
+}: {
+  icon: string;
+  label: string;
+  description: string;
+  onPress: () => void;
+}) => {
+  const { tema } = useTheme();
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      className="flex-row items-center px-4 py-3 border-b border-line"
+      style={{ minHeight: 56 }}
+    >
+      <View className="w-8 h-8 rounded-lg bg-canvas-sunken items-center justify-center">
+        <Ionicons name={icon as any} size={16} color={hexDe(tema.paleta.tintaSoft)} />
+      </View>
+      <View className="ml-3 flex-1 pr-2">
+        <Text className="text-[14px] font-medium text-ink">{label}</Text>
+        <Text className="text-[11px] text-ink-muted mt-0.5">{description}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={16} color={hexDe(tema.paleta.tintaMuted)} />
+    </TouchableOpacity>
+  );
+};
+
 /** 30000 → "30 s"; 60000 → "1 min" */
 const formatarIntervalo = (ms: number) => {
   const segundos = Math.round(ms / 1000);
@@ -150,10 +185,30 @@ const INTERVALOS = [30000, 60000, 120000, 300000];
 
 export const SettingsScreen = () => {
   const { temaId, setTema } = useTheme();
-  const { statusIntervalMs, setStatusInterval, filaAuto, fila, definirFilaAuto } =
-    usePrinterConnections();
+  const {
+    statusIntervalMs,
+    setStatusInterval,
+    filaAuto,
+    fila,
+    definirFilaAuto,
+    printers,
+    addPrinter,
+  } = usePrinterConnections();
   const [notificationPrefs, setNotificationPrefs] =
     useState<NotificationPrefs>(DEFAULT_PREFS);
+
+  const [modoRemoto, setModoRemoto] = useState(false);
+
+  useEffect(() => {
+    AsyncStorage.getItem('modoRemoto')
+      .then(valor => setModoRemoto(valor === '1'))
+      .catch(() => undefined);
+  }, []);
+
+  const alternarModoRemoto = (ligado: boolean) => {
+    setModoRemoto(ligado);
+    AsyncStorage.setItem('modoRemoto', ligado ? '1' : '0').catch(() => undefined);
+  };
 
   useEffect(() => {
     loadNotificationPrefs().then(setNotificationPrefs);
@@ -201,6 +256,65 @@ export const SettingsScreen = () => {
         },
       ]
     );
+  };
+
+  const exportar = async () => {
+    try {
+      const dados = {
+        versao: 1,
+        criadoEm: new Date().toISOString(),
+        impressoras: printers.map(p => ({
+          printerName: p.printerName,
+          ipAddress: p.ipAddress,
+          alternateIp: p.alternateIp,
+          mainboardId: p.mainboardId,
+        })),
+        preferencias: { statusIntervalMs, filaAuto },
+      };
+      const permissao =
+        await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+      if (!permissao.granted) return;
+      const ficheiro = await FileSystem.StorageAccessFramework.createFileAsync(
+        permissao.directoryUri,
+        'cc-tool-backup',
+        'application/json'
+      );
+      await FileSystem.writeAsStringAsync(ficheiro, JSON.stringify(dados, null, 2));
+      Alert.alert(t('settings.backupTitulo'), t('settings.backupExportado'));
+    } catch (erro) {
+      Alert.alert(
+        t('settings.backupTitulo'),
+        erro instanceof Error ? erro.message : t('settings.backupFalhou')
+      );
+    }
+  };
+
+  const importar = async () => {
+    try {
+      const escolha = await DocumentPicker.getDocumentAsync({
+        type: 'application/json',
+        copyToCacheDirectory: true,
+      });
+      if (escolha.canceled) return;
+      const texto = await FileSystem.readAsStringAsync(escolha.assets[0].uri);
+      const dados = JSON.parse(texto);
+      const lista = Array.isArray(dados?.impressoras) ? dados.impressoras : [];
+      if (lista.length === 0) {
+        Alert.alert(t('settings.backupTitulo'), t('settings.backupVazio'));
+        return;
+      }
+      lista.forEach((p: any) => {
+        if (p?.printerName && p?.ipAddress) {
+          addPrinter(p.printerName, p.ipAddress, p.mainboardId, p.alternateIp);
+        }
+      });
+      Alert.alert(
+        t('settings.backupTitulo'),
+        t('settings.backupImportado', { n: lista.length })
+      );
+    } catch {
+      Alert.alert(t('settings.backupTitulo'), t('settings.backupFalhou'));
+    }
   };
 
   return (
@@ -321,6 +435,13 @@ export const SettingsScreen = () => {
             onChange={value => updateNotificationPref('offline', value)}
           />
           <SwitchRow
+            icon="cellular-outline"
+            label={t('settings.modoRemoto')}
+            description={t('settings.modoRemotoDesc')}
+            value={modoRemoto}
+            onChange={alternarModoRemoto}
+          />
+          <SwitchRow
             icon="list-outline"
             label={t('settings.filaAuto')}
             description={
@@ -331,6 +452,26 @@ export const SettingsScreen = () => {
             value={filaAuto}
             onChange={definirFilaAuto}
           />
+
+          <View className="mt-6">
+            <Text className="text-[10px] tracking-[1.4px] font-semibold text-ink-soft mb-2 px-4">
+              {t('settings.seccaoBackup').toUpperCase()}
+            </Text>
+            <View className="bg-canvas-sunken rounded-xl overflow-hidden">
+              <AcaoRow
+                icon="share-outline"
+                label={t('settings.exportar')}
+                description={t('settings.exportarDesc')}
+                onPress={exportar}
+              />
+              <AcaoRow
+                icon="download-outline"
+                label={t('settings.importar')}
+                description={t('settings.importarDesc')}
+                onPress={importar}
+              />
+            </View>
+          </View>
           <Row
             icon="notifications-outline"
             label={t('settings.notificacaoTeste')}
