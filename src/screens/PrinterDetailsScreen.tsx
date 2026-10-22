@@ -62,6 +62,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
 
   const [refreshing, setRefreshing] = useState(false);
   const [webViewKey, setWebViewKey] = useState(0);
+  const [pausadoPorMim, setPausadoPorMim] = useState(false);
   const [speedPercent, setSpeedPercent] = useState(100);
   const [timelapse, setTimelapse] = useState(false);
   const [fanSpeeds, setFanSpeeds] = useState({
@@ -99,18 +100,20 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
     }
   }, [printer?.status?.CurrentFanSpeed]);
 
+  // O firmware usa o mesmo código para "a imprimir" e "em pausa" e recusa
+  // retomar quando está a correr. A decisão passa a ser local: só mostramos
+  // "Retomar" depois de nós próprios termos pausado.
   const handlePrintControl = () => {
     if (!printer) return;
-    const printStatusFromPrinter = printer.status?.PrintInfo?.Status || 0;
-    const canPause = printStatusFromPrinter === 13;
-    const canResume = printStatusFromPrinter === 6;
-    if (canPause) {
-      sendCommand(printer.id, pausePrintCommand({ id: `pause-${Date.now()}` }));
-    } else if (canResume) {
+    if (pausadoPorMim) {
       sendCommand(
         printer.id,
         resumePrintCommand({ id: `resume-${Date.now()}` })
       );
+      setPausadoPorMim(false);
+    } else {
+      sendCommand(printer.id, pausePrintCommand({ id: `pause-${Date.now()}` }));
+      setPausadoPorMim(true);
     }
   };
 
@@ -253,8 +256,8 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
   const isLightOn = printer.status?.LightStatus?.SecondLight === 1;
   const isConnected = printer.connectionStatus === 'connected';
   const printStatus = info?.Status || 0;
-  const canPause = printStatus === 13;
-  const canResume = printStatus === 6;
+  const canPause = !pausadoPorMim;
+  const canResume = pausadoPorMim;
   const isPrinting =
     printStatus === 3 || printStatus === 6 || printStatus === 13 || progress > 0;
 
@@ -480,15 +483,15 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
         {/* Acções de impressão */}
         {isConnected && isPrinting && (
           <View className="flex-row mt-3" style={{ gap: 10 }}>
-            {(canPause || canResume) && (
+            {(isConnected && isPrinting) && (
               <TouchableOpacity
                 onPress={handlePrintControl}
                 className="flex-1 h-11 rounded-xl bg-brand items-center justify-center flex-row"
                 activeOpacity={0.8}
               >
-                <Ionicons name={canResume ? 'play' : 'pause'} size={15} color="#FFFFFF" />
+                <Ionicons name={pausadoPorMim ? 'play' : 'pause'} size={15} color="#FFFFFF" />
                 <Text className="ml-1.5 text-[13px] font-semibold text-white">
-                  {canResume ? t('comum.retomar') : t('comum.pausar')}
+                  {pausadoPorMim ? t('comum.retomar') : t('comum.pausar')}
                 </Text>
               </TouchableOpacity>
             )}
