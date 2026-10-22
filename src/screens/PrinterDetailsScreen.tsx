@@ -62,7 +62,8 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
 
   const [refreshing, setRefreshing] = useState(false);
   const [webViewKey, setWebViewKey] = useState(0);
-  const [pausadoPorMim, setPausadoPorMim] = useState(false);
+  const [emPausa, setEmPausa] = useState(false);
+  const ultimosTicks = useRef({ valor: -1, desde: Date.now() });
   const [speedPercent, setSpeedPercent] = useState(100);
   const [timelapse, setTimelapse] = useState(false);
   const [fanSpeeds, setFanSpeeds] = useState({
@@ -100,20 +101,22 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
     }
   }, [printer?.status?.CurrentFanSpeed]);
 
-  // O firmware usa o mesmo código para "a imprimir" e "em pausa" e recusa
-  // retomar quando está a correr. A decisão passa a ser local: só mostramos
-  // "Retomar" depois de nós próprios termos pausado.
+  // A máquina NÃO muda o Status ao pausar (fica 6, igual a imprimir); o sinal
+  // fiável é o CurrentTicks parar de avançar. 6 s parado = em pausa.
   const handlePrintControl = () => {
     if (!printer) return;
-    if (pausadoPorMim) {
+    if (emPausa) {
       sendCommand(
         printer.id,
         resumePrintCommand({ id: `resume-${Date.now()}` })
       );
-      setPausadoPorMim(false);
+      setEmPausa(false);
+      ultimosTicks.current = {
+        valor: ultimosTicks.current.valor,
+        desde: Date.now(),
+      };
     } else {
       sendCommand(printer.id, pausePrintCommand({ id: `pause-${Date.now()}` }));
-      setPausadoPorMim(true);
     }
   };
 
@@ -256,11 +259,28 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
   const isLightOn = printer.status?.LightStatus?.SecondLight === 1;
   const isConnected = printer.connectionStatus === 'connected';
   const printStatus = info?.Status || 0;
-  const canPause = !pausadoPorMim;
-  const canResume = pausadoPorMim;
   // Lido da máquina: Status 6 = a imprimir, 8 = parada (mantém Progress antigo),
   // 13 aparece noutros firmwares. Parada nunca conta como impressão.
   const isPrinting = printStatus === 6 || printStatus === 13;
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      const valor = info?.CurrentTicks ?? 0;
+      if (valor !== ultimosTicks.current.valor) {
+        ultimosTicks.current = { valor, desde: Date.now() };
+        setEmPausa(false);
+        return;
+      }
+      if (
+        isPrinting &&
+        valor > 0 &&
+        Date.now() - ultimosTicks.current.desde > 6000
+      ) {
+        setEmPausa(true);
+      }
+    }, 2000);
+    return () => clearInterval(id);
+  }, [info?.CurrentTicks, isPrinting]);
 
   const restanteSegundos = Math.max(
     0,
@@ -492,9 +512,9 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                 className="flex-1 h-11 rounded-xl bg-brand items-center justify-center flex-row"
                 activeOpacity={0.8}
               >
-                <Ionicons name={pausadoPorMim ? 'play' : 'pause'} size={15} color="#FFFFFF" />
+                <Ionicons name={emPausa ? 'play' : 'pause'} size={15} color="#FFFFFF" />
                 <Text className="ml-1.5 text-[13px] font-semibold text-white">
-                  {pausadoPorMim ? t('comum.retomar') : t('comum.pausar')}
+                  {emPausa ? t('comum.retomar') : t('comum.pausar')}
                 </Text>
               </TouchableOpacity>
             )}
