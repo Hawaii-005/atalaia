@@ -11,17 +11,26 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { discoverPrinters } from '../utils/PrinterDiscovery';
 import { AppState, AppStateStatus, Alert } from 'react-native';
 import { Printer, ConnectionStatus, PrinterStatus } from '../types';
+import { isSdcpCommand, SdcpCommand } from '../utils/commands';
+import {
+  CommandValidationError,
+  PrinterOfflineError,
+  PrinterTimeoutError,
+} from '../utils/errors';
 
 interface PrinterConnectionsContextType {
   printers: Printer[];
-  addPrinter: (printerName: string, ipAddress: string, mainboardId?: string) => void;
+  addPrinter: (
+    printerName: string,
+    ipAddress: string,
+    mainboardId?: string
+  ) => void;
   removePrinter: (id: string) => void;
   reconnectAll: () => void;
-  sendCommand: (printerId: string, command: any) => void;
+  sendCommand: (printerId: string, command: SdcpCommand<unknown>) => void;
   request: (
     printerId: string,
-    cmd: number,
-    payload: any,
+    command: SdcpCommand<unknown>,
     timeoutMs?: number
   ) => Promise<any>;
   updatePrinterIp: (id: string, ipAddress: string) => void;
@@ -74,7 +83,10 @@ export const PrinterConnectionsProvider = ({
   const printersRef = useRef<Printer[]>([]);
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
   const pendingRequestsRef = useRef<{
-    [key: string]: { resolve: (value: any) => void; timer: ReturnType<typeof setTimeout> };
+    [key: string]: {
+      resolve: (value: any) => void;
+      timer: ReturnType<typeof setTimeout>;
+    };
   }>({});
 
   const pendingCommandsRef = useRef<{
@@ -318,7 +330,8 @@ export const PrinterConnectionsProvider = ({
       const match = discovered.find(
         d =>
           (!!printer.mainboardId && d.mainboardId === printer.mainboardId) ||
-          d.name.trim().toLowerCase() === printer.printerName.trim().toLowerCase()
+          d.name.trim().toLowerCase() ===
+            printer.printerName.trim().toLowerCase()
       );
 
       if (match && match.ip !== printer.ipAddress) {
@@ -570,7 +583,9 @@ export const PrinterConnectionsProvider = ({
       return;
     }
 
-    console.log(`Updating ${printer.printerName} IP ${printer.ipAddress} -> ${ipAddress}`);
+    console.log(
+      `Updating ${printer.printerName} IP ${printer.ipAddress} -> ${ipAddress}`
+    );
 
     const existingSocket = webSocketsRef.current[id];
     if (existingSocket) {
@@ -602,26 +617,35 @@ export const PrinterConnectionsProvider = ({
   };
 
   const request = useCallback(
-    (printerId: string, cmd: number, payload: any, timeoutMs = 8000) =>
+    (printerId: string, command: SdcpCommand<unknown>, timeoutMs = 8000) =>
       new Promise<any>((resolve, reject) => {
+        // Rejeita já, sem tocar na rede, se o comando não for um SDCP válido.
+        if (!isSdcpCommand(command)) {
+          reject(
+            new CommandValidationError(
+              'Comando SDCP inválido: tem de vir de um construtor de src/utils/commands.ts.'
+            )
+          );
+          return;
+        }
         const ws = webSocketsRef.current[printerId];
         if (!ws || ws.readyState !== WebSocket.OPEN) {
-          reject(new Error('Sem ligação à impressora'));
+          reject(new PrinterOfflineError());
           return;
         }
         const printer = printersRef.current.find(item => item.id === printerId);
         const requestId = `REQ_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
         const timer = setTimeout(() => {
           delete pendingRequestsRef.current[requestId];
-          reject(new Error('A impressora não respondeu'));
+          reject(new PrinterTimeoutError());
         }, timeoutMs);
         pendingRequestsRef.current[requestId] = { resolve, timer };
         ws.send(
           JSON.stringify({
             Id: 'request',
             Data: {
-              Cmd: cmd,
-              Data: payload,
+              Cmd: command.Data.Cmd,
+              Data: command.Data.Data,
               RequestID: requestId,
               MainboardID: printer?.mainboardId ?? '',
               TimeStamp: Math.floor(Date.now() / 1000),
@@ -633,7 +657,13 @@ export const PrinterConnectionsProvider = ({
     []
   );
 
-  const sendCommand = (printerId: string, command: any) => {
+  const sendCommand = (printerId: string, command: SdcpCommand<unknown>) => {
+    // Erro de programação: rejeita já, sem tocar na rede.
+    if (!isSdcpCommand(command)) {
+      throw new CommandValidationError(
+        'Comando SDCP inválido: tem de vir de um construtor de src/utils/commands.ts.'
+      );
+    }
     const ws = webSocketsRef.current[printerId];
     if (ws && ws.readyState === WebSocket.OPEN) {
       console.log(`Sending command to printer ${printerId}:`, command);

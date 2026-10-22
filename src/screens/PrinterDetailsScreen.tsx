@@ -21,6 +21,17 @@ import {
   formatTicksToReadableTime,
 } from '~/utils/FormatUtils';
 import type { ConnectionStatus } from '../types';
+import {
+  pausePrintCommand,
+  resumePrintCommand,
+  stopPrintCommand,
+  skipPreheatCommand,
+  stopFilamentCommand,
+  lightCommand,
+  printSpeedCommand,
+  timelapseCommand,
+  type SdcpCommand,
+} from '../utils/commands';
 
 // Etiquetas visíveis para o estado de ligação da impressora.
 const CONNECTION_LABEL: { [key in ConnectionStatus]: string } = {
@@ -83,29 +94,12 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
     const canPause = printStatusFromPrinter === 13;
     const canResume = printStatusFromPrinter === 6;
     if (canPause) {
-      sendCommand(printer.id, {
-        Id: '',
-        Data: {
-          Cmd: 129,
-          Data: {},
-          RequestID: `pause-${Date.now()}`,
-          MainboardID: '',
-          TimeStamp: Date.now(),
-          From: 1,
-        },
-      });
+      sendCommand(printer.id, pausePrintCommand({ id: `pause-${Date.now()}` }));
     } else if (canResume) {
-      sendCommand(printer.id, {
-        Id: '',
-        Data: {
-          Cmd: 131,
-          Data: {},
-          RequestID: `resume-${Date.now()}`,
-          MainboardID: '',
-          TimeStamp: Date.now(),
-          From: 1,
-        },
-      });
+      sendCommand(
+        printer.id,
+        resumePrintCommand({ id: `resume-${Date.now()}` })
+      );
     }
   };
 
@@ -120,17 +114,10 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
           text: 'Parar impressão',
           style: 'destructive',
           onPress: () =>
-            sendCommand(printer.id, {
-              Id: '',
-              Data: {
-                Cmd: 130,
-                Data: {},
-                RequestID: `cancel-${Date.now()}`,
-                MainboardID: '',
-                TimeStamp: Date.now(),
-                From: 1,
-              },
-            }),
+            sendCommand(
+              printer.id,
+              stopPrintCommand({ id: `cancel-${Date.now()}` })
+            ),
         },
       ]
     );
@@ -145,17 +132,10 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
 
   const handleLightToggle = (isOn: boolean) => {
     if (!printer) return;
-    sendCommand(printer.id, {
-      Id: `${printer.printerName}-id-${Date.now()}`,
-      Data: {
-        Cmd: 403,
-        Data: { LightStatus: { SecondLight: isOn } },
-        RequestID: `light-toggle-${Date.now()}`,
-        MainboardID: '',
-        TimeStamp: 0,
-        From: 1,
-      },
-    });
+    sendCommand(
+      printer.id,
+      lightCommand(isOn, { id: `${printer.printerName}-id-${Date.now()}` })
+    );
   };
 
   const handleFanSpeed = (
@@ -167,6 +147,8 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
     const next = { ...fanSpeeds, [fanType]: speed };
     setFanSpeeds(next);
 
+    // TargetFanSpeed não consta dos payloads confirmados do SDCP;
+    // mantém-se construído à mão até ser validado contra a impressora.
     sendCommand(printer.id, {
       Id: `${printer.printerName}-id-${Date.now()}`,
       Data: {
@@ -189,48 +171,27 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
   const handleSpeedProfile = (percent: number) => {
     if (!printer) return;
     setSpeedPercent(percent);
-    sendCommand(printer.id, {
-      Id: `${printer.printerName}-id-${Date.now()}`,
-      Data: {
-        Cmd: 403,
-        Data: { PrintSpeedPct: percent },
-        RequestID: `speed-${percent}-${Date.now()}`,
-        MainboardID: '',
-        TimeStamp: 0,
-        From: 1,
-      },
-    });
+    sendCommand(
+      printer.id,
+      printSpeedCommand(percent, {
+        id: `${printer.printerName}-id-${Date.now()}`,
+      })
+    );
   };
 
   const handleTimelapse = (enabled: boolean) => {
     if (!printer) return;
     setTimelapse(enabled);
-    sendCommand(printer.id, {
-      Id: `${printer.printerName}-id-${Date.now()}`,
-      Data: {
-        Cmd: 387,
-        Data: { Enable: enabled ? 1 : 0 },
-        RequestID: `timelapse-${Date.now()}`,
-        MainboardID: '',
-        TimeStamp: 0,
-        From: 1,
-      },
-    });
+    sendCommand(
+      printer.id,
+      timelapseCommand(enabled, { id: `timelapse-${Date.now()}` })
+    );
   };
 
-  const handleQuickCommand = (cmd: 132 | 133) => {
+  // Envia um comando sem payload já construído (132/133).
+  const handleQuickCommand = (comando: SdcpCommand<unknown>) => {
     if (!printer) return;
-    sendCommand(printer.id, {
-      Id: `${printer.printerName}-id-${Date.now()}`,
-      Data: {
-        Cmd: cmd,
-        Data: {},
-        RequestID: `quick-${cmd}-${Date.now()}`,
-        MainboardID: '',
-        TimeStamp: 0,
-        From: 1,
-      },
-    });
+    sendCommand(printer.id, comando);
   };
 
   const handleDeletePrinter = () => {
@@ -326,12 +287,12 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
 
   const FAN_STEPS = [0, 25, 50, 75, 100];
 
-const SPEED_PROFILES = [
-  { label: 'Silencioso', percent: 50 },
-  { label: 'Normal', percent: 100 },
-  { label: 'Desporto', percent: 130 },
-  { label: 'Ludicrous', percent: 160 },
-];
+  const SPEED_PROFILES = [
+    { label: 'Silencioso', percent: 50 },
+    { label: 'Normal', percent: 100 },
+    { label: 'Desporto', percent: 130 },
+    { label: 'Ludicrous', percent: 160 },
+  ];
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
@@ -581,9 +542,15 @@ const SPEED_PROFILES = [
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center">
                 <View className="w-8 h-8 rounded-lg bg-canvas-sunken items-center justify-center">
-                  <Ionicons name="speedometer-outline" size={16} color="#3F444D" />
+                  <Ionicons
+                    name="speedometer-outline"
+                    size={16}
+                    color="#3F444D"
+                  />
                 </View>
-                <Text className="ml-3 text-[14px] font-medium text-ink">Velocidade</Text>
+                <Text className="ml-3 text-[14px] font-medium text-ink">
+                  Velocidade
+                </Text>
               </View>
               <Text className="text-[12px] font-semibold text-ink-soft">
                 {speedPercent}%
@@ -599,7 +566,9 @@ const SPEED_PROFILES = [
                     onPress={() => handleSpeedProfile(profile.percent)}
                     activeOpacity={0.7}
                     className={`flex-1 mr-1.5 py-1.5 rounded-lg items-center ${
-                      active ? 'bg-brand' : 'bg-canvas-sunken border border-line'
+                      active
+                        ? 'bg-brand'
+                        : 'bg-canvas-sunken border border-line'
                     }`}
                   >
                     <Text
@@ -620,10 +589,16 @@ const SPEED_PROFILES = [
           <View className="px-4 py-3 border-t border-line flex-row items-center justify-between">
             <View className="flex-row items-center flex-1">
               <View className="w-8 h-8 rounded-lg bg-canvas-sunken items-center justify-center">
-                <Ionicons name="film-outline" size={16} color={timelapse ? '#3E6AE1' : '#3F444D'} />
+                <Ionicons
+                  name="film-outline"
+                  size={16}
+                  color={timelapse ? '#3E6AE1' : '#3F444D'}
+                />
               </View>
               <View className="ml-3">
-                <Text className="text-[14px] font-medium text-ink">Time-lapse</Text>
+                <Text className="text-[14px] font-medium text-ink">
+                  Time-lapse
+                </Text>
                 <Text className="text-[11px] text-ink-muted">
                   Gravado pela própria impressora
                 </Text>
@@ -647,7 +622,7 @@ const SPEED_PROFILES = [
             <View className="flex-row mt-2">
               <TouchableOpacity
                 disabled={!isConnected}
-                onPress={() => handleQuickCommand(133)}
+                onPress={() => handleQuickCommand(skipPreheatCommand())}
                 className="flex-1 rounded-xl border border-line py-2.5 items-center mr-1.5"
                 activeOpacity={0.7}
               >
@@ -657,7 +632,7 @@ const SPEED_PROFILES = [
               </TouchableOpacity>
               <TouchableOpacity
                 disabled={!isConnected}
-                onPress={() => handleQuickCommand(132)}
+                onPress={() => handleQuickCommand(stopFilamentCommand())}
                 className="flex-1 rounded-xl border border-line py-2.5 items-center"
                 activeOpacity={0.7}
               >
