@@ -115,9 +115,8 @@ export const classificarEstado = (
 export const isPausable = (status: number): boolean =>
   status === 6 || status === 13;
 
-/** Só faz sentido retomar quando a app detectou pausa (ticks parados). */
-export const isResumable = (status: number): boolean =>
-  status === 6 || status === 13 || status === 20;
+/** Retomar só no estado de pausa (20). Em 6/13 a máquina está a imprimir. */
+export const isResumable = (status: number): boolean => status === 20;
 
 /** Qualquer trabalho em curso pode ser parado. */
 export const isStoppable = (status: number): boolean =>

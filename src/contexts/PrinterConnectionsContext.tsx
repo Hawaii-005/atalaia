@@ -103,6 +103,11 @@ export const PrinterConnectionsProvider = ({
   // TCP pode estar morta sem `onclose` (foi desligada da corrente, Wi-Fi caiu).
   const lastMessageRef = useRef<{ [key: string]: number }>({});
   const watchdogTimersRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
+  // Timeout de ligação por impressora: sem o guardar ficava um timer vivo a
+  // criar sockets depois de remover a impressora ou de sair do ecrã.
+  const timeoutsLigacaoRef = useRef<{
+    [key: string]: ReturnType<typeof setTimeout>;
+  }>({});
   const statusIntervalRef = useRef(DEFAULT_STATUS_INTERVAL);
   const [statusIntervalMs, setStatusIntervalMs] = useState(
     DEFAULT_STATUS_INTERVAL
@@ -175,6 +180,10 @@ export const PrinterConnectionsProvider = ({
         clearInterval(timer)
       );
       watchdogTimersRef.current = {};
+      Object.values(timeoutsLigacaoRef.current).forEach(timer =>
+        clearTimeout(timer)
+      );
+      timeoutsLigacaoRef.current = {};
       Object.entries(pendingRequestsRef.current).forEach(([, pedido]) => {
         clearTimeout(pedido.timer);
         pedido.reject(new PrinterOfflineError());
@@ -564,6 +573,10 @@ export const PrinterConnectionsProvider = ({
       webSocketsRef.current[printer.id].close();
     }
     clearReconnectTimer(printer.id);
+    if (timeoutsLigacaoRef.current[printer.id]) {
+      clearTimeout(timeoutsLigacaoRef.current[printer.id]);
+      delete timeoutsLigacaoRef.current[printer.id];
+    }
     intentionalCloseRef.current[printer.id] = false;
 
     updatePrinterStatus(printer.id, 'connecting');
@@ -593,9 +606,11 @@ export const PrinterConnectionsProvider = ({
       }
       healPrinterIp(printer);
     }, CONNECTION_TIMEOUT);
+    timeoutsLigacaoRef.current[printer.id] = timeout;
 
     ws.onopen = () => {
       clearTimeout(timeout);
+      delete timeoutsLigacaoRef.current[printer.id];
       log(`Connected to printer: ${printer.printerName} (${alvo})`);
       // Guardar por onde se ligou, para câmara, ficheiros e envio usarem o mesmo.
       setPrinters(prev => {

@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { mensagemDoErro } from '../utils/errors';
-import { lightCommand, pausePrintCommand, stopPrintCommand } from '../utils/commands';
+import { isResumable } from '../types';
+import { lightCommand, pausePrintCommand, resumePrintCommand, stopPrintCommand } from '../utils/commands';
 import {
   View,
   ScrollView,
@@ -94,11 +95,15 @@ export const HomeScreen = ({ navigation }: any) => {
     );
   };
 
-  const handlePrintControl = async (printerId: string, _status: number) => {
-    // Aqui só se pausa; retomar vive no ecrã de detalhe (é lá que se sabe
-    // se os ticks pararam). Espera pelo Ack e explica a recusa.
+  const handlePrintControl = async (printerId: string, status: number) => {
+    // Mesmo critério do rótulo: 20 é pausa, o resto é impressão a correr.
     try {
-      await request(printerId, pausePrintCommand({ id: `pause-${Date.now()}` }));
+      await request(
+        printerId,
+        isResumable(status)
+          ? resumePrintCommand({ id: `resume-${Date.now()}` })
+          : pausePrintCommand({ id: `pause-${Date.now()}` })
+      );
     } catch (erro) {
       Alert.alert('Comando recusado', mensagemDoErro(erro));
     }

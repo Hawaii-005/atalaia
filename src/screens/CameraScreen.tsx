@@ -1,7 +1,7 @@
 import { enderecoDe } from '../utils/rede';
 import { log } from '../utils/log';
 import { mensagemDoErro } from '../utils/errors';
-import { pausePrintCommand, stopPrintCommand } from '../utils/commands';
+import { pausePrintCommand, resumePrintCommand, stopPrintCommand } from '../utils/commands';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -30,6 +30,7 @@ import { useIsFocused } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { Header } from '../components/Header';
+import { isResumable } from '../types';
 import type { ConnectionStatus } from '../types';
 import { t } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
@@ -189,11 +190,16 @@ export const CameraScreen = ({ navigation, route }: any) => {
 
   const handlePrintControl = useCallback(async () => {
     if (!printer) return;
-    // Aqui só se pausa; retomar exige saber se os ticks pararam e isso vive
-    // no ecrã de detalhe. O pedido espera pelo Ack: se a máquina recusar,
-    // o utilizador sabe porquê.
+    // O botão diz "Retomar" no estado 20 e "Pausar" no resto: o comando segue
+    // o mesmo critério, para nunca fazer o contrário do que está escrito.
+    const retomar = isResumable(printer.status?.PrintInfo?.Status ?? 0);
     try {
-      await request(printer.id, pausePrintCommand({ id: `pause-${Date.now()}` }));
+      await request(
+        printer.id,
+        retomar
+          ? resumePrintCommand({ id: `resume-${Date.now()}` })
+          : pausePrintCommand({ id: `pause-${Date.now()}` })
+      );
     } catch (erro) {
       Alert.alert('Comando recusado', mensagemDoErro(erro));
     }
@@ -673,7 +679,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
                 job ? 'text-white' : 'text-ink-muted'
               }`}
             >
-              {printer?.status?.PrintInfo?.Status === 6
+              {isResumable(printer?.status?.PrintInfo?.Status ?? 0)
                 ? t('comum.retomar')
                 : t('comum.pausar')}
             </Text>
