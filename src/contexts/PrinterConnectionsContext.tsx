@@ -135,17 +135,38 @@ export const PrinterConnectionsProvider = ({
     loadPrinters();
 
     return () => {
-      // Sem reconexões nem pedidos órfãos depois do unmount.
+      // Sem reconexões nem pedidos órfãos depois do unmount: mata timers,
+      // rejeita pedidos pendentes e tira os handlers antes de fechar, para o
+      // `onclose` não tentar fazer setState sobre um componente morto.
       Object.values(reconnectTimersRef.current).forEach(timer =>
         clearTimeout(timer)
       );
-      Object.values(webSocketsRef.current).forEach(ws => ws.close());
+      reconnectTimersRef.current = {};
       Object.values(statusTimersRef.current).forEach(timer =>
         clearInterval(timer)
       );
+      statusTimersRef.current = {};
       Object.values(watchdogTimersRef.current).forEach(timer =>
         clearInterval(timer)
       );
+      watchdogTimersRef.current = {};
+      Object.entries(pendingRequestsRef.current).forEach(([, pedido]) => {
+        clearTimeout(pedido.timer);
+        pedido.reject(new PrinterOfflineError());
+      });
+      pendingRequestsRef.current = {};
+      Object.entries(webSocketsRef.current).forEach(([id, ws]) => {
+        intentionalCloseRef.current[id] = true;
+        ws.onclose = null;
+        ws.onerror = null;
+        ws.onmessage = null;
+        try {
+          ws.close();
+        } catch {
+          // Socket já fechado: nada a fazer.
+        }
+      });
+      webSocketsRef.current = {};
     };
   }, []);
 
@@ -720,13 +741,14 @@ export const PrinterConnectionsProvider = ({
       mainboardId,
     };
 
+    // Verificar ANTES de ligar: se o IP já existe, a lista não muda e ficaria
+    // um WebSocket/timer/watchdog a vigiar uma impressora que não está lá.
+    if (printersRef.current.some(p => p.ipAddress === ipAddress)) {
+      console.log('printer already exists', ipAddress);
+      return;
+    }
+
     setPrinters(prevPrinters => {
-      const existingPrinter = prevPrinters.find(p => p.ipAddress === ipAddress);
-      if (existingPrinter) {
-        // Maybe alert the user that the printer already exists
-        console.log('printer already exists', existingPrinter);
-        return prevPrinters;
-      }
       const updatedPrinters = [...prevPrinters, newPrinter];
       printersRef.current = updatedPrinters;
       return updatedPrinters;

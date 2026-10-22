@@ -98,7 +98,9 @@ export const StatsScreen = ({ navigation }: any) => {
     } finally {
       setLoading(false);
     }
-  }, [printer, request]);
+    // Depender só do id: o objeto `printer` muda a cada actualização de
+    // estado (30 s) e isso recarregava a página inteira.
+  }, [printer?.id, request]);
 
   useFocusEffect(
     useCallback(() => {

@@ -173,7 +173,7 @@ export const useGcodePreview = (
     return buildLocalUrl(printerIp, filename);
   }, [printerIp, filename]);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (cancelado: { atual: boolean }) => {
     if (!url) return;
     const guardado = cacheRef.current[url];
     if (guardado !== undefined) {
@@ -185,29 +185,38 @@ export const useGcodePreview = (
     try {
       // O servidor da impressora responde 416 a pedidos Range — sem cabeçalho.
       const response = await comVez(() => fetch(url));
+      if (cancelado.atual) return;
       if (!response.ok) {
         cacheRef.current[url] = { preview: null, filamentos: [] };
         return;
       }
       const text = await response.text();
+      if (cancelado.atual) return;
       const result = parseToolpath(text);
       // As cores vêm do mesmo texto: não há segundo download.
       const cores = filamentosDoCabecalho(text);
       cacheRef.current[url] = { preview: result, filamentos: cores };
+      if (cancelado.atual) return;
       setPreview(result);
       setFilamentos(cores);
     } catch (error) {
       console.log('preview failed', error instanceof Error ? error.stack : String(error));
       cacheRef.current[url] = { preview: null, filamentos: [] };
+      if (cancelado.atual) return;
       setPreview(null);
       setFilamentos([]);
     } finally {
-      setLoading(false);
+      if (!cancelado.atual) setLoading(false);
     }
   }, [url]);
 
   useEffect(() => {
-    load();
+    // Se o ficheiro mudar a meio, o pedido antigo não pode pintar o ecrã.
+    const cancelado = { atual: false };
+    load(cancelado);
+    return () => {
+      cancelado.atual = true;
+    };
   }, [load]);
 
   return { preview, filamentos, loading };

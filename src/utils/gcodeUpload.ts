@@ -2,6 +2,7 @@ import * as FileSystem from 'expo-file-system';
 import SparkMD5 from 'spark-md5';
 
 const CHUNK_SIZE = 1024 * 1024;
+const TEMPO_LIMITE_BLOCO_MS = 60000;
 const uploadUrl = (ip: string) => `http://${ip}:3030/uploadFile/upload`;
 
 const BASE64_CHARS =
@@ -95,16 +96,32 @@ export const uploadGcode = async (
       type: 'application/octet-stream',
     } as unknown as Blob);
 
-    const response = await fetch(uploadUrl(printerIp), {
-      method: 'POST',
-      body: form,
-    });
-    const payload = await response.json().catch(() => null);
-
-    FileSystem.deleteAsync(chunkUri, { idempotent: true }).catch(() => {});
-
-    if (!response.ok || !payload?.success) {
-      throw new Error(`Falhou no byte ${position}`);
+    // Timeout: sem isto um pedido que não responde deixa o envio pendurado
+    // para sempre. O ficheiro temporário sai sempre, mesmo em erro.
+    const controller = new AbortController();
+    const relogio = setTimeout(() => controller.abort(), TEMPO_LIMITE_BLOCO_MS);
+    try {
+      const response = await fetch(uploadUrl(printerIp), {
+        method: 'POST',
+        body: form,
+        signal: controller.signal,
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.success) {
+        throw new Error(`Falhou no byte ${position}`);
+      }
+    } catch (erro) {
+      if (erro instanceof Error && erro.name === 'AbortError') {
+        throw new Error(
+          `A impressora não respondeu ao bloco do byte ${position} em 60 s`
+        );
+      }
+      throw erro;
+    } finally {
+      clearTimeout(relogio);
+      await FileSystem.deleteAsync(chunkUri, { idempotent: true }).catch(
+        () => undefined
+      );
     }
 
     index += 1;

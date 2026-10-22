@@ -25,6 +25,8 @@ const MILESTONES = [50, 90];
 export const usePrintNotifications = (printers: Printer[]) => {
   const [prefs, setPrefs] = useState<NotificationPrefs>(DEFAULT_PREFS);
   const snapshotRef = useRef<Record<string, Snapshot>>({});
+  // A pausa não muda o código de estado: o sinal é o CurrentTicks parar.
+  const ticksRef = useRef<Record<string, { valor: number; desde: number }>>({});
 
   useEffect(() => {
     loadNotificationPrefs().then(setPrefs);
@@ -37,8 +39,23 @@ export const usePrintNotifications = (printers: Printer[]) => {
       const connected = printer.connectionStatus === 'connected';
       const previous = snapshotRef.current[printer.id];
 
-      const status =
+      const statusBase =
         rawStatus === undefined ? previous?.status ?? 'idle' : getPrintStatus(rawStatus);
+
+      const ticksAtuais = info?.CurrentTicks ?? 0;
+      const agora = Date.now();
+      const marco = ticksRef.current[printer.id];
+      if (!marco || marco.valor !== ticksAtuais) {
+        ticksRef.current[printer.id] = { valor: ticksAtuais, desde: agora };
+      }
+      const paradoDesde = ticksRef.current[printer.id]?.desde ?? agora;
+      const emPausa =
+        connected &&
+        statusBase === 'printing' &&
+        ticksAtuais > 0 &&
+        agora - paradoDesde > 6000;
+
+      const status: PrintStatus = emPausa ? 'paused' : statusBase;
       const progress = info?.Progress ?? 0;
       const filename = info?.Filename || 'your print';
 
