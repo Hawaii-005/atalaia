@@ -15,6 +15,7 @@ module.exports = {
           sunken: 'rgb(var(--fundo-baixo) / <alpha-value>)',
         },
         cartao: 'rgb(var(--cartao) / <alpha-value>)',
+        inkFixo: 'rgb(var(--tinta-fixa) / <alpha-value>)',
         ink: {
           DEFAULT: 'rgb(var(--tinta) / <alpha-value>)',
           soft: 'rgb(var(--tinta-soft) / <alpha-value>)',
@@ -25,6 +26,7 @@ module.exports = {
           DEFAULT: 'rgb(var(--acento) / <alpha-value>)',
           dark: 'rgb(var(--acento-forte) / <alpha-value>)',
           soft: 'rgb(var(--acento-suave) / <alpha-value>)',
+          texto: 'rgb(var(--acento-texto) / <alpha-value>)',
         },
         state: {
           ok: 'rgb(var(--ok) / <alpha-value>)',

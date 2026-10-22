@@ -250,7 +250,7 @@ export const DiscoveryScreen = ({ navigation }: any) => {
               activeOpacity={0.7}
               className="mt-3"
             >
-              <Text className="text-[13px] font-semibold text-brand">
+              <Text className="text-[13px] font-semibold text-brand-texto">
                 {t('discovery.adicionarManualmente')}
               </Text>
             </TouchableOpacity>

@@ -18,6 +18,10 @@ export type Paleta = {
   acento: string;
   acentoForte: string;
   acentoSuave: string;
+  /** acento legível como texto (mais claro nos temas escuros) */
+  acentoTexto: string;
+  /** tinta escura fixa, para fundos claros (ex.: aviso âmbar) */
+  tintaFixa: string;
   ok: string;
   aviso: string;
   perigo: string;
@@ -52,6 +56,8 @@ export const TEMAS: Record<TemaId, Tema> = {
       acento: '62 106 225',
       acentoForte: '47 85 196',
       acentoSuave: '237 241 252',
+      acentoTexto: '62 106 225',
+      tintaFixa: '23 26 32',
       ok: '31 157 85',
       aviso: '242 169 0',
       perigo: '198 40 40',
@@ -71,11 +77,13 @@ export const TEMAS: Record<TemaId, Tema> = {
       cartao: '30 27 50',
       tinta: '242 245 255',
       tintaSoft: '205 200 232',
-      tintaMuted: '158 152 190',
+      tintaMuted: '180 175 208',
       linha: '62 58 92',
       acento: '139 92 246',
       acentoForte: '109 62 214',
       acentoSuave: '48 40 74',
+      acentoTexto: '167 139 250',
+      tintaFixa: '23 26 32',
       ok: '143 191 106',
       aviso: '238 212 159',
       perigo: '255 100 120',
@@ -95,11 +103,13 @@ export const TEMAS: Record<TemaId, Tema> = {
       cartao: '59 66 82',
       tinta: '236 239 244',
       tintaSoft: '216 222 233',
-      tintaMuted: '163 172 187',
+      tintaMuted: '186 194 207',
       linha: '76 86 106',
       acento: '94 129 172',
       acentoForte: '76 110 150',
       acentoSuave: '67 76 94',
+      acentoTexto: '136 192 208',
+      tintaFixa: '23 26 32',
       ok: '163 190 140',
       aviso: '235 203 139',
       perigo: '191 97 106',
@@ -124,6 +134,8 @@ export const TEMAS: Record<TemaId, Tema> = {
       acento: '47 107 255',
       acentoForte: '34 84 214',
       acentoSuave: '232 236 250',
+      acentoTexto: '47 107 255',
+      tintaFixa: '23 26 32',
       ok: '47 125 85',
       aviso: '214 138 40',
       perigo: '195 64 44',
@@ -154,6 +166,8 @@ export function variaveis(tema: Tema): Record<string, string> {
     '--acento': p.acento,
     '--acento-forte': p.acentoForte,
     '--acento-suave': p.acentoSuave,
+    '--acento-texto': p.acentoTexto,
+    '--tinta-fixa': p.tintaFixa,
     '--ok': p.ok,
     '--aviso': p.aviso,
     '--perigo': p.perigo,

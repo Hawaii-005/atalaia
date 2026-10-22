@@ -510,11 +510,11 @@ export const CameraScreen = ({ navigation, route }: any) => {
             <Ionicons
               name={lightOn ? 'bulb' : 'bulb-outline'}
               size={20}
-              color={lightOn ? hexDe(tema.paleta.tinta) : hexDe(tema.paleta.tintaSoft)}
+              color={lightOn ? hexDe(tema.paleta.tintaFixa) : hexDe(tema.paleta.tintaSoft)}
             />
             <Text
               className={`ml-2 font-bold text-xs tracking-wide ${
-                lightOn ? 'text-ink' : 'text-ink-soft'
+                lightOn ? 'text-inkFixo' : 'text-ink-soft'
               }`}
             >
               {lightOn ? t('camera.luzLigada') : t('camera.luzDesligada')}

@@ -82,7 +82,7 @@ const HistoryRow = ({ record }: { record: PrintRecord }) => {
               ? 'text-state-ok'
               : record.outcome === 'stopped'
                 ? 'text-state-danger'
-                : 'text-brand'
+                : 'text-brand-texto'
           }`}
         >
           {t(outcomeLabel[record.outcome])}

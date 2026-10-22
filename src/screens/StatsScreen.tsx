@@ -253,7 +253,7 @@ export const StatsScreen = ({ navigation }: any) => {
             className="mt-4 py-3 items-center"
             activeOpacity={0.7}
           >
-            <Text className="text-[13px] font-semibold text-brand">
+            <Text className="text-[13px] font-semibold text-brand-texto">
               {t('stats.verHistoricoCompleto')}
             </Text>
           </TouchableOpacity>

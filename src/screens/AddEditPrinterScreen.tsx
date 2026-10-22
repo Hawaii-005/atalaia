@@ -134,7 +134,7 @@ export const AddEditPrinterScreen = () => {
               onPress={() => navigation.navigate('WhereIsIp')}
               activeOpacity={0.7}
             >
-              <Text className="text-[12px] font-semibold text-brand">
+              <Text className="text-[12px] font-semibold text-brand-texto">
                 {t('addPrinter.ondeEncontrar')}
               </Text>
             </TouchableOpacity>

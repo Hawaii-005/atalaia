@@ -75,8 +75,8 @@ export const AppNavigator = () => {
             return <Ionicons name="help-outline" size={size} color={color} />;
           }
         },
-        tabBarActiveTintColor: hexDe(tema.paleta.acento),
-        tabBarInactiveTintColor: hexDe(tema.paleta.tintaMuted),
+        tabBarActiveTintColor: hexDe(tema.paleta.acentoTexto),
+        tabBarInactiveTintColor: hexDe(tema.paleta.tintaSoft),
         tabBarLabelStyle: {
           fontSize: 10,
           fontWeight: '600',
