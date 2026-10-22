@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   runOnJS,
   useAnimatedStyle,
@@ -109,7 +109,7 @@ export const ZoomThumb = ({ path, altura = 240 }: Props) => {
   }));
 
   return (
-    <GestureHandlerRootView>
+    <View>
       <View
         className="w-full rounded-xl border border-line bg-cartao overflow-hidden items-center justify-center"
         style={{ height: altura }}
@@ -142,6 +142,6 @@ export const ZoomThumb = ({ path, altura = 240 }: Props) => {
       <Text className="text-[10px] text-ink-muted mt-1.5 text-center">
         {t('files.dicaZoom')}
       </Text>
-    </GestureHandlerRootView>
+    </View>
   );
 };
