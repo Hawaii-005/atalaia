@@ -29,6 +29,8 @@ import * as FileSystem from 'expo-file-system';
 import { uploadGcode } from '../utils/gcodeUpload';
 import { custoDe, euros, getPrecoKg, setPrecoKg } from '../utils/precos';
 import { t } from '../i18n';
+import { useTheme } from '../contexts/ThemeContext';
+import { hexDe } from '../theme/temas';
 
 interface PrinterFile {
   name: string;
@@ -56,6 +58,7 @@ const FileRow = ({
   printerIp: string;
   onOpen: () => void;
 }) => {
+  const { tema } = useTheme();
   const size = file.FileSize ?? file.totalSize ?? file.usedSize ?? 0;
   const { preview } = useGcodePreview(
     size && size < PREVIEW_LIMIT ? printerIp : undefined,
@@ -69,18 +72,18 @@ const FileRow = ({
       activeOpacity={0.7}
       className="flex-row items-center px-4 py-3 border-b border-line"
     >
-      <View className="w-14 h-14 rounded-lg bg-white border border-line items-center justify-center overflow-hidden">
+      <View className="w-14 h-14 rounded-lg bg-cartao border border-line items-center justify-center overflow-hidden">
         {preview ? (
           <Svg viewBox="0 0 100 100" width={52} height={52}>
             <Path
               d={preview.path}
-              stroke="#171A20"
+              stroke={hexDe(tema.paleta.tinta)}
               strokeWidth={0.6}
               fill="none"
             />
           </Svg>
         ) : (
-          <Ionicons name="cube-outline" size={18} color="#9AA0A6" />
+          <Ionicons name="cube-outline" size={18} color={hexDe(tema.paleta.tintaMuted)} />
         )}
       </View>
       <View className="flex-1 ml-3">
@@ -91,7 +94,7 @@ const FileRow = ({
           {formatSize(size)}
         </Text>
       </View>
-      <Ionicons name="chevron-forward" size={18} color="#9AA0A6" />
+      <Ionicons name="chevron-forward" size={18} color={hexDe(tema.paleta.tintaMuted)} />
     </TouchableOpacity>
   );
 };
@@ -119,6 +122,7 @@ const FileDetails = ({
   onDelete: () => void;
   onRename: () => void;
 }) => {
+  const { tema } = useTheme();
   const size = file.FileSize ?? file.totalSize ?? file.usedSize ?? 0;
   const { preview, filamentos, loading } = useGcodePreview(
     size && size < PREVIEW_LIMIT ? printerIp : undefined,
@@ -166,19 +170,19 @@ const FileDetails = ({
               className="w-9 h-9 items-center justify-center rounded-lg border border-line"
               activeOpacity={0.7}
             >
-              <Ionicons name="close" size={18} color="#171A20" />
+              <Ionicons name="close" size={18} color={hexDe(tema.paleta.tinta)} />
             </TouchableOpacity>
           </View>
 
-          <View className="items-center justify-center mt-4 h-48 rounded-xl bg-white border border-line">
+          <View className="items-center justify-center mt-4 h-48 rounded-xl bg-cartao border border-line">
             {loading ? (
-              <ActivityIndicator color="#3E6AE1" />
+              <ActivityIndicator color={hexDe(tema.paleta.acento)} />
             ) : preview ? (
               <Svg viewBox="0 0 100 100" width={180} height={180}>
-                <Path d={preview.path} stroke="#171A20" strokeWidth={0.5} fill="none" />
+                <Path d={preview.path} stroke={hexDe(tema.paleta.tinta)} strokeWidth={0.5} fill="none" />
               </Svg>
             ) : (
-              <Ionicons name="cube-outline" size={40} color="#9AA0A6" />
+              <Ionicons name="cube-outline" size={40} color={hexDe(tema.paleta.tintaMuted)} />
             )}
           </View>
 
@@ -195,7 +199,7 @@ const FileDetails = ({
                 <View key={filamento.tool} className="flex-row items-center mt-2">
                   <View
                     className="w-5 h-5 rounded-full border border-line mr-2"
-                    style={{ backgroundColor: filamento.cor ?? '#E4E4E4' }}
+                    style={{ backgroundColor: filamento.cor ?? hexDe(tema.paleta.linha) }}
                   />
                   <Text className="text-[12px] font-semibold text-ink">
                     T{filamento.tool}
@@ -243,7 +247,7 @@ const FileDetails = ({
                 }}
                 keyboardType="decimal-pad"
                 placeholder="0,00"
-                placeholderTextColor="#9AA0A6"
+                placeholderTextColor={hexDe(tema.paleta.tintaMuted)}
                 className="w-24 h-9 px-3 rounded-lg border border-line text-[12px] text-ink text-right"
               />
             </View>
@@ -289,9 +293,9 @@ const FileDetails = ({
             <Switch
               value={bedLevel}
               onValueChange={onChangeBedLevel}
-              trackColor={{ false: '#E4E4E4', true: '#3E6AE1' }}
+              trackColor={{ false: hexDe(tema.paleta.linha), true: hexDe(tema.paleta.acento) }}
               thumbColor="#FFFFFF"
-              ios_backgroundColor="#E4E4E4"
+              ios_backgroundColor={hexDe(tema.paleta.linha)}
             />
           </View>
 
@@ -301,14 +305,14 @@ const FileDetails = ({
               className="h-12 w-12 items-center justify-center rounded-xl border border-line mr-2"
               activeOpacity={0.7}
             >
-              <Ionicons name="pencil-outline" size={18} color="#171A20" />
+              <Ionicons name="pencil-outline" size={18} color={hexDe(tema.paleta.tinta)} />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={onDelete}
               className="h-12 px-4 items-center justify-center rounded-xl border border-line mr-2"
               activeOpacity={0.7}
             >
-              <Ionicons name="trash-outline" size={18} color="#C62828" />
+              <Ionicons name="trash-outline" size={18} color={hexDe(tema.paleta.perigo)} />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={onPrint}
@@ -327,6 +331,7 @@ const FileDetails = ({
 };
 
 export const FilesScreen = ({ route, navigation }: any) => {
+  const { tema } = useTheme();
   const { printerId } = route.params ?? {};
   const { printers, request } = usePrinterConnections();
   const printer = printers.find(item => item.id === printerId) ?? printers[0];
@@ -481,11 +486,11 @@ export const FilesScreen = ({ route, navigation }: any) => {
 
       {loading ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#3E6AE1" />
+          <ActivityIndicator color={hexDe(tema.paleta.acento)} />
         </View>
       ) : error ? (
         <View className="flex-1 items-center justify-center px-8">
-          <Ionicons name="alert-circle-outline" size={36} color="#C62828" />
+          <Ionicons name="alert-circle-outline" size={36} color={hexDe(tema.paleta.perigo)} />
           <Text className="text-[13px] text-ink-muted mt-3 text-center">
             {error}
           </Text>
@@ -546,9 +551,9 @@ export const FilesScreen = ({ route, navigation }: any) => {
             <Switch
               value={bedLevel}
               onValueChange={setBedLevel}
-              trackColor={{ false: '#E4E4E4', true: '#3E6AE1' }}
+              trackColor={{ false: hexDe(tema.paleta.linha), true: hexDe(tema.paleta.acento) }}
               thumbColor="#FFFFFF"
-              ios_backgroundColor="#E4E4E4"
+              ios_backgroundColor={hexDe(tema.paleta.linha)}
             />
           </View>
 
@@ -588,14 +593,14 @@ export const FilesScreen = ({ route, navigation }: any) => {
               <Ionicons
                 name={crescente ? 'arrow-up' : 'arrow-down'}
                 size={15}
-                color="#171A20"
+                color={hexDe(tema.paleta.tinta)}
               />
             </TouchableOpacity>
           </View>
 
           {files.length === 0 ? (
             <View className="items-center justify-center py-16">
-              <Ionicons name="folder-open-outline" size={36} color="#9AA0A6" />
+              <Ionicons name="folder-open-outline" size={36} color={hexDe(tema.paleta.tintaMuted)} />
               <Text className="text-[14px] font-semibold text-ink mt-3">
                 {t('files.semFicheiros')}
               </Text>
@@ -662,7 +667,7 @@ export const FilesScreen = ({ route, navigation }: any) => {
                 autoFocus
                 className="h-11 px-3 mt-3 rounded-xl border border-line text-[13px] text-ink"
                 placeholder={t('files.nomeNovo')}
-                placeholderTextColor="#9AA0A6"
+                placeholderTextColor={hexDe(tema.paleta.tintaMuted)}
               />
               <View className="flex-row justify-end mt-4">
                 <TouchableOpacity

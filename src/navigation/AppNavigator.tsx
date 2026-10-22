@@ -16,6 +16,7 @@ import { CameraScreen } from '../screens/CameraScreen';
 import WhereIsIpScreen from '../screens/WhereIsIpScreen';
 import PrinterIcon from '../components/icons/PrinterIcon';
 import { useTheme } from '../contexts/ThemeContext';
+import { hexDe } from '../theme/temas';
 import { t } from '../i18n';
 
 const Tab = createBottomTabNavigator();
@@ -40,7 +41,7 @@ const PrintersStackNavigator = () => (
 );
 
 export const AppNavigator = () => {
-  const { colorScheme } = useTheme();
+  const { tema } = useTheme();
 
   return (
     <Tab.Navigator
@@ -74,8 +75,8 @@ export const AppNavigator = () => {
             return <Ionicons name="help-outline" size={size} color={color} />;
           }
         },
-        tabBarActiveTintColor: '#3E6AE1',
-        tabBarInactiveTintColor: '#9AA0A6',
+        tabBarActiveTintColor: hexDe(tema.paleta.acento),
+        tabBarInactiveTintColor: hexDe(tema.paleta.tintaMuted),
         tabBarLabelStyle: {
           fontSize: 10,
           fontWeight: '600',
@@ -85,9 +86,9 @@ export const AppNavigator = () => {
         headerShown: false,
         tabBarHideOnKeyboard: true,
         tabBarStyle: {
-          backgroundColor: colorScheme === 'dark' ? '#111827' : '#FFFFFF',
+          backgroundColor: hexDe(tema.paleta.cartao),
           borderTopWidth: 1,
-          borderTopColor: colorScheme === 'dark' ? '#1F2937' : '#E4E4E4',
+          borderTopColor: hexDe(tema.paleta.linha),
           paddingBottom: 6,
           paddingTop: 6,
           height: 66,

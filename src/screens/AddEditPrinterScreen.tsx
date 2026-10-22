@@ -14,6 +14,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { checkLocalNetworkPermission } from '../utils/LocalNetworkUtils';
 import { t } from '../i18n';
+import { useTheme } from '../contexts/ThemeContext';
+import { hexDe } from '../theme/temas';
 
 interface FormData {
   printerName: string;
@@ -35,6 +37,7 @@ const validationSchema = yup.object().shape({
 });
 
 export const AddEditPrinterScreen = () => {
+  const { tema } = useTheme();
   const navigation = useNavigation<any>();
   const { addPrinter } = usePrinterConnections();
   const [formData, setFormData] = useState<FormData>({
@@ -75,9 +78,9 @@ export const AddEditPrinterScreen = () => {
   };
 
   const fieldClass = (field: keyof FormData) =>
-    `rounded-xl border bg-white px-4 py-3.5 text-[15px] text-ink ${
+    `rounded-xl border bg-cartao px-4 py-3.5 text-[15px] text-ink ${
       errors[field]
-        ? 'border-[#C62828]'
+        ? 'border-state-danger'
         : focused === field
           ? 'border-brand'
           : 'border-line'
@@ -98,7 +101,7 @@ export const AddEditPrinterScreen = () => {
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         keyboardShouldPersistTaps="handled"
       >
-        <View className="rounded-xl2 border border-line bg-white p-4">
+        <View className="rounded-xl2 border border-line bg-cartao p-4">
           <Text className="text-[10px] tracking-widest font-semibold text-ink-soft">
             {t('addPrinter.seccaoImpressora')}
           </Text>
@@ -109,7 +112,7 @@ export const AddEditPrinterScreen = () => {
           <TextInput
             className={fieldClass('printerName')}
             placeholder="Centauri Carbon"
-            placeholderTextColor="#9AA0A6"
+            placeholderTextColor={hexDe(tema.paleta.tintaMuted)}
             value={formData.printerName}
             onChangeText={value => handleInputChange('printerName', value)}
             onFocus={() => setFocused('printerName')}
@@ -118,7 +121,7 @@ export const AddEditPrinterScreen = () => {
             autoCorrect={false}
           />
           {errors.printerName && (
-            <Text className="mt-1.5 text-[12px] text-[#C62828]">
+            <Text className="mt-1.5 text-[12px] text-state-danger">
               {errors.printerName}
             </Text>
           )}
@@ -139,7 +142,7 @@ export const AddEditPrinterScreen = () => {
           <TextInput
             className={fieldClass('ipAddress')}
             placeholder="192.168.1.9"
-            placeholderTextColor="#9AA0A6"
+            placeholderTextColor={hexDe(tema.paleta.tintaMuted)}
             value={formData.ipAddress}
             onChangeText={value => handleInputChange('ipAddress', value)}
             onFocus={() => setFocused('ipAddress')}
@@ -150,7 +153,7 @@ export const AddEditPrinterScreen = () => {
             style={{ fontFamily: 'monospace' }}
           />
           {errors.ipAddress ? (
-            <Text className="mt-1.5 text-[12px] text-[#C62828]">
+            <Text className="mt-1.5 text-[12px] text-state-danger">
               {errors.ipAddress}
             </Text>
           ) : (
@@ -165,7 +168,7 @@ export const AddEditPrinterScreen = () => {
           disabled={isSubmitting}
           activeOpacity={0.85}
           className={`mt-4 rounded-xl2 py-4 items-center ${
-            canSave && !isSubmitting ? 'bg-brand' : 'bg-[#C9CFDD]'
+            canSave && !isSubmitting ? 'bg-brand' : 'bg-line'
           }`}
         >
           <Text className="text-[15px] font-semibold text-white">
@@ -178,7 +181,7 @@ export const AddEditPrinterScreen = () => {
           activeOpacity={0.7}
           className="mt-3 py-3 flex-row items-center justify-center"
         >
-          <Ionicons name="wifi" size={16} color="#3F444D" />
+          <Ionicons name="wifi" size={16} color={hexDe(tema.paleta.tintaSoft)} />
           <Text className="ml-2 text-[13px] font-semibold text-ink-soft">
             {t('addPrinter.analisarRede')}
           </Text>

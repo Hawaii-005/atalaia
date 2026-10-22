@@ -19,6 +19,8 @@ import {
 } from '../utils/commands';
 import { mensagemDeErro } from '../utils/errors';
 import { t } from '../i18n';
+import { useTheme } from '../contexts/ThemeContext';
+import { hexDe } from '../theme/temas';
 
 interface TaskDetail {
   TaskId: string;
@@ -62,6 +64,7 @@ const StatCard = ({
 );
 
 export const StatsScreen = ({ navigation }: any) => {
+  const { tema } = useTheme();
   const { printers, request } = usePrinterConnections();
   const printer = printers[0];
   const [loading, setLoading] = useState(true);
@@ -135,7 +138,7 @@ export const StatsScreen = ({ navigation }: any) => {
 
       {loading ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#3E6AE1" />
+          <ActivityIndicator color={hexDe(tema.paleta.acento)} />
         </View>
       ) : (
         <ScrollView
@@ -221,7 +224,7 @@ export const StatsScreen = ({ navigation }: any) => {
                 />
               ) : (
                 <View className="w-10 h-10 rounded-lg bg-canvas-sunken items-center justify-center">
-                  <Ionicons name="cube-outline" size={16} color="#9AA0A6" />
+                  <Ionicons name="cube-outline" size={16} color={hexDe(tema.paleta.tintaMuted)} />
                 </View>
               )}
               <View className="flex-1 ml-3">

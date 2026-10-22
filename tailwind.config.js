@@ -7,12 +7,30 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Direction B "Bare metal" — light canvas, ink text, one action blue.
-        canvas: { DEFAULT: '#FFFFFF', sunken: '#F4F4F4' },
-        ink: { DEFAULT: '#171A20', soft: '#3F444D', muted: '#63676E' },
-        line: '#E4E4E4',
-        brand: { DEFAULT: '#3E6AE1', dark: '#2F55C4', soft: '#EDF1FC' },
-        state: { ok: '#1F9D55', light: '#F2A900', danger: '#C62828' },
+        // As cores vêm de variáveis CSS (triplos "r g b") definidas em
+        // src/theme/temas.ts e aplicadas na raiz com `vars()` do NativeWind.
+        // Trocar de tema é trocar as variáveis, sem tocar nas classNames.
+        canvas: {
+          DEFAULT: 'rgb(var(--fundo) / <alpha-value>)',
+          sunken: 'rgb(var(--fundo-baixo) / <alpha-value>)',
+        },
+        cartao: 'rgb(var(--cartao) / <alpha-value>)',
+        ink: {
+          DEFAULT: 'rgb(var(--tinta) / <alpha-value>)',
+          soft: 'rgb(var(--tinta-soft) / <alpha-value>)',
+          muted: 'rgb(var(--tinta-muted) / <alpha-value>)',
+        },
+        line: 'rgb(var(--linha) / <alpha-value>)',
+        brand: {
+          DEFAULT: 'rgb(var(--acento) / <alpha-value>)',
+          dark: 'rgb(var(--acento-forte) / <alpha-value>)',
+          soft: 'rgb(var(--acento-suave) / <alpha-value>)',
+        },
+        state: {
+          ok: 'rgb(var(--ok) / <alpha-value>)',
+          light: 'rgb(var(--aviso) / <alpha-value>)',
+          danger: 'rgb(var(--perigo) / <alpha-value>)',
+        },
       },
       borderRadius: { xl2: '18px' },
     },

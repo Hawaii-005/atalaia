@@ -12,6 +12,7 @@ import PagerView from 'react-native-pager-view';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '../contexts/ThemeContext';
+import { hexDe } from '../theme/temas';
 import { t } from '../i18n';
 
 const SLIDES = [
@@ -39,8 +40,7 @@ const SLIDES = [
 ];
 
 const WelcomeScreen = ({ onComplete }: { onComplete: () => void }) => {
-  const { colorScheme } = useTheme();
-  const isDark = colorScheme === 'dark';
+  const { escuro: isDark, tema } = useTheme();
   const pagerRef = React.useRef<PagerView>(null);
   const [page, setPage] = React.useState(0);
 
@@ -101,7 +101,7 @@ const WelcomeScreen = ({ onComplete }: { onComplete: () => void }) => {
                   <Ionicons
                     name={slide.icon as any}
                     size={38}
-                    color="#3E6AE1"
+                    color={hexDe(tema.paleta.acento)}
                   />
                 </View>
               ) : (
@@ -128,7 +128,7 @@ const WelcomeScreen = ({ onComplete }: { onComplete: () => void }) => {
                   className="mt-6 flex-row items-center rounded-xl2 border border-line px-4 py-2.5"
                   activeOpacity={0.7}
                 >
-                  <Ionicons name="logo-github" size={16} color="#171A20" />
+                  <Ionicons name="logo-github" size={16} color={hexDe(tema.paleta.tinta)} />
                   <Text className="ml-2 text-[13px] font-semibold text-ink">
                     {t('welcome.verGithub')}
                   </Text>
@@ -144,7 +144,7 @@ const WelcomeScreen = ({ onComplete }: { onComplete: () => void }) => {
           <View
             key={slide.titleKey}
             className={`h-1.5 rounded-full mx-1 ${
-              index === page ? 'w-6 bg-brand' : 'w-1.5 bg-[#D6D8DB]'
+              index === page ? 'w-6 bg-brand' : 'w-1.5 bg-line'
             }`}
           />
         ))}

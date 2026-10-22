@@ -16,6 +16,8 @@ import {
   formatTicksToReadableTime,
 } from '../utils/FormatUtils';
 import { t } from '../i18n';
+import { useTheme } from '../contexts/ThemeContext';
+import { hexDe } from '../theme/temas';
 
 interface PrinterCardProps {
   printer: Printer;
@@ -53,6 +55,7 @@ export const PrinterCard = ({
   onPrintControl,
   onStopPrint,
 }: PrinterCardProps) => {
+  const { tema } = useTheme();
   const [currentTime, setCurrentTime] = useState(Date.now());
 
   useEffect(() => {
@@ -100,7 +103,7 @@ export const PrinterCard = ({
 
   return (
     <TouchableOpacity
-      className="rounded-xl2 border border-line bg-white p-4"
+      className="rounded-xl2 border border-line bg-cartao p-4"
       onPress={onPress}
       activeOpacity={onPress ? 0.7 : 1}
     >
@@ -136,7 +139,7 @@ export const PrinterCard = ({
             <Ionicons
               name="chevron-forward"
               size={16}
-              color="#9AA0A6"
+              color={hexDe(tema.paleta.tintaMuted)}
               style={{ marginTop: 6 }}
             />
           )}
@@ -198,8 +201,8 @@ export const PrinterCard = ({
               progress={readablePrintStatus === 'completed' ? 1 : progress / 100}
               width={null}
               height={5}
-              color="#3E6AE1"
-              unfilledColor="#E4E4E4"
+              color={hexDe(tema.paleta.acento)}
+              unfilledColor={hexDe(tema.paleta.linha)}
               borderWidth={0}
               borderRadius={3}
             />
@@ -215,10 +218,10 @@ export const PrinterCard = ({
                 {canStop && onStopPrint && (
                   <TouchableOpacity
                     onPress={onStopPrint}
-                    className="w-8 h-8 rounded-full bg-[#FCEDED] items-center justify-center mr-2"
+                    className="w-8 h-8 rounded-full bg-state-danger/10 items-center justify-center mr-2"
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="stop" size={15} color="#C62828" />
+                    <Ionicons name="stop" size={15} color={hexDe(tema.paleta.perigo)} />
                   </TouchableOpacity>
                 )}
                 {(canPause || canResume) && onPrintControl && (
@@ -230,7 +233,7 @@ export const PrinterCard = ({
                     <Ionicons
                       name={canResume ? 'play' : 'pause'}
                       size={15}
-                      color="#3E6AE1"
+                      color={hexDe(tema.paleta.acento)}
                     />
                   </TouchableOpacity>
                 )}

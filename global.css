@@ -1,3 +1,23 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Valores por omissão (tema Grafite). Em runtime são substituídos pelas
+   variáveis do tema escolhido, aplicadas na raiz com `vars()` do NativeWind. */
+@layer base {
+  :root {
+    --fundo: 255 255 255;
+    --fundo-baixo: 244 244 244;
+    --cartao: 255 255 255;
+    --tinta: 23 26 32;
+    --tinta-soft: 63 68 77;
+    --tinta-muted: 99 103 110;
+    --linha: 228 228 228;
+    --acento: 62 106 225;
+    --acento-forte: 47 85 196;
+    --acento-suave: 237 241 252;
+    --ok: 31 157 85;
+    --aviso: 242 169 0;
+    --perigo: 198 40 40;
+  }
+}

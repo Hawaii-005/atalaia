@@ -23,6 +23,8 @@ import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { Header } from '../components/Header';
 import type { ConnectionStatus } from '../types';
 import { t } from '../i18n';
+import { useTheme } from '../contexts/ThemeContext';
+import { hexDe } from '../theme/temas';
 
 const LIGHT_COMMAND = 403;
 
@@ -36,6 +38,7 @@ const CONNECTION_LABEL: Record<ConnectionStatus, string> = {
 };
 
 export const CameraScreen = ({ navigation, route }: any) => {
+  const { tema } = useTheme();
   // Keep the display awake while the camera tab is open.
   useKeepAwake();
 
@@ -355,7 +358,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
         edges={['top']}
         className="flex-1 bg-canvas items-center justify-center p-6"
       >
-        <Ionicons name="videocam-off" size={48} color="#7C8088" />
+        <Ionicons name="videocam-off" size={48} color={hexDe(tema.paleta.tintaMuted)} />
         <Text className="mt-3 text-ink text-center">
           {t('camera.semImpressoras')}
         </Text>
@@ -442,9 +445,9 @@ export const CameraScreen = ({ navigation, route }: any) => {
           ) : (
             <View className="flex-1 items-center justify-center">
               {printer.connectionStatus === 'connecting' ? (
-                <ActivityIndicator color="#3E6AE1" />
+                <ActivityIndicator color={hexDe(tema.paleta.acento)} />
               ) : (
-                <Ionicons name="videocam-off" size={40} color="#7C8088" />
+                <Ionicons name="videocam-off" size={40} color={hexDe(tema.paleta.tintaMuted)} />
               )}
               <Text className="text-white/70 mt-2 text-sm text-center px-4">
                 {(printer.reconnectAttempt ?? 0) >= 2
@@ -507,7 +510,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
             <Ionicons
               name={lightOn ? 'bulb' : 'bulb-outline'}
               size={20}
-              color={lightOn ? '#171A20' : '#3F444D'}
+              color={lightOn ? hexDe(tema.paleta.tinta) : hexDe(tema.paleta.tintaSoft)}
             />
             <Text
               className={`ml-2 font-bold text-xs tracking-wide ${
@@ -566,18 +569,18 @@ export const CameraScreen = ({ navigation, route }: any) => {
               </Text>
             </View>
             <View className="flex-row items-center mt-2">
-              <View className="w-14 h-14 rounded-lg bg-white border border-line items-center justify-center overflow-hidden mr-3">
+              <View className="w-14 h-14 rounded-lg bg-cartao border border-line items-center justify-center overflow-hidden mr-3">
                 {preview ? (
                   <Svg viewBox="0 0 100 100" width={52} height={52}>
                     <Path
                       d={preview.path}
-                      stroke="#171A20"
+                      stroke={hexDe(tema.paleta.tinta)}
                       strokeWidth={0.6}
                       fill="none"
                     />
                   </Svg>
                 ) : (
-                  <Ionicons name="cube-outline" size={18} color="#9AA0A6" />
+                  <Ionicons name="cube-outline" size={18} color={hexDe(tema.paleta.tintaMuted)} />
                 )}
               </View>
               <Text
@@ -612,7 +615,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
                   onPress={handleStopPrint}
                   className="px-3 py-1.5 rounded-lg border border-line"
                 >
-                  <Text className="text-[11px] font-semibold text-[#C62828]">
+                  <Text className="text-[11px] font-semibold text-state-danger">
                     {t('comum.parar')}
                   </Text>
                 </TouchableOpacity>
@@ -648,7 +651,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
               }`}
               activeOpacity={0.7}
             >
-              <Ionicons name="cloud-upload-outline" size={18} color="#3F444D" />
+              <Ionicons name="cloud-upload-outline" size={18} color={hexDe(tema.paleta.tintaSoft)} />
               <Text className="ml-2 text-ink font-semibold text-[13px]">
                 {uploading ? t('camera.aEnviar', { p: uploadPercent }) : t('camera.enviarGcode')}
               </Text>
@@ -666,7 +669,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
               }`}
               activeOpacity={0.7}
             >
-              <Ionicons name="folder-open-outline" size={18} color="#3F444D" />
+              <Ionicons name="folder-open-outline" size={18} color={hexDe(tema.paleta.tintaSoft)} />
               <Text className="ml-2 text-ink font-semibold text-[13px]">{t('camera.ficheiros')}</Text>
             </TouchableOpacity>
           </View>

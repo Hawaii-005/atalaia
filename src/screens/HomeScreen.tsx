@@ -16,8 +16,11 @@ import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { Ionicons } from '@expo/vector-icons';
 import { checkLocalNetworkAccess } from '@generac/react-native-local-network-permission';
 import { t } from '../i18n';
+import { useTheme } from '../contexts/ThemeContext';
+import { hexDe } from '../theme/temas';
 
 export const HomeScreen = ({ navigation }: any) => {
+  const { tema } = useTheme();
   const [refreshing, setRefreshing] = useState(false);
   const [hasNetworkAccess, setHasNetworkAccess] = useState(true);
   const { printers, reconnectAll, removePrinter, sendCommand } =
@@ -158,17 +161,17 @@ export const HomeScreen = ({ navigation }: any) => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#3E6AE1"
+            tintColor={hexDe(tema.paleta.acento)}
           />
         }
         showsVerticalScrollIndicator={false}
       >
         {printers.length > 0 && !hasNetworkAccess && (
           <TouchableOpacity
-            className="mb-4 rounded-xl2 bg-[#FFF8E8] border border-[#F2E1B8] p-4 flex-row"
+            className="mb-4 rounded-xl2 bg-state-light/10 border border-state-light/40 p-4 flex-row"
             onPress={() => Linking.openSettings()}
           >
-            <Ionicons name="warning-outline" size={18} color="#8A6100" />
+            <Ionicons name="warning-outline" size={18} color={hexDe(tema.paleta.aviso)} />
             <Text className="ml-2 flex-1 text-[13px] leading-[19px] text-[#6B4E00]">
               {t('home.avisoRedeLocal')}
             </Text>
@@ -236,7 +239,7 @@ export const HomeScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('AddEditPrinter')}
               activeOpacity={0.7}
             >
-              <Ionicons name="add" size={18} color="#3F444D" />
+              <Ionicons name="add" size={18} color={hexDe(tema.paleta.tintaSoft)} />
               <Text className="ml-1.5 text-ink-soft font-semibold text-[14px]">
                 {t('home.adicionarImpressora')}
               </Text>
@@ -247,7 +250,7 @@ export const HomeScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('History')}
               activeOpacity={0.7}
             >
-              <Ionicons name="time-outline" size={16} color="#63676E" />
+              <Ionicons name="time-outline" size={16} color={hexDe(tema.paleta.tintaMuted)} />
               <Text className="ml-1.5 text-ink-muted font-semibold text-[13px]">
                 {t('home.historicoImpressoes')}
               </Text>
@@ -258,7 +261,7 @@ export const HomeScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('Stats')}
               activeOpacity={0.7}
             >
-              <Ionicons name="stats-chart-outline" size={16} color="#63676E" />
+              <Ionicons name="stats-chart-outline" size={16} color={hexDe(tema.paleta.tintaMuted)} />
               <Text className="ml-1.5 text-ink-muted font-semibold text-[13px]">
                 {t('home.estatisticas')}
               </Text>

@@ -1,59 +1,70 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { useColorScheme } from 'nativewind';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Appearance } from 'react-native';
+import {
+  TEMAS,
+  TEMA_PREDEFINIDO,
+  Tema,
+  TemaId,
+  variaveis,
+} from '../theme/temas';
 
-type Theme = 'light' | 'dark' | 'system';
+const CHAVE = 'temaApp';
 
 interface ThemeContextType {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
+  tema: Tema;
+  temaId: TemaId;
+  setTema: (id: TemaId) => void;
+  /** true quando o tema é escuro (StatusBar, barras do sistema) */
+  escuro: boolean;
+  /** variáveis CSS a aplicar na raiz com `vars()` do NativeWind */
+  vars: Record<string, string>;
+  /** compatibilidade com o código que já lia o esquema */
   colorScheme: 'light' | 'dark';
+  theme: TemaId;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
-  const { colorScheme, setColorScheme } = useColorScheme();
-  const [theme, _setTheme] = useState<Theme>('system');
+  const [temaId, _setTemaId] = useState<TemaId>(TEMA_PREDEFINIDO);
 
   useEffect(() => {
-    const getTheme = async () => {
+    const carregar = async () => {
       try {
-        const savedTheme = (await AsyncStorage.getItem(
-          'theme'
-        )) as Theme | null;
-        if (savedTheme) {
-          _setTheme(savedTheme);
+        const guardado = (await AsyncStorage.getItem(CHAVE)) as TemaId | null;
+        if (guardado && TEMAS[guardado]) {
+          _setTemaId(guardado);
         }
       } catch (e) {
-        console.error('Failed to load theme from storage', e);
+        console.error('Falha ao ler o tema guardado', e);
       }
     };
-
-    getTheme();
+    carregar();
   }, []);
 
-  useEffect(() => {
-    if (theme === 'system') {
-      setColorScheme(Appearance.getColorScheme() ?? 'light');
-    } else {
-      setColorScheme(theme);
-    }
-  }, [theme, setColorScheme]);
-
-  const setTheme = async (newTheme: Theme) => {
+  const setTema = async (id: TemaId) => {
+    if (!TEMAS[id]) return;
+    _setTemaId(id);
     try {
-      await AsyncStorage.setItem('theme', newTheme);
-      _setTheme(newTheme);
+      await AsyncStorage.setItem(CHAVE, id);
     } catch (e) {
-      console.error('Failed to save theme to storage', e);
+      console.error('Falha ao guardar o tema', e);
     }
   };
 
+  const tema = TEMAS[temaId] ?? TEMAS[TEMA_PREDEFINIDO];
+
   return (
     <ThemeContext.Provider
-      value={{ theme, setTheme, colorScheme: colorScheme as 'light' | 'dark' }}
+      value={{
+        tema,
+        temaId,
+        setTema,
+        escuro: tema.escuro,
+        vars: variaveis(tema),
+        colorScheme: tema.escuro ? 'dark' : 'light',
+        theme: temaId,
+      }}
     >
       {children}
     </ThemeContext.Provider>
@@ -67,3 +78,6 @@ export const useTheme = () => {
   }
   return context;
 };
+
+export { TEMAS };
+export type { Tema, TemaId };

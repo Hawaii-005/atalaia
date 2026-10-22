@@ -19,6 +19,8 @@ import {
   loadHistory,
 } from '../utils/printHistory';
 import { t, idiomaActual } from '../i18n';
+import { useTheme } from '../contexts/ThemeContext';
+import { hexDe } from '../theme/temas';
 
 // Etiquetas visíveis para o desfecho de cada impressão (chaves i18n).
 const outcomeLabel: Record<PrintRecord['outcome'], string> = {
@@ -39,18 +41,19 @@ const formatDate = (timestamp: number) => {
 };
 
 const HistoryRow = ({ record }: { record: PrintRecord }) => {
+  const { tema } = useTheme();
   const { preview } = useGcodePreview(record.printerIp, record.filename);
   const name = record.filename.split('/').pop() ?? record.filename;
 
   return (
     <View className="flex-row items-center px-4 py-3 border-b border-line">
-      <View className="w-14 h-14 rounded-lg bg-white border border-line items-center justify-center overflow-hidden">
+      <View className="w-14 h-14 rounded-lg bg-cartao border border-line items-center justify-center overflow-hidden">
         {preview ? (
           <Svg viewBox="0 0 100 100" width={52} height={52}>
-            <Path d={preview.path} stroke="#171A20" strokeWidth={0.6} fill="none" />
+            <Path d={preview.path} stroke={hexDe(tema.paleta.tinta)} strokeWidth={0.6} fill="none" />
           </Svg>
         ) : (
-          <Ionicons name="cube-outline" size={18} color="#9AA0A6" />
+          <Ionicons name="cube-outline" size={18} color={hexDe(tema.paleta.tintaMuted)} />
         )}
       </View>
       <View className="flex-1 ml-3">
@@ -90,6 +93,7 @@ const HistoryRow = ({ record }: { record: PrintRecord }) => {
 };
 
 export const HistoryScreen = ({ navigation }: any) => {
+  const { tema } = useTheme();
   const [records, setRecords] = useState<PrintRecord[]>([]);
 
   useFocusEffect(
@@ -139,7 +143,7 @@ export const HistoryScreen = ({ navigation }: any) => {
       >
         {records.length === 0 ? (
           <View className="items-center justify-center py-16">
-            <Ionicons name="time-outline" size={40} color="#9AA0A6" />
+            <Ionicons name="time-outline" size={40} color={hexDe(tema.paleta.tintaMuted)} />
             <Text className="text-[15px] font-semibold text-ink mt-3">
               {t('history.semImpressoes')}
             </Text>

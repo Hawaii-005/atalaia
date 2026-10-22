@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../components/Header';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
+import { ORDEM_TEMAS, TEMAS, hexDe } from '../theme/temas';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
@@ -25,8 +26,6 @@ import {
 } from '../utils/notifications';
 import { t } from '../i18n';
 
-type ThemeOption = 'light' | 'dark' | 'system';
-
 const Section = ({
   title,
   children,
@@ -38,7 +37,7 @@ const Section = ({
     <Text className="mb-2 ml-1 text-[10px] tracking-widest font-semibold text-ink-soft">
       {title}
     </Text>
-    <View className="rounded-xl2 border border-line bg-white overflow-hidden">
+    <View className="rounded-xl2 border border-line bg-cartao overflow-hidden">
       {children}
     </View>
   </View>
@@ -59,6 +58,8 @@ const Row = ({
   destructive?: boolean;
   last?: boolean;
 }) => {
+  const { tema } = useTheme();
+  const paleta = tema.paleta;
   const content = (
     <View
       className={`flex-row items-center px-4 py-3.5 ${
@@ -74,7 +75,7 @@ const Row = ({
       </View>
       <Text
         className={`ml-3 flex-1 text-[14px] font-medium ${
-          destructive ? 'text-[#C62828]' : 'text-ink'
+          destructive ? 'text-state-danger' : 'text-ink'
         }`}
       >
         {label}
@@ -110,14 +111,17 @@ const SwitchRow = ({
   value: boolean;
   onChange: (value: boolean) => void;
   last?: boolean;
-}) => (
+}) => {
+  const { tema } = useTheme();
+  const paleta = tema.paleta;
+  return (
   <View
     className={`flex-row items-center px-4 py-3 ${
       last ? '' : 'border-b border-line'
     }`}
   >
     <View className="w-8 h-8 rounded-lg bg-canvas-sunken items-center justify-center">
-      <Ionicons name={icon as any} size={16} color="#3F444D" />
+      <Ionicons name={icon as any} size={16} color={hexDe(paleta.tintaSoft)} />
     </View>
     <View className="ml-3 flex-1 pr-2">
       <Text className="text-[14px] font-medium text-ink">{label}</Text>
@@ -126,15 +130,16 @@ const SwitchRow = ({
     <Switch
       value={value}
       onValueChange={onChange}
-      trackColor={{ false: '#E4E4E4', true: '#3E6AE1' }}
+      trackColor={{ false: hexDe(paleta.linha), true: hexDe(paleta.acento) }}
       thumbColor="#FFFFFF"
-      ios_backgroundColor="#E4E4E4"
+      ios_backgroundColor={hexDe(paleta.linha)}
     />
   </View>
-);
+  );
+};
 
 export const SettingsScreen = () => {
-  const { theme, setTheme } = useTheme();
+  const { temaId, setTema } = useTheme();
   const { statusIntervalMs, setStatusInterval } = usePrinterConnections();
   const [notificationPrefs, setNotificationPrefs] =
     useState<NotificationPrefs>(DEFAULT_PREFS);
@@ -187,12 +192,6 @@ export const SettingsScreen = () => {
     );
   };
 
-  const options: { key: ThemeOption; label: string }[] = [
-    { key: 'light', label: t('settings.temaClaro') },
-    { key: 'dark', label: t('settings.temaEscuro') },
-    { key: 'system', label: t('settings.temaSistema') },
-  ];
-
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
       <Header title={t('settings.title')} subtitle={t('settings.subtitulo')} />
@@ -205,26 +204,44 @@ export const SettingsScreen = () => {
         <Section title={t('settings.seccaoPrefs')}>
           <View className="px-4 py-4">
             <Text className="text-[14px] font-medium text-ink">{t('settings.tema')}</Text>
-            <View className="mt-3 flex-row rounded-xl bg-canvas-sunken p-1">
-              {options.map(option => {
-                const active = theme === option.key;
+            <View className="mt-3 flex-row flex-wrap" style={{ gap: 8 }}>
+              {ORDEM_TEMAS.map(id => {
+                const item = TEMAS[id];
+                const activo = temaId === id;
                 return (
                   <TouchableOpacity
-                    key={option.key}
-                    onPress={() => setTheme(option.key)}
-                    activeOpacity={0.7}
-                    className={`flex-1 rounded-lg py-2 items-center ${
-                      active ? 'bg-white border border-line' : ''
+                    key={id}
+                    onPress={() => setTema(id)}
+                    activeOpacity={0.8}
+                    className={`rounded-xl border p-3 ${
+                      activo ? 'border-brand bg-brand-soft' : 'border-line bg-cartao'
                     }`}
+                    style={{ width: '48%' }}
                   >
+                    <View className="flex-row" style={{ gap: 4 }}>
+                      {item.amostra.map(cor => (
+                        <View
+                          key={cor}
+                          style={{
+                            backgroundColor: cor,
+                            width: 18,
+                            height: 18,
+                            borderRadius: 9,
+                            borderWidth: 1,
+                            borderColor: hexDe(item.paleta.linha),
+                          }}
+                        />
+                      ))}
+                    </View>
                     <Text
-                      className={`text-[13px] ${
-                        active
-                          ? 'font-semibold text-ink'
-                          : 'font-medium text-ink-soft'
+                      className={`mt-2 text-[13px] ${
+                        activo ? 'font-semibold text-ink' : 'font-medium text-ink-soft'
                       }`}
                     >
-                      {option.label}
+                      {item.nome}
+                    </Text>
+                    <Text className="mt-0.5 text-[10px] leading-4 text-ink-muted">
+                      {t(`settings.tema_${id}`)}
                     </Text>
                   </TouchableOpacity>
                 );

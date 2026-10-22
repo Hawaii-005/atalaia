@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Platform } from 'react-native';
+import { Platform, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { vars } from 'nativewind';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
+import { hexDe } from './src/theme/temas';
 import {
   PrinterConnectionsProvider,
   usePrinterConnections,
@@ -21,7 +23,7 @@ import * as NavigationBar from 'expo-navigation-bar';
 import './global.css';
 
 function AppContent() {
-  const { colorScheme } = useTheme();
+  const { escuro, tema } = useTheme();
   const { printers } = usePrinterConnections();
   usePrintNotifications(printers);
 
@@ -29,43 +31,30 @@ function AppContent() {
     prepareNotifications();
   }, []);
 
-  const MyDarkTheme = {
-    ...DarkTheme,
+  const base = escuro ? DarkTheme : DefaultTheme;
+  const paleta = tema.paleta;
+  const temaNavegacao = {
+    ...base,
     colors: {
-      ...DarkTheme.colors,
-      background: '#111827',
-      card: '#1f2937',
-      text: '#f9fafb',
-      border: '#3F444D',
-    },
-  };
-
-  const MyLightTheme = {
-    ...DefaultTheme,
-    colors: {
-      ...DefaultTheme.colors,
-      background: '#FFFFFF',
-      card: '#ffffff',
-      text: '#171A20',
-      border: '#E4E4E4',
+      ...base.colors,
+      background: hexDe(paleta.fundo),
+      card: hexDe(paleta.cartao),
+      text: hexDe(paleta.tinta),
+      border: hexDe(paleta.linha),
+      primary: hexDe(paleta.acento),
     },
   };
 
   useEffect(() => {
     if (Platform.OS === 'android') {
-      const barColor = colorScheme === 'dark' ? '#111827' : '#FFFFFF';
-      NavigationBar.setBackgroundColorAsync(barColor);
-      NavigationBar.setButtonStyleAsync(
-        colorScheme === 'dark' ? 'light' : 'dark'
-      );
+      NavigationBar.setBackgroundColorAsync(hexDe(paleta.fundo));
+      NavigationBar.setButtonStyleAsync(escuro ? 'light' : 'dark');
     }
-  }, [colorScheme]);
+  }, [escuro, paleta.fundo]);
 
   return (
-    <NavigationContainer
-      theme={colorScheme === 'dark' ? MyDarkTheme : MyLightTheme}
-    >
-      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+    <NavigationContainer theme={temaNavegacao}>
+      <StatusBar style={escuro ? 'light' : 'dark'} />
       <AppNavigator />
     </NavigationContainer>
   );
@@ -116,10 +105,26 @@ function AppLogic() {
   );
 }
 
+/** Aplica as variáveis do tema na raiz — todas as classNames (bg-canvas,
+ *  text-ink, border-line…) passam a ler o tema escolhido. */
+function RaizTematica() {
+  const { vars: variaveisTema, tema } = useTheme();
+  return (
+    <View
+      style={[
+        { flex: 1, backgroundColor: hexDe(tema.paleta.fundo) },
+        vars(variaveisTema),
+      ]}
+    >
+      <AppLogic />
+    </View>
+  );
+}
+
 export default function App() {
   return (
     <ThemeProvider>
-      <AppLogic />
+      <RaizTematica />
     </ThemeProvider>
   );
 }

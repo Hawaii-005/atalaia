@@ -17,10 +17,13 @@ import {
   getLocalSubnet,
 } from '../utils/PrinterDiscovery';
 import { t } from '../i18n';
+import { useTheme } from '../contexts/ThemeContext';
+import { hexDe } from '../theme/temas';
 
 type ScanState = 'idle' | 'scanning' | 'done' | 'error';
 
 export const DiscoveryScreen = ({ navigation }: any) => {
+  const { tema } = useTheme();
   const { printers, addPrinter, updatePrinterIp } = usePrinterConnections();
   const [scanState, setScanState] = useState<ScanState>('idle');
   const [found, setFound] = useState<DiscoveredPrinter[]>([]);
@@ -131,10 +134,10 @@ export const DiscoveryScreen = ({ navigation }: any) => {
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="rounded-xl2 border border-line bg-white p-4">
+        <View className="rounded-xl2 border border-line bg-cartao p-4">
           <View className="flex-row items-start">
             {scanning ? (
-              <ActivityIndicator size="small" color="#3E6AE1" />
+              <ActivityIndicator size="small" color={hexDe(tema.paleta.acento)} />
             ) : (
               <Ionicons
                 name={
@@ -143,19 +146,19 @@ export const DiscoveryScreen = ({ navigation }: any) => {
                     : 'wifi'
                 }
                 size={16}
-                color={scanState === 'error' ? '#C62828' : '#3E6AE1'}
+                color={scanState === 'error' ? hexDe(tema.paleta.perigo) : hexDe(tema.paleta.acento)}
               />
             )}
             <Text
               className={`ml-2 flex-1 text-[13px] leading-[19px] ${
-                scanState === 'error' ? 'text-[#C62828]' : 'text-ink-soft'
+                scanState === 'error' ? 'text-state-danger' : 'text-ink-soft'
               }`}
             >
               {statusLabel}
             </Text>
           </View>
 
-          <View className="mt-3 h-[5px] rounded-full bg-[#DCDCDC] overflow-hidden">
+          <View className="mt-3 h-[5px] rounded-full bg-line overflow-hidden">
             <View
               className="h-full rounded-full bg-brand"
               style={{
@@ -201,7 +204,7 @@ export const DiscoveryScreen = ({ navigation }: any) => {
           return (
             <View
               key={device.ip}
-              className="mt-3 rounded-xl2 border border-line bg-white p-4 flex-row items-center"
+              className="mt-3 rounded-xl2 border border-line bg-cartao p-4 flex-row items-center"
             >
               <View className="flex-1 pr-3">
                 <Text className="text-[15px] font-semibold text-ink">
@@ -212,7 +215,7 @@ export const DiscoveryScreen = ({ navigation }: any) => {
                   {device.firmware ? ` · ${device.firmware}` : ''}
                 </Text>
                 {action === 'update' && (
-                  <Text className="mt-1 text-[11px] text-[#8A6100]">
+                  <Text className="mt-1 text-[11px] text-state-light">
                     {t('discovery.conhecidaNovoIp')}
                   </Text>
                 )}

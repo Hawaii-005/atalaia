@@ -33,6 +33,8 @@ import {
 } from '../utils/commands';
 import { t } from '../i18n';
 import type { ConnectionStatus } from '../types';
+import { useTheme } from '../contexts/ThemeContext';
+import { hexDe } from '../theme/temas';
 
 // Etiquetas visíveis para o estado de ligação da impressora (chaves i18n).
 const CONNECTION_LABEL: { [key in ConnectionStatus]: string } = {
@@ -44,6 +46,7 @@ const CONNECTION_LABEL: { [key in ConnectionStatus]: string } = {
 };
 
 export const PrinterDetailsScreen = ({ navigation }: any) => {
+  const { tema } = useTheme();
   const route = useRoute();
   const { printerId } = route.params as { printerId: string };
   const { printers, sendCommand, reconnectAll, removePrinter } =
@@ -316,7 +319,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#3E6AE1"
+            tintColor={hexDe(tema.paleta.acento)}
           />
         }
         showsVerticalScrollIndicator={false}
@@ -345,7 +348,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
             />
           ) : (
             <View className="flex-1 items-center justify-center">
-              <Ionicons name="videocam-off" size={32} color="#7C8088" />
+              <Ionicons name="videocam-off" size={32} color={hexDe(tema.paleta.tintaMuted)} />
               <Text className="mt-2 text-[12px] text-white/60">
                 {isConnected
                   ? t('details.aEsperaVideo')
@@ -369,7 +372,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
 
         {/* Print job */}
         {isConnected && isPrinting && (
-          <View className="mt-4 rounded-xl2 border border-line bg-white p-4">
+          <View className="mt-4 rounded-xl2 border border-line bg-cartao p-4">
             <View className="flex-row items-start justify-between">
               <Text className="text-[10px] tracking-widest font-semibold text-ink-soft">
                 {printStatus === 6
@@ -392,7 +395,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
               {info?.Filename || t('details.semFicheiro')}
             </Text>
 
-            <View className="mt-3 h-[5px] rounded-full bg-[#DCDCDC] overflow-hidden">
+            <View className="mt-3 h-[5px] rounded-full bg-line overflow-hidden">
               <View
                 className="h-full rounded-full bg-brand"
                 style={{ width: `${Math.max(2, progress)}%` }}
@@ -421,7 +424,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                   <Ionicons
                     name={canResume ? 'play' : 'pause'}
                     size={15}
-                    color="#171A20"
+                    color={hexDe(tema.paleta.tinta)}
                   />
                   <Text className="ml-1.5 text-[13px] font-semibold text-ink">
                     {canResume ? t('comum.retomar') : t('comum.pausar')}
@@ -433,8 +436,8 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                 className="flex-1 rounded-xl2 border border-line py-3 flex-row items-center justify-center"
                 activeOpacity={0.7}
               >
-                <Ionicons name="stop" size={15} color="#C62828" />
-                <Text className="ml-1.5 text-[13px] font-semibold text-[#C62828]">
+                <Ionicons name="stop" size={15} color={hexDe(tema.paleta.perigo)} />
+                <Text className="ml-1.5 text-[13px] font-semibold text-state-danger">
                   {t('comum.parar')}
                 </Text>
               </TouchableOpacity>
@@ -468,7 +471,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
         </View>
 
         {/* Controls */}
-        <View className="mt-4 rounded-xl2 border border-line bg-white">
+        <View className="mt-4 rounded-xl2 border border-line bg-cartao">
           <Text className="px-4 pt-4 pb-1 text-[10px] tracking-widest font-semibold text-ink-soft">
             {t('details.controlos')}
           </Text>
@@ -480,7 +483,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                 <Ionicons
                   name={isLightOn ? 'bulb' : 'bulb-outline'}
                   size={16}
-                  color={isLightOn ? '#3E6AE1' : '#3F444D'}
+                  color={isLightOn ? hexDe(tema.paleta.acento) : hexDe(tema.paleta.tintaSoft)}
                 />
               </View>
               <Text className="ml-3 text-[14px] font-medium text-ink">
@@ -491,9 +494,9 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
               value={isLightOn}
               onValueChange={handleLightToggle}
               disabled={!isConnected}
-              trackColor={{ false: '#E4E4E4', true: '#3E6AE1' }}
+              trackColor={{ false: hexDe(tema.paleta.linha), true: hexDe(tema.paleta.acento) }}
               thumbColor="#FFFFFF"
-              ios_backgroundColor="#E4E4E4"
+              ios_backgroundColor={hexDe(tema.paleta.linha)}
             />
           </View>
 
@@ -506,7 +509,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                     <Ionicons
                       name={row.icon as any}
                       size={16}
-                      color={row.speed > 0 ? '#3E6AE1' : '#3F444D'}
+                      color={row.speed > 0 ? hexDe(tema.paleta.acento) : hexDe(tema.paleta.tintaSoft)}
                     />
                   </View>
                   <Text className="ml-3 text-[14px] font-medium text-ink">
@@ -555,7 +558,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                   <Ionicons
                     name="speedometer-outline"
                     size={16}
-                    color="#3F444D"
+                    color={hexDe(tema.paleta.tintaSoft)}
                   />
                 </View>
                 <Text className="ml-3 text-[14px] font-medium text-ink">
@@ -602,7 +605,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                 <Ionicons
                   name="film-outline"
                   size={16}
-                  color={timelapse ? '#3E6AE1' : '#3F444D'}
+                  color={timelapse ? hexDe(tema.paleta.acento) : hexDe(tema.paleta.tintaSoft)}
                 />
               </View>
               <View className="ml-3">
@@ -618,9 +621,9 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
               value={timelapse}
               onValueChange={handleTimelapse}
               disabled={!isConnected}
-              trackColor={{ false: '#E4E4E4', true: '#3E6AE1' }}
+              trackColor={{ false: hexDe(tema.paleta.linha), true: hexDe(tema.paleta.acento) }}
               thumbColor="#FFFFFF"
-              ios_backgroundColor="#E4E4E4"
+              ios_backgroundColor={hexDe(tema.paleta.linha)}
             />
           </View>
 
@@ -655,7 +658,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
         </View>
 
         {/* Printer */}
-        <View className="mt-4 rounded-xl2 border border-line bg-white">
+        <View className="mt-4 rounded-xl2 border border-line bg-cartao">
           <Text className="px-4 pt-4 pb-1 text-[10px] tracking-widest font-semibold text-ink-soft">
             {t('details.seccaoImpressora')}
           </Text>
@@ -675,8 +678,8 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
             className="flex-row items-center px-4 py-3 border-t border-line"
             activeOpacity={0.7}
           >
-            <Ionicons name="trash-outline" size={16} color="#C62828" />
-            <Text className="ml-2 text-[13px] font-semibold text-[#C62828]">
+            <Ionicons name="trash-outline" size={16} color={hexDe(tema.paleta.perigo)} />
+            <Text className="ml-2 text-[13px] font-semibold text-state-danger">
               {t('details.desassociar')}
             </Text>
           </TouchableOpacity>

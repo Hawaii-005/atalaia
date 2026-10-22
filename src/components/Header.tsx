@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../contexts/ThemeContext';
+import { hexDe } from '../theme/temas';
 
 interface HeaderProps {
   title: string;
@@ -29,6 +31,7 @@ export const Header: React.FC<HeaderProps> = ({
   rightAction,
   className = '',
 }) => {
+  const { tema } = useTheme();
   const leadingIcon = onBack ? 'chevron-back' : leftAction?.icon;
   const leadingPress = onBack ?? leftAction?.onPress;
 
@@ -42,7 +45,7 @@ export const Header: React.FC<HeaderProps> = ({
           className="w-9 h-9 -ml-2 mr-1 items-center justify-center rounded-xl"
           activeOpacity={0.6}
         >
-          <Ionicons name={leadingIcon as any} size={22} color="#171A20" />
+          <Ionicons name={leadingIcon as any} size={22} color={hexDe(tema.paleta.tinta)} />
         </TouchableOpacity>
       )}
 
@@ -66,7 +69,7 @@ export const Header: React.FC<HeaderProps> = ({
           className="w-10 h-10 rounded-xl bg-canvas-sunken items-center justify-center"
           activeOpacity={0.6}
         >
-          <Ionicons name={rightAction.icon as any} size={20} color="#171A20" />
+          <Ionicons name={rightAction.icon as any} size={20} color={hexDe(tema.paleta.tinta)} />
         </TouchableOpacity>
       ) : (
         <View className="w-1" />
