@@ -497,7 +497,7 @@ export const SettingsScreen = () => {
           <Row
             icon="information-circle-outline"
             label={t('settings.versaoApp')}
-            value={Constants.expoConfig?.version || '1.2.1'}
+            value={Constants.expoConfig?.version || '—'}
           />
           <Row
             icon="logo-github"
