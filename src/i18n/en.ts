@@ -92,6 +92,8 @@ const en = {
   'files.nivelarDica': 'Adds several minutes to every print',
   'files.semFicheiros': 'No files on the printer',
   'files.semFicheirosDica': 'Upload a G-code from the camera screen.',
+  'files.dicaZoom': 'Pinch with two fingers',
+  'files.reporZoom': 'reset',
   'files.imprimirTitulo': 'Print',
   'files.imprimirMsg': 'Start printing {nome}?',
   'files.naoArrancou': "Didn't start",

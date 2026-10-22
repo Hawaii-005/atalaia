@@ -31,6 +31,7 @@ import { custoDe, euros, getPrecoKg, setPrecoKg } from '../utils/precos';
 import { t } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
+import { ZoomThumb } from '../components/ZoomThumb';
 import { BT_ACENTO, BT_APAGADA, BT_NEUTRA, BT_PERIGO, TX_ACENTO, TX_PERIGO } from '../theme/botoes';
 
 interface PrinterFile {
@@ -175,15 +176,17 @@ const FileDetails = ({
             </TouchableOpacity>
           </View>
 
-          <View className="items-center justify-center mt-4 h-48 rounded-xl bg-cartao border border-line">
+          <View className="mt-4">
             {loading ? (
-              <ActivityIndicator color={hexDe(tema.paleta.acento)} />
+              <View className="h-60 rounded-xl border border-line bg-cartao items-center justify-center">
+                <ActivityIndicator color={hexDe(tema.paleta.acento)} />
+              </View>
             ) : preview ? (
-              <Svg viewBox="0 0 100 100" width={180} height={180}>
-                <Path d={preview.path} stroke={hexDe(tema.paleta.tinta)} strokeWidth={0.5} fill="none" />
-              </Svg>
+              <ZoomThumb path={preview.path} altura={240} />
             ) : (
-              <Ionicons name="cube-outline" size={40} color={hexDe(tema.paleta.tintaMuted)} />
+              <View className="h-60 rounded-xl border border-line bg-cartao items-center justify-center">
+                <Ionicons name="cube-outline" size={40} color={hexDe(tema.paleta.tintaMuted)} />
+              </View>
             )}
           </View>
 

@@ -90,6 +90,8 @@ export default {
   'files.nivelarDica': 'Acrescenta vários minutos a cada impressão',
   'files.semFicheiros': 'Sem ficheiros na impressora',
   'files.semFicheirosDica': 'Envia um G-code pelo ecrã da câmara.',
+  'files.dicaZoom': 'Aproxime com dois dedos',
+  'files.reporZoom': 'repor',
   'files.imprimirTitulo': 'Imprimir',
   'files.imprimirMsg': 'Começar a imprimir {nome}?',
   'files.naoArrancou': 'Não arrancou',
