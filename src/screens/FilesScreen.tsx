@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,6 +18,7 @@ import { useGcodePreview } from '../hooks/useGcodePreview';
 
 interface PrinterFile {
   name: string;
+  FileSize?: number;
   usedSize?: number;
   totalSize?: number;
 }
@@ -50,7 +52,7 @@ const FileRow = ({
   onPrint?: () => void;
   onDelete: () => void;
 }) => {
-  const size = file.totalSize ?? file.usedSize ?? 0;
+  const size = file.FileSize ?? file.totalSize ?? file.usedSize ?? 0;
   const { preview } = useGcodePreview(
     size && size < PREVIEW_LIMIT ? printerIp : undefined,
     file.name
@@ -99,6 +101,8 @@ export const FilesScreen = ({ route, navigation }: any) => {
   const [files, setFiles] = useState<PrinterFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [bedLevel, setBedLevel] = useState(false);
+  const [plateSide, setPlateSide] = useState<0 | 1>(0);
 
   const load = useCallback(async () => {
     if (!printer) return;
@@ -139,8 +143,8 @@ export const FilesScreen = ({ route, navigation }: any) => {
               {
                 Filename: file.name,
                 StartLayer: 0,
-                Calibration_switch: 1,
-                PrintPlatformType: 0,
+                Calibration_switch: bedLevel ? 1 : 0,
+                PrintPlatformType: plateSide,
                 Tlp_Switch: 0,
                 slot_map: [],
               },
@@ -206,6 +210,53 @@ export const FilesScreen = ({ route, navigation }: any) => {
           contentContainerStyle={{ paddingBottom: 32 }}
           showsVerticalScrollIndicator={false}
         >
+          <View className="flex-row items-center justify-between px-4 py-3 border-b border-line">
+            <View className="flex-1 pr-3">
+              <Text className="text-[13px] font-semibold text-ink">Lado da mesa</Text>
+              <Text className="text-[11px] text-ink-muted mt-0.5">
+                A = texturada · B = lisa
+              </Text>
+            </View>
+            <View className="flex-row">
+              {([0, 1] as const).map(side => (
+                <TouchableOpacity
+                  key={side}
+                  onPress={() => setPlateSide(side)}
+                  activeOpacity={0.7}
+                  className={`w-9 h-9 items-center justify-center rounded-lg mr-1.5 border ${
+                    plateSide === side ? 'bg-brand border-brand' : 'border-line'
+                  }`}
+                >
+                  <Text
+                    className={`text-[13px] font-semibold ${
+                      plateSide === side ? 'text-white' : 'text-ink-soft'
+                    }`}
+                  >
+                    {side === 0 ? 'A' : 'B'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <View className="flex-row items-center justify-between px-4 py-3 border-b border-line">
+            <View className="flex-1 pr-3">
+              <Text className="text-[13px] font-semibold text-ink">
+                Nivelar a mesa antes
+              </Text>
+              <Text className="text-[11px] text-ink-muted mt-0.5">
+                Acrescenta vários minutos a cada impressão
+              </Text>
+            </View>
+            <Switch
+              value={bedLevel}
+              onValueChange={setBedLevel}
+              trackColor={{ false: '#E4E4E4', true: '#3E6AE1' }}
+              thumbColor="#FFFFFF"
+              ios_backgroundColor="#E4E4E4"
+            />
+          </View>
+
           {files.length === 0 ? (
             <View className="items-center justify-center py-16">
               <Ionicons name="folder-open-outline" size={36} color="#9AA0A6" />

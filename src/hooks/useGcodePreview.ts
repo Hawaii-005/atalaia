@@ -7,6 +7,7 @@ export interface GcodePreview {
 
 const MAX_BYTES = 6_000_000;
 const MAX_POINTS = 4000;
+const MAX_RAW_POINTS = 200_000;
 const JUMP = 6; // % do lado maior: acima disto é deslocação, não extrusão
 
 const num = (map: Record<string, string>, key: string, fallback: number) =>
@@ -69,7 +70,7 @@ export const parseToolpath = (gcode: string): GcodePreview | null => {
     const extruding = map.E !== undefined && Number(map.E) > 0;
 
     if (line.startsWith('G1')) {
-      if (extruding) points.push({ x: nx, y: ny });
+      if (extruding && points.length < MAX_RAW_POINTS) points.push({ x: nx, y: ny });
     } else if (extruding) {
       pushArc(
         x + num(map, 'I', 0),
@@ -89,12 +90,16 @@ export const parseToolpath = (gcode: string): GcodePreview | null => {
     return null;
   }
 
-  const xs = points.map(p => p.x);
-  const ys = points.map(p => p.y);
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (const point of points) {
+    if (point.x < minX) minX = point.x;
+    if (point.x > maxX) maxX = point.x;
+    if (point.y < minY) minY = point.y;
+    if (point.y > maxY) maxY = point.y;
+  }
   const width = maxX - minX || 1;
   const height = maxY - minY || 1;
 
@@ -143,9 +148,8 @@ export const useGcodePreview = (
     }
     setLoading(true);
     try {
-      const response = await fetch(url, {
-        headers: { Range: `bytes=0-${MAX_BYTES}` },
-      });
+      // O servidor da impressora responde 416 a pedidos Range — sem cabeçalho.
+      const response = await fetch(url);
       if (!response.ok) {
         cacheRef.current[url] = null;
         return;
