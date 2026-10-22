@@ -44,6 +44,19 @@ export const HomeScreen = ({ navigation }: any) => {
       navigation.navigate('PrinterDetails', { printerId });
       return;
     }
+    // Enquanto a reconexão automática está a correr, não se sugere apagar a
+    // impressora: dá-se a tentativa em curso e um botão para forçar já.
+    if (printer?.reconnectAttempt) {
+      Alert.alert(
+        'A reconectar',
+        `${printer.printerName}: tentativa ${printer.reconnectAttempt}. Já está a ser tentado automaticamente.`,
+        [
+          { text: 'Fechar', style: 'cancel' },
+          { text: 'Tentar agora', onPress: () => reconnectAll() },
+        ]
+      );
+      return;
+    }
     Alert.alert(
       'Impressora desligada',
       `${printer?.printerName} não está ligada. Pode eliminá-la e adicioná-la de novo.`,
