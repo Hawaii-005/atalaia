@@ -30,6 +30,7 @@ const en = {
   'comum.emDireto': 'LIVE',
   'comum.emDiretoPct': 'LIVE · {p}%',
   'comum.camada': 'Layer {actual}/{total}',
+  'comum.restante': 'Left',
   'comum.restantes': '{t} remaining',
   'comum.camadas': '{n} layers',
   'comum.bico': 'Nozzle',

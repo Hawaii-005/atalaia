@@ -28,6 +28,7 @@ export default {
   'comum.emDireto': 'EM DIRETO',
   'comum.emDiretoPct': 'EM DIRETO · {p}%',
   'comum.camada': 'Camada {actual}/{total}',
+  'comum.restante': 'Falta',
   'comum.restantes': '{t} restantes',
   'comum.camadas': '{n} camadas',
   'comum.bico': 'Bico',

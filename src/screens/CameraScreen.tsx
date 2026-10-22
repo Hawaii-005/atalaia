@@ -12,7 +12,7 @@ import { useKeepAwake } from 'expo-keep-awake';
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
 import { captureRef } from 'react-native-view-shot';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Circle, Path } from 'react-native-svg';
 import { useGcodePreview } from '../hooks/useGcodePreview';
 import * as DocumentPicker from 'expo-document-picker';
 import { uploadGcode } from '../utils/gcodeUpload';
@@ -25,7 +25,7 @@ import type { ConnectionStatus } from '../types';
 import { t } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
-import { BT_ACENTO, BT_APAGADA, BT_NEUTRA, BT_PERIGO, TX_ACENTO, TX_PERIGO } from '../theme/botoes';
+import { BT_ACENTO, BT_APAGADA, BT_NEUTRA, BT_PERIGO, TX_ACENTO, TX_NEUTRO, TX_PERIGO } from '../theme/botoes';
 
 const LIGHT_COMMAND = 403;
 
@@ -37,6 +37,11 @@ const CONNECTION_LABEL: Record<ConnectionStatus, string> = {
   error: 'camera.impComErro',
   timeout: 'camera.impSemResposta',
 };
+
+const ANEL = 238;
+const RAIO = 112;
+const DIAMETRO = 216;
+const CIRCUNFERENCIA = 2 * Math.PI * RAIO;
 
 export const CameraScreen = ({ navigation, route }: any) => {
   const { tema } = useTheme();
@@ -408,84 +413,153 @@ export const CameraScreen = ({ navigation, route }: any) => {
         </View>
       )}
 
-      {/* Video */}
-      <View className="flex-1 px-4 pt-3">
-        <View
-          className="flex-1 rounded-xl2 overflow-hidden bg-ink"
-          onLayout={event => setVideoWidth(event.nativeEvent.layout.width)}
-        >
-          {isConnected && streamHtml && !fullscreen ? (
-            <View
-              ref={videoRef}
-              collapsable={false}
-              style={
-                capturing && videoWidth
-                  ? {
-                      width: videoWidth,
-                      height: Math.round((videoWidth * 9) / 16),
-                      alignSelf: 'center',
-                    }
-                  : { flex: 1 }
-              }
-            >
-            <WebView
-              key={`${printer.id}-${reloadKey}`}
-              ref={webViewRef}
-              source={{ html: streamHtml, baseUrl: `http://${videoHost}` }}
-              style={{ flex: 1, backgroundColor: '#000' }}
-              javaScriptEnabled
-              domStorageEnabled={false}
-              allowsInlineMediaPlayback
-              mediaPlaybackRequiresUserAction={false}
-              mixedContentMode="always"
-              originWhitelist={['*']}
-              scrollEnabled={false}
-              bounces={false}
+      {/* Câmara em anel (conceito N) */}
+      <View className="items-center px-4 pt-4">
+        <View style={{ width: ANEL, height: ANEL }}>
+          <Svg width={ANEL} height={ANEL}>
+            <Circle
+              cx={ANEL / 2}
+              cy={ANEL / 2}
+              r={RAIO}
+              stroke={hexDe(tema.paleta.linha)}
+              strokeWidth={5}
+              fill="none"
             />
-            </View>
-          ) : (
-            <View className="flex-1 items-center justify-center">
-              {printer.connectionStatus === 'connecting' ? (
-                <ActivityIndicator color={hexDe(tema.paleta.acento)} />
-              ) : (
-                <Ionicons name="videocam-off" size={40} color={hexDe(tema.paleta.tintaMuted)} />
-              )}
-              <Text className="text-white/70 mt-2 text-sm text-center px-4">
-                {(printer.reconnectAttempt ?? 0) >= 2
-                  ? t('camera.aReconectarTentativa', { n: printer.reconnectAttempt ?? 0 })
-                  : printer.connectionStatus === 'connecting'
-                    ? t('camera.aLigarImpressora')
-                    : t(CONNECTION_LABEL[printer.connectionStatus])}
-              </Text>
-            </View>
-          )}
+            <Circle
+              cx={ANEL / 2}
+              cy={ANEL / 2}
+              r={RAIO}
+              stroke={hexDe(tema.paleta.acento)}
+              strokeWidth={5}
+              fill="none"
+              strokeDasharray={`${CIRCUNFERENCIA} ${CIRCUNFERENCIA}`}
+              strokeDashoffset={
+                CIRCUNFERENCIA * (1 - Math.max(0, Math.min(100, progress)) / 100)
+              }
+              strokeLinecap="round"
+              transform={`rotate(-90 ${ANEL / 2} ${ANEL / 2})`}
+            />
+          </Svg>
+
+          <View
+            ref={videoRef}
+            collapsable={false}
+            onLayout={event => setVideoWidth(event.nativeEvent.layout.width)}
+            style={{
+              position: 'absolute',
+              left: (ANEL - DIAMETRO) / 2,
+              top: (ANEL - DIAMETRO) / 2,
+              width: DIAMETRO,
+              height: DIAMETRO,
+              borderRadius: DIAMETRO / 2,
+              overflow: 'hidden',
+              backgroundColor: '#000',
+            }}
+          >
+            {isConnected && streamHtml && !fullscreen ? (
+              <WebView
+                key={`${printer.id}-${reloadKey}`}
+                ref={webViewRef}
+                source={{ html: streamHtml, baseUrl: `http://${videoHost}` }}
+                style={{ flex: 1, backgroundColor: '#000' }}
+                javaScriptEnabled
+                domStorageEnabled={false}
+                allowsInlineMediaPlayback
+                mediaPlaybackRequiresUserAction={false}
+                mixedContentMode="always"
+                originWhitelist={['*']}
+                scrollEnabled={false}
+                bounces={false}
+              />
+            ) : (
+              <View className="flex-1 items-center justify-center px-6">
+                {printer.connectionStatus === 'connecting' ? (
+                  <ActivityIndicator color={hexDe(tema.paleta.acento)} />
+                ) : (
+                  <Ionicons name="videocam-off" size={34} color={hexDe(tema.paleta.tintaMuted)} />
+                )}
+                <Text className="text-white/70 mt-2 text-[11px] text-center">
+                  {(printer.reconnectAttempt ?? 0) >= 2
+                    ? t('camera.aReconectarTentativa', { n: printer.reconnectAttempt ?? 0 })
+                    : printer.connectionStatus === 'connecting'
+                      ? t('camera.aLigarImpressora')
+                      : t(CONNECTION_LABEL[printer.connectionStatus])}
+                </Text>
+              </View>
+            )}
+          </View>
 
           {isConnected && streamHtml && (
-            <TouchableOpacity
-              onPress={handleSnapshot}
-              className="absolute bottom-3 right-3 w-9 h-9 rounded-full bg-black/55 items-center justify-center"
+            <View
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                left: (ANEL - DIAMETRO) / 2,
+                top: (ANEL - DIAMETRO) / 2,
+                width: DIAMETRO,
+                height: DIAMETRO,
+                borderRadius: DIAMETRO / 2,
+                backgroundColor: 'rgba(0,0,0,0.30)',
+              }}
+            />
+          )}
+
+          <Text
+            pointerEvents="none"
+            style={{ position: 'absolute', left: 0, right: 0, bottom: 46 }}
+            className="text-center text-white text-[34px] font-bold"
+          >
+            {progress > 0 ? `${progress}%` : '—'}
+          </Text>
+
+          {isConnected && (
+            <View
+              className="absolute flex-row items-center"
+              style={{ top: 34, alignSelf: 'center' }}
             >
-              <Ionicons name="camera-outline" size={18} color="#FFFFFF" />
-            </TouchableOpacity>
+              <View className="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5" />
+              <Text className="text-white/90 text-[9px] font-bold tracking-widest">
+                {t('comum.emDireto')}
+              </Text>
+            </View>
           )}
 
           {isConnected && streamHtml && (
             <TouchableOpacity
               onPress={() => setFullscreen(true)}
-              className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/55 items-center justify-center"
+              className="absolute items-center justify-center rounded-full bg-black/55"
+              style={{ width: 32, height: 32, right: 26, top: 52 }}
             >
-              <Ionicons name="expand" size={18} color="#FFFFFF" />
+              <Ionicons name="expand" size={16} color="#FFFFFF" />
             </TouchableOpacity>
           )}
 
-          {isConnected && (
-            <View className="absolute top-3 left-3 bg-black/55 rounded-full px-2.5 py-1 flex-row items-center">
-              <View className="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5" />
-              <Text className="text-white text-[10px] font-bold tracking-widest">
-                {t('comum.emDireto')}
-              </Text>
-            </View>
+          {isConnected && streamHtml && (
+            <TouchableOpacity
+              onPress={handleSnapshot}
+              className="absolute items-center justify-center rounded-full bg-black/55"
+              style={{ width: 32, height: 32, right: 26, bottom: 52 }}
+            >
+              <Ionicons name="camera-outline" size={16} color="#FFFFFF" />
+            </TouchableOpacity>
           )}
+        </View>
+
+        {/* Cotas da camada */}
+        <View className="w-full flex-row justify-between mt-3">
+          <Text className="text-[10px] tracking-widest text-ink-soft font-semibold">
+            {t('comum.camada', { actual: job?.layer ?? 0, total: job?.totalLayers ?? 0 })}
+          </Text>
+          <Text className="text-[10px] tracking-widest text-ink-soft font-semibold">
+            {job?.totalLayers ?? 0}
+          </Text>
+        </View>
+        <View className="w-full mt-1.5">
+          <View className="h-px bg-line" />
+          <View className="flex-row justify-between">
+            <View style={{ width: 1, height: 5 }} className="bg-brand" />
+            <View style={{ width: 1, height: 5 }} className="bg-brand" />
+          </View>
         </View>
       </View>
 
@@ -504,7 +578,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
           <TouchableOpacity
             onPress={toggleLight}
             disabled={!isConnected}
-            className={`flex-row items-center rounded-full border px-4 py-2.5 ${
+            className={`flex-row items-center rounded-md border-[1.5px] px-3.5 py-2.5 ${
               lightOn ? 'bg-state-light border-state-light' : 'bg-canvas-sunken border-line'
             }`}
           >
@@ -514,7 +588,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
               color={lightOn ? hexDe(tema.paleta.tintaFixa) : hexDe(tema.paleta.tintaSoft)}
             />
             <Text
-              className={`ml-2 font-bold text-xs tracking-wide ${
+              className={`ml-2 font-semibold text-[10px] uppercase tracking-[1.2px] ${
                 lightOn ? 'text-inkFixo' : 'text-ink-soft'
               }`}
             >
@@ -524,40 +598,33 @@ export const CameraScreen = ({ navigation, route }: any) => {
         </View>
 
         <View className="flex-row mt-4">
-          <View className="flex-1 bg-canvas-sunken rounded-xl py-3 items-center mr-2">
-            <Text className="text-[10px] tracking-widest text-ink-soft font-semibold">
-              {t('comum.bico').toUpperCase()}
-            </Text>
-            <Text className="text-xl font-bold text-ink mt-1">
-              {nozzle}
-              <Text className="text-xs font-medium text-ink-muted"> °C</Text>
-            </Text>
-          </View>
-          <View className="flex-1 bg-canvas-sunken rounded-xl py-3 items-center mr-2">
-            <Text className="text-[10px] tracking-widest text-ink-soft font-semibold">
-              {t('comum.mesa').toUpperCase()}
-            </Text>
-            <Text className="text-xl font-bold text-ink mt-1">
-              {bed}
-              <Text className="text-xs font-medium text-ink-muted"> °C</Text>
-            </Text>
-          </View>
-          <View className="flex-1 bg-canvas-sunken rounded-xl py-3 items-center">
-            <Text className="text-[10px] tracking-widest text-ink-soft font-semibold">
-              {t('camera.progresso')}
-            </Text>
-            <Text className="text-xl font-bold text-ink mt-1">
-              {progress > 0 ? `${progress}` : '—'}
-              {progress > 0 && (
-                <Text className="text-xs font-medium text-ink-muted"> %</Text>
-              )}
-            </Text>
-          </View>
+          {[
+            { rotulo: t('comum.bico').toUpperCase(), valor: `${nozzle}`, unidade: '°C' },
+            { rotulo: t('comum.mesa').toUpperCase(), valor: `${bed}`, unidade: '°C' },
+            { rotulo: t('comum.restante').toUpperCase(), valor: job?.remaining ?? '—', unidade: '' },
+          ].map((bloco, indice) => (
+            <View
+              key={bloco.rotulo}
+              className={`flex-1 border border-line bg-cartao/50 rounded-md py-2.5 items-center ${
+                indice < 2 ? 'mr-2' : ''
+              }`}
+            >
+              <Text className="text-[9px] tracking-[1.4px] text-ink-soft font-semibold">
+                {bloco.rotulo}
+              </Text>
+              <Text className="text-lg font-bold text-ink mt-1">
+                {bloco.valor}
+                {bloco.unidade ? (
+                  <Text className="text-[10px] font-medium text-ink-muted"> {bloco.unidade}</Text>
+                ) : null}
+              </Text>
+            </View>
+          ))}
         </View>
 
         {/* Current job */}
         {job ? (
-          <View className="mt-4 bg-canvas-sunken rounded-xl p-4">
+          <View className="mt-4 border border-line bg-cartao/50 rounded-md p-4">
             <View className="flex-row items-center justify-between">
               <Text
                 className="text-[10px] tracking-widest text-ink-soft font-semibold"
@@ -591,9 +658,9 @@ export const CameraScreen = ({ navigation, route }: any) => {
                 {job.filename}
               </Text>
             </View>
-            <View className="h-1.5 rounded-full bg-line mt-3 overflow-hidden">
+            <View className="h-[3px] bg-line mt-3 overflow-hidden">
               <View
-                className="h-full rounded-full bg-brand"
+                className="h-full bg-brand"
                 style={{ width: `${Math.max(2, progress)}%` }}
               />
             </View>
@@ -604,9 +671,9 @@ export const CameraScreen = ({ navigation, route }: any) => {
               <View className="flex-row">
                 <TouchableOpacity
                   onPress={handlePrintControl}
-                  className="px-3 py-1.5 rounded-lg border border-line mr-2"
+                  className={`px-3 py-1.5 mr-2 ${BT_NEUTRA}`}
                 >
-                  <Text className="text-[11px] font-semibold text-ink">
+                  <Text className={TX_NEUTRO}>
                     {printer?.status?.PrintInfo?.Status === 6
                       ? t('comum.retomar')
                       : t('comum.pausar')}
@@ -614,9 +681,9 @@ export const CameraScreen = ({ navigation, route }: any) => {
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={handleStopPrint}
-                  className="px-3 py-1.5 rounded-lg border border-line"
+                  className={`px-3 py-1.5 ${BT_PERIGO}`}
                 >
-                  <Text className="text-[11px] font-semibold text-state-danger">
+                  <Text className={TX_PERIGO}>
                     {t('comum.parar')}
                   </Text>
                 </TouchableOpacity>
@@ -624,7 +691,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
             </View>
           </View>
         ) : (
-          <View className="mt-4 bg-canvas-sunken rounded-xl p-4">
+          <View className="mt-4 border border-line bg-cartao/50 rounded-md p-4">
             <Text className="text-xs text-ink-soft font-semibold tracking-widest">
               {t('camera.inativa')}
             </Text>
@@ -638,7 +705,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
           {uploading && (
             <View className="h-1.5 rounded-full bg-line overflow-hidden mb-2 mx-0.5">
               <View
-                className="h-full rounded-full bg-brand"
+                className="h-full bg-brand"
                 style={{ width: `${Math.max(2, uploadPercent)}%` }}
               />
             </View>
