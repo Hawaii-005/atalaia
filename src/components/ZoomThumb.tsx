@@ -1,12 +1,7 @@
 import React, { useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
-import Animated, {
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
+import { runOnJS, useSharedValue } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
@@ -24,89 +19,64 @@ type Props = {
 };
 
 /**
- * Miniatura do G-code com zoom por pinca e arrasto. Usa o gesture-handler
- * nativo — o PanResponder era engolido pelo ScrollView do painel.
- * O desenho é vectorial: ampliar não perde nitidez.
+ * Miniatura do G-code com zoom por pinca. O zoom muda a janela do `viewBox`
+ * (zoom vectorial a sério) em vez de `transform: scale` — o scale desaparecia
+ * dentro do `overflow: hidden` do painel em Android.
  */
 export const ZoomThumb = ({ path, altura = 240 }: Props) => {
   const { tema } = useTheme();
-  const escala = useSharedValue(1);
-  const guardada = useSharedValue(1);
-  const desvioX = useSharedValue(0);
-  const desvioY = useSharedValue(0);
-  const guardadoX = useSharedValue(0);
-  const guardadoY = useSharedValue(0);
   const [nivel, setNivel] = useState(1);
+  const [centro, setCentro] = useState({ x: 50, y: 50 });
+  const escala = useSharedValue(1);
+  const base = useSharedValue(1);
+
+  const aplicarNivel = (v: number) => setNivel(Math.round(v * 4) / 4);
+  const aplicarCentro = (x: number, y: number) => setCentro({ x, y });
 
   const repor = () => {
-    escala.value = withTiming(1, { duration: 160 });
-    desvioX.value = withTiming(0, { duration: 160 });
-    desvioY.value = withTiming(0, { duration: 160 });
-    guardada.value = 1;
-    guardadoX.value = 0;
-    guardadoY.value = 0;
+    escala.value = 1;
     setNivel(1);
+    setCentro({ x: 50, y: 50 });
   };
 
   const pinca = Gesture.Pinch()
+    .onStart(() => {
+      base.value = escala.value;
+    })
     .onUpdate(evento => {
-      escala.value = limitar(guardada.value * evento.scale);
+      escala.value = limitar(base.value * evento.scale);
+      runOnJS(aplicarNivel)(escala.value);
     })
     .onEnd(() => {
-      if (escala.value < 1.05) {
-        escala.value = withTiming(1, { duration: 160 });
-        desvioX.value = withTiming(0, { duration: 160 });
-        desvioY.value = withTiming(0, { duration: 160 });
-        guardada.value = 1;
-        guardadoX.value = 0;
-        guardadoY.value = 0;
-        runOnJS(setNivel)(1);
-      } else {
-        guardada.value = escala.value;
-        runOnJS(setNivel)(escala.value);
-      }
+      runOnJS(aplicarNivel)(escala.value);
     });
 
   const arrasto = Gesture.Pan()
     .averageTouches(true)
-    .minPointers(1)
     .onUpdate(evento => {
-      if (escala.value <= 1) return;
-      desvioX.value = guardadoX.value + evento.translationX;
-      desvioY.value = guardadoY.value + evento.translationY;
-    })
-    .onEnd(() => {
-      guardadoX.value = desvioX.value;
-      guardadoY.value = desvioY.value;
+      if (escala.value <= 1.05) return;
+      const janela = 100 / escala.value;
+      const passo = janela / (altura - 16);
+      runOnJS(aplicarCentro)(
+        Math.min(100 - janela / 2, Math.max(janela / 2, 50 - evento.translationX * passo)),
+        Math.min(100 - janela / 2, Math.max(janela / 2, 50 - evento.translationY * passo))
+      );
     });
 
   const duploToque = Gesture.Tap()
     .numberOfTaps(2)
     .onEnd(() => {
-      if (escala.value > 1.05) {
-        escala.value = withTiming(1, { duration: 160 });
-        desvioX.value = withTiming(0, { duration: 160 });
-        desvioY.value = withTiming(0, { duration: 160 });
-        guardada.value = 1;
-        guardadoX.value = 0;
-        guardadoY.value = 0;
-        runOnJS(setNivel)(1);
-      } else {
-        escala.value = withTiming(3, { duration: 180 });
-        guardada.value = 3;
-        runOnJS(setNivel)(3);
-      }
+      const proximo = escala.value > 1.05 ? 1 : 3;
+      escala.value = proximo;
+      runOnJS(aplicarNivel)(proximo);
+      if (proximo === 1) runOnJS(aplicarCentro)(50, 50);
     });
 
   const gestos = Gesture.Simultaneous(pinca, arrasto, duploToque);
 
-  const estilo = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: desvioX.value },
-      { translateY: desvioY.value },
-      { scale: escala.value },
-    ],
-  }));
+  const janela = 100 / nivel;
+  const x0 = centro.x - janela / 2;
+  const y0 = centro.y - janela / 2;
 
   return (
     <GestureHandlerRootView style={{ width: '100%' }}>
@@ -115,16 +85,20 @@ export const ZoomThumb = ({ path, altura = 240 }: Props) => {
         style={{ height: altura }}
       >
         <GestureDetector gesture={gestos}>
-          <Animated.View style={estilo}>
-            <Svg viewBox="0 0 100 100" width={altura - 16} height={altura - 16}>
+          <View>
+            <Svg
+              viewBox={`${x0} ${y0} ${janela} ${janela}`}
+              width={altura - 16}
+              height={altura - 16}
+            >
               <Path
                 d={path}
                 stroke={hexDe(tema.paleta.tinta)}
-                strokeWidth={0.5}
+                strokeWidth={0.5 / nivel}
                 fill="none"
               />
             </Svg>
-          </Animated.View>
+          </View>
         </GestureDetector>
 
         {nivel > 1.05 && (
