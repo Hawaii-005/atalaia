@@ -238,6 +238,25 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
     return ticks > 0 ? formatTicksToReadableTime(ticks) : '—';
   }, [info?.TotalTicks, info?.CurrentTicks]);
 
+  // Tem de ficar ANTES do return antecipado de `!printer`, senão o número de
+  // hooks muda entre renders e o React rebenta.
+  useEffect(() => {
+    const id = setInterval(() => {
+      const st = printer?.status?.PrintInfo;
+      const valor = st?.CurrentTicks ?? 0;
+      const emCurso = !!st?.Filename && ![0, 7, 8].includes(st.Status ?? 0);
+      if (valor !== ultimosTicks.current.valor) {
+        ultimosTicks.current = { valor, desde: Date.now() };
+        setEmPausa(false);
+        return;
+      }
+      if (emCurso && valor > 0 && Date.now() - ultimosTicks.current.desde > 6000) {
+        setEmPausa(true);
+      }
+    }, 2000);
+    return () => clearInterval(id);
+  }, [printer?.status?.PrintInfo?.CurrentTicks, printer?.status?.PrintInfo?.Status]);
+
   if (!printer) {
     return (
       <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
@@ -267,25 +286,6 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
   const isPrinting =
     !!info?.Filename && !codigosParado.includes(printStatus);
   const estado = classificarEstado(info, emPausa);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      const valor = info?.CurrentTicks ?? 0;
-      if (valor !== ultimosTicks.current.valor) {
-        ultimosTicks.current = { valor, desde: Date.now() };
-        setEmPausa(false);
-        return;
-      }
-      if (
-        isPrinting &&
-        valor > 0 &&
-        Date.now() - ultimosTicks.current.desde > 6000
-      ) {
-        setEmPausa(true);
-      }
-    }, 2000);
-    return () => clearInterval(id);
-  }, [info?.CurrentTicks, isPrinting]);
 
   const restanteSegundos = Math.max(
     0,

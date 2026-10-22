@@ -215,10 +215,9 @@ export const PrinterConnectionsProvider = ({
       }
     };
 
-    // Only save if printers state has been initialized from storage
-    if (printers.length > 0) {
-      savePrinters();
-    }
+    // Gravar sempre, mesmo lista vazia: senão remover a última impressora
+    // deixa a lista antiga no AsyncStorage e ela volta no arranque seguinte.
+    savePrinters();
   }, [printers]);
 
   const updatePrinterStatus = (
@@ -753,14 +752,8 @@ export const PrinterConnectionsProvider = ({
       printersRef.current = updatedPrinters;
       return updatedPrinters;
     });
-    // Also remove from AsyncStorage
-    AsyncStorage.getItem('printers').then(printersJSON => {
-      if (printersJSON) {
-        const printers = JSON.parse(printersJSON);
-        const filteredPrinters = printers.filter((p: Printer) => p.id !== id);
-        AsyncStorage.setItem('printers', JSON.stringify(filteredPrinters));
-      }
-    });
+    // A gravação fica a cargo do efeito que observa `printers` (uma só
+    // escrita, sem corrida com o get/set manual que aqui existia).
   };
 
   const updatePrinterIp = (id: string, ipAddress: string) => {
