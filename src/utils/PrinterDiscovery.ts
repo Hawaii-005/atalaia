@@ -1,4 +1,6 @@
 import * as Network from 'expo-network';
+import { Buffer } from 'buffer';
+import dgram from 'react-native-udp';
 
 export interface DiscoveredPrinter {
   ip: string;
@@ -76,6 +78,76 @@ const probePrinter = (ip: string): Promise<DiscoveredPrinter | null> =>
     }
   });
 
+
+const UDP_PORT = 3000;
+const UDP_TIMEOUT = 2500;
+
+/**
+ * SDCP answers a UDP broadcast of "M99999" on port 3000 with its identity.
+ * One datagram finds every printer on the LAN — no /24 sweep needed.
+ */
+const udpDiscovery = (subnet: string | null): Promise<DiscoveredPrinter[]> =>
+  new Promise(resolve => {
+    const found = new Map<string, DiscoveredPrinter>();
+    let socket: any = null;
+    let finished = false;
+    let graceTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      try {
+        socket?.close();
+      } catch {
+        // ignore
+      }
+      console.log('[discovery] udp encontrou', found.size);
+      resolve(Array.from(found.values()));
+    };
+
+    try {
+      socket = dgram.createSocket({ type: 'udp4' });
+      socket.on('error', finish);
+      socket.on('message', (data: any) => {
+        try {
+          const text = Buffer.isBuffer(data) ? data.toString('utf8') : String(data);
+          const payload = JSON.parse(text);
+          const info = payload?.Data ?? payload;
+          const ip = info?.MainboardIP;
+          if (!ip) return;
+          if (!graceTimer) {
+            graceTimer = setTimeout(finish, 600);
+          }
+          found.set(ip, {
+            ip,
+            name: info.MachineName || info.Name || 'Centauri Carbon',
+            firmware: info.FirmwareVersion,
+            mainboardId: info.MainboardID,
+          });
+        } catch {
+          // not ours
+        }
+      });
+
+      socket.bind(0, () => {
+        const targets = ['255.255.255.255'];
+        if (subnet) targets.push(`${subnet}.255`);
+        targets.forEach(address => {
+          try {
+            socket?.send('M99999', 0, 6, UDP_PORT, address, () => {});
+          } catch {
+            // ignore unreachable broadcast
+          }
+        });
+      });
+    } catch {
+      finish();
+      return;
+    }
+
+    setTimeout(finish, UDP_TIMEOUT);
+  });
+
 /** Returns the /24 prefix of the phone's Wi-Fi address, e.g. "192.168.1". */
 export const getLocalSubnet = async (): Promise<string | null> => {
   try {
@@ -102,6 +174,12 @@ export const discoverPrinters = async (
     throw new Error(
       'Could not read your Wi-Fi address. Make sure the phone is on the same Wi-Fi as the printer.'
     );
+  }
+
+  const viaUdp = await udpDiscovery(subnet);
+  if (viaUdp.length > 0) {
+    onProgress?.(254, 254);
+    return viaUdp;
   }
 
   const hosts = Array.from({ length: 254 }, (_, i) => `${subnet}.${i + 1}`);
