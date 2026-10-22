@@ -68,6 +68,13 @@ export default {
 
   // ——— Files
   'files.title': 'Ficheiros',
+  'files.enviar': 'Enviar G-code',
+  'files.aEnviar': 'A enviar…',
+  'files.enviado': 'Enviado',
+  'files.enviadoMsg': '{nome} já está na impressora. Imprimir agora?',
+  'files.falhouEnvio': 'O envio falhou',
+  'files.imprimirAgora': 'Imprimir agora',
+  'files.naoEncontrado': 'O ficheiro não aparece na lista da máquina.',
   'files.tentarDeNovo': 'Tentar de novo',
   'files.cores': 'Filamentos neste ficheiro',
   'files.coresDica': 'Lido do cabeçalho do G-code do fatiador',

@@ -70,6 +70,13 @@ const en = {
 
   // ——— Files
   'files.title': 'Files',
+  'files.enviar': 'Upload G-code',
+  'files.aEnviar': 'Uploading…',
+  'files.enviado': 'Uploaded',
+  'files.enviadoMsg': '{nome} is on the printer. Print now?',
+  'files.falhouEnvio': 'Upload failed',
+  'files.imprimirAgora': 'Print now',
+  'files.naoEncontrado': 'The file is not in the printer list.',
   'files.tentarDeNovo': 'Try again',
   'files.cores': 'Filaments in this file',
   'files.coresDica': 'Read from the slicer G-code header',

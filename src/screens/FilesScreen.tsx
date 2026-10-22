@@ -26,6 +26,7 @@ import {
 } from '../utils/commands';
 import { mensagemDeErro } from '../utils/errors';
 import * as FileSystem from 'expo-file-system';
+import * as DocumentPicker from 'expo-document-picker';
 import { uploadGcode } from '../utils/gcodeUpload';
 import { custoDe, euros, getPrecoKg, setPrecoKg } from '../utils/precos';
 import { t } from '../i18n';
@@ -489,6 +490,63 @@ export const FilesScreen = ({ route, navigation }: any) => {
     ]);
   };
 
+  /** Envia um G-code do telemóvel e oferece imprimir logo a seguir. */
+  const handleUpload = useCallback(async () => {
+    if (!printer) return;
+    const picked = await DocumentPicker.getDocumentAsync({
+      copyToCacheDirectory: true,
+      multiple: false,
+    });
+    if (picked.canceled || !picked.assets?.length) return;
+    const asset = picked.assets[0];
+    try {
+      setOcupado(`${t('files.aEnviar')} 0%`);
+      await uploadGcode(printer.ipAddress, asset.uri, asset.name, (enviado, total) => {
+        setOcupado(`${t('files.aEnviar')} ${Math.round((enviado / total) * 100)}%`);
+      });
+      await load();
+      Alert.alert(t('files.enviado'), t('files.enviadoMsg', { nome: asset.name }), [
+        { text: t('comum.nao'), style: 'cancel' },
+        {
+          text: t('files.imprimirAgora'),
+          onPress: async () => {
+            try {
+              // O nome tem de ser o que a máquina devolve no Cmd 258.
+              const dados = await request(
+                printer.id,
+                listFilesCommand('/local/', 1, 100)
+              );
+              const lista: PrinterFile[] = dados?.FileList ?? [];
+              const alvo = lista.find(f => f.name.endsWith(`/${asset.name}`));
+              if (!alvo) {
+                Alert.alert(t('files.naoArrancou'), t('files.naoEncontrado'));
+                return;
+              }
+              const comando = startPrintCommand(alvo.name, {
+                nivelar: bedLevel,
+                lado: plateSide,
+              });
+              const resposta = await request(printer.id, comando, 15000);
+              const ack = ackDaResposta(resposta) ?? 0;
+              if (ack !== 0) {
+                Alert.alert(t('files.naoArrancou'), descreverAck(ack));
+                return;
+              }
+              Alert.alert(t('files.aArrancar'), t('files.aArrancarMsg', { nome: asset.name }));
+              navigation.navigate('Printers');
+            } catch (e) {
+              Alert.alert(t('files.naoArrancou'), mensagemDeErro(e));
+            }
+          },
+        },
+      ]);
+    } catch (e) {
+      Alert.alert(t('files.falhouEnvio'), mensagemDeErro(e));
+    } finally {
+      setOcupado(null);
+    }
+  }, [printer, load, bedLevel, plateSide, request, navigation]);
+
   const handleDelete = (file: PrinterFile) => {
     const label = file.name.split('/').pop() ?? file.name;
     Alert.alert(t('files.apagarTitulo'), t('files.apagarMsg', { nome: label }), [
@@ -738,6 +796,19 @@ export const FilesScreen = ({ route, navigation }: any) => {
             </View>
           </View>
         </Modal>
+      )}
+      {!loading && printer && (
+        <TouchableOpacity
+          onPress={handleUpload}
+          disabled={!!ocupado}
+          activeOpacity={0.85}
+          className={`absolute right-5 bottom-7 ${BT_ACENTO} px-4 py-3 rounded-full flex-row items-center`}
+        >
+          <Ionicons name="cloud-upload-outline" size={16} color={hexDe(tema.paleta.acento)} />
+          <Text className={`ml-2 text-[12px] font-semibold ${TX_ACENTO}`}>
+            {ocupado ?? t('files.enviar')}
+          </Text>
+        </TouchableOpacity>
       )}
     </SafeAreaView>
   );
