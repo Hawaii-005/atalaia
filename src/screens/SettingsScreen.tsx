@@ -23,6 +23,7 @@ import {
   prepareNotifications,
   saveNotificationPrefs,
 } from '../utils/notifications';
+import { t } from '../i18n';
 
 type ThemeOption = 'light' | 'dark' | 'system';
 
@@ -160,31 +161,25 @@ export const SettingsScreen = () => {
         await Linking.openURL(url);
       }
     } catch {
-      Alert.alert('Erro', 'Não foi possível abrir a ligação.');
+      Alert.alert(t('comum.erro'), t('comum.erroLigacao'));
     }
   };
 
   const handleResetWelcomeFlow = () => {
     Alert.alert(
-      'Reiniciar fluxo de boas-vindas',
-      'Os ecrãs de boas-vindas aparecem novamente da próxima vez que abrir a aplicação.',
+      t('settings.reiniciarBoasVindas'),
+      t('settings.reiniciarBoasVindasMsg'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('comum.cancelar'), style: 'cancel' },
         {
-          text: 'Reiniciar',
+          text: t('settings.reiniciar'),
           style: 'destructive',
           onPress: async () => {
             try {
               await AsyncStorage.removeItem('hasLaunched');
-              Alert.alert(
-                'Concluído',
-                'O fluxo de boas-vindas foi reiniciado.'
-              );
+              Alert.alert(t('settings.concluido'), t('settings.boasVindasReiniciado'));
             } catch {
-              Alert.alert(
-                'Erro',
-                'Não foi possível reiniciar o fluxo de boas-vindas.'
-              );
+              Alert.alert(t('comum.erro'), t('settings.erroBoasVindas'));
             }
           },
         },
@@ -193,23 +188,23 @@ export const SettingsScreen = () => {
   };
 
   const options: { key: ThemeOption; label: string }[] = [
-    { key: 'light', label: 'Claro' },
-    { key: 'dark', label: 'Escuro' },
-    { key: 'system', label: 'Sistema' },
+    { key: 'light', label: t('settings.temaClaro') },
+    { key: 'dark', label: t('settings.temaEscuro') },
+    { key: 'system', label: t('settings.temaSistema') },
   ];
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
-      <Header title="Definições" subtitle="Preferências e sobre" />
+      <Header title={t('settings.title')} subtitle={t('settings.subtitulo')} />
 
       <ScrollView
         className="flex-1 bg-canvas"
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
-        <Section title="PREFERÊNCIAS">
+        <Section title={t('settings.seccaoPrefs')}>
           <View className="px-4 py-4">
-            <Text className="text-[14px] font-medium text-ink">Tema</Text>
+            <Text className="text-[14px] font-medium text-ink">{t('settings.tema')}</Text>
             <View className="mt-3 flex-row rounded-xl bg-canvas-sunken p-1">
               {options.map(option => {
                 const active = theme === option.key;
@@ -239,26 +234,26 @@ export const SettingsScreen = () => {
 
           <Row
             icon="time-outline"
-            label="Intervalo de actualização"
+            label={t('settings.intervalo')}
             value={`${Math.round(statusIntervalMs / 1000)}s`}
             onPress={() =>
               Alert.alert(
-                'Intervalo de actualização',
-                'Com que frequência pedir o estado à impressora',
+                t('settings.intervalo'),
+                t('settings.intervaloMsg'),
                 [
                   {
-                    text: '5 segundos',
+                    text: t('settings.segundos5'),
                     onPress: () => setStatusInterval(5000),
                   },
                   {
-                    text: '15 segundos',
+                    text: t('settings.segundos15'),
                     onPress: () => setStatusInterval(15000),
                   },
                   {
-                    text: '30 segundos',
+                    text: t('settings.segundos30'),
                     onPress: () => setStatusInterval(30000),
                   },
-                  { text: 'Cancelar', style: 'cancel' },
+                  { text: t('comum.cancelar'), style: 'cancel' },
                 ]
               )
             }
@@ -266,60 +261,60 @@ export const SettingsScreen = () => {
           />
         </Section>
 
-        <Section title="NOTIFICAÇÕES">
+        <Section title={t('settings.seccaoNotif')}>
           <SwitchRow
             icon="checkmark-circle-outline"
-            label="Impressão concluída"
-            description="Quando uma impressão termina"
+            label={t('settings.notifConcluida')}
+            description={t('settings.notifConcluidaDesc')}
             value={notificationPrefs.finished}
             onChange={value => updateNotificationPref('finished', value)}
           />
           <SwitchRow
             icon="pause-circle-outline"
-            label="Em pausa ou interrompida"
-            description="Quando uma impressão fica em pausa ou é cancelada"
+            label={t('settings.notifPausada')}
+            description={t('settings.notifPausadaDesc')}
             value={notificationPrefs.paused}
             onChange={value => updateNotificationPref('paused', value)}
           />
           <SwitchRow
             icon="trending-up-outline"
-            label="Marcos de progresso"
-            description="Aos 50% e aos 90%"
+            label={t('settings.notifMarcos')}
+            description={t('settings.notifMarcosDesc')}
             value={notificationPrefs.milestones}
             onChange={value => updateNotificationPref('milestones', value)}
           />
           <SwitchRow
             icon="cloud-offline-outline"
-            label="Impressora desligada"
-            description="Se se desligar a meio de uma impressão"
+            label={t('settings.notifDesligada')}
+            description={t('settings.notifDesligadaDesc')}
             value={notificationPrefs.offline}
             onChange={value => updateNotificationPref('offline', value)}
           />
           <Row
             icon="notifications-outline"
-            label="Enviar uma notificação de teste"
+            label={t('settings.notificacaoTeste')}
             onPress={async () => {
               const granted = await prepareNotifications();
               if (!granted) {
                 Alert.alert(
-                  'Notificações bloqueadas',
-                  'Permita as notificações da CC Tool nas definições do Android.'
+                  t('settings.notifBloqueadas'),
+                  t('settings.notifBloqueadasMsg')
                 );
                 return;
               }
               await notify(
-                'Impressão concluída',
-                'A Centauri Carbon concluiu a sua impressão de teste.'
+                t('settings.notifConcluida'),
+                t('settings.notificacaoTesteCorpo')
               );
             }}
             last
           />
         </Section>
 
-        <Section title="SOBRE">
+        <Section title={t('settings.seccaoSobre')}>
           <Row
             icon="information-circle-outline"
-            label="Versão da aplicação"
+            label={t('settings.versaoApp')}
             value={Constants.expoConfig?.version || '1.2.1'}
           />
           <Row
@@ -331,27 +326,25 @@ export const SettingsScreen = () => {
           />
           <Row
             icon="bug-outline"
-            label="Comunicar um problema"
+            label={t('settings.comunicarProblema')}
             onPress={() =>
               openUrl('https://github.com/WalkerFrederick/CC-Tool/issues')
             }
           />
-          <Row icon="document-text-outline" label="Licença" value="MIT" last />
+          <Row icon="document-text-outline" label={t('settings.licenca')} value="MIT" last />
         </Section>
 
-        <Section title="MANUTENÇÃO">
+        <Section title={t('settings.seccaoManutencao')}>
           <Row
             icon="refresh-outline"
-            label="Reiniciar fluxo de boas-vindas"
+            label={t('settings.reiniciarBoasVindas')}
             onPress={handleResetWelcomeFlow}
             last
           />
         </Section>
 
         <Text className="mt-6 px-2 text-[11px] leading-[17px] text-ink-muted text-center">
-          A CC Tool é uma aplicação independente, criada pela comunidade, para
-          impressoras Elegoo. Sem qualquer afiliação, apoio ou recomendação da
-          Elegoo.
+          {t('settings.avisoComunidade')}
         </Text>
       </ScrollView>
     </SafeAreaView>

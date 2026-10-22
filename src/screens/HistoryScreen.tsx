@@ -18,16 +18,21 @@ import {
   formatDuration,
   loadHistory,
 } from '../utils/printHistory';
+import { t, idiomaActual } from '../i18n';
 
+// Etiquetas visíveis para o desfecho de cada impressão (chaves i18n).
 const outcomeLabel: Record<PrintRecord['outcome'], string> = {
-  printing: 'A imprimir',
-  completed: 'Concluída',
-  stopped: 'Parada',
+  printing: 'history.aImprimir',
+  completed: 'history.concluida',
+  stopped: 'history.parada',
 };
+
+// Locale de formatação de datas segue o idioma detectado.
+const LOCALE = idiomaActual === 'pt' ? 'pt-PT' : 'en-GB';
 
 const formatDate = (timestamp: number) => {
   const date = new Date(timestamp);
-  return date.toLocaleDateString('pt-PT', {
+  return date.toLocaleDateString(LOCALE, {
     day: '2-digit',
     month: 'short',
   });
@@ -54,7 +59,9 @@ const HistoryRow = ({ record }: { record: PrintRecord }) => {
         </Text>
         <Text className="text-[11px] text-ink-muted mt-1">
           {formatDate(record.startedAt)} · {formatDuration(record)} ·{' '}
-          {record.layers ?? record.totalLayers ?? '—'} camadas
+          {t('comum.camadas', {
+            n: record.layers ?? record.totalLayers ?? '—',
+          })}
         </Text>
       </View>
       <View
@@ -75,7 +82,7 @@ const HistoryRow = ({ record }: { record: PrintRecord }) => {
                 : 'text-brand'
           }`}
         >
-          {outcomeLabel[record.outcome]}
+          {t(outcomeLabel[record.outcome])}
         </Text>
       </View>
     </View>
@@ -92,24 +99,32 @@ export const HistoryScreen = ({ navigation }: any) => {
   );
 
   const handleClear = () => {
-    Alert.alert('Limpar histórico', 'Isto apaga o registo de todas as impressões.', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Limpar',
-        style: 'destructive',
-        onPress: async () => {
-          await clearHistory();
-          setRecords([]);
+    Alert.alert(
+      t('history.limparTitulo'),
+      t('history.limparMsg'),
+      [
+        { text: t('comum.cancelar'), style: 'cancel' },
+        {
+          text: t('history.limpar'),
+          style: 'destructive',
+          onPress: async () => {
+            await clearHistory();
+            setRecords([]);
+          },
         },
-      },
-    ]);
+      ]
+    );
   };
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
       <Header
-        title="Histórico"
-        subtitle={`${records.length} ${records.length === 1 ? 'impressão' : 'impressões'}`}
+        title={t('history.title')}
+        subtitle={
+          records.length === 1
+            ? t('history.contagem_um', { n: records.length })
+            : t('history.contagem_outros', { n: records.length })
+        }
         onBack={() => navigation.goBack()}
         rightAction={
           records.length > 0
@@ -126,10 +141,10 @@ export const HistoryScreen = ({ navigation }: any) => {
           <View className="items-center justify-center py-16">
             <Ionicons name="time-outline" size={40} color="#9AA0A6" />
             <Text className="text-[15px] font-semibold text-ink mt-3">
-              Ainda sem impressões
+              {t('history.semImpressoes')}
             </Text>
             <Text className="text-[12px] text-ink-muted mt-1 text-center px-8">
-              As impressões aparecem aqui quando começarem.
+              {t('history.semImpressoesDica')}
             </Text>
           </View>
         ) : (
@@ -142,7 +157,7 @@ export const HistoryScreen = ({ navigation }: any) => {
 
         {records.length > 0 && (
           <Text className="text-[11px] text-ink-muted mt-3 px-1">
-            As miniaturas são desenhadas a partir do G-code guardado na impressora.
+            {t('history.miniaturasDica')}
           </Text>
         )}
       </ScrollView>

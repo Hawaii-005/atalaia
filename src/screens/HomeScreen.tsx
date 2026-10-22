@@ -15,6 +15,7 @@ import { PrinterCard } from '../components/PrinterCard';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { Ionicons } from '@expo/vector-icons';
 import { checkLocalNetworkAccess } from '@generac/react-native-local-network-permission';
+import { t } from '../i18n';
 
 export const HomeScreen = ({ navigation }: any) => {
   const [refreshing, setRefreshing] = useState(false);
@@ -48,31 +49,34 @@ export const HomeScreen = ({ navigation }: any) => {
     // impressora: dá-se a tentativa em curso e um botão para forçar já.
     if (printer?.reconnectAttempt) {
       Alert.alert(
-        'A reconectar',
-        `${printer.printerName}: tentativa ${printer.reconnectAttempt}. Já está a ser tentado automaticamente.`,
+        t('comum.aReconectar'),
+        t('home.aReconectarMsg', {
+          nome: printer.printerName,
+          n: printer.reconnectAttempt,
+        }),
         [
-          { text: 'Fechar', style: 'cancel' },
-          { text: 'Tentar agora', onPress: () => reconnectAll() },
+          { text: t('comum.fechar'), style: 'cancel' },
+          { text: t('home.tentarAgora'), onPress: () => reconnectAll() },
         ]
       );
       return;
     }
     Alert.alert(
-      'Impressora desligada',
-      `${printer?.printerName} não está ligada. Pode eliminá-la e adicioná-la de novo.`,
+      t('comum.impressoraDesligada'),
+      t('home.naoLigadaMsg', { nome: printer?.printerName ?? '' }),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('comum.cancelar'), style: 'cancel' },
         {
-          text: 'Eliminar impressora',
+          text: t('home.eliminarImpressora'),
           style: 'destructive',
           onPress: () => {
             Alert.alert(
-              'Eliminar impressora',
-              `Remover ${printer?.printerName}? Esta ação é irreversível.`,
+              t('home.eliminarImpressora'),
+              t('home.removerIrreversivel', { nome: printer?.printerName ?? '' }),
               [
-                { text: 'Cancelar', style: 'cancel' },
+                { text: t('comum.cancelar'), style: 'cancel' },
                 {
-                  text: 'Eliminar',
+                  text: t('home.eliminar'),
                   style: 'destructive',
                   onPress: () => printer && removePrinter(printer.id),
                 },
@@ -100,10 +104,10 @@ export const HomeScreen = ({ navigation }: any) => {
   };
 
   const handleStopPrint = (printerId: string, name: string) => {
-    Alert.alert('Cancelar impressão', `Parar a impressão em ${name}?`, [
-      { text: 'Continuar a impressão', style: 'cancel' },
+    Alert.alert(t('comum.cancelarImpressao'), t('home.pararImpressaoEm', { nome: name }), [
+      { text: t('comum.continuarImpressao'), style: 'cancel' },
       {
-        text: 'Parar impressão',
+        text: t('comum.pararImpressao'),
         style: 'destructive',
         onPress: () =>
           sendCommand(printerId, {
@@ -127,13 +131,19 @@ export const HomeScreen = ({ navigation }: any) => {
 
   const subtitle =
     printers.length === 0
-      ? 'Ainda não há impressoras'
-      : `${printers.length} impressora${printers.length === 1 ? '' : 's'} · ${onlineCount} ligada${onlineCount === 1 ? '' : 's'}`;
+      ? t('home.semImpressoras')
+      : `${printers.length === 1
+          ? t('home.contadorImpressoras_um', { n: printers.length })
+          : t('home.contadorImpressoras_outros', { n: printers.length })} · ${
+          onlineCount === 1
+            ? t('home.contadorLigadas_um', { n: onlineCount })
+            : t('home.contadorLigadas_outros', { n: onlineCount })
+        }`;
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
       <Header
-        title="Impressoras"
+        title={t('home.title')}
         subtitle={subtitle}
         rightAction={{
           icon: 'wifi',
@@ -160,8 +170,7 @@ export const HomeScreen = ({ navigation }: any) => {
           >
             <Ionicons name="warning-outline" size={18} color="#8A6100" />
             <Text className="ml-2 flex-1 text-[13px] leading-[19px] text-[#6B4E00]">
-              O acesso à rede local está desativado, pelo que não é possível
-              comunicar com as impressoras. Abra as Definições para o permitir.
+              {t('home.avisoRedeLocal')}
             </Text>
           </TouchableOpacity>
         )}
@@ -174,11 +183,10 @@ export const HomeScreen = ({ navigation }: any) => {
               resizeMode="contain"
             />
             <Text className="mt-6 text-[22px] font-bold text-ink text-center">
-              Ainda não há impressoras
+              {t('home.semImpressoras')}
             </Text>
             <Text className="mt-2 text-[13px] leading-[20px] text-ink-muted text-center px-6">
-              A sua impressora responde na mesma rede Wi-Fi. Analise a rede e
-              ela será encontrada automaticamente.
+              {t('home.primeiraImpressoraMsg')}
             </Text>
 
             <TouchableOpacity
@@ -188,7 +196,7 @@ export const HomeScreen = ({ navigation }: any) => {
             >
               <Ionicons name="wifi" size={18} color="#FFFFFF" />
               <Text className="ml-2 text-white font-semibold text-[15px]">
-                Analisar rede
+                {t('home.analisarRede')}
               </Text>
             </TouchableOpacity>
 
@@ -198,7 +206,7 @@ export const HomeScreen = ({ navigation }: any) => {
               activeOpacity={0.7}
             >
               <Text className="text-ink-soft font-semibold text-[14px]">
-                Adicionar manualmente
+                {t('home.adicionarManualmente')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -230,7 +238,7 @@ export const HomeScreen = ({ navigation }: any) => {
             >
               <Ionicons name="add" size={18} color="#3F444D" />
               <Text className="ml-1.5 text-ink-soft font-semibold text-[14px]">
-                Adicionar impressora
+                {t('home.adicionarImpressora')}
               </Text>
             </TouchableOpacity>
 
@@ -241,7 +249,7 @@ export const HomeScreen = ({ navigation }: any) => {
             >
               <Ionicons name="time-outline" size={16} color="#63676E" />
               <Text className="ml-1.5 text-ink-muted font-semibold text-[13px]">
-                Histórico de impressões
+                {t('home.historicoImpressoes')}
               </Text>
             </TouchableOpacity>
 
@@ -252,7 +260,7 @@ export const HomeScreen = ({ navigation }: any) => {
             >
               <Ionicons name="stats-chart-outline" size={16} color="#63676E" />
               <Text className="ml-1.5 text-ink-muted font-semibold text-[13px]">
-                Estatísticas
+                {t('home.estatisticas')}
               </Text>
             </TouchableOpacity>
           </>

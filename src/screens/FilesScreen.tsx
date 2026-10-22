@@ -23,6 +23,7 @@ import {
   ackDaResposta,
 } from '../utils/commands';
 import { mensagemDeErro } from '../utils/errors';
+import { t } from '../i18n';
 
 interface PrinterFile {
   name: string;
@@ -142,10 +143,10 @@ export const FilesScreen = ({ route, navigation }: any) => {
 
   const handlePrint = (file: PrinterFile) => {
     const label = file.name.split('/').pop() ?? file.name;
-    Alert.alert('Imprimir', `Começar a imprimir ${label}?`, [
-      { text: 'Cancelar', style: 'cancel' },
+    Alert.alert(t('files.imprimirTitulo'), t('files.imprimirMsg', { nome: label }), [
+      { text: t('comum.cancelar'), style: 'cancel' },
       {
-        text: 'Imprimir',
+        text: t('files.imprimirTitulo'),
         onPress: async () => {
           try {
             const comando = startPrintCommand(file.name, {
@@ -155,13 +156,13 @@ export const FilesScreen = ({ route, navigation }: any) => {
             const response = await request(printer.id, comando, 15000);
             const ack = ackDaResposta(response) ?? 0;
             if (ack !== 0) {
-              Alert.alert('Não arrancou', descreverAck(ack));
+              Alert.alert(t('files.naoArrancou'), descreverAck(ack));
               return;
             }
-            Alert.alert('A arrancar', `${label} vai começar.`);
+            Alert.alert(t('files.aArrancar'), t('files.aArrancarMsg', { nome: label }));
             navigation.navigate('Printers');
           } catch (e) {
-            Alert.alert('Não arrancou', mensagemDeErro(e));
+            Alert.alert(t('files.naoArrancou'), mensagemDeErro(e));
           }
         },
       },
@@ -170,10 +171,10 @@ export const FilesScreen = ({ route, navigation }: any) => {
 
   const handleDelete = (file: PrinterFile) => {
     const label = file.name.split('/').pop() ?? file.name;
-    Alert.alert('Apagar', `Apagar ${label} da impressora?`, [
-      { text: 'Cancelar', style: 'cancel' },
+    Alert.alert(t('files.apagarTitulo'), t('files.apagarMsg', { nome: label }), [
+      { text: t('comum.cancelar'), style: 'cancel' },
       {
-        text: 'Apagar',
+        text: t('files.confirmarApagar'),
         style: 'destructive',
         onPress: async () => {
           try {
@@ -183,14 +184,14 @@ export const FilesScreen = ({ route, navigation }: any) => {
             );
             const ack = ackDaResposta(response) ?? 0;
             if (ack !== 0) {
-              Alert.alert('Não apagou', descreverAck(ack));
+              Alert.alert(t('files.naoApagou'), descreverAck(ack));
               // Recarrega: o estado real da lista pode ter mudado.
               load();
               return;
             }
             setFiles(prev => prev.filter(item => item.name !== file.name));
           } catch (e) {
-            Alert.alert('Não apagou', mensagemDeErro(e));
+            Alert.alert(t('files.naoApagou'), mensagemDeErro(e));
           }
         },
       },
@@ -200,8 +201,8 @@ export const FilesScreen = ({ route, navigation }: any) => {
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
       <Header
-        title="Ficheiros"
-        subtitle={printer ? printer.printerName : 'Sem impressora'}
+        title={t('files.title')}
+        subtitle={printer ? printer.printerName : t('comum.semImpressora')}
         onBack={() => navigation.goBack()}
         rightAction={{ icon: 'refresh', onPress: load }}
       />
@@ -221,7 +222,7 @@ export const FilesScreen = ({ route, navigation }: any) => {
             className="mt-4 px-4 py-2 rounded-lg border border-line"
           >
             <Text className="text-[13px] font-semibold text-ink">
-              Tentar de novo
+              {t('files.tentarDeNovo')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -233,10 +234,10 @@ export const FilesScreen = ({ route, navigation }: any) => {
           <View className="flex-row items-center justify-between px-4 py-3 border-b border-line">
             <View className="flex-1 pr-3">
               <Text className="text-[13px] font-semibold text-ink">
-                Lado da mesa
+                {t('files.ladoMesa')}
               </Text>
               <Text className="text-[11px] text-ink-muted mt-0.5">
-                A = texturada · B = lisa
+                {t('files.ladoMesaDica')}
               </Text>
             </View>
             <View className="flex-row">
@@ -264,10 +265,10 @@ export const FilesScreen = ({ route, navigation }: any) => {
           <View className="flex-row items-center justify-between px-4 py-3 border-b border-line">
             <View className="flex-1 pr-3">
               <Text className="text-[13px] font-semibold text-ink">
-                Nivelar a mesa antes
+                {t('files.nivelarAntes')}
               </Text>
               <Text className="text-[11px] text-ink-muted mt-0.5">
-                Acrescenta vários minutos a cada impressão
+                {t('files.nivelarDica')}
               </Text>
             </View>
             <Switch
@@ -283,10 +284,10 @@ export const FilesScreen = ({ route, navigation }: any) => {
             <View className="items-center justify-center py-16">
               <Ionicons name="folder-open-outline" size={36} color="#9AA0A6" />
               <Text className="text-[14px] font-semibold text-ink mt-3">
-                Sem ficheiros na impressora
+                {t('files.semFicheiros')}
               </Text>
               <Text className="text-[12px] text-ink-muted mt-1 text-center px-8">
-                Envia um G-code pelo ecrã da câmara.
+                {t('files.semFicheirosDica')}
               </Text>
             </View>
           ) : (

@@ -15,6 +15,7 @@ import {
   formatTextMaxEllipsis,
   formatTicksToReadableTime,
 } from '../utils/FormatUtils';
+import { t } from '../i18n';
 
 interface PrinterCardProps {
   printer: Printer;
@@ -35,12 +36,13 @@ const STATUS_DOT: { [key in ConnectionStatus]: string } = {
   timeout: '#C62828',
 };
 
+// Etiquetas visíveis para o estado de ligação da impressora (chaves i18n).
 const STATUS_LABEL: { [key in ConnectionStatus]: string } = {
-  connected: 'Ligada',
-  connecting: 'A ligar',
-  disconnected: 'Desligada',
-  error: 'Erro',
-  timeout: 'Tempo esgotado',
+  connected: 'comum.ligada',
+  connecting: 'comum.aLigar',
+  disconnected: 'comum.desligada',
+  error: 'comum.erro',
+  timeout: 'comum.tempoEsgotado',
 };
 
 export const PrinterCard = ({
@@ -83,18 +85,18 @@ export const PrinterCard = ({
 
   // A reconectar tem prioridade: mostra quantas tentativas já falharam.
   const statusText = !isConnected && printer.reconnectAttempt
-    ? `A reconectar (tentativa ${printer.reconnectAttempt})`
+    ? t('comum.aReconectarTentativa', { n: printer.reconnectAttempt })
     : readablePrintStatus === 'idle'
-      ? STATUS_LABEL[printer.connectionStatus]
+      ? t(STATUS_LABEL[printer.connectionStatus])
       : readablePrintStatus === 'completed'
-        ? 'Impressão concluída'
+        ? t('comum.impressaoConcluida')
         : readablePrintStatus === 'preparing'
-          ? 'A preparar'
+          ? t('comum.aPreparar')
           : readablePrintStatus === 'paused'
-            ? 'Em pausa'
+            ? t('comum.emPausa')
             : readablePrintStatus === 'stopped'
-              ? 'Parada'
-              : 'A imprimir';
+              ? t('comum.parada')
+              : t('comum.aImprimir');
 
   return (
     <TouchableOpacity
@@ -145,9 +147,9 @@ export const PrinterCard = ({
       {isConnected && showTemps && (
         <View className="flex-row mt-4">
           {[
-            { label: 'Bico', value: nozzleTemp, target: targetNozzleTemp },
-            { label: 'Mesa', value: bedTemp, target: targetBedTemp },
-            { label: 'Câmara', value: boxTemp, target: targetBoxTemp },
+            { label: t('comum.bico'), value: nozzleTemp, target: targetNozzleTemp },
+            { label: t('comum.mesa'), value: bedTemp, target: targetBedTemp },
+            { label: t('comum.camara'), value: boxTemp, target: targetBoxTemp },
           ].map((tile, index) => (
             <View
               key={tile.label}
@@ -172,18 +174,20 @@ export const PrinterCard = ({
         <View className="mt-4 pt-4 border-t border-line">
           <Text className="text-[13px] font-semibold text-ink" numberOfLines={1}>
             {isPrinting
-              ? formatTextMaxEllipsis(filename, 34) || 'A imprimir'
+              ? formatTextMaxEllipsis(filename, 34) || t('comum.aImprimir')
               : statusText}
           </Text>
 
           {totalLayer > 0 && (
             <View className="flex-row justify-between mt-1">
               <Text className="text-xs text-ink-muted">
-                Camada {currentLayer}/{totalLayer}
+                {t('comum.camada', { actual: currentLayer, total: totalLayer })}
               </Text>
               <Text className="text-xs text-ink-muted">
                 {totalTicks > 0
-                  ? `${formatTicksToReadableTime(totalTicks - currentTicks)} restantes`
+                  ? t('comum.restantes', {
+                      t: formatTicksToReadableTime(totalTicks - currentTicks),
+                    })
                   : ''}
               </Text>
             </View>

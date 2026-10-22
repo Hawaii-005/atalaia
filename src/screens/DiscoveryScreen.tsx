@@ -16,6 +16,7 @@ import {
   discoverPrinters,
   getLocalSubnet,
 } from '../utils/PrinterDiscovery';
+import { t } from '../i18n';
 
 type ScanState = 'idle' | 'scanning' | 'done' | 'error';
 
@@ -60,7 +61,7 @@ export const DiscoveryScreen = ({ navigation }: any) => {
       if (!mountedRef.current) {
         return;
       }
-      setErrorMessage(error?.message || 'A análise da rede falhou.');
+      setErrorMessage(error?.message || t('discovery.falhou'));
       setScanState('error');
     }
   }, []);
@@ -90,15 +91,15 @@ export const DiscoveryScreen = ({ navigation }: any) => {
     if (action === 'update' && printer) {
       updatePrinterIp(printer.id, device.ip);
       Alert.alert(
-        'Impressora actualizada',
-        `${device.name} está agora em ${device.ip}. A restabelecer a ligação…`
+        t('discovery.atualizadaTitulo'),
+        t('discovery.atualizadaMsg', { nome: device.name, ip: device.ip })
       );
       return;
     }
     addPrinter(device.name, device.ip, device.mainboardId);
     Alert.alert(
-      'Impressora adicionada',
-      `${device.name} (${device.ip}) foi adicionada.`
+      t('discovery.adicionadaTitulo'),
+      t('discovery.adicionadaMsg', { nome: device.name, ip: device.ip })
     );
   };
 
@@ -106,16 +107,22 @@ export const DiscoveryScreen = ({ navigation }: any) => {
   const progress = total > 0 ? Math.min(scanned / total, 1) : 0;
 
   const statusLabel = scanning
-    ? `A analisar ${subnet || 'a sua rede'}… ${scanned}/${total}`
+    ? t('discovery.aAnalisar', {
+        rede: subnet || t('discovery.aSuaRede'),
+        feitos: scanned,
+        total,
+      })
     : scanState === 'error'
       ? errorMessage
-      : `${found.length} impressora${found.length === 1 ? '' : 's'} encontrada${found.length === 1 ? '' : 's'}`;
+      : found.length === 1
+        ? t('discovery.encontradas_um', { n: found.length })
+        : t('discovery.encontradas_outros', { n: found.length });
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
       <Header
-        title="Encontrar impressoras"
-        subtitle={subnet ? `${subnet}.0/24` : 'Rede local'}
+        title={t('discovery.title')}
+        subtitle={subnet ? `${subnet}.0/24` : t('discovery.redeLocal')}
         onBack={() => navigation.goBack()}
       />
 
@@ -160,8 +167,7 @@ export const DiscoveryScreen = ({ navigation }: any) => {
           </View>
 
           <Text className="mt-3 text-[12px] leading-[18px] text-ink-muted">
-            Encontra impressoras Elegoo na mesma rede Wi-Fi. Não precisa de
-            escrever o IP.
+            {t('discovery.dica')}
           </Text>
 
           <TouchableOpacity
@@ -177,7 +183,7 @@ export const DiscoveryScreen = ({ navigation }: any) => {
                 scanning ? 'text-ink-muted' : 'text-white'
               }`}
             >
-              {scanning ? 'A analisar…' : 'Analisar novamente'}
+              {scanning ? t('discovery.aAnalisarBotao') : t('discovery.analisarDeNovo')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -186,10 +192,10 @@ export const DiscoveryScreen = ({ navigation }: any) => {
           const { action } = printerFor(device);
           const label =
             action === 'added'
-              ? 'ADICIONADA'
+              ? t('discovery.adicionada')
               : action === 'update'
-                ? 'ATUALIZAR'
-                : 'ADICIONAR';
+                ? t('discovery.atualizar')
+                : t('discovery.adicionar');
           const disabled = action === 'added';
 
           return (
@@ -207,7 +213,7 @@ export const DiscoveryScreen = ({ navigation }: any) => {
                 </Text>
                 {action === 'update' && (
                   <Text className="mt-1 text-[11px] text-[#8A6100]">
-                    Impressora conhecida com um novo IP
+                    {t('discovery.conhecidaNovoIp')}
                   </Text>
                 )}
               </View>
@@ -234,9 +240,7 @@ export const DiscoveryScreen = ({ navigation }: any) => {
         {scanState === 'done' && found.length === 0 && (
           <View className="mt-4 rounded-xl2 bg-canvas-sunken p-4">
             <Text className="text-[13px] leading-[19px] text-ink-soft">
-              Nada respondeu nesta rede. Verifique se a impressora está ligada e
-              associada à mesma rede Wi-Fi que o telemóvel — e não ao seu
-              próprio ponto de acesso de configuração.
+              {t('discovery.semRespostas')}
             </Text>
             <TouchableOpacity
               onPress={() => navigation.navigate('AddEditPrinter')}
@@ -244,7 +248,7 @@ export const DiscoveryScreen = ({ navigation }: any) => {
               className="mt-3"
             >
               <Text className="text-[13px] font-semibold text-brand">
-                Adicionar manualmente
+                {t('discovery.adicionarManualmente')}
               </Text>
             </TouchableOpacity>
           </View>
