@@ -18,15 +18,15 @@ export const checkLocalNetworkPermission = async (): Promise<boolean> => {
 
     if (!hasAccess) {
       Alert.alert(
-        'Local Network Access Required',
-        'This app needs access to your local network to connect to printers. Please enable local network access in Settings to continue.',
+        'Acesso à rede local necessário',
+        'Esta app precisa de acesso à rede local para ligar às impressoras. Activa o acesso em Definições para continuar.',
         [
           {
-            text: 'Cancel',
+            text: 'Cancelar',
             style: 'cancel',
           },
           {
-            text: 'Open Settings',
+            text: 'Abrir definições',
             onPress: () => {
               Linking.openSettings();
             },
@@ -38,10 +38,10 @@ export const checkLocalNetworkPermission = async (): Promise<boolean> => {
 
     return true;
   } catch (error) {
-    console.error('Errorr checking local network access:', error);
+    console.error('Error checking local network access:', error);
     Alert.alert(
-      'Network Access Errorr',
-      'Unable to verify local network access. Please ensure you have granted the necessary permissions.',
+      'Erro de acesso à rede',
+      'Não foi possível verificar o acesso à rede local. Confirma as permissões.',
       [{ text: 'OK' }]
     );
     return false;

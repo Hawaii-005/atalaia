@@ -15,21 +15,21 @@ import { useTheme } from '../contexts/ThemeContext';
 
 const SLIDES = [
   {
-    overline: 'WELCOME',
-    title: 'Your printer, in your pocket',
-    body: 'Watch the camera, read temperatures and pause a print from anywhere on your network.',
+    overline: 'BEM-VINDO',
+    title: 'A sua impressora, no seu bolso',
+    body: 'Veja a câmara, consulte as temperaturas e pause uma impressão a partir de qualquer ponto da sua rede.',
     icon: null,
   },
   {
-    overline: 'DISCLAIMER',
-    title: 'Not affiliated with Elegoo',
-    body: 'This is an independent, community-made client. Your printer talks to it directly over your local network — nothing goes through us.',
+    overline: 'AVISO',
+    title: 'Sem afiliação com a Elegoo',
+    body: 'É uma aplicação independente, criada pela comunidade. A sua impressora comunica com ela diretamente através da rede local — nada passa por nós.',
     icon: 'shield-checkmark-outline',
   },
   {
-    overline: 'OPEN SOURCE',
-    title: 'Community built',
-    body: 'MIT licensed and developed in the open. Bug reports and pull requests are welcome.',
+    overline: 'CÓDIGO ABERTO',
+    title: 'Criado pela comunidade',
+    body: 'Sob licença MIT e com desenvolvimento aberto. Avisos de erros e contribuições são bem-vindos.',
     icon: 'code-slash-outline',
   },
 ];
@@ -68,7 +68,7 @@ const WelcomeScreen = ({ onComplete }: { onComplete: () => void }) => {
         await Linking.openURL(url);
       }
     } catch {
-      Alert.alert('Error', 'Could not open the link.');
+      Alert.alert('Erro', 'Não foi possível abrir a ligação.');
     }
   };
 
@@ -118,7 +118,7 @@ const WelcomeScreen = ({ onComplete }: { onComplete: () => void }) => {
                 {slide.body}
               </Text>
 
-              {slide.overline === 'OPEN SOURCE' && (
+              {slide.overline === 'CÓDIGO ABERTO' && (
                 <TouchableOpacity
                   onPress={handleGitHubPress}
                   className="mt-6 flex-row items-center rounded-xl2 border border-line px-4 py-2.5"
@@ -126,7 +126,7 @@ const WelcomeScreen = ({ onComplete }: { onComplete: () => void }) => {
                 >
                   <Ionicons name="logo-github" size={16} color="#171A20" />
                   <Text className="ml-2 text-[13px] font-semibold text-ink">
-                    View on GitHub
+                    Ver no GitHub
                   </Text>
                 </TouchableOpacity>
               )}
@@ -154,7 +154,7 @@ const WelcomeScreen = ({ onComplete }: { onComplete: () => void }) => {
             activeOpacity={0.7}
           >
             <Text className="text-[15px] font-semibold text-ink-soft">
-              Back
+              Anterior
             </Text>
           </TouchableOpacity>
         )}
@@ -164,7 +164,7 @@ const WelcomeScreen = ({ onComplete }: { onComplete: () => void }) => {
           activeOpacity={0.85}
         >
           <Text className="text-[15px] font-semibold text-white">
-            {isLast ? 'Get started' : 'Next'}
+            {isLast ? 'Começar' : 'Seguinte'}
           </Text>
         </TouchableOpacity>
       </View>

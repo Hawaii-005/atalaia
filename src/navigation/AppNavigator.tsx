@@ -2,7 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
-import { HomeScreen, SettingsScreen } from '../screens';
+import { HomeScreen, SettingsScreen, HistoryScreen } from '../screens';
 import { PrinterDetailsScreen } from '../screens/PrinterDetailsScreen';
 import { AddEditPrinterScreen } from '../screens/AddEditPrinterScreen';
 import { DiscoveryScreen } from '../screens/DiscoveryScreen';
@@ -26,6 +26,7 @@ const PrintersStackNavigator = () => (
     <Stack.Screen name="AddEditPrinter" component={AddEditPrinterScreen} />
     <Stack.Screen name="Discovery" component={DiscoveryScreen} />
     <Stack.Screen name="WhereIsIp" component={WhereIsIpScreen} />
+    <Stack.Screen name="History" component={HistoryScreen} />
   </Stack.Navigator>
 );
 
@@ -88,21 +89,21 @@ export const AppNavigator = () => {
         name="Printers"
         component={PrintersStackNavigator}
         options={{
-          title: 'Printers',
+          title: 'Impressoras',
         }}
       />
       <Tab.Screen
         name="Camera"
         component={CameraScreen}
         options={{
-          title: 'Camera',
+          title: 'Câmara',
         }}
       />
       <Tab.Screen
         name="Settings"
         component={SettingsScreen}
         options={{
-          title: 'Settings',
+          title: 'Definições',
         }}
       />
     </Tab.Navigator>

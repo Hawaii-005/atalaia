@@ -36,11 +36,11 @@ const STATUS_DOT: { [key in ConnectionStatus]: string } = {
 };
 
 const STATUS_LABEL: { [key in ConnectionStatus]: string } = {
-  connected: 'Connected',
-  connecting: 'Connecting',
-  disconnected: 'Offline',
-  error: 'Error',
-  timeout: 'Timeout',
+  connected: 'Ligada',
+  connecting: 'A ligar',
+  disconnected: 'Desligada',
+  error: 'Erro',
+  timeout: 'Tempo esgotado',
 };
 
 export const PrinterCard = ({
@@ -85,14 +85,14 @@ export const PrinterCard = ({
     readablePrintStatus === 'idle'
       ? STATUS_LABEL[printer.connectionStatus]
       : readablePrintStatus === 'completed'
-        ? 'Print completed'
+        ? 'Impressão concluída'
         : readablePrintStatus === 'preparing'
-          ? 'Preparing'
+          ? 'A preparar'
           : readablePrintStatus === 'paused'
-            ? 'Paused'
+            ? 'Em pausa'
             : readablePrintStatus === 'stopped'
-              ? 'Stopped'
-              : 'Printing';
+              ? 'Parada'
+              : 'A imprimir';
 
   return (
     <TouchableOpacity
@@ -143,9 +143,9 @@ export const PrinterCard = ({
       {isConnected && showTemps && (
         <View className="flex-row mt-4">
           {[
-            { label: 'Nozzle', value: nozzleTemp, target: targetNozzleTemp },
-            { label: 'Bed', value: bedTemp, target: targetBedTemp },
-            { label: 'Chamber', value: boxTemp, target: targetBoxTemp },
+            { label: 'Bico', value: nozzleTemp, target: targetNozzleTemp },
+            { label: 'Mesa', value: bedTemp, target: targetBedTemp },
+            { label: 'Câmara', value: boxTemp, target: targetBoxTemp },
           ].map((tile, index) => (
             <View
               key={tile.label}
@@ -170,18 +170,18 @@ export const PrinterCard = ({
         <View className="mt-4 pt-4 border-t border-line">
           <Text className="text-[13px] font-semibold text-ink" numberOfLines={1}>
             {isPrinting
-              ? formatTextMaxEllipsis(filename, 34) || 'Printing'
+              ? formatTextMaxEllipsis(filename, 34) || 'A imprimir'
               : statusText}
           </Text>
 
           {totalLayer > 0 && (
             <View className="flex-row justify-between mt-1">
               <Text className="text-xs text-ink-muted">
-                Layer {currentLayer}/{totalLayer}
+                Camada {currentLayer}/{totalLayer}
               </Text>
               <Text className="text-xs text-ink-muted">
                 {totalTicks > 0
-                  ? `${formatTicksToReadableTime(totalTicks - currentTicks)} left`
+                  ? `${formatTicksToReadableTime(totalTicks - currentTicks)} restantes`
                   : ''}
               </Text>
             </View>

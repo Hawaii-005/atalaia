@@ -27,10 +27,10 @@ interface FormErrors {
 const validationSchema = yup.object().shape({
   printerName: yup
     .string()
-    .required('Printer name is required')
-    .min(2, 'At least 2 characters')
-    .max(50, 'Less than 50 characters'),
-  ipAddress: yup.string().required('IP address is required'),
+    .required('O nome da impressora é obrigatório')
+    .min(2, 'Pelo menos 2 caracteres')
+    .max(50, 'Menos de 50 caracteres'),
+  ipAddress: yup.string().required('O endereço IP é obrigatório'),
 });
 
 export const AddEditPrinterScreen = () => {
@@ -87,8 +87,8 @@ export const AddEditPrinterScreen = () => {
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
       <Header
-        title="Add Printer"
-        subtitle="Manual setup"
+        title="Adicionar impressora"
+        subtitle="Configuração manual"
         onBack={() => navigation.goBack()}
       />
 
@@ -99,11 +99,11 @@ export const AddEditPrinterScreen = () => {
       >
         <View className="rounded-xl2 border border-line bg-white p-4">
           <Text className="text-[10px] tracking-widest font-semibold text-ink-soft">
-            PRINTER
+            IMPRESSORA
           </Text>
 
           <Text className="mt-4 mb-1.5 text-[12px] font-medium text-ink-soft">
-            Name
+            Nome
           </Text>
           <TextInput
             className={fieldClass('printerName')}
@@ -124,14 +124,14 @@ export const AddEditPrinterScreen = () => {
 
           <View className="mt-4 flex-row items-center justify-between mb-1.5">
             <Text className="text-[12px] font-medium text-ink-soft">
-              IP address or hostname
+              Endereço IP ou nome do anfitrião
             </Text>
             <TouchableOpacity
               onPress={() => navigation.navigate('WhereIsIp')}
               activeOpacity={0.7}
             >
               <Text className="text-[12px] font-semibold text-brand">
-                Where is this?
+                Onde encontrar?
               </Text>
             </TouchableOpacity>
           </View>
@@ -154,7 +154,7 @@ export const AddEditPrinterScreen = () => {
             </Text>
           ) : (
             <Text className="mt-1.5 text-[11px] text-ink-muted">
-              Find it on the printer screen: Settings → Network.
+              Encontra-o no ecrã da impressora: Definições → Rede.
             </Text>
           )}
         </View>
@@ -168,7 +168,7 @@ export const AddEditPrinterScreen = () => {
           }`}
         >
           <Text className="text-[15px] font-semibold text-white">
-            {isSubmitting ? 'Saving…' : 'Save printer'}
+            {isSubmitting ? 'A guardar…' : 'Guardar impressora'}
           </Text>
         </TouchableOpacity>
 
@@ -179,7 +179,7 @@ export const AddEditPrinterScreen = () => {
         >
           <Ionicons name="wifi" size={16} color="#3F444D" />
           <Text className="ml-2 text-[13px] font-semibold text-ink-soft">
-            Scan the network instead
+            Analisar a rede
           </Text>
         </TouchableOpacity>
       </ScrollView>

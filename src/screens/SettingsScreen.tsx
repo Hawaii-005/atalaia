@@ -160,25 +160,31 @@ export const SettingsScreen = () => {
         await Linking.openURL(url);
       }
     } catch {
-      Alert.alert('Error', 'Could not open the link.');
+      Alert.alert('Erro', 'Não foi possível abrir a ligação.');
     }
   };
 
   const handleResetWelcomeFlow = () => {
     Alert.alert(
-      'Reset welcome flow',
-      'The welcome screens will appear again the next time you open the app.',
+      'Reiniciar fluxo de boas-vindas',
+      'Os ecrãs de boas-vindas aparecem novamente da próxima vez que abrir a aplicação.',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
-          text: 'Reset',
+          text: 'Reiniciar',
           style: 'destructive',
           onPress: async () => {
             try {
               await AsyncStorage.removeItem('hasLaunched');
-              Alert.alert('Done', 'The welcome flow was reset.');
+              Alert.alert(
+                'Concluído',
+                'O fluxo de boas-vindas foi reiniciado.'
+              );
             } catch {
-              Alert.alert('Error', 'Could not reset the welcome flow.');
+              Alert.alert(
+                'Erro',
+                'Não foi possível reiniciar o fluxo de boas-vindas.'
+              );
             }
           },
         },
@@ -187,23 +193,23 @@ export const SettingsScreen = () => {
   };
 
   const options: { key: ThemeOption; label: string }[] = [
-    { key: 'light', label: 'Light' },
-    { key: 'dark', label: 'Dark' },
-    { key: 'system', label: 'System' },
+    { key: 'light', label: 'Claro' },
+    { key: 'dark', label: 'Escuro' },
+    { key: 'system', label: 'Sistema' },
   ];
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
-      <Header title="Settings" subtitle="Preferences and about" />
+      <Header title="Definições" subtitle="Preferências e sobre" />
 
       <ScrollView
         className="flex-1 bg-canvas"
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
-        <Section title="PREFERENCES">
+        <Section title="PREFERÊNCIAS">
           <View className="px-4 py-4">
-            <Text className="text-[14px] font-medium text-ink">Theme</Text>
+            <Text className="text-[14px] font-medium text-ink">Tema</Text>
             <View className="mt-3 flex-row rounded-xl bg-canvas-sunken p-1">
               {options.map(option => {
                 const active = theme === option.key;
@@ -233,74 +239,87 @@ export const SettingsScreen = () => {
 
           <Row
             icon="time-outline"
-            label="Refresh interval"
+            label="Intervalo de actualização"
             value={`${Math.round(statusIntervalMs / 1000)}s`}
             onPress={() =>
-              Alert.alert('Refresh interval', 'How often to ask the printer for status', [
-                { text: '5 seconds', onPress: () => setStatusInterval(5000) },
-                { text: '15 seconds', onPress: () => setStatusInterval(15000) },
-                { text: '30 seconds', onPress: () => setStatusInterval(30000) },
-                { text: 'Cancelar', style: 'cancel' },
-              ])
+              Alert.alert(
+                'Intervalo de actualização',
+                'Com que frequência pedir o estado à impressora',
+                [
+                  {
+                    text: '5 segundos',
+                    onPress: () => setStatusInterval(5000),
+                  },
+                  {
+                    text: '15 segundos',
+                    onPress: () => setStatusInterval(15000),
+                  },
+                  {
+                    text: '30 segundos',
+                    onPress: () => setStatusInterval(30000),
+                  },
+                  { text: 'Cancelar', style: 'cancel' },
+                ]
+              )
             }
             last
           />
         </Section>
 
-        <Section title="NOTIFICATIONS">
+        <Section title="NOTIFICAÇÕES">
           <SwitchRow
             icon="checkmark-circle-outline"
-            label="Print finished"
-            description="When a print completes"
+            label="Impressão concluída"
+            description="Quando uma impressão termina"
             value={notificationPrefs.finished}
             onChange={value => updateNotificationPref('finished', value)}
           />
           <SwitchRow
             icon="pause-circle-outline"
-            label="Paused or stopped"
-            description="When a print is paused or cancelled"
+            label="Em pausa ou interrompida"
+            description="Quando uma impressão fica em pausa ou é cancelada"
             value={notificationPrefs.paused}
             onChange={value => updateNotificationPref('paused', value)}
           />
           <SwitchRow
             icon="trending-up-outline"
-            label="Progress milestones"
-            description="At 50% and 90%"
+            label="Marcos de progresso"
+            description="Aos 50% e aos 90%"
             value={notificationPrefs.milestones}
             onChange={value => updateNotificationPref('milestones', value)}
           />
           <SwitchRow
             icon="cloud-offline-outline"
-            label="Printer offline"
-            description="If it drops off mid-print"
+            label="Impressora desligada"
+            description="Se se desligar a meio de uma impressão"
             value={notificationPrefs.offline}
             onChange={value => updateNotificationPref('offline', value)}
           />
           <Row
             icon="notifications-outline"
-            label="Send a test notification"
+            label="Enviar uma notificação de teste"
             onPress={async () => {
               const granted = await prepareNotifications();
               if (!granted) {
                 Alert.alert(
-                  'Notifications blocked',
-                  'Allow notifications for CC Tool in Android settings.'
+                  'Notificações bloqueadas',
+                  'Permita as notificações da CC Tool nas definições do Android.'
                 );
                 return;
               }
               await notify(
-                'Print finished',
-                'Centauri Carbon completed your test print.'
+                'Impressão concluída',
+                'A Centauri Carbon concluiu a sua impressão de teste.'
               );
             }}
             last
           />
         </Section>
 
-        <Section title="ABOUT">
+        <Section title="SOBRE">
           <Row
             icon="information-circle-outline"
-            label="App version"
+            label="Versão da aplicação"
             value={Constants.expoConfig?.version || '1.2.1'}
           />
           <Row
@@ -312,31 +331,27 @@ export const SettingsScreen = () => {
           />
           <Row
             icon="bug-outline"
-            label="Report an issue"
+            label="Comunicar um problema"
             onPress={() =>
               openUrl('https://github.com/WalkerFrederick/CC-Tool/issues')
             }
           />
-          <Row
-            icon="document-text-outline"
-            label="License"
-            value="MIT"
-            last
-          />
+          <Row icon="document-text-outline" label="Licença" value="MIT" last />
         </Section>
 
-        <Section title="MAINTENANCE">
+        <Section title="MANUTENÇÃO">
           <Row
             icon="refresh-outline"
-            label="Reset welcome flow"
+            label="Reiniciar fluxo de boas-vindas"
             onPress={handleResetWelcomeFlow}
             last
           />
         </Section>
 
         <Text className="mt-6 px-2 text-[11px] leading-[17px] text-ink-muted text-center">
-          CC Tool is an independent, community-made client for Elegoo printers.
-          Not affiliated with, endorsed by, or supported by Elegoo.
+          A CC Tool é uma aplicação independente, criada pela comunidade, para
+          impressoras Elegoo. Sem qualquer afiliação, apoio ou recomendação da
+          Elegoo.
         </Text>
       </ScrollView>
     </SafeAreaView>

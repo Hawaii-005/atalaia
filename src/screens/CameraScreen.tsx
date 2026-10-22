@@ -12,13 +12,27 @@ import { useKeepAwake } from 'expo-keep-awake';
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
 import { captureRef } from 'react-native-view-shot';
+import Svg, { Path } from 'react-native-svg';
+import { useGcodePreview } from '../hooks/useGcodePreview';
+import * as DocumentPicker from 'expo-document-picker';
+import { uploadGcode } from '../utils/gcodeUpload';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { Header } from '../components/Header';
+import type { ConnectionStatus } from '../types';
 
 const LIGHT_COMMAND = 403;
+
+// Etiquetas visíveis para o estado de ligação da impressora.
+const CONNECTION_LABEL: Record<ConnectionStatus, string> = {
+  connected: 'ligada',
+  connecting: 'a ligar',
+  disconnected: 'desligada',
+  error: 'com erro',
+  timeout: 'sem resposta',
+};
 
 export const CameraScreen = ({ navigation, route }: any) => {
   // Keep the display awake while the camera tab is open.
@@ -36,6 +50,8 @@ export const CameraScreen = ({ navigation, route }: any) => {
   const videoRef = useRef<View>(null);
   const [videoWidth, setVideoWidth] = useState(0);
   const [capturing, setCapturing] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadPercent, setUploadPercent] = useState(0);
 
   // Só este ecrã roda: ao abrir o modo cheio passa a horizontal e ao fechar
   // volta a portrait (a app está bloqueada em portrait no app.json).
@@ -147,25 +163,29 @@ export const CameraScreen = ({ navigation, route }: any) => {
 
   const handleStopPrint = useCallback(() => {
     if (!printer) return;
-    Alert.alert('Cancelar impressão', 'This stops the print and cannot be undone.', [
-      { text: 'Keep printing', style: 'cancel' },
-      {
-        text: 'Stop Print',
-        style: 'destructive',
-        onPress: () =>
-          sendCommand(printer.id, {
-            Id: '',
-            Data: {
-              Cmd: 130,
-              Data: {},
-              RequestID: `cancel-${Date.now()}`,
-              MainboardID: '',
-              TimeStamp: Date.now(),
-              From: 1,
-            },
-          }),
-      },
-    ]);
+    Alert.alert(
+      'Cancelar impressão',
+      'Esta ação interrompe a impressão e é irreversível.',
+      [
+        { text: 'Continuar a impressão', style: 'cancel' },
+        {
+          text: 'Parar impressão',
+          style: 'destructive',
+          onPress: () =>
+            sendCommand(printer.id, {
+              Id: '',
+              Data: {
+                Cmd: 130,
+                Data: {},
+                RequestID: `cancel-${Date.now()}`,
+                MainboardID: '',
+                TimeStamp: Date.now(),
+                From: 1,
+              },
+            }),
+        },
+      ]
+    );
   }, [printer, sendCommand]);
 
   const handleSnapshot = useCallback(async () => {
@@ -175,7 +195,10 @@ export const CameraScreen = ({ navigation, route }: any) => {
     try {
       const permission = await MediaLibrary.requestPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert('Gallery access needed', 'Allow photos to save snapshots.');
+        Alert.alert(
+          'É necessário acesso à galeria',
+          'Permita o acesso às fotografias para guardar as capturas.'
+        );
         return;
       }
 
@@ -189,9 +212,9 @@ export const CameraScreen = ({ navigation, route }: any) => {
 
       const uri = await captureRef(videoRef, { format: 'jpg', quality: 0.92 });
       await MediaLibrary.saveToLibraryAsync(uri);
-      Alert.alert('Saved', 'Snapshot saved to your gallery.');
+      Alert.alert('Guardado', 'Captura guardada na galeria.');
     } catch (error) {
-      Alert.alert('Could not capture', String(error));
+      Alert.alert('Não foi possível capturar', String(error));
     } finally {
       setCapturing(false);
       webViewRef.current?.injectJavaScript(
@@ -199,6 +222,32 @@ export const CameraScreen = ({ navigation, route }: any) => {
       );
     }
   }, [capturing]);
+
+  const handleUpload = useCallback(async () => {
+    if (!printer || uploading) {
+      return;
+    }
+    const picked = await DocumentPicker.getDocumentAsync({
+      copyToCacheDirectory: true,
+      multiple: false,
+    });
+    if (picked.canceled || !picked.assets?.length) {
+      return;
+    }
+    const asset = picked.assets[0];
+    setUploading(true);
+    setUploadPercent(0);
+    try {
+      await uploadGcode(printer.ipAddress, asset.uri, asset.name, progress => {
+        setUploadPercent(Math.round((progress.sent / progress.total) * 100));
+      });
+      Alert.alert('Enviado', `${asset.name} está na memória da impressora.`);
+    } catch (error) {
+      Alert.alert('Falhou o envio', String(error));
+    } finally {
+      setUploading(false);
+    }
+  }, [printer, uploading]);
 
   const toggleLight = useCallback(() => {
     if (!printer || !isConnected) {
@@ -238,7 +287,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
   </head>
   <body>
     <img id="stream" src="${url}" />
-    <div id="hint">connecting...</div>
+    <div id="hint">a ligar...</div>
     <script>
       (function () {
         var img = document.getElementById('stream');
@@ -248,13 +297,13 @@ export const CameraScreen = ({ navigation, route }: any) => {
         img.onload = function () { hint.style.display = 'none'; };
         img.onerror = function () {
           hint.style.display = 'block';
-          hint.textContent = 'stream lost - reconnecting...';
+          hint.textContent = 'fluxo de vídeo perdido - a religar...';
           clearTimeout(retry);
           retry = setTimeout(load, 2000);
         };
         clearTimeout(retry);
         retry = setTimeout(function () {
-          if (!img.naturalWidth) { hint.textContent = 'no video yet - retrying...'; load(); }
+          if (!img.naturalWidth) { hint.textContent = 'sem vídeo - a tentar novamente...'; load(); }
         }, 6000);
       })();
     </script>
@@ -285,10 +334,12 @@ export const CameraScreen = ({ navigation, route }: any) => {
           totalLayers: info.TotalLayer ?? 0,
           remaining:
             remainingHours > 0
-              ? `${remainingHours}h ${remainingMinutes}m left`
-              : `${remainingMinutes}m left`,
+              ? `${remainingHours}h ${remainingMinutes}m restantes`
+              : `${remainingMinutes}m restantes`,
         }
       : null;
+
+  const { preview } = useGcodePreview(printer?.ipAddress, job?.filename);
 
   if (!printer) {
     return (
@@ -297,12 +348,14 @@ export const CameraScreen = ({ navigation, route }: any) => {
         className="flex-1 bg-canvas items-center justify-center p-6"
       >
         <Ionicons name="videocam-off" size={48} color="#7C8088" />
-        <Text className="mt-3 text-ink text-center">No printer added yet.</Text>
+        <Text className="mt-3 text-ink text-center">
+          Ainda não há impressoras adicionadas.
+        </Text>
         <TouchableOpacity
           className="mt-4 bg-brand rounded-xl px-6 py-3"
           onPress={() => navigation?.navigate('Printers')}
         >
-          <Text className="text-white font-bold">GO TO PRINTERS</Text>
+          <Text className="text-white font-bold">IR PARA IMPRESSORAS</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -311,8 +364,8 @@ export const CameraScreen = ({ navigation, route }: any) => {
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
       <Header
-        title="Camera"
-        subtitle={isConnected ? 'Live view' : 'Printer offline'}
+        title="Câmara"
+        subtitle={isConnected ? 'Imagem em direto' : 'Impressora desligada'}
         rightAction={{ icon: 'refresh', onPress: restartStream }}
       />
 
@@ -385,8 +438,8 @@ export const CameraScreen = ({ navigation, route }: any) => {
               )}
               <Text className="text-white/70 mt-2 text-sm">
                 {printer.connectionStatus === 'connecting'
-                  ? 'Connecting to printer...'
-                  : `Printer ${printer.connectionStatus}`}
+                  ? 'A ligar à impressora...'
+                  : `Impressora ${CONNECTION_LABEL[printer.connectionStatus]}`}
               </Text>
             </View>
           )}
@@ -413,7 +466,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
             <View className="absolute top-3 left-3 bg-black/55 rounded-full px-2.5 py-1 flex-row items-center">
               <View className="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5" />
               <Text className="text-white text-[10px] font-bold tracking-widest">
-                LIVE
+                EM DIRETO
               </Text>
             </View>
           )}
@@ -428,7 +481,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
               {printer.printerName}
             </Text>
             <Text className="text-xs text-ink-muted mt-0.5">
-              {isConnected ? 'Connected' : 'Offline'} · {printer.ipAddress}
+              {isConnected ? 'Ligada' : 'Desligada'} · {printer.ipAddress}
             </Text>
           </View>
 
@@ -449,7 +502,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
                 lightOn ? 'text-ink' : 'text-ink-soft'
               }`}
             >
-              {lightOn ? 'LIGHT ON' : 'LIGHT OFF'}
+              {lightOn ? 'LUZ LIGADA' : 'LUZ DESLIGADA'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -457,7 +510,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
         <View className="flex-row mt-4">
           <View className="flex-1 bg-canvas-sunken rounded-xl py-3 items-center mr-2">
             <Text className="text-[10px] tracking-widest text-ink-soft font-semibold">
-              NOZZLE
+              BICO
             </Text>
             <Text className="text-xl font-bold text-ink mt-1">
               {nozzle}
@@ -466,7 +519,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
           </View>
           <View className="flex-1 bg-canvas-sunken rounded-xl py-3 items-center mr-2">
             <Text className="text-[10px] tracking-widest text-ink-soft font-semibold">
-              BED
+              MESA
             </Text>
             <Text className="text-xl font-bold text-ink mt-1">
               {bed}
@@ -475,7 +528,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
           </View>
           <View className="flex-1 bg-canvas-sunken rounded-xl py-3 items-center">
             <Text className="text-[10px] tracking-widest text-ink-soft font-semibold">
-              PROGRESS
+              PROGRESSO
             </Text>
             <Text className="text-xl font-bold text-ink mt-1">
               {progress > 0 ? `${progress}` : '—'}
@@ -494,18 +547,34 @@ export const CameraScreen = ({ navigation, route }: any) => {
                 className="text-[10px] tracking-widest text-ink-soft font-semibold"
                 numberOfLines={1}
               >
-                PRINTING
+                A IMPRIMIR
               </Text>
               <Text className="text-xs text-ink-soft font-semibold">
                 {job.remaining}
               </Text>
             </View>
-            <Text
-              className="text-sm font-semibold text-ink mt-2"
-              numberOfLines={1}
-            >
-              {job.filename}
-            </Text>
+            <View className="flex-row items-center mt-2">
+              <View className="w-14 h-14 rounded-lg bg-white border border-line items-center justify-center overflow-hidden mr-3">
+                {preview ? (
+                  <Svg viewBox="0 0 100 100" width={52} height={52}>
+                    <Path
+                      d={preview.path}
+                      stroke="#171A20"
+                      strokeWidth={0.6}
+                      fill="none"
+                    />
+                  </Svg>
+                ) : (
+                  <Ionicons name="cube-outline" size={18} color="#9AA0A6" />
+                )}
+              </View>
+              <Text
+                className="flex-1 text-sm font-semibold text-ink"
+                numberOfLines={2}
+              >
+                {job.filename}
+              </Text>
+            </View>
             <View className="h-1.5 rounded-full bg-line mt-3 overflow-hidden">
               <View
                 className="h-full rounded-full bg-brand"
@@ -514,7 +583,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
             </View>
             <View className="flex-row justify-between mt-2">
               <Text className="text-xs text-ink-muted">
-                Layer {job.layer}/{job.totalLayers}
+                Camada {job.layer}/{job.totalLayers}
               </Text>
               <View className="flex-row">
                 <TouchableOpacity
@@ -523,8 +592,8 @@ export const CameraScreen = ({ navigation, route }: any) => {
                 >
                   <Text className="text-[11px] font-semibold text-ink">
                     {printer?.status?.PrintInfo?.Status === 6
-                      ? 'Resume'
-                      : 'Pause'}
+                      ? 'Retomar'
+                      : 'Pausar'}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -532,7 +601,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
                   className="px-3 py-1.5 rounded-lg border border-line"
                 >
                   <Text className="text-[11px] font-semibold text-[#C62828]">
-                    Stop
+                    Parar
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -541,13 +610,25 @@ export const CameraScreen = ({ navigation, route }: any) => {
         ) : (
           <View className="mt-4 bg-canvas-sunken rounded-xl p-4">
             <Text className="text-xs text-ink-soft font-semibold tracking-widest">
-              IDLE
+              INATIVA
             </Text>
             <Text className="text-sm text-ink-muted mt-1">
-              No print running. The bed is clear.
+              Nenhuma impressão em curso. A mesa está livre.
             </Text>
           </View>
         )}
+
+        <TouchableOpacity
+          onPress={handleUpload}
+          disabled={uploading}
+          className="mt-3 rounded-xl border border-line py-3 items-center flex-row justify-center"
+          activeOpacity={0.7}
+        >
+          <Ionicons name="cloud-upload-outline" size={18} color="#3F444D" />
+          <Text className="ml-2 text-ink font-semibold text-[14px]">
+            {uploading ? `A enviar ${uploadPercent}%` : 'Enviar G-code'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <Modal
@@ -573,7 +654,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
           <View className="absolute top-4 left-4 flex-row items-center bg-black/55 rounded-full px-3 py-1.5">
             <View className="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5" />
             <Text className="text-white text-[10px] font-bold tracking-widest">
-              LIVE · {progress}%
+              EM DIRETO · {progress}%
             </Text>
           </View>
 

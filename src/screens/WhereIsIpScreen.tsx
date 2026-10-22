@@ -8,16 +8,15 @@ const WhereIsIpScreen = () => {
     <SafeAreaView className="flex-1 bg-canvas-sunken dark:bg-gray-900">
       <View className="flex-1 justify-center items-center p-8">
         <Text className="text-2xl font-bold text-ink dark:text-gray-100 text-center mt-5">
-          How to Find Your Printer&apos;s IP Address
+          Como Encontrar o Endereço IP da Sua Impressora
         </Text>
         <Text className="text-base text-ink-soft dark:text-gray-300 text-center mt-4 leading-6">
-          On the CC, you can find your printer&apos;s IP address by clicking the
-          &quot;Settings&quot; button. and pressing &quot;Network&quot; at the
-          top.
+          Na CC, encontra o endereço IP da sua impressora tocando no botão
+          &quot;Definições&quot; e depois em &quot;Rede&quot;, no topo.
         </Text>
         <Text className="text-base text-ink-soft dark:text-gray-300 text-center mt-4 leading-6">
-          Ensure your phone is connected to the same Wi-Fi network as your
-          printer!
+          Certifique-se de que o telemóvel está ligado à mesma rede Wi-Fi da
+          impressora!
         </Text>
       </View>
       <View className="p-4">
@@ -26,7 +25,7 @@ const WhereIsIpScreen = () => {
           className="bg-brand rounded-lg py-4"
         >
           <Text className="text-white text-center font-bold text-lg">
-            Add Printer
+            Adicionar impressora
           </Text>
         </TouchableOpacity>
       </View>

@@ -60,7 +60,7 @@ export const DiscoveryScreen = ({ navigation }: any) => {
       if (!mountedRef.current) {
         return;
       }
-      setErrorMessage(error?.message || 'Network scan failed.');
+      setErrorMessage(error?.message || 'A análise da rede falhou.');
       setScanState('error');
     }
   }, []);
@@ -90,29 +90,32 @@ export const DiscoveryScreen = ({ navigation }: any) => {
     if (action === 'update' && printer) {
       updatePrinterIp(printer.id, device.ip);
       Alert.alert(
-        'Printer updated',
-        `${device.name} is now at ${device.ip}. Reconnecting…`
+        'Impressora actualizada',
+        `${device.name} está agora em ${device.ip}. A restabelecer a ligação…`
       );
       return;
     }
     addPrinter(device.name, device.ip, device.mainboardId);
-    Alert.alert('Printer added', `${device.name} (${device.ip}) was added.`);
+    Alert.alert(
+      'Impressora adicionada',
+      `${device.name} (${device.ip}) foi adicionada.`
+    );
   };
 
   const scanning = scanState === 'scanning';
   const progress = total > 0 ? Math.min(scanned / total, 1) : 0;
 
   const statusLabel = scanning
-    ? `Scanning ${subnet || 'your network'}… ${scanned}/${total}`
+    ? `A analisar ${subnet || 'a sua rede'}… ${scanned}/${total}`
     : scanState === 'error'
       ? errorMessage
-      : `${found.length} printer${found.length === 1 ? '' : 's'} found`;
+      : `${found.length} impressora${found.length === 1 ? '' : 's'} encontrada${found.length === 1 ? '' : 's'}`;
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
       <Header
-        title="Find printers"
-        subtitle={subnet ? `${subnet}.0/24` : 'Local network'}
+        title="Encontrar impressoras"
+        subtitle={subnet ? `${subnet}.0/24` : 'Rede local'}
         onBack={() => navigation.goBack()}
       />
 
@@ -157,7 +160,8 @@ export const DiscoveryScreen = ({ navigation }: any) => {
           </View>
 
           <Text className="mt-3 text-[12px] leading-[18px] text-ink-muted">
-            Finds Elegoo printers that share your Wi-Fi. No IP typing needed.
+            Encontra impressoras Elegoo na mesma rede Wi-Fi. Não precisa de
+            escrever o IP.
           </Text>
 
           <TouchableOpacity
@@ -173,7 +177,7 @@ export const DiscoveryScreen = ({ navigation }: any) => {
                 scanning ? 'text-ink-muted' : 'text-white'
               }`}
             >
-              {scanning ? 'Scanning…' : 'Scan again'}
+              {scanning ? 'A analisar…' : 'Analisar novamente'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -181,7 +185,11 @@ export const DiscoveryScreen = ({ navigation }: any) => {
         {found.map(device => {
           const { action } = printerFor(device);
           const label =
-            action === 'added' ? 'ADDED' : action === 'update' ? 'UPDATE' : 'ADD';
+            action === 'added'
+              ? 'ADICIONADA'
+              : action === 'update'
+                ? 'ATUALIZAR'
+                : 'ADICIONAR';
           const disabled = action === 'added';
 
           return (
@@ -199,7 +207,7 @@ export const DiscoveryScreen = ({ navigation }: any) => {
                 </Text>
                 {action === 'update' && (
                   <Text className="mt-1 text-[11px] text-[#8A6100]">
-                    Known printer with a new IP
+                    Impressora conhecida com um novo IP
                   </Text>
                 )}
               </View>
@@ -226,9 +234,9 @@ export const DiscoveryScreen = ({ navigation }: any) => {
         {scanState === 'done' && found.length === 0 && (
           <View className="mt-4 rounded-xl2 bg-canvas-sunken p-4">
             <Text className="text-[13px] leading-[19px] text-ink-soft">
-              Nothing answered on this network. Check that the printer is on and
-              joined to the same Wi-Fi as the phone — not to its own setup
-              hotspot.
+              Nada respondeu nesta rede. Verifique se a impressora está ligada e
+              associada à mesma rede Wi-Fi que o telemóvel — e não ao seu
+              próprio ponto de acesso de configuração.
             </Text>
             <TouchableOpacity
               onPress={() => navigation.navigate('AddEditPrinter')}
@@ -236,7 +244,7 @@ export const DiscoveryScreen = ({ navigation }: any) => {
               className="mt-3"
             >
               <Text className="text-[13px] font-semibold text-brand">
-                Add it manually instead
+                Adicionar manualmente
               </Text>
             </TouchableOpacity>
           </View>

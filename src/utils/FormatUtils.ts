@@ -25,7 +25,7 @@ export const formatTimeAgo = (
   } else if (seconds > 5) {
     return `${seconds}s ago`;
   } else {
-    return 'Just now';
+    return 'Agora mesmo';
   }
 };
 

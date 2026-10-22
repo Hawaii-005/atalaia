@@ -16,8 +16,20 @@ import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { WebView } from 'react-native-webview';
 import { useRoute } from '@react-navigation/native';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
-import { formatTextMaxEllipsis } from '~/utils/FormatUtils';
-import { formatTicksToReadableTime } from '../utils/FormatUtils';
+import {
+  formatTextMaxEllipsis,
+  formatTicksToReadableTime,
+} from '~/utils/FormatUtils';
+import type { ConnectionStatus } from '../types';
+
+// Etiquetas visíveis para o estado de ligação da impressora.
+const CONNECTION_LABEL: { [key in ConnectionStatus]: string } = {
+  connected: 'Ligada',
+  connecting: 'A ligar',
+  disconnected: 'Desligada',
+  error: 'Erro',
+  timeout: 'Tempo esgotado',
+};
 
 export const PrinterDetailsScreen = ({ navigation }: any) => {
   const route = useRoute();
@@ -99,11 +111,11 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
     if (!printer) return;
     Alert.alert(
       'Cancelar impressão',
-      'This stops the print and cannot be undone.',
+      'Esta ação interrompe a impressão e é irreversível.',
       [
-        { text: 'Keep printing', style: 'cancel' },
+        { text: 'Continuar a impressão', style: 'cancel' },
         {
-          text: 'Stop Print',
+          text: 'Parar impressão',
           style: 'destructive',
           onPress: () =>
             sendCommand(printer.id, {
@@ -175,12 +187,12 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
   const handleDeletePrinter = () => {
     if (!printer) return;
     Alert.alert(
-      'Unlink printer',
-      `Remove ${printer.printerName}? This cannot be undone.`,
+      'Desassociar impressora',
+      `Remover ${printer.printerName}? Esta ação é irreversível.`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
-          text: 'Unlink',
+          text: 'Desassociar',
           style: 'destructive',
           onPress: () => {
             removePrinter(printer.id);
@@ -201,16 +213,16 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
   if (!printer) {
     return (
       <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
-        <Header title="Printer" onBack={() => navigation.goBack()} />
+        <Header title="Impressora" onBack={() => navigation.goBack()} />
         <View className="flex-1 items-center justify-center px-6">
           <Text className="text-ink-muted text-center">
-            This printer is no longer available.
+            Esta impressora já não está disponível.
           </Text>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             className="mt-4 rounded-xl2 bg-brand px-6 py-3"
           >
-            <Text className="text-white font-semibold">Back</Text>
+            <Text className="text-white font-semibold">Voltar</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -226,17 +238,17 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
 
   const temperatures = [
     {
-      label: 'NOZZLE',
+      label: 'BICO',
       value: printer.status?.TempOfNozzle ?? 0,
       target: printer.status?.TempTargetNozzle ?? 0,
     },
     {
-      label: 'BED',
+      label: 'MESA',
       value: printer.status?.TempOfHotbed ?? 0,
       target: printer.status?.TempTargetHotbed ?? 0,
     },
     {
-      label: 'CHAMBER',
+      label: 'CÂMARA',
       value: printer.status?.TempOfBox ?? 0,
       target: printer.status?.TempTargetBox ?? 0,
     },
@@ -245,19 +257,19 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
   const fanRows = [
     {
       key: 'model' as const,
-      label: 'Model fan',
+      label: 'Ventoinha do modelo',
       icon: 'cube-outline',
       speed: fanSpeeds.model,
     },
     {
       key: 'chamber' as const,
-      label: 'Chamber fan',
+      label: 'Ventoinha da câmara',
       icon: 'thermometer-outline',
       speed: fanSpeeds.chamber,
     },
     {
       key: 'side' as const,
-      label: 'Side fan',
+      label: 'Ventoinha lateral',
       icon: 'layers-outline',
       speed: fanSpeeds.side,
     },
@@ -271,8 +283,8 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
         title={formatTextMaxEllipsis(printer.printerName, 26)}
         subtitle={
           isConnected
-            ? `${printer.ipAddress} · Connected`
-            : printer.connectionStatus.toUpperCase()
+            ? `${printer.ipAddress} · Ligada`
+            : CONNECTION_LABEL[printer.connectionStatus].toUpperCase()
         }
         onBack={() => navigation.goBack()}
       />
@@ -315,7 +327,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
             <View className="flex-1 items-center justify-center">
               <Ionicons name="videocam-off" size={32} color="#7C8088" />
               <Text className="mt-2 text-[12px] text-white/60">
-                {isConnected ? 'Waiting for video' : 'Printer offline'}
+                {isConnected ? 'À espera do vídeo' : 'Impressora desligada'}
               </Text>
             </View>
           )}
@@ -324,7 +336,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
             <View className="absolute top-3 left-3 flex-row items-center rounded-full bg-black/55 px-2.5 py-1">
               <View className="w-1.5 h-1.5 rounded-full bg-[#FF4757] mr-1.5" />
               <Text className="text-white text-[10px] font-bold tracking-widest">
-                LIVE
+                EM DIRETO
               </Text>
             </View>
           )}
@@ -338,7 +350,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
           <View className="mt-4 rounded-xl2 border border-line bg-white p-4">
             <View className="flex-row items-start justify-between">
               <Text className="text-[10px] tracking-widest font-semibold text-ink-soft">
-                {printStatus === 6 ? 'PAUSED' : 'PRINTING'}
+                {printStatus === 6 ? 'EM PAUSA' : 'A IMPRIMIR'}
               </Text>
               <Text className="text-[26px] font-bold text-ink leading-none">
                 {progress}
@@ -353,7 +365,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
               numberOfLines={1}
               style={{ fontFamily: 'monospace' }}
             >
-              {info?.Filename || 'No file'}
+              {info?.Filename || 'Sem ficheiro'}
             </Text>
 
             <View className="mt-3 h-[5px] rounded-full bg-[#DCDCDC] overflow-hidden">
@@ -365,10 +377,10 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
 
             <View className="flex-row justify-between mt-2.5">
               <Text className="text-[12px] text-ink-muted">
-                Layer {info?.CurrentLayer ?? 0}/{info?.TotalLayer ?? 0}
+                Camada {info?.CurrentLayer ?? 0}/{info?.TotalLayer ?? 0}
               </Text>
               <Text className="text-[12px] text-ink-muted">
-                {remaining} left
+                {remaining} restantes
               </Text>
             </View>
 
@@ -385,7 +397,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                     color="#171A20"
                   />
                   <Text className="ml-1.5 text-[13px] font-semibold text-ink">
-                    {canResume ? 'Resume' : 'Pause'}
+                    {canResume ? 'Retomar' : 'Pausar'}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -396,7 +408,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
               >
                 <Ionicons name="stop" size={15} color="#C62828" />
                 <Text className="ml-1.5 text-[13px] font-semibold text-[#C62828]">
-                  Stop
+                  Parar
                 </Text>
               </TouchableOpacity>
             </View>
@@ -422,7 +434,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                 </Text>
               </Text>
               <Text className="text-[11px] text-ink-muted">
-                target {tile.target.toFixed(0)}°
+                alvo {tile.target.toFixed(0)}°
               </Text>
             </View>
           ))}
@@ -431,7 +443,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
         {/* Controls */}
         <View className="mt-4 rounded-xl2 border border-line bg-white">
           <Text className="px-4 pt-4 pb-1 text-[10px] tracking-widest font-semibold text-ink-soft">
-            CONTROLS
+            CONTROLOS
           </Text>
 
           {/* Light */}
@@ -445,7 +457,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                 />
               </View>
               <Text className="ml-3 text-[14px] font-medium text-ink">
-                Printer light
+                Luz da impressora
               </Text>
             </View>
             <Switch
@@ -512,15 +524,13 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
         {/* Printer */}
         <View className="mt-4 rounded-xl2 border border-line bg-white">
           <Text className="px-4 pt-4 pb-1 text-[10px] tracking-widest font-semibold text-ink-soft">
-            PRINTER
+            IMPRESSORA
           </Text>
           <View className="flex-row items-center justify-between px-4 py-3 border-t border-line">
             <View>
-              <Text className="text-[13px] font-medium text-ink">
-                Connection
-              </Text>
+              <Text className="text-[13px] font-medium text-ink">Ligação</Text>
               <Text className="text-[11px] text-ink-muted">
-                Direct over LAN · SDCP
+                Direta por LAN · SDCP
               </Text>
             </View>
             <Text className="text-[12px] text-ink-muted">
@@ -534,7 +544,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
           >
             <Ionicons name="trash-outline" size={16} color="#C62828" />
             <Text className="ml-2 text-[13px] font-semibold text-[#C62828]">
-              Unlink printer
+              Desassociar impressora
             </Text>
           </TouchableOpacity>
         </View>

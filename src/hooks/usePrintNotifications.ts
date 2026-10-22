@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { getPrintStatus, Printer, PrintStatus } from '../types';
+import { finishRecord, startRecord } from '../utils/printHistory';
 import {
   DEFAULT_PREFS,
   NotificationPrefs,
@@ -40,6 +41,27 @@ export const usePrintNotifications = (printers: Printer[]) => {
       const progress = info?.Progress ?? 0;
       const filename = info?.Filename || 'your print';
 
+      const nowPrinting = status === 'printing';
+      const wasPrinting = previous?.status === 'printing';
+
+      if (connected && nowPrinting && !wasPrinting) {
+        startRecord({
+          printerName: printer.printerName,
+          printerIp: printer.ipAddress,
+          filename,
+          totalLayers: info?.TotalLayer,
+          outcome: 'printing',
+        });
+      }
+
+      if (connected && !nowPrinting && wasPrinting) {
+        if (status === 'completed') {
+          finishRecord(printer.printerName, 'completed', info?.CurrentLayer);
+        } else if (status === 'stopped') {
+          finishRecord(printer.printerName, 'stopped', info?.CurrentLayer);
+        }
+      }
+
       if (previous) {
         // Connection lost mid-print.
         if (
@@ -49,8 +71,8 @@ export const usePrintNotifications = (printers: Printer[]) => {
           previous.status === 'printing'
         ) {
           notify(
-            'Printer offline',
-            `${printer.printerName} dropped off the network while printing.`,
+            'Impressora desligada',
+            `${printer.printerName} perdeu a ligação à rede a imprimir.`,
             { printerId: printer.id }
           );
         }
@@ -58,20 +80,20 @@ export const usePrintNotifications = (printers: Printer[]) => {
         if (connected && previous.status !== status) {
           if (status === 'completed' && prefs.finished) {
             notify(
-              'Print finished',
-              `${printer.printerName} completed ${filename}.`,
+              'Impressão terminada',
+              `${printer.printerName} concluiu ${filename}.`,
               { printerId: printer.id }
             );
           }
           if (status === 'paused' && prefs.paused) {
-            notify('Print paused', `${printer.printerName} paused ${filename}.`, {
+            notify('Impressão em pausa', `${printer.printerName} pausou ${filename}.`, {
               printerId: printer.id,
             });
           }
           if (status === 'stopped' && prefs.paused) {
             notify(
-              'Print stopped',
-              `${printer.printerName} stopped ${filename}.`,
+              'Impressão parada',
+              `${printer.printerName} parou ${filename}.`,
               { printerId: printer.id }
             );
           }
@@ -86,8 +108,8 @@ export const usePrintNotifications = (printers: Printer[]) => {
           MILESTONES.forEach(mark => {
             if (previous.progress < mark && progress >= mark) {
               notify(
-                `${mark}% printed`,
-                `${printer.printerName} reached ${mark}%.`,
+                `${mark}% impressos`,
+                `${printer.printerName} chegou aos ${mark}%.`,
                 { printerId: printer.id }
               );
             }
