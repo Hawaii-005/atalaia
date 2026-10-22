@@ -30,6 +30,7 @@ import {
   skipPreheatCommand,
   stopFilamentCommand,
   lightCommand,
+  fanCommand,
   printSpeedCommand,
   timelapseCommand,
   type SdcpCommand,
@@ -207,6 +208,25 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
     });
   };
 
+  const aplicarPreset = async (preset: (typeof PRESETS)[number]) => {
+    if (!printer) return;
+    const id = `${printer.printerName}-preset-${Date.now()}`;
+    setSpeedPercent(preset.pct);
+    setFanSpeeds(preset.fans);
+    try {
+      await request(printer.id, printSpeedCommand(preset.pct, { id }));
+      // As ventoinhas vão pelo mesmo caminho dos controlos manuais; o valor
+      // aplicado só é dado como certo quando a máquina responde Ack 0.
+      await request(printer.id, fanCommand(preset.fans, { id }));
+      const luzAgora = !!printer.status?.LightStatus?.SecondLight;
+      if (luzAgora !== preset.luz) {
+        await request(printer.id, lightCommand(preset.luz, { id }));
+      }
+    } catch (erro) {
+      Alert.alert('Comando recusado', mensagemDoErro(erro));
+    }
+  };
+
   const handleSpeedProfile = (percent: number) => {
     if (!printer) return;
     setSpeedPercent(percent);
@@ -364,6 +384,13 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
 
   const FAN_STEPS = [0, 25, 50, 75, 100];
 
+  // Presets por material: velocidade, ventoinhas e luz de uma vez.
+  const PRESETS = [
+    { id: 'pla', label: 'PLA', pct: 100, fans: { model: 100, side: 0, chamber: 0 }, luz: false },
+    { id: 'abs', label: 'ABS', pct: 130, fans: { model: 60, side: 0, chamber: 80 }, luz: true },
+    { id: 'silencioso', label: t('details.silencioso'), pct: 50, fans: { model: 50, side: 0, chamber: 0 }, luz: false },
+  ];
+
   const SPEED_PROFILES = [
     { label: t('details.silencioso'), percent: 50 },
     { label: t('details.normal'), percent: 100 },
@@ -384,6 +411,22 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
         }
         onBack={() => navigation.goBack()}
       />
+
+      {!isConnected && printer.status && (
+        <View className="mx-4 mb-1 rounded-xl2 border border-line bg-canvas-sunken px-3 py-2 flex-row items-center">
+          <Ionicons name="cloud-offline-outline" size={13} color={hexDe(tema.paleta.tintaSoft)} />
+          <Text className="ml-2 text-[11px] text-ink-soft">
+            {printer.lastUpdate
+              ? t('details.ultimoEstado', {
+                  hora: new Date(printer.lastUpdate).toLocaleTimeString('pt-PT', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  }),
+                })
+              : t('details.semLigacao')}
+          </Text>
+        </View>
+      )}
 
       <ScrollView
         className="flex-1 bg-canvas"
@@ -660,6 +703,21 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
               <Text className="text-[12px] font-semibold text-ink-soft">
                 {speedPercent}%
               </Text>
+            </View>
+            <View className="flex-row mt-2.5 ml-11">
+              {PRESETS.map(preset => (
+                <TouchableOpacity
+                  key={preset.id}
+                  disabled={!isConnected}
+                  onPress={() => aplicarPreset(preset)}
+                  activeOpacity={0.7}
+                  className="flex-1 mr-1.5 py-2 rounded-lg items-center bg-canvas-sunken border border-line"
+                >
+                  <Text className="text-[10px] font-semibold text-ink-soft" numberOfLines={1}>
+                    {preset.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
             <View className="flex-row mt-2.5 ml-11">
               {SPEED_PROFILES.map(profile => {

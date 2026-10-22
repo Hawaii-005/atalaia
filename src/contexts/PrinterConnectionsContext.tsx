@@ -19,6 +19,12 @@ import {
   PrinterOfflineError,
   PrinterTimeoutError,
 } from '../utils/errors';
+import {
+  pausePrintCommand,
+  resumePrintCommand,
+  stopPrintCommand,
+} from '../utils/commands';
+import * as Notifications from 'expo-notifications';
 
 interface PrinterConnectionsContextType {
   printers: Printer[];
@@ -898,6 +904,47 @@ export const PrinterConnectionsProvider = ({
       }),
     []
   );
+
+  // Botões dos avisos: agir sem abrir a app (com ela em segundo plano).
+  useEffect(() => {
+    const inscricao = Notifications.addNotificationResponseReceivedListener(
+      async resposta => {
+        const dados = resposta.notification.request.content.data as {
+          printerId?: string;
+        };
+        const printerId = dados?.printerId;
+        if (!printerId) return;
+        const acao = resposta.actionIdentifier;
+        try {
+          if (acao === 'PAUSAR') {
+            await request(
+              printerId,
+              pausePrintCommand({ id: `aviso-pausa-${Date.now()}` })
+            );
+          } else if (acao === 'RETOMAR') {
+            await request(
+              printerId,
+              resumePrintCommand({ id: `aviso-retoma-${Date.now()}` })
+            );
+          } else if (acao === 'PARAR') {
+            await request(
+              printerId,
+              stopPrintCommand({ id: `aviso-parar-${Date.now()}` })
+            );
+          }
+        } catch (erro) {
+          const texto =
+            erro instanceof Error ? erro.message : 'Comando não aceite.';
+          await Notifications.scheduleNotificationAsync({
+            content: { title: 'Comando recusado', body: texto },
+            trigger: null,
+          });
+        }
+      }
+    );
+    return () => inscricao.remove();
+  }, [request]);
+
 
   const sendCommand = (printerId: string, command: SdcpCommand<unknown>) => {
     // Erro de programação: rejeita já, sem tocar na rede.

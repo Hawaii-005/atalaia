@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { mensagemDoErro } from '../utils/errors';
-import { pausePrintCommand, stopPrintCommand } from '../utils/commands';
+import { lightCommand, pausePrintCommand, stopPrintCommand } from '../utils/commands';
 import {
   View,
   ScrollView,
@@ -99,6 +99,14 @@ export const HomeScreen = ({ navigation }: any) => {
     // se os ticks pararam). Espera pelo Ack e explica a recusa.
     try {
       await request(printerId, pausePrintCommand({ id: `pause-${Date.now()}` }));
+    } catch (erro) {
+      Alert.alert('Comando recusado', mensagemDoErro(erro));
+    }
+  };
+
+  const handleToggleLight = async (printerId: string, ligada: boolean) => {
+    try {
+      await request(printerId, lightCommand(!ligada));
     } catch (erro) {
       Alert.alert('Comando recusado', mensagemDoErro(erro));
     }
@@ -290,6 +298,15 @@ export const HomeScreen = ({ navigation }: any) => {
                   }
                   onStopPrint={() =>
                     handleStopPrint(printer.id, printer.printerName)
+                  }
+                  onOpenCamera={() =>
+                    navigation.navigate('Camera', { printerId: printer.id })
+                  }
+                  onToggleLight={() =>
+                    handleToggleLight(
+                      printer.id,
+                      !!printer.status?.LightStatus?.SecondLight
+                    )
                   }
                   onPress={() => handlePrinterPress(printer.id)}
                 />

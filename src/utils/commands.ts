@@ -408,3 +408,32 @@ export const printSpeedCommand = (
     `speed-${pct}-${Date.now()}`
   );
 };
+
+export const fanCommand = (
+  ventoinhas: { model: number; side: number; chamber: number },
+  opts: Emissao = {}
+): SdcpCommand<{
+  TargetFanSpeed: { ModelFan: number; AuxiliaryFan: number; BoxFan: number };
+}> => {
+  const limpar = (valor: number, nome: string) => {
+    const n = numeroValido(valor, nome);
+    if (!Number.isInteger(n) || n < 0 || n > 100) {
+      throw new CommandValidationError(
+        `${nome} tem de ser uma percentagem inteira entre 0 e 100.`
+      );
+    }
+    return n;
+  };
+  return construir(
+    403,
+    {
+      TargetFanSpeed: {
+        ModelFan: limpar(ventoinhas.model, 'ModelFan'),
+        AuxiliaryFan: limpar(ventoinhas.side, 'AuxiliaryFan'),
+        BoxFan: limpar(ventoinhas.chamber, 'BoxFan'),
+      },
+    },
+    opts,
+    `fan-${Date.now()}`
+  );
+};

@@ -109,15 +109,21 @@ export const usePrintNotifications = (printers: Printer[]) => {
             );
           }
           if (status === 'paused' && prefs.paused) {
-            notify('Impressão em pausa', `${printer.printerName} pausou ${filename}.`, {
-              printerId: printer.id,
-            });
+            notify(
+              'Impressão em pausa',
+              `${printer.printerName} pausou ${filename}.`,
+              { printerId: printer.id },
+              'em-pausa',
+              printer.ipAddress
+            );
           }
           if (status === 'stopped' && prefs.paused) {
             notify(
               'Impressão parada',
               `${printer.printerName} parou ${filename}.`,
-              { printerId: printer.id }
+              { printerId: printer.id },
+              'em-curso',
+              printer.ipAddress
             );
           }
         }

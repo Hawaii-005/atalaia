@@ -30,6 +30,8 @@ interface PrinterCardProps {
   onPrintControl?: () => void;
   onStopPrint?: () => void;
   showPrintControls?: boolean;
+  onToggleLight?: () => void;
+  onOpenCamera?: () => void;
 }
 
 const MEDALHA = 58;
@@ -58,6 +60,8 @@ export const PrinterCard = ({
   showPrintControls = false,
   onPrintControl,
   onStopPrint,
+  onToggleLight,
+  onOpenCamera,
 }: PrinterCardProps) => {
   const { tema } = useTheme();
   const [currentTime, setCurrentTime] = useState(Date.now());
@@ -68,6 +72,7 @@ export const PrinterCard = ({
   }, []);
 
   const status = printer.status;
+  const luzLigada = !!printer.status?.LightStatus?.SecondLight;
   const bedTemp = status?.TempOfHotbed || 0;
   const nozzleTemp = status?.TempOfNozzle || 0;
   const boxTemp = status?.TempOfBox || 0;
@@ -272,6 +277,33 @@ export const PrinterCard = ({
                     <Text className={`ml-1.5 text-[11px] ${TX_ACENTO}`}>
                       {canResume ? t('comum.retomar') : t('comum.pausar')}
                     </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+
+            {(onToggleLight || onOpenCamera) && (
+              <View className="flex-row">
+                {onToggleLight && (
+                  <TouchableOpacity
+                    onPress={onToggleLight}
+                    className={`${luzLigada ? BT_ACENTO : BT_NEUTRA} px-2.5 py-1.5 mr-2`}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons
+                      name={luzLigada ? 'bulb' : 'bulb-outline'}
+                      size={13}
+                      color={hexDe(luzLigada ? tema.paleta.acento : tema.paleta.tintaSoft)}
+                    />
+                  </TouchableOpacity>
+                )}
+                {onOpenCamera && (
+                  <TouchableOpacity
+                    onPress={onOpenCamera}
+                    className={`${BT_NEUTRA} px-2.5 py-1.5`}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="videocam-outline" size={13} color={hexDe(tema.paleta.tintaSoft)} />
                   </TouchableOpacity>
                 )}
               </View>
