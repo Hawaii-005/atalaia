@@ -9,6 +9,7 @@ import {
   FilesScreen,
   StatsScreen,
 } from '../screens';
+import { BancadaScreen } from '../screens/BancadaScreen';
 import { PrinterDetailsScreen } from '../screens/PrinterDetailsScreen';
 import { AddEditPrinterScreen } from '../screens/AddEditPrinterScreen';
 import { DiscoveryScreen } from '../screens/DiscoveryScreen';
@@ -51,7 +52,8 @@ const MonitorStackNavigator = () => (
       animation: 'none',
     }}
   >
-    <Stack.Screen name="MonitorHome" component={MonitorScreen} />
+    <Stack.Screen name="BancadaHome" component={BancadaScreen} />
+    <Stack.Screen name="MonitorLista" component={MonitorScreen} />
     <Stack.Screen name="Camera" component={CameraScreen} />
     <Stack.Screen name="Resina" component={ResinScreen} />
   </Stack.Navigator>
@@ -76,6 +78,22 @@ export const AppNavigator = () => {
           } else if (route.name === 'Monitor') {
             // A aba mostra vídeo quando há câmara e trabalho quando só há resina.
             const temCamera = printers.some(p => p.kind !== 'resin');
+            const temTrabalho = printers.some(p => {
+              const info = p.status?.PrintInfo;
+              if (!info?.Filename) return false;
+              return ![0, 7, 8, 9].includes(info.Status ?? 0);
+            });
+
+            if (temTrabalho) {
+              return (
+                <Ionicons
+                  name={focused ? 'time' : 'time-outline'}
+                  size={size}
+                  color={color}
+                />
+              );
+            }
+
             return (
               <Ionicons
                 name={

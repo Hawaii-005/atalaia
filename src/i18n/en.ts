@@ -399,6 +399,14 @@ const en = {
   'resina.restante': 'Remaining',
   'resina.camada': 'layer {x} / {y}',
   'resina.previaRotulo': 'Preview: {p}% printed',
+
+  'bancada.titulo': 'Bench',
+  'bancada.subtitulo': 'subtitle',
+  'bancada.semTrabalho': 'Nothing printing',
+  'bancada.verLista': 'See list',
+  'bancada.acabaPrimeiro': 'finishes first',
+  'bancada.fim': 'end',
+  'bancada.camada': 'layer {x}/{y}',
 } as const satisfies Record<keyof typeof pt, string>;
 
 export default en;

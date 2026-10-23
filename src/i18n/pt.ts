@@ -401,4 +401,12 @@ export default {
   'resina.restante': 'Restante',
   'resina.camada': 'camada {x} / {y}',
   'resina.previaRotulo': 'Pré-visualização: {p}% impresso',
+
+  'bancada.titulo': 'Bancada',
+  'bancada.subtitulo': 'subtitulo',
+  'bancada.semTrabalho': 'Sem trabalhos a correr',
+  'bancada.verLista': 'Ver lista',
+  'bancada.acabaPrimeiro': 'acaba primeiro',
+  'bancada.fim': 'fim',
+  'bancada.camada': 'camada {x}/{y}',
 } as const;
