@@ -151,7 +151,7 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
             uri={miniatura}
             progresso={progresso}
             estado={estadoPrevia}
-            altura={260}
+            altura={340}
             rotulo={t('resina.previaRotulo', { p: Math.round(progresso) })}
           />
         </View>
