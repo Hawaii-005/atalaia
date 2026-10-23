@@ -29,7 +29,8 @@ export const BancadaScreen = ({ navigation }: any) => {
       const info = printer.status?.PrintInfo;
       if (!info || !info.Filename) continue;
       
-      const isActive = ![0, 7, 8, 9].includes(info.Status ?? 0);
+      const estado = getPrintStatus(info.Status ?? 0);
+      const isActive = estado === 'printing' || estado === 'paused' || estado === 'preparing';
       if (!isActive) continue;
 
       const inicioTempo = agora.getTime() - (info.CurrentTicks * 1000);
@@ -109,7 +110,7 @@ export const BancadaScreen = ({ navigation }: any) => {
             {t('home.title')}
           </Text>
           <TouchableOpacity onPress={() => navigation.navigate('MonitorLista')}>
-            <Text className="text-[14px] font-semibold text-accent">
+            <Text className="text-[14px] font-semibold text-brand">
               {t('bancada.verLista')}
             </Text>
           </TouchableOpacity>
@@ -118,7 +119,10 @@ export const BancadaScreen = ({ navigation }: any) => {
         <View className="space-y-3">
           {ordenadas.map(p => {
             const info = p.status?.PrintInfo;
-            const isPrinting = info?.Filename && ![0, 7, 8, 9].includes(info.Status ?? 0);
+            const estadoActual = getPrintStatus(info?.Status ?? 0);
+            const isPrinting =
+              !!info?.Filename &&
+              (estadoActual === 'printing' || estadoActual === 'paused' || estadoActual === 'preparing');
             
             let estadoTexto = p.connectionStatus === 'connected' ? t('comum.ligada') : t('comum.desligada');
             if (p.connectionStatus === 'connected' && info?.Filename) {
@@ -144,6 +148,8 @@ export const BancadaScreen = ({ navigation }: any) => {
                 key={p.id}
                 activeOpacity={0.7}
                 onPress={() => aoTocar(p.id)}
+                accessibilityRole="button"
+                accessibilityLabel={`${p.printerName}, ${estadoTexto}`}
                 className="bg-card rounded-2xl p-4 border border-line flex-row items-center justify-between"
               >
                 <View className="flex-1">

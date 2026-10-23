@@ -401,7 +401,6 @@ const en = {
   'resina.previaRotulo': 'Preview: {p}% printed',
 
   'bancada.titulo': 'Bench',
-  'bancada.subtitulo': 'subtitle',
   'bancada.semTrabalho': 'Nothing printing',
   'bancada.verLista': 'See list',
   'bancada.acabaPrimeiro': 'finishes first',

@@ -21,6 +21,7 @@ import PrinterIcon from '../components/icons/PrinterIcon';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { hexDe } from '../theme/temas';
+import { getPrintStatus } from '../types';
 import { t } from '../i18n';
 
 const Tab = createBottomTabNavigator();
@@ -81,7 +82,8 @@ export const AppNavigator = () => {
             const temTrabalho = printers.some(p => {
               const info = p.status?.PrintInfo;
               if (!info?.Filename) return false;
-              return ![0, 7, 8, 9].includes(info.Status ?? 0);
+              const estado = getPrintStatus(info.Status ?? 0);
+              return estado === 'printing' || estado === 'paused' || estado === 'preparing';
             });
 
             if (temTrabalho) {

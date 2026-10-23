@@ -403,7 +403,6 @@ export default {
   'resina.previaRotulo': 'Pré-visualização: {p}% impresso',
 
   'bancada.titulo': 'Bancada',
-  'bancada.subtitulo': 'subtitulo',
   'bancada.semTrabalho': 'Sem trabalhos a correr',
   'bancada.verLista': 'Ver lista',
   'bancada.acabaPrimeiro': 'acaba primeiro',
