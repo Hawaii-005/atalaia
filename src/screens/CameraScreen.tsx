@@ -452,6 +452,16 @@ export const CameraScreen = ({ navigation, route, dentroDoMonitor }: any) => {
       {/* Cabeçalho discreto: etiqueta + estado */}
       <View className="flex-row items-center justify-between px-4 pt-1 pb-3">
         <View className="flex-row items-center">
+          {dentroDoMonitor ? null : (
+            <TouchableOpacity
+              onPress={() => navigation?.goBack()}
+              className="w-8 h-8 -ml-1 mr-1 items-center justify-center"
+              activeOpacity={0.7}
+              accessibilityLabel={t('details.voltar')}
+            >
+              <Ionicons name="chevron-back" size={20} color={hexDe(tema.paleta.tinta)} />
+            </TouchableOpacity>
+          )}
           <Text className="text-[10px] tracking-[2.4px] font-semibold text-ink-soft">
             {t('camera.title').toUpperCase()}
           </Text>
