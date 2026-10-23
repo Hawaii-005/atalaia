@@ -57,7 +57,10 @@ export const MonitorScreen = ({ navigation, route }: any) => {
       </View>
 
       {/* Lista de impressoras */}
-      <ScrollView contentContainerStyle={{ padding: 16, paddingTop: 4, paddingBottom: 96 }}>
+      <ScrollView
+        style={{ flex: 1, marginBottom: 40 }}
+        contentContainerStyle={{ padding: 16, paddingTop: 4, paddingBottom: 24 }}
+      >
         {ordenadas
           .filter(p => p.kind !== 'resin')
           .map(p => (
