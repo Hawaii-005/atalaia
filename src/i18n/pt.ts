@@ -379,6 +379,7 @@ export default {
   'monitor.trabalho': 'Trabalho',
   'monitor.trabalhoSub': 'O que a impressora de resina está a fazer, camada a camada.',
   'monitor.abrir': 'Abrir',
+  'monitor.ultimoDado': 'Último dado recebido {t}.',
   'monitor.semImpressoras': 'Sem impressoras ligadas. Adiciona uma em Impressoras.',
   'monitor.semResina': 'Ainda não há impressoras de resina ligadas.',
   'resina.erroMaquina':

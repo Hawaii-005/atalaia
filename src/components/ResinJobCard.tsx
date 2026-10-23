@@ -9,7 +9,7 @@ import {
   stopPrintCommand,
 } from '../utils/commands';
 import { mensagemDoErro } from '../utils/errors';
-import { formatTicksToReadableTime } from '../utils/FormatUtils';
+import { formatTicksToReadableTime, formatTimeAgo } from '../utils/FormatUtils';
 import { t } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
@@ -113,11 +113,12 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
           </View>
         </View>
         <View className="items-end">
+          {/* Sem ligação não há dados: "—" em vez de um 0% que parece real. */}
           <Text className="text-[28px] font-bold text-ink leading-8">
-            {Math.round(progresso)}%
+            {ligada ? `${Math.round(progresso)}%` : '—'}
           </Text>
           <Text className="text-[10px] text-ink-soft" style={{ fontFamily: 'monospace' }}>
-            {info?.CurrentLayer ?? 0}/{info?.TotalLayer ?? 0}
+            {ligada ? `${info?.CurrentLayer ?? 0}/${info?.TotalLayer ?? 0}` : '—'}
           </Text>
         </View>
       </View>
@@ -136,6 +137,15 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
       >
         {ficheiro || t('resina.mesaLivre')}
       </Text>
+
+      {/* Sem ligação, o que está no cartão é o último dado recebido — dizê-lo. */}
+      {!ligada && printer.lastUpdate ? (
+        <Text className="text-[11px] text-ink-soft mt-1">
+          {t('monitor.ultimoDado', {
+            t: formatTimeAgo(printer.lastUpdate, Date.now()),
+          })}
+        </Text>
+      ) : null}
 
       {(aImprimir || emPausa) && (
         <View className="flex-row justify-between mt-1">
