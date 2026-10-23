@@ -373,6 +373,7 @@ const en = {
   'resina.enviarDica': 'Sliced .goo or .ctb files for this machine. The printer fetches them over Wi-Fi.',
   'resina.escolher': 'Choose .goo / .ctb',
   'monitor.titulo': 'Monitor',
+  'monitor.subtitulo': '{n} printers online',
   'monitor.camara': 'Camera',
   'monitor.trabalho': 'Job',
   'monitor.trabalhoSub': 'What the resin printer is doing, layer by layer.',

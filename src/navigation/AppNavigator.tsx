@@ -14,6 +14,7 @@ import { AddEditPrinterScreen } from '../screens/AddEditPrinterScreen';
 import { DiscoveryScreen } from '../screens/DiscoveryScreen';
 import { MonitorScreen } from '../screens/MonitorScreen';
 import { ResinScreen } from '../screens/ResinScreen';
+import { CameraScreen } from '../screens/CameraScreen';
 import WhereIsIpScreen from '../screens/WhereIsIpScreen';
 import PrinterIcon from '../components/icons/PrinterIcon';
 import { useTheme } from '../contexts/ThemeContext';
@@ -39,6 +40,19 @@ const PrintersStackNavigator = () => (
     <Stack.Screen name="History" component={HistoryScreen} />
     <Stack.Screen name="Files" component={FilesScreen} />
     <Stack.Screen name="Stats" component={StatsScreen} />
+    <Stack.Screen name="Resina" component={ResinScreen} />
+  </Stack.Navigator>
+);
+
+const MonitorStackNavigator = () => (
+  <Stack.Navigator
+    screenOptions={{
+      headerShown: false,
+      animation: 'none',
+    }}
+  >
+    <Stack.Screen name="MonitorHome" component={MonitorScreen} />
+    <Stack.Screen name="Camera" component={CameraScreen} />
     <Stack.Screen name="Resina" component={ResinScreen} />
   </Stack.Navigator>
 );
@@ -118,7 +132,7 @@ export const AppNavigator = () => {
       />
       <Tab.Screen
         name="Monitor"
-        component={MonitorScreen}
+        component={MonitorStackNavigator}
         options={{
           title: t('monitor.titulo'),
         }}

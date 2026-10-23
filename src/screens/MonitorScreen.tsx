@@ -1,44 +1,41 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import React, { useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScrollView, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
-import { CameraScreen } from './CameraScreen';
-import { WorkScreen } from './WorkScreen';
+import { PrinterCard } from '../components/PrinterCard';
+import { ResinJobCard } from '../components/ResinJobCard';
 import { t } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 
-type Aba = 'camara' | 'trabalho';
-
 /**
- * Aba fixa do meio: mostra o que a impressora tem para mostrar.
- * Com câmara (Centauri) → vídeo; sem câmara (Saturn) → trabalho. Com as duas
- * famílias ligadas aparecem os dois botões e o utilizador escolhe. A posição da
- * aba nunca muda, para não se perder o sítio quando uma impressora sai da rede.
+ * Aba Monitor: mostra todas as impressoras, uma por bloco, ligadas primeiro.
+ * Cada bloco abre o ecrã próprio daquela máquina (Câmara ou Resina).
+ * Sem chips de seleção — as máquinas distinguem-se pelo conteúdo.
  */
 export const MonitorScreen = ({ navigation, route }: any) => {
   const { tema } = useTheme();
   const { printers } = usePrinterConnections();
 
-  const temCamera = useMemo(
-    () => printers.some(p => p.kind !== 'resin'),
-    [printers]
-  );
-  const temResina = useMemo(
-    () => printers.some(p => p.kind === 'resin'),
+  const ligadas = useMemo(
+    () => printers.filter(p => p.connectionStatus === 'connected'),
     [printers]
   );
 
-  const [aba, setAba] = useState<Aba>(temCamera ? 'camara' : 'trabalho');
+  // Mostram-se todas as máquinas; as ligadas primeiro. Esconder as que estão
+  // offline deixava a aba vazia sem explicação quando a rede cai.
+  const ordenadas = useMemo(
+    () =>
+      [...printers].sort((a, b) => {
+        const pa = a.connectionStatus === 'connected' ? 0 : 1;
+        const pb = b.connectionStatus === 'connected' ? 0 : 1;
+        return pa - pb;
+      }),
+    [printers]
+  );
 
-  // Se a impressora que dava a aba actual desaparecer, cai para a outra.
-  useEffect(() => {
-    if (aba === 'camara' && !temCamera && temResina) setAba('trabalho');
-    if (aba === 'trabalho' && !temResina && temCamera) setAba('camara');
-  }, [aba, temCamera, temResina]);
-
-  if (!temCamera && !temResina) {
+  if (printers.length === 0) {
     return (
       <View className="flex-1 bg-canvas items-center justify-center px-8">
         <Ionicons name="eye-off-outline" size={28} color={hexDe(tema.paleta.tintaSoft)} />
@@ -49,48 +46,38 @@ export const MonitorScreen = ({ navigation, route }: any) => {
     );
   }
 
-  const escolhida: Aba = !temCamera ? 'trabalho' : !temResina ? 'camara' : aba;
-
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
-      {temCamera && temResina ? (
-        <View className="flex-row px-4 pt-2 pb-1">
-          {(['camara', 'trabalho'] as Aba[]).map(nome => {
-            const activa = escolhida === nome;
-            return (
-              <TouchableOpacity
-                key={nome}
-                onPress={() => setAba(nome)}
-                activeOpacity={0.8}
-                className={`flex-row items-center px-3 py-2 mr-2 rounded-full border ${
-                  activa ? 'bg-brand/15 border-brand' : 'border-line'
-                }`}
-              >
-                <Ionicons
-                  name={nome === 'camara' ? 'videocam' : 'layers'}
-                  size={13}
-                  color={hexDe(activa ? tema.paleta.acentoTexto : tema.paleta.tintaSoft)}
-                />
-                <Text
-                  className={`ml-2 text-[12px] ${
-                    activa ? 'text-ink font-semibold' : 'text-ink-soft'
-                  }`}
-                >
-                  {nome === 'camara' ? t('monitor.camara') : t('monitor.trabalho')}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      ) : null}
-
-      <View className="flex-1">
-        {escolhida === 'camara' ? (
-          <CameraScreen navigation={navigation} route={route} dentroDoMonitor />
-        ) : (
-          <WorkScreen navigation={navigation} route={route} dentroDoMonitor />
-        )}
+      {/* Cabeçalho */}
+      <View className="px-4 pt-3 pb-2">
+        <Text className="text-[22px] font-bold text-ink">{t('monitor.titulo')}</Text>
+        <Text className="text-[12px] text-ink-soft mt-0.5">
+          {t('monitor.subtitulo', { n: ligadas.length })}
+        </Text>
       </View>
+
+      {/* Lista de impressoras */}
+      <ScrollView contentContainerStyle={{ padding: 16, paddingTop: 4 }}>
+        {ordenadas
+          .filter(p => p.kind !== 'resin')
+          .map(p => (
+            <PrinterCard
+              key={p.id}
+              printer={p}
+              showTemps
+              onOpenCamera={() => navigation.navigate('Camera', { printerId: p.id })}
+            />
+          ))}
+        {ordenadas
+          .filter(p => p.kind === 'resin')
+          .map(p => (
+            <ResinJobCard
+              key={p.id}
+              printer={p}
+              onAbrir={() => navigation.navigate('Resina', { printerId: p.id })}
+            />
+          ))}
+      </ScrollView>
     </SafeAreaView>
   );
 };

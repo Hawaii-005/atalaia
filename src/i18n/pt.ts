@@ -375,6 +375,7 @@ export default {
   'resina.enviarDica': 'Ficheiros .goo ou .ctb fatiados para esta máquina. A impressora vai buscá-los por Wi-Fi.',
   'resina.escolher': 'Escolher .goo / .ctb',
   'monitor.titulo': 'Monitor',
+  'monitor.subtitulo': '{n} máquinas ligadas',
   'monitor.camara': 'Câmara',
   'monitor.trabalho': 'Trabalho',
   'monitor.trabalhoSub': 'O que a impressora de resina está a fazer, camada a camada.',
