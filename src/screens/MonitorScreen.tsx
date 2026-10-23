@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { PrinterCard } from '../components/PrinterCard';
@@ -49,13 +49,25 @@ export const MonitorScreen = ({ navigation, route }: any) => {
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-canvas" style={{ flex: 1 }}>
       {/* Cabeçalho */}
-      <View className="px-4 pt-3 pb-2">
-        <Text className="text-[22px] font-bold text-ink">{t('monitor.titulo')}</Text>
-        <Text className="text-[12px] text-ink-soft mt-0.5">
-          {ligadas.length === 1
-            ? t('monitor.subtitulo1')
-            : t('monitor.subtitulo', { n: ligadas.length })}
-        </Text>
+      <View className="px-4 pt-3 pb-2 flex-row items-center">
+        {navigation.canGoBack() && (
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            accessibilityRole="button"
+            accessibilityLabel={t('comum.voltar')}
+            className="mr-3 h-9 w-9 items-center justify-center rounded-full border border-line bg-card"
+          >
+            <Ionicons name="chevron-back" size={20} color={hexDe(tema.paleta.tinta)} />
+          </TouchableOpacity>
+        )}
+        <View className="flex-1">
+          <Text className="text-[22px] font-bold text-ink">{t('monitor.titulo')}</Text>
+          <Text className="text-[12px] text-ink-soft mt-0.5">
+            {ligadas.length === 1
+              ? t('monitor.subtitulo1')
+              : t('monitor.subtitulo', { n: ligadas.length })}
+          </Text>
+        </View>
       </View>
 
       {/* Lista de impressoras */}

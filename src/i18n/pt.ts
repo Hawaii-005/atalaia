@@ -3,6 +3,7 @@ export default {
   // ——— Comum: verbos, estados e alertas partilhados por várias telas
   'comum.erro': 'Erro',
   'comum.erroLigacao': 'Não foi possível abrir a ligação.',
+  'comum.voltar': 'Voltar',
   'comum.agoraMesmo': 'Agora mesmo',
   'comum.ligada': 'Ligada',
   'comum.aLigar': 'A ligar',

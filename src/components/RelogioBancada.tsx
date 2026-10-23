@@ -88,7 +88,8 @@ export function RelogioBancada({
 
   // renderizar trabalhos como arcos
   const elementosTrabalhos = trabalhos.map((trabalho, indice) => {
-    const raioArco = tamanho * (0.36 - indice * 0.05);
+    // mínimo de 12 % para que muitos trabalhos não colapsem no centro
+    const raioArco = Math.max(tamanho * 0.12, tamanho * (0.36 - indice * 0.05));
     const path = arcoSvg(
       trabalho.inicio,
       trabalho.fim,
@@ -102,8 +103,12 @@ export function RelogioBancada({
     // ponto no fim do arco para o círculo e rótulo
     const [xFim, yFim] = pontoHora(trabalho.fim, raioArco, centro, centro);
 
-    // rótulo junto ao fim
+    // rótulo junto ao fim, encostado para dentro do mostrador
     const corTexto = hexDe(paleta.tintaSoft);
+    const nomeCurto =
+      trabalho.nome.length > 13 ? `${trabalho.nome.slice(0, 12)}…` : trabalho.nome;
+    const xEtiqueta = Math.min(Math.max(xFim, 30), tamanho - 30);
+    const yEtiqueta = Math.max(14, yFim - 12);
 
     return (
       <G
@@ -122,13 +127,13 @@ export function RelogioBancada({
         />
         <Circle cx={xFim} cy={yFim} r={4} fill={trabalho.cor} />
         <Text
-          x={xFim}
-          y={yFim - 12}
+          x={xEtiqueta}
+          y={yEtiqueta}
           fontSize={11}
           fill={corTexto}
           textAnchor="middle"
         >
-          {trabalho.nome}
+          {nomeCurto}
         </Text>
       </G>
     );

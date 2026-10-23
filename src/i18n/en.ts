@@ -6,6 +6,7 @@ const en = {
   // ——— Comum: verbos, estados e alertas partilhados por várias telas
   'comum.erro': 'Error',
   'comum.erroLigacao': "Couldn't open the link.",
+  'comum.voltar': 'Back',
   'comum.agoraMesmo': 'Just now',
   'comum.ligada': 'Connected',
   'comum.aLigar': 'Connecting',
