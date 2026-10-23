@@ -374,6 +374,7 @@ const en = {
   'resina.escolher': 'Choose .goo / .ctb',
   'monitor.titulo': 'Monitor',
   'monitor.subtitulo': '{n} printers online',
+  'monitor.subtitulo1': '1 printer online',
   'monitor.camara': 'Camera',
   'monitor.trabalho': 'Job',
   'monitor.trabalhoSub': 'What the resin printer is doing, layer by layer.',

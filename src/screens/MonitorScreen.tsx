@@ -52,7 +52,9 @@ export const MonitorScreen = ({ navigation, route }: any) => {
       <View className="px-4 pt-3 pb-2">
         <Text className="text-[22px] font-bold text-ink">{t('monitor.titulo')}</Text>
         <Text className="text-[12px] text-ink-soft mt-0.5">
-          {t('monitor.subtitulo', { n: ligadas.length })}
+          {ligadas.length === 1
+            ? t('monitor.subtitulo1')
+            : t('monitor.subtitulo', { n: ligadas.length })}
         </Text>
       </View>
 

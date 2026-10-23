@@ -376,6 +376,7 @@ export default {
   'resina.escolher': 'Escolher .goo / .ctb',
   'monitor.titulo': 'Monitor',
   'monitor.subtitulo': '{n} máquinas ligadas',
+  'monitor.subtitulo1': '1 máquina ligada',
   'monitor.camara': 'Câmara',
   'monitor.trabalho': 'Trabalho',
   'monitor.trabalhoSub': 'O que a impressora de resina está a fazer, camada a camada.',
