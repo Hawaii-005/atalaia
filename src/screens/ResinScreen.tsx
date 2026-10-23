@@ -29,8 +29,8 @@ import {
   BT_NEUTRA,
   BT_PERIGO,
   TX_ACENTO,
-  TX_NEUTRO,
   TX_PERIGO,
+  TX_NEUTRO,
 } from '../theme/botoes';
 
 const formatoTamanho = (bytes: number) => {
@@ -59,6 +59,8 @@ export const ResinScreen = ({ navigation, route }: any) => {
   const status = info?.Status ?? 0;
   const aImprimir = status === 6;
   const emPausa = status === 20;
+  // A máquina não recusa em silêncio: fica com o ficheiro e o erro no estado.
+  const erroMaquina = Number(info?.ErrorNumber ?? 0);
   const progresso = Math.max(0, Math.min(100, info?.Progress ?? 0));
   const restante = Math.max(0, (info?.TotalTicks ?? 0) - (info?.CurrentTicks ?? 0));
   const ligada = printer?.connectionStatus === 'connected';
@@ -255,6 +257,11 @@ export const ResinScreen = ({ navigation, route }: any) => {
                   ? String(info.Filename).split('/').pop()
                   : t('resina.mesaLivre')}
               </Text>
+              {erroMaquina ? (
+                <Text className={`text-[12px] mt-2 ${TX_PERIGO}`}>
+                  {t('resina.erroMaquina', { n: erroMaquina })}
+                </Text>
+              ) : null}
             </View>
           )}
         </View>

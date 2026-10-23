@@ -372,6 +372,8 @@ const en = {
   'resina.enviar': 'Send to printer',
   'resina.enviarDica': 'Sliced .goo or .ctb files for this machine. The printer fetches them over Wi-Fi.',
   'resina.escolher': 'Choose .goo / .ctb',
+  'resina.erroMaquina':
+    'The printer recorded an error ({n}) and did not start. Error 4 = invalid or corrupt file.',
   'resina.limites': 'This printer exposes no camera, file list or temperatures — its protocol only publishes the current job.',
   'resina.formatoInvalido': 'Only .goo or .ctb files.',
   'resina.falhouEnvio': 'Upload failed',

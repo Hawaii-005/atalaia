@@ -374,6 +374,8 @@ export default {
   'resina.enviar': 'Enviar para a impressora',
   'resina.enviarDica': 'Ficheiros .goo ou .ctb fatiados para esta máquina. A impressora vai buscá-los por Wi-Fi.',
   'resina.escolher': 'Escolher .goo / .ctb',
+  'resina.erroMaquina':
+    'A impressora registou um erro ({n}) e não arrancou. Erro 4 = ficheiro inválido ou corrompido.',
   'resina.limites': 'Esta impressora não expõe câmara, lista de ficheiros nem temperaturas — o protocolo dela só publica o trabalho em curso.',
   'resina.formatoInvalido': 'Só ficheiros .goo ou .ctb.',
   'resina.falhouEnvio': 'O envio falhou',

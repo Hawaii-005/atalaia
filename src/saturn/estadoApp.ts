@@ -6,9 +6,9 @@ import { PrinterStatus } from '../types';
 import { EstadoResina } from './ligacao';
 
 /**
- * Códigos do `PrintInfo.Status` da Saturn (firmware 1.5.4): 0 em repouso,
- * 2/3/4 fases de impressão (expor/afastar/baixar), 16 concluída. A pausa não
- * tem código próprio: a ligação marca-a com 20 quando os ticks param.
+ * Códigos do `PrintInfo.Status` da Saturn (medidos na firmware 1.5.4):
+ * 0 repouso, 2/3/4/5/6/7 fases, 8 pausa, 10 a parar, 14 parada/cancelada,
+ * 16 concluída.
  */
 export const codigoParaApp = (status: number): number => {
   if (status === 0) return 0;
@@ -16,6 +16,9 @@ export const codigoParaApp = (status: number): number => {
   // PrintInfo.Status a 8 e os ticks param; ao retomar volta a 2/3/4).
   if (status === 8) return 20;
   if (status === 20) return 20;
+  // 10 = a parar, 14 = parada/cancelada (medido: ao parar pela app a máquina
+  // fica em cs 0 / ps 14 e mantém o nome do ficheiro).
+  if (status === 10 || status === 14) return 8;
   if (status === 16) return 9;
   if (status >= 1 && status <= 15) return 6;
   return 8;
@@ -57,6 +60,8 @@ export const estadoParaApp = (estado: EstadoResina): PrinterStatus => {
       TaskId: '',
       PrintSpeedPct: 0,
       Progress: progresso(info.CurrentLayer, info.TotalLayer, codigo),
+      // Sem isto a recusa de um ficheiro ficava invisível na app.
+      ErrorNumber: info.ErrorNumber ?? 0,
     },
   };
 };
