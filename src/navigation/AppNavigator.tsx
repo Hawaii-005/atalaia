@@ -55,6 +55,7 @@ const MonitorStackNavigator = () => (
   >
     <Stack.Screen name="BancadaHome" component={BancadaScreen} />
     <Stack.Screen name="MonitorLista" component={MonitorScreen} />
+    <Stack.Screen name="PrinterDetails" component={PrinterDetailsScreen} />
     <Stack.Screen name="Camera" component={CameraScreen} />
     <Stack.Screen name="Resina" component={ResinScreen} />
   </Stack.Navigator>
