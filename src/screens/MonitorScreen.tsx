@@ -68,6 +68,7 @@ export const MonitorScreen = ({ navigation, route }: any) => {
               key={p.id}
               printer={p}
               showTemps
+              onPress={() => navigation.navigate('Camera', { printerId: p.id })}
               onOpenCamera={() => navigation.navigate('Camera', { printerId: p.id })}
             />
           ))}
