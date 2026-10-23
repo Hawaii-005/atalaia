@@ -139,10 +139,16 @@ export interface PrinterStatus {
   PrintInfo: PrintInfo;
 }
 
+/** 'fdm' = Centauri (WebSocket SDCP) · 'resin' = Saturn/Mars (SDCP V1 MQTT). */
+export type PrinterKind = 'fdm' | 'resin';
+
 export interface Printer {
   id: string;
   printerName: string;
   ipAddress: string;
+  kind?: PrinterKind;
+  /** Id da sessão UDP da impressora de resina (campo `Id` do SDCP V1). */
+  sdcpId?: string;
   connectionStatus: ConnectionStatus;
   status?: PrinterStatus;
   lastUpdate?: number; // Timestamp of last status update

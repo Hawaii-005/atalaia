@@ -8,6 +8,10 @@ export interface DiscoveredPrinter {
   name: string;
   firmware?: string;
   mainboardId?: string;
+  /** 'fdm' = WebSocket SDCP (:3030); 'resin' = SDCP V1 sobre MQTT (UDP :3000). */
+  kind: 'fdm' | 'resin';
+  /** Identificador da sessão UDP, necessário para o MQTT da resina. */
+  sdcpId?: string;
 }
 
 const PROBE_TIMEOUT = 1500;
@@ -66,6 +70,7 @@ const probePrinter = (ip: string): Promise<DiscoveredPrinter | null> =>
               name: attrs.Name || attrs.MachineName || `Printer ${ip}`,
               firmware: attrs.FirmwareVersion,
               mainboardId: attrs.MainboardID,
+              kind: 'fdm',
             });
           }
         } catch {
@@ -114,16 +119,24 @@ const udpDiscovery = (subnet: string | null): Promise<DiscoveredPrinter[]> =>
           const text = Buffer.isBuffer(data) ? data.toString('utf8') : String(data);
           const payload = JSON.parse(text);
           const info = payload?.Data ?? payload;
-          const ip = info?.MainboardIP;
+          // A Saturn 3 Ultra aninha tudo em Data.Attributes; a Centauri manda
+          // os campos à superfície de Data. Aceitam-se as duas formas.
+          const attrs = info?.Attributes ?? info;
+          const ip = attrs?.MainboardIP;
           if (!ip) return;
           if (!graceTimer) {
             graceTimer = setTimeout(finish, 600);
           }
+          const protocolo = String(attrs?.ProtocolVersion ?? '');
           found.set(ip, {
             ip,
-            name: info.MachineName || info.Name || 'Centauri Carbon',
-            firmware: info.FirmwareVersion,
-            mainboardId: info.MainboardID,
+            name: attrs?.MachineName || attrs?.Name || 'Impressora Elegoo',
+            firmware: attrs?.FirmwareVersion,
+            mainboardId: attrs?.MainboardID,
+            // SDCP V1 é a família das resinas (Saturn/Mars): falam MQTT, não
+            // WebSocket. A Centauri Carbon anuncia V3.
+            kind: protocolo.startsWith('V1') ? 'resin' : 'fdm',
+            sdcpId: payload?.Id,
           });
         } catch {
           // not ours

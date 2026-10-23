@@ -9,7 +9,7 @@ const BASE64_CHARS =
   'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 /** Hermes has no Buffer and atob is not guaranteed, so decode by hand. */
-const decodeBase64 = (input: string): Uint8Array => {
+export const decodeBase64 = (input: string): Uint8Array => {
   const clean = input.replace(/[^A-Za-z0-9+/]/g, '');
   const length = Math.floor((clean.length * 3) / 4);
   const bytes = new Uint8Array(length);

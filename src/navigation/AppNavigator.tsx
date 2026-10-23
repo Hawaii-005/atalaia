@@ -13,6 +13,7 @@ import { PrinterDetailsScreen } from '../screens/PrinterDetailsScreen';
 import { AddEditPrinterScreen } from '../screens/AddEditPrinterScreen';
 import { DiscoveryScreen } from '../screens/DiscoveryScreen';
 import { CameraScreen } from '../screens/CameraScreen';
+import { ResinScreen } from '../screens/ResinScreen';
 import WhereIsIpScreen from '../screens/WhereIsIpScreen';
 import PrinterIcon from '../components/icons/PrinterIcon';
 import { useTheme } from '../contexts/ThemeContext';
@@ -37,6 +38,7 @@ const PrintersStackNavigator = () => (
     <Stack.Screen name="History" component={HistoryScreen} />
     <Stack.Screen name="Files" component={FilesScreen} />
     <Stack.Screen name="Stats" component={StatsScreen} />
+    <Stack.Screen name="Resina" component={ResinScreen} />
   </Stack.Navigator>
 );
 

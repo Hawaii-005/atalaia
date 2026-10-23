@@ -99,7 +99,10 @@ export const DiscoveryScreen = ({ navigation }: any) => {
       );
       return;
     }
-    addPrinter(device.name, device.ip, device.mainboardId);
+    addPrinter(device.name, device.ip, device.mainboardId, undefined, {
+      kind: device.kind,
+      sdcpId: device.sdcpId,
+    });
     Alert.alert(
       t('discovery.adicionadaTitulo'),
       t('discovery.adicionadaMsg', { nome: device.name, ip: device.ip })

@@ -48,6 +48,11 @@ export const HomeScreen = ({ navigation }: any) => {
 
   const handlePrinterPress = (printerId: string) => {
     const printer = printers.find(p => p.id === printerId);
+    // Resina tem ecrã próprio: não há câmara, temperaturas nem ficheiros.
+    if (printer?.kind === 'resin') {
+      navigation.navigate('Resina', { printerId });
+      return;
+    }
     if (printer?.connectionStatus === 'connected') {
       navigation.navigate('PrinterDetails', { printerId });
       return;
@@ -239,6 +244,16 @@ export const HomeScreen = ({ navigation }: any) => {
               />
             </View>
 
+            {emTrabalho?.kind === 'resin' ? (
+              <View className="flex-row items-center justify-between mt-2.5">
+                <Text className="text-[11px] text-ink-soft" style={{ fontFamily: 'monospace' }}>
+                  {t('home.ventoinhas').toUpperCase()} —
+                </Text>
+                <Text className="text-[11px] text-ink-soft" style={{ fontFamily: 'monospace' }}>
+                  {emTrabalho?.printerName}
+                </Text>
+              </View>
+            ) : (
             <View className="flex-row items-center justify-between mt-2.5">
               <Text className="text-[11px] text-ink" style={{ fontFamily: 'monospace' }}>
                 {t('comum.bico').toUpperCase()} {(emTrabalho?.status?.TempOfNozzle ?? 0).toFixed(0)}°
@@ -250,6 +265,7 @@ export const HomeScreen = ({ navigation }: any) => {
                 {t('home.ventoinhas').toUpperCase()} {heroVent?.ModelFan ?? 0}/{(heroVent?.BoxFan ?? 0)}/{(heroVent?.AuxiliaryFan ?? 0)}%
               </Text>
             </View>
+            )}
           </View>
         )}
 
@@ -294,6 +310,7 @@ export const HomeScreen = ({ navigation }: any) => {
               <View key={printer.id} className="mb-3">
                 <PrinterCard
                   printer={printer}
+                  showTemps={printer.kind !== 'resin'}
                   showPrintControls
                   onPrintControl={() =>
                     handlePrintControl(
@@ -304,14 +321,19 @@ export const HomeScreen = ({ navigation }: any) => {
                   onStopPrint={() =>
                     handleStopPrint(printer.id, printer.printerName)
                   }
-                  onOpenCamera={() =>
-                    navigation.navigate('Camera', { printerId: printer.id })
+                  onOpenCamera={
+                    printer.kind === 'resin'
+                      ? undefined
+                      : () => navigation.navigate('Camera', { printerId: printer.id })
                   }
-                  onToggleLight={() =>
-                    handleToggleLight(
-                      printer.id,
-                      !!printer.status?.LightStatus?.SecondLight
-                    )
+                  onToggleLight={
+                    printer.kind === 'resin'
+                      ? undefined
+                      : () =>
+                          handleToggleLight(
+                            printer.id,
+                            !!printer.status?.LightStatus?.SecondLight
+                          )
                   }
                   onPress={() => handlePrinterPress(printer.id)}
                 />

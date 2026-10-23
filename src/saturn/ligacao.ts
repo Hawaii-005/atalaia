@@ -24,6 +24,8 @@ import {
 export interface SocketSaturno {
   on(evento: 'data' | 'close' | 'error', cb: (dados?: any) => void): void;
   write(dados: Uint8Array): void;
+  /** Escrita que espera pelo `drain` do socket (opcional no harness Node). */
+  escrever?(dados: Uint8Array): Promise<void>;
   end(): void;
   destroy(): void;
 }
@@ -140,7 +142,10 @@ export class LigacaoSaturno {
   private atributos: AtributosResina = {};
   private rotas = new Map<string, { uri: string; tamanho: number }>();
   private transferencia: { resolver: () => void; rejeitar: (e: any) => void } | null = null;
+  private aoProgresso: ((enviado: number, total: number) => void) | null = null;
   private ligado = false;
+  private ligando: Promise<AtributosResina> | null = null;
+  private estadoRecebido = false;
   private ultimoTick = -1;
   private desdeTick = 0;
   private emPausa = false;
@@ -159,8 +164,24 @@ export class LigacaoSaturno {
     return this.atributos;
   }
 
-  /** Arranca os servidores, manda a impressora ligar-se e fica à escuta. */
-  async ligar(ip: string, ident: string, mainboardId: string): Promise<AtributosResina> {
+  /**
+   * Arranca os servidores, manda a impressora ligar-se e fica à escuta.
+   * Duas chamadas ao mesmo tempo partilham a mesma promessa: sem isto a
+   * segunda destruía os servidores da primeira.
+   */
+  ligar(ip: string, ident: string, mainboardId: string): Promise<AtributosResina> {
+    if (this.ligando) return this.ligando;
+    this.ligando = this.ligarInterno(ip, ident, mainboardId).finally(() => {
+      this.ligando = null;
+    });
+    return this.ligando;
+  }
+
+  private async ligarInterno(
+    ip: string,
+    ident: string,
+    mainboardId: string
+  ): Promise<AtributosResina> {
     await this.desligar(false);
     this.parado = false;
     this.ip = ip;
@@ -169,6 +190,8 @@ export class LigacaoSaturno {
     this.bufferMqtt = new Uint8Array(0);
     this.ultimoTick = -1;
     this.emPausa = false;
+    this.atributos = {};
+    this.estadoRecebido = false;
 
     const ligacao = new Promise<void>((resolver, rejeitar) => {
       const relogio = setTimeout(() => {
@@ -196,12 +219,32 @@ export class LigacaoSaturno {
       if (!this.ligado) this.rede.enviarUdp(`M66666 ${this.portaMqtt}`, PORTA_UDP, this.ip);
     }, 800);
 
-    await ligacao;
+    try {
+      await ligacao;
+    } catch (erro) {
+      // Sem subscrição não há sessão: fechar servidores e portas já abertos.
+      await this.desligar(false);
+      throw erro;
+    }
     this.ligado = true;
 
     await this.pedido(0, null, TEMPO_PEDIDO_MS).catch(() => undefined);
     await this.pedido(1, null, TEMPO_PEDIDO_MS).catch(() => undefined);
     await this.pedido(512, { TimePeriod: 5000 }, TEMPO_PEDIDO_MS).catch(() => undefined);
+
+    // Se o 512 se perder, a impressora não publica estado nenhum e a UI fica
+    // "ligada" e morta. Repete-se o pedido até chegar o primeiro estado.
+    let tentativas = 0;
+    const relogioEstado = setInterval(() => {
+      tentativas += 1;
+      if (this.estadoRecebido || tentativas > 5 || !this.ligado) {
+        clearInterval(relogioEstado);
+        return;
+      }
+      this.pedido(512, { TimePeriod: 5000 }, TEMPO_PEDIDO_MS).catch(() => undefined);
+      this.pedido(0, null, TEMPO_PEDIDO_MS).catch(() => undefined);
+    }, 4000);
+
     this.eventos.aoLigar?.();
     return this.atributos;
   }
@@ -237,13 +280,21 @@ export class LigacaoSaturno {
       juntos.set(this.bufferMqtt, 0);
       juntos.set(bytes, this.bufferMqtt.length);
       const { mensagens, resto } = lerMensagens(juntos);
+      // Um pacote corrompido não pode fazer crescer o buffer sem fim.
+      if (resto.length > 1024 * 1024) {
+        socket.destroy();
+        return;
+      }
       this.bufferMqtt = resto;
       mensagens.forEach(mensagem => this.tratarMensagem(socket, mensagem));
     });
 
     socket.on('error', () => undefined);
     socket.on('close', () => {
-      if (this.cliente === socket) this.cliente = null;
+      // Um socket substituído a fechar não pode derrubar a ligação nova.
+      if (this.cliente !== socket) return;
+      this.cliente = null;
+      this.rejeitarPendentes(new Error('A impressora fechou a ligação.'));
       if (this.ligado && !this.parado) {
         this.ligado = false;
         this.eventos.aoDesligar?.('A impressora fechou a ligação.');
@@ -256,7 +307,9 @@ export class LigacaoSaturno {
       case 1: {
         // CONNECT
         const cliente = lerConnect(mensagem.payload);
-        if (cliente) this.mainboardId = this.mainboardId || cliente;
+        // O clientId do CONNECT é a fonte da verdade: se o ID guardado estiver
+        // velho, os pedidos iriam para um tópico que ninguém subscreve.
+        if (cliente) this.mainboardId = cliente;
         socket.write(connack());
         break;
       }
@@ -265,7 +318,9 @@ export class LigacaoSaturno {
         const { idPacote, topico } = lerSubscricao(mensagem.payload);
         socket.write(suback(idPacote));
         if (topico.startsWith('/sdcp/request/')) {
-          this.aoSubscrever?.();
+          const resolver = this.aoSubscrever;
+          this.aoSubscrever = null;
+          resolver?.();
         }
         break;
       }
@@ -327,9 +382,25 @@ export class LigacaoSaturno {
    * Mantém-se o estado normalizado com o código 20 (pausa) enquanto o
    * contador não mexer, para o resto da app não precisar de saber disto.
    */
+  private rejeitarPendentes(erro: Error) {
+    this.pedidos.forEach(({ relogio, rejeitar }) => {
+      clearTimeout(relogio);
+      rejeitar(erro);
+    });
+    this.pedidos.clear();
+    const transferencia = this.transferencia;
+    this.transferencia = null;
+    transferencia?.rejeitar(erro);
+  }
+
   private processarEstado(estado: EstadoResina) {
-    if (this.eventos.aoTransferir && estado.FileTransferInfo.Status !== 0) {
-      this.eventos.aoTransferir(
+    this.estadoRecebido = true;
+    if (estado.FileTransferInfo.Status !== 0) {
+      this.eventos.aoTransferir?.(
+        estado.FileTransferInfo.DownloadOffset,
+        estado.FileTransferInfo.FileTotalSize
+      );
+      this.aoProgresso?.(
         estado.FileTransferInfo.DownloadOffset,
         estado.FileTransferInfo.FileTotalSize
       );
@@ -441,15 +512,27 @@ export class LigacaoSaturno {
         posicao,
         Math.min(LIMITE_BLOCO, tamanho - posicao)
       );
-      socket.write(bloco);
-      // Deixa o buffer nativo escoar: um .goo de 200 MB não cabe em memória.
-      await new Promise(resolver => setTimeout(resolver, 0));
+      // Um .goo de 200 MB não cabe em memória: espera-se que o buffer nativo
+      // escoe antes de ler o bloco seguinte (o adaptador expõe `drain`).
+      if (socket.escrever) {
+        await socket.escrever(bloco);
+      } else {
+        socket.write(bloco);
+        await new Promise(resolver => setTimeout(resolver, 0));
+      }
     }
   }
 
   /** Envia um .goo/.ctb para a impressora (comando 256 + HTTP local). */
-  async carregar(uri: string, nome: string): Promise<void> {
+  async carregar(
+    uri: string,
+    nome: string,
+    onProgresso?: (enviado: number, total: number) => void
+  ): Promise<void> {
     if (!this.http) throw new Error('Servidor de ficheiros não iniciado.');
+    if (this.transferencia) {
+      throw new Error('Já está uma transferência em curso.');
+    }
     const tamanho = await this.rede.tamanhoFicheiro(uri);
     if (!tamanho) throw new Error('Ficheiro vazio.');
     const md5 = await this.rede.md5Ficheiro(uri);
@@ -457,6 +540,7 @@ export class LigacaoSaturno {
     const caminho = `/${hexAleatorio(16)}.${extensao}`;
     this.rotas.set(caminho, { uri, tamanho });
 
+    this.aoProgresso = onProgresso ?? null;
     const conclusao = new Promise<void>((resolver, rejeitar) => {
       const relogio = setTimeout(() => {
         this.transferencia = null;
@@ -491,6 +575,7 @@ export class LigacaoSaturno {
       await conclusao;
     } finally {
       this.rotas.delete(caminho);
+      this.aoProgresso = null;
     }
   }
 
@@ -518,12 +603,7 @@ export class LigacaoSaturno {
       await this.pedido(64, null, 2000).catch(() => undefined);
     }
     this.ligado = false;
-    this.pedidos.forEach(({ relogio, rejeitar }) => {
-      clearTimeout(relogio);
-      rejeitar(new Error('Ligação fechada.'));
-    });
-    this.pedidos.clear();
-    this.transferencia = null;
+    this.rejeitarPendentes(new Error('Ligação fechada.'));
     this.rotas.clear();
     try {
       this.cliente?.destroy();

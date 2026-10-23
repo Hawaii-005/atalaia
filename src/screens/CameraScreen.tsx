@@ -116,13 +116,15 @@ export const CameraScreen = ({ navigation, route }: any) => {
 
   useEffect(() => () => { ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {}); }, []);
 
+  // A resina não tem câmara: a aba só olha para as impressoras que têm vídeo.
   const printer = useMemo(() => {
-    const bySelection = printers.find(p => p.id === selectedId);
+    const comCamera = printers.filter(p => p.kind !== 'resin');
+    const bySelection = comCamera.find(p => p.id === selectedId);
     if (bySelection) {
       return bySelection;
     }
     return (
-      printers.find(p => p.connectionStatus === 'connected') ?? printers[0]
+      comCamera.find(p => p.connectionStatus === 'connected') ?? comCamera[0]
     );
   }, [printers, selectedId]);
 

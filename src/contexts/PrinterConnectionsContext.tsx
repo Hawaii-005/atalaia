@@ -12,6 +12,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { descobrirSoUdp, discoverPrinters } from '../utils/PrinterDiscovery';
 import { AppState, NativeModules, AppStateStatus, Alert } from 'react-native';
 import { Printer, ConnectionStatus, PrinterStatus } from '../types';
+import { LigacaoSaturno } from '../saturn/ligacao';
+import { redeSaturno } from '../saturn/rede';
+import { estadoParaApp } from '../saturn/estadoApp';
+import { inquirirSaturno } from '../saturn/descoberta';
 import { descreverAck, PrinterRecusouError } from '../utils/errors';
 import { isSdcpCommand, SdcpCommand } from '../utils/commands';
 import {
@@ -36,7 +40,8 @@ interface PrinterConnectionsContextType {
     printerName: string,
     ipAddress: string,
     mainboardId?: string,
-    alternateIp?: string
+    alternateIp?: string,
+    extras?: { kind?: Printer['kind']; sdcpId?: string }
   ) => void;
   removePrinter: (id: string) => void;
   reconnectAll: () => void;
@@ -54,6 +59,15 @@ interface PrinterConnectionsContextType {
   removerDaFila: (id: string) => void;
   definirFilaAuto: (ligada: boolean) => void;
   setStatusInterval: (ms: number) => Promise<void>;
+  /** Envia um .goo/.ctb para uma impressora de resina (comando 256). */
+  carregarParaSaturno: (
+    printerId: string,
+    uri: string,
+    nome: string,
+    onProgresso?: (enviado: number, total: number) => void
+  ) => Promise<void>;
+  /** Manda imprimir um ficheiro que já esteja na impressora de resina. */
+  imprimirNoSaturno: (printerId: string, nome: string) => Promise<void>;
 }
 
 const PrinterConnectionsContext = createContext<
@@ -98,6 +112,9 @@ export const PrinterConnectionsProvider = ({
   const filaRef = useRef<ItemFila[]>([]);
   const estadoAnteriorRef = useRef<Record<string, number | undefined>>({});
   const webSocketsRef = useRef<{ [key: string]: WebSocket }>({});
+  // Impressoras de resina: falam SDCP V1 sobre MQTT, não WebSocket.
+  const saturnoRef = useRef<{ [key: string]: LigacaoSaturno }>({});
+  const vigiasSaturnoRef = useRef<{ [key: string]: ReturnType<typeof setInterval> }>({});
   const statusTimersRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
   // Vigia de silêncio: se a impressora não enviar nada neste tempo, a ligação
   // TCP pode estar morta sem `onclose` (foi desligada da corrente, Wi-Fi caiu).
@@ -267,12 +284,14 @@ export const PrinterConnectionsProvider = ({
     const savePrinters = async () => {
       try {
         const printersToSave = printers.map(
-          ({ id, printerName, ipAddress, alternateIp, mainboardId }) => ({
+          ({ id, printerName, ipAddress, alternateIp, mainboardId, kind, sdcpId }) => ({
             id,
             printerName,
             ipAddress,
             alternateIp,
             mainboardId,
+            kind,
+            sdcpId,
           })
         );
         await AsyncStorage.setItem('printers', JSON.stringify(printersToSave));
@@ -366,6 +385,8 @@ export const PrinterConnectionsProvider = ({
   };
 
   const startStatusTimer = (printer: Printer) => {
+    // A resina não faz polling: recebe o estado por MQTT a cada ~5 s.
+    if (printer.kind === 'resin') return;
     log(
       `Starting status timer for ${printer.printerName} (${printer.id})`
     );
@@ -566,7 +587,86 @@ export const PrinterConnectionsProvider = ({
     intentionalCloseRef.current[printerId] = true;
   };
 
+  /**
+   * Resina (Saturn 3 Ultra): a impressora liga-se a um broker MQTT nosso e é
+   * por aí que chega o estado e vão os comandos. Não há WebSocket nenhum.
+   */
+  const ligarSaturno = async (printer: Printer) => {
+    const anterior = saturnoRef.current[printer.id];
+    if (anterior) {
+      delete saturnoRef.current[printer.id];
+      anterior.desligar(false).catch(() => undefined);
+    }
+    const vigiaAnterior = vigiasSaturnoRef.current[printer.id];
+    if (vigiaAnterior) {
+      clearInterval(vigiaAnterior);
+      delete vigiasSaturnoRef.current[printer.id];
+    }
+
+    intentionalCloseRef.current[printer.id] = false;
+    updatePrinterStatus(printer.id, 'connecting');
+    const alvo = printer.activeIp ?? printer.ipAddress;
+
+    try {
+      let sdcpId = printer.sdcpId;
+      let mainboardId = printer.mainboardId;
+      if (!sdcpId || !mainboardId) {
+        const resposta = await inquirirSaturno(alvo);
+        sdcpId = resposta.id;
+        mainboardId = resposta.atributos.MainboardID;
+        setPrinters(prev => {
+          const lista = prev.map(p =>
+            p.id === printer.id ? { ...p, sdcpId, mainboardId } : p
+          );
+          printersRef.current = lista;
+          return lista;
+        });
+      }
+
+      const ligacao = new LigacaoSaturno(redeSaturno, {
+        aoEstado: estado => updatePrinterData(printer.id, estadoParaApp(estado)),
+        aoLigar: () => updatePrinterStatus(printer.id, 'connected'),
+        aoDesligar: motivo => {
+          log(`saturno: ${printer.printerName} desligou (${motivo})`);
+          updatePrinterStatus(printer.id, 'disconnected');
+          const actual = printersRef.current.find(p => p.id === printer.id);
+          if (actual && !intentionalCloseRef.current[printer.id]) {
+            scheduleReconnect(actual);
+          }
+        },
+      });
+      saturnoRef.current[printer.id] = ligacao;
+      await ligacao.ligar(alvo, sdcpId ?? '', mainboardId ?? '');
+
+      // A impressora diz quando muda de estado, mas se ficar calada (Wi-Fi
+      // caído) o socket pendura-se: ao fim de 45 s sem nada, reconecta-se.
+      vigiasSaturnoRef.current[printer.id] = setInterval(() => {
+        const actual = printersRef.current.find(p => p.id === printer.id);
+        if (!actual) return;
+        const ultimo = actual.lastUpdate ?? 0;
+        if (Date.now() - ultimo <= 45000) return;
+        clearInterval(vigiasSaturnoRef.current[printer.id]);
+        delete vigiasSaturnoRef.current[printer.id];
+        ligacao.desligar(false).catch(() => undefined);
+        delete saturnoRef.current[printer.id];
+        updatePrinterStatus(printer.id, 'disconnected');
+        if (!intentionalCloseRef.current[printer.id]) scheduleReconnect(actual);
+      }, 15000);
+    } catch (erro) {
+      log('saturno: falhou a ligação', erro);
+      updatePrinterStatus(printer.id, 'disconnected');
+      const actual = printersRef.current.find(p => p.id === printer.id);
+      if (actual && !intentionalCloseRef.current[printer.id]) {
+        scheduleReconnect(actual);
+      }
+    }
+  };
+
   const connectToPrinter = (printer: Printer) => {
+    if (printer.kind === 'resin') {
+      ligarSaturno(printer);
+      return;
+    }
     // If a websocket for this printer already exists, close it before creating a new one.
     if (webSocketsRef.current[printer.id]) {
       markIntentionalClose(printer.id);
@@ -834,7 +934,8 @@ export const PrinterConnectionsProvider = ({
     printerName: string,
     ipAddress: string,
     mainboardId?: string,
-    alternateIp?: string
+    alternateIp?: string,
+    extras?: { kind?: Printer['kind']; sdcpId?: string }
   ) => {
     const newPrinter: Printer = {
       id: generateId(),
@@ -843,6 +944,8 @@ export const PrinterConnectionsProvider = ({
       alternateIp: alternateIp?.trim() || undefined,
       connectionStatus: 'connecting',
       mainboardId,
+      kind: extras?.kind ?? 'fdm',
+      sdcpId: extras?.sdcpId,
     };
 
     // Verificar ANTES de ligar: se o IP já existe, a lista não muda e ficaria
@@ -862,6 +965,17 @@ export const PrinterConnectionsProvider = ({
   };
 
   const removePrinter = (id: string) => {
+    // Resina: despede-se da impressora (comando 64) e fecha os servidores.
+    const ligacaoResina = saturnoRef.current[id];
+    if (ligacaoResina) {
+      delete saturnoRef.current[id];
+      ligacaoResina.desligar().catch(() => undefined);
+    }
+    const vigiaResina = vigiasSaturnoRef.current[id];
+    if (vigiaResina) {
+      clearInterval(vigiaResina);
+      delete vigiasSaturnoRef.current[id];
+    }
     // Fecho intencional: matar temporizadores antes de fechar o socket.
     clearReconnectTimer(id);
     stopWatchdog(id);
@@ -882,6 +996,23 @@ export const PrinterConnectionsProvider = ({
     });
     // A gravação fica a cargo do efeito que observa `printers` (uma só
     // escrita, sem corrida com o get/set manual que aqui existia).
+  };
+
+  const carregarParaSaturno = async (
+    printerId: string,
+    uri: string,
+    nome: string,
+    onProgresso?: (enviado: number, total: number) => void
+  ) => {
+    const ligacao = saturnoRef.current[printerId];
+    if (!ligacao?.estaLigado) throw new PrinterOfflineError();
+    await ligacao.carregar(uri, nome, onProgresso);
+  };
+
+  const imprimirNoSaturno = async (printerId: string, nome: string) => {
+    const ligacao = saturnoRef.current[printerId];
+    if (!ligacao?.estaLigado) throw new PrinterOfflineError();
+    await ligacao.imprimir(nome);
   };
 
   const updatePrinterIp = (id: string, ipAddress: string) => {
@@ -941,12 +1072,54 @@ export const PrinterConnectionsProvider = ({
           );
           return;
         }
+        const printer = printersRef.current.find(item => item.id === printerId);
+
+        // Resina: os mesmos construtores de comando, mas por MQTT.
+        if (printer?.kind === 'resin') {
+          const ligacao = saturnoRef.current[printerId];
+          if (!ligacao?.estaLigado) {
+            reject(new PrinterOfflineError());
+            return;
+          }
+          const cmd = command.Data.Cmd;
+          const payload = (command.Data.Data ?? {}) as any;
+          let promessa: Promise<any>;
+          switch (cmd) {
+            case 0:
+              promessa = ligacao.pedido(0, null, timeoutMs);
+              break;
+            case 129:
+              promessa = ligacao.pausar();
+              break;
+            case 130:
+              promessa = ligacao.pararImpressao();
+              break;
+            case 131:
+              promessa = ligacao.retomar();
+              break;
+            case 128:
+              promessa = ligacao.imprimir(
+                String(payload?.Filename ?? ''),
+                Number(payload?.StartLayer ?? 0)
+              );
+              break;
+            default:
+              reject(
+                new CommandValidationError(
+                  `O comando ${cmd} não existe nesta impressora de resina.`
+                )
+              );
+              return;
+          }
+          promessa.then(resolve).catch(reject);
+          return;
+        }
+
         const ws = webSocketsRef.current[printerId];
         if (!ws || ws.readyState !== WebSocket.OPEN) {
           reject(new PrinterOfflineError());
           return;
         }
-        const printer = printersRef.current.find(item => item.id === printerId);
         const requestId = `REQ_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
         const timer = setTimeout(() => {
           // Tempo esgotado: limpar o pedido para não vazar memória.
@@ -1116,6 +1289,13 @@ export const PrinterConnectionsProvider = ({
         'Comando SDCP inválido: tem de vir de um construtor de src/utils/commands.ts.'
       );
     }
+    const alvoResina = printersRef.current.find(p => p.id === printerId);
+    if (alvoResina?.kind === 'resin') {
+      request(printerId, command).catch(erro =>
+        log('saturno: comando recusado', erro)
+      );
+      return;
+    }
     const ws = webSocketsRef.current[printerId];
     if (ws && ws.readyState === WebSocket.OPEN) {
       log(`Sending command to printer ${printerId}:`, command);
@@ -1234,6 +1414,8 @@ export const PrinterConnectionsProvider = ({
         updatePrinterIp,
         statusIntervalMs,
         setStatusInterval: updateStatusInterval,
+        carregarParaSaturno,
+        imprimirNoSaturno,
         fila,
         filaAuto,
         adicionarAFila,

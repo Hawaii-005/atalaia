@@ -354,6 +354,32 @@ const en = {
   'ip.corpo2':
     'Make sure your phone is connected to the same Wi-Fi network as the printer!',
   'ip.adicionarImpressora': 'Add printer',
+
+  // ——— Resin printer (Saturn 3 Ultra)
+  'resina.titulo': 'Resin printer',
+  'resina.subtitulo': 'Resin · {ip}',
+  'resina.naoLigada': 'Not connected to the printer',
+  'resina.tentar': 'Try now',
+  'resina.estadoMaquina': 'Machine state',
+  'resina.emRepouso': 'Idle',
+  'resina.mesaLivre': 'Build plate free, no job',
+  'resina.enviarTitulo': 'SEND FILE',
+  'resina.enviado': 'already on the printer',
+  'resina.aEnviar': 'Sending… {pct}%',
+  'resina.aEnviarCurto': 'Sending',
+  'resina.trocar': 'Change',
+  'resina.imprimir': 'Print',
+  'resina.enviar': 'Send to printer',
+  'resina.enviarDica': 'Sliced .goo or .ctb files for this machine. The printer fetches them over Wi-Fi.',
+  'resina.escolher': 'Choose .goo / .ctb',
+  'resina.limites': 'This printer exposes no camera, file list or temperatures — its protocol only publishes the current job.',
+  'resina.formatoInvalido': 'Only .goo or .ctb files.',
+  'resina.falhouEnvio': 'Upload failed',
+  'resina.falhouImprimir': 'Did not start',
+  'resina.confirmarImprimir': 'Print this file?',
+  'resina.confirmarImprimirMsg': '{nome} will start printing. Check that the plate and the resin vat are ready.',
+  'resina.confirmarParar': 'The running print will be cancelled. The part is lost.',
+  'resina.comandoRecusado': 'Command refused',
 } as const satisfies Record<keyof typeof pt, string>;
 
 export default en;
