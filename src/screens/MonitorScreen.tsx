@@ -47,7 +47,7 @@ export const MonitorScreen = ({ navigation, route }: any) => {
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
+    <SafeAreaView edges={['top']} className="flex-1 bg-canvas" style={{ flex: 1 }}>
       {/* Cabeçalho */}
       <View className="px-4 pt-3 pb-2">
         <Text className="text-[22px] font-bold text-ink">{t('monitor.titulo')}</Text>
@@ -58,8 +58,8 @@ export const MonitorScreen = ({ navigation, route }: any) => {
 
       {/* Lista de impressoras */}
       <ScrollView
-        style={{ flex: 1, marginBottom: 40 }}
-        contentContainerStyle={{ padding: 16, paddingTop: 4, paddingBottom: 24 }}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: 16, paddingTop: 4, paddingBottom: 80 }}
       >
         {ordenadas
           .filter(p => p.kind !== 'resin')
