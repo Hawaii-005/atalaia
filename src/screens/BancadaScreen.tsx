@@ -9,6 +9,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 import { t } from '../i18n';
 import { getPrintStatus } from '../types';
+import { loadHistory, PrintRecord } from '../utils/printHistory';
 
 export const BancadaScreen = ({ navigation }: any) => {
   const { tema } = useTheme();
@@ -16,6 +17,19 @@ export const BancadaScreen = ({ navigation }: any) => {
   const { printers } = usePrinterConnections();
 
   const [agora, setAgora] = useState(new Date());
+  const [historico, setHistorico] = useState<PrintRecord[]>([]);
+
+  useEffect(() => {
+    let activo = true;
+    loadHistory()
+      .then(r => {
+        if (activo) setHistorico(r.slice(0, 3));
+      })
+      .catch(() => {});
+    return () => {
+      activo = false;
+    };
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -111,7 +125,7 @@ export const BancadaScreen = ({ navigation }: any) => {
               )}
             </>
           ) : (
-            <View className="items-center justify-center py-14">
+            <View className="w-full items-center justify-center rounded-2xl border border-line bg-card py-10">
               <Ionicons
                 name="time-outline"
                 size={26}
@@ -119,6 +133,9 @@ export const BancadaScreen = ({ navigation }: any) => {
               />
               <Text className="mt-3 text-[15px] text-ink-soft">
                 {t('bancada.semTrabalho')}
+              </Text>
+              <Text className="mt-1 text-[12px] text-ink-muted">
+                {t('history.semImpressoesDica')}
               </Text>
             </View>
           )}
@@ -199,6 +216,34 @@ export const BancadaScreen = ({ navigation }: any) => {
             );
           })}
         </View>
+
+        {historico.length > 0 && (
+          <View className="mt-8">
+            <Text className="mb-3 text-[14px] font-bold uppercase tracking-wider text-ink-soft">
+              {t('history.title')}
+            </Text>
+            <View className="space-y-2">
+              {historico.map(r => (
+                <View
+                  key={r.id}
+                  className="rounded-xl border border-line bg-card px-4 py-3"
+                >
+                  <Text className="text-[14px] font-semibold text-ink" numberOfLines={1}>
+                    {r.filename}
+                  </Text>
+                  <Text className="mt-1 text-[12px] text-ink-muted">
+                    {r.printerName} · {r.outcome === 'completed' ? t('comum.impressaoConcluida') : t('comum.parada')}
+                    {' · '}
+                    {new Date(r.startedAt).toLocaleDateString('pt-PT', {
+                      day: '2-digit',
+                      month: 'short',
+                    })}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
