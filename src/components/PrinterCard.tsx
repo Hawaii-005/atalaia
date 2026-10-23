@@ -103,7 +103,10 @@ export const PrinterCard = ({
       : readablePrintStatus === 'completed'
         ? t('comum.impressaoConcluida')
         : readablePrintStatus === 'preparing'
-          ? t('comum.aPreparar')
+          ? // O código 20 é pausa (a máquina mantém-se pronta a retomar).
+            canResume
+            ? t('comum.emPausa')
+            : t('comum.aPreparar')
           : readablePrintStatus === 'paused'
             ? t('comum.emPausa')
             : readablePrintStatus === 'stopped'

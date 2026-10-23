@@ -88,6 +88,9 @@ const TEMPO_LIGACAO_MS = 15000;
 const TEMPO_PEDIDO_MS = 8000;
 const TEMPO_TRANSFERENCIA_MS = 20 * 60 * 1000;
 const LIMITE_BLOCO = 1024 * 1024;
+// Medido numa impressão real (ring-cthulhu.ctb, V1.5.4): os ticks avançam em
+// saltos de ~33 s. Só se considera pausa depois de 90 s sem mexer.
+const LIMITE_TICKS_PARADOS_MS = 90000;
 
 const agora = () => Date.now();
 
@@ -419,25 +422,9 @@ export class LigacaoSaturno {
       }
     }
 
-    const ticks = estado.PrintInfo.CurrentTicks;
-    const agoraMs = agora();
-    if (ticks !== this.ultimoTick) {
-      this.ultimoTick = ticks;
-      this.desdeTick = agoraMs;
-      this.emPausa = false;
-    } else if (!this.emPausa && agoraMs - this.desdeTick > 6000) {
-      this.emPausa = true;
-    }
-
-    const aImprimir =
-      !!estado.PrintInfo.Filename && ![0, 16].includes(estado.PrintInfo.Status);
-    this.eventos.aoEstado?.({
-      ...estado,
-      PrintInfo: {
-        ...estado.PrintInfo,
-        Status: this.emPausa && aImprimir ? 20 : estado.PrintInfo.Status,
-      },
-    });
+    // A firmware diz a pausa no próprio código: 8. Não é preciso adivinhar
+    // pelos ticks (que só avançam de ~33 em ~33 s e davam falsos positivos).
+    this.eventos.aoEstado?.(estado);
   }
 
   /** Envia um comando SDCP e resolve com a resposta da impressora. */

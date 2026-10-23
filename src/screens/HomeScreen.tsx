@@ -247,7 +247,7 @@ export const HomeScreen = ({ navigation }: any) => {
             {emTrabalho?.kind === 'resin' ? (
               <View className="flex-row items-center justify-between mt-2.5">
                 <Text className="text-[11px] text-ink-soft" style={{ fontFamily: 'monospace' }}>
-                  {t('home.ventoinhas').toUpperCase()} —
+                  {emTrabalho?.status?.PrintInfo?.TotalLayer ?? 0} CAMADAS
                 </Text>
                 <Text className="text-[11px] text-ink-soft" style={{ fontFamily: 'monospace' }}>
                   {emTrabalho?.printerName}

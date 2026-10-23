@@ -12,6 +12,9 @@ import { EstadoResina } from './ligacao';
  */
 export const codigoParaApp = (status: number): number => {
   if (status === 0) return 0;
+  // 8 = em pausa (medido: carregar em Pausa no ecrã da máquina põe o
+  // PrintInfo.Status a 8 e os ticks param; ao retomar volta a 2/3/4).
+  if (status === 8) return 20;
   if (status === 20) return 20;
   if (status === 16) return 9;
   if (status >= 1 && status <= 15) return 6;
