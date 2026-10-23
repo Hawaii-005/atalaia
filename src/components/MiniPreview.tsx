@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Image, Animated, Easing, StyleSheet } from 'react-native';
 import type { EstadoPrevia } from '../utils/revelacao';
 import { limitarProgresso } from '../utils/revelacao';
@@ -42,6 +42,23 @@ export const MiniPreview: React.FC<Props> = ({
   const { tema } = useTheme();
   const p = limitarProgresso(progresso);
 
+  // O enquadramento acompanha o formato da própria imagem: assim não ficam
+  // faixas vazias nas laterais quando a prévia do .ctb é vertical.
+  const [larguraCaixa, setLarguraCaixa] = useState(0);
+  const [aspeto, setAspeto] = useState(0.64);
+  useEffect(() => {
+    Image.getSize(
+      uri,
+      (w, h) => {
+        if (w > 0 && h > 0) setAspeto(w / h);
+      },
+      () => {}
+    );
+  }, [uri]);
+  const largura = larguraCaixa
+    ? Math.min(larguraCaixa, altura * aspeto)
+    : undefined;
+
   const anim = useRef(new Animated.Value(p)).current;
 
   useEffect(() => {
@@ -56,6 +73,7 @@ export const MiniPreview: React.FC<Props> = ({
   const revelar =
     estado === 'a-imprimir' || estado === 'em-pausa' || estado === 'parada';
   const comFrente = estado === 'a-imprimir' || estado === 'em-pausa';
+  const comLinha = comFrente || estado === 'parada';
   const emPausa = estado === 'em-pausa';
   const semLigacao = estado === 'sem-ligacao';
 
@@ -74,7 +92,18 @@ export const MiniPreview: React.FC<Props> = ({
 
   return (
     <View
-      style={[styles.frame, { height: altura, backgroundColor: hexDe(tema.paleta.fundoBaixo) }]}
+      style={styles.casca}
+      onLayout={e => setLarguraCaixa(e.nativeEvent.layout.width)}
+    >
+    <View
+      style={[
+        styles.frame,
+        {
+          height: altura,
+          width: largura ?? '100%',
+          backgroundColor: hexDe(tema.paleta.fundoBaixo),
+        },
+      ]}
       accessibilityRole="progressbar"
       accessibilityValue={{ min: 0, max: 100, now: Math.round(p) }}
       accessibilityLabel={rotulo}
@@ -102,7 +131,7 @@ export const MiniPreview: React.FC<Props> = ({
           </Animated.View>
 
           {/* 3. frente de impressão: linha de 2 dp + halo */}
-          {comFrente ? (
+          {comLinha ? (
             <Animated.View
               style={[styles.front, { top: topoFrenteAnim }]}
               pointerEvents="none"
@@ -119,14 +148,24 @@ export const MiniPreview: React.FC<Props> = ({
                   ))}
                 </View>
               ) : (
-                <View style={[styles.linha, { backgroundColor: corFrente }]} />
+                <View
+                  style={[
+                    styles.linha,
+                    {
+                      backgroundColor: comFrente ? corFrente : corMuted,
+                      opacity: comFrente ? 1 : 0.55,
+                    },
+                  ]}
+                />
               )}
-              <View
-                style={[
-                  styles.halo,
-                  { backgroundColor: corFrente, opacity: emPausa ? 0.12 : 0.14 },
-                ]}
-              />
+              {comFrente ? (
+                <View
+                  style={[
+                    styles.halo,
+                    { backgroundColor: corFrente, opacity: emPausa ? 0.12 : 0.14 },
+                  ]}
+                />
+              ) : null}
             </Animated.View>
           ) : null}
         </>
@@ -140,10 +179,14 @@ export const MiniPreview: React.FC<Props> = ({
         />
       )}
     </View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  casca: {
+    alignItems: 'center',
+  },
   frame: {
     borderRadius: 12,
     overflow: 'hidden',

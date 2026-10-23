@@ -200,7 +200,7 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
       </View>
 
       {/* Tempos: duas colunas (só quando há impressão para ler) */}
-      {(aImprimir || emPausa || concluida) && (
+      {(aImprimir || emPausa || concluida || (parada && !!ficheiro)) && (
       <View className="flex-row justify-between mt-3">
         <View>
           <Text
