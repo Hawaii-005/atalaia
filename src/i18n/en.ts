@@ -378,6 +378,7 @@ const en = {
   'monitor.trabalhoSub': 'What the resin printer is doing, layer by layer.',
   'monitor.abrir': 'Open',
   'monitor.ultimoDado': 'Last data received {t}.',
+  'resina.semMiniatura': 'No preview for this file',
   'monitor.semImpressoras': 'No printers connected. Add one under Printers.',
   'monitor.semResina': 'No resin printers connected yet.',
   'resina.erroMaquina':

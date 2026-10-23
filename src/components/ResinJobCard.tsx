@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, Alert, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Printer } from '../types';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
@@ -10,6 +10,7 @@ import {
 } from '../utils/commands';
 import { mensagemDoErro } from '../utils/errors';
 import { formatTicksToReadableTime, formatTimeAgo } from '../utils/FormatUtils';
+import { miniaturaDe } from '../saturn/miniatura';
 import { t } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
@@ -48,7 +49,21 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
   const restante = Math.max(0, (info?.TotalTicks ?? 0) - (info?.CurrentTicks ?? 0));
   const decorrido = Math.max(0, info?.CurrentTicks ?? 0);
   const ligada = printer.connectionStatus === 'connected';
-  const ficheiro = info?.Filename ? String(info.Filename).split('/').pop() : '';
+  const ficheiro = info?.Filename
+    ? String(info.Filename).split('/').pop() ?? ''
+    : '';
+
+  // A miniatura vem do último envio deste ficheiro a partir da app.
+  const [miniatura, setMiniatura] = useState<string | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    miniaturaDe(ficheiro).then(uri => {
+      if (vivo) setMiniatura(uri);
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [ficheiro]);
 
   const controlar = async (acao: 'pausar' | 'retomar' | 'parar') => {
     try {
@@ -99,6 +114,56 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
 
   return (
     <View className="rounded-xl2 border border-line bg-cartao p-4 mb-3">
+      {/* Miniatura do projeto: revela-se de baixo para cima com a impressão. */}
+      {miniatura ? (
+        <View
+          className="rounded-lg overflow-hidden mb-3"
+          style={{ height: 170, backgroundColor: hexDe(tema.paleta.fundoBaixo) }}
+        >
+          <Image
+            source={{ uri: miniatura }}
+            style={{ width: '100%', height: '100%' }}
+            resizeMode="contain"
+          />
+          {aImprimir || emPausa ? (
+            <>
+              <View
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  top: 0,
+                  height: `${Math.max(0, 100 - progresso)}%`,
+                  backgroundColor: hexDe(tema.paleta.cartao),
+                  opacity: 0.94,
+                }}
+              />
+              <View
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  top: `${Math.max(0, 100 - progresso)}%`,
+                  height: 2,
+                  backgroundColor: hexDe(tema.paleta.acento),
+                  opacity: 0.85,
+                }}
+              />
+            </>
+          ) : null}
+        </View>
+      ) : (
+        <View
+          className="rounded-lg mb-3 items-center justify-center border border-line"
+          style={{ height: 104, backgroundColor: hexDe(tema.paleta.fundoBaixo) }}
+        >
+          <Ionicons name="layers-outline" size={22} color={hexDe(tema.paleta.tintaSoft)} />
+          <Text className="text-[11px] text-ink-soft mt-1.5">
+            {t('resina.semMiniatura')}
+          </Text>
+        </View>
+      )}
+
       <View className="flex-row items-start justify-between">
         <View className="flex-1 pr-3">
           <Text className="text-[11px] text-ink-soft">

@@ -19,6 +19,7 @@ import {
   stopPrintCommand,
 } from '../utils/commands';
 import { mensagemDoErro } from '../utils/errors';
+import { extrairMiniatura } from '../saturn/miniatura';
 import { isPausable, isResumable, isStoppable } from '../types';
 import { t } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
@@ -108,6 +109,9 @@ export const ResinScreen = ({ navigation, route }: any) => {
       setFicheiro({ uri: escolhido.uri, nome, tamanho });
       setEnviado(0);
       setNaImpressora(null);
+      // Guardar já a miniatura do ficheiro: serve para o painel de trabalho,
+      // inclusive quando a impressão for lançada depois pela pen USB.
+      extrairMiniatura(escolhido.uri, nome).catch(() => undefined);
     } catch (erro) {
       Alert.alert(t('resina.titulo'), mensagemDoErro(erro));
     }
