@@ -398,5 +398,5 @@ export default {
   'resina.decorrido': 'Decorrido',
   'resina.restante': 'Restante',
   'resina.camada': 'camada {x} / {y}',
-  'resina.etiquetaFicheiro': 'Ficheiro',
+  'resina.previaRotulo': 'Pré-visualização: {p}% impresso',
 } as const;

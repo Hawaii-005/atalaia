@@ -146,12 +146,15 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
 
       {/* Miniatura ou caixa vazia */}
       {miniatura ? (
-        <MiniPreview
-          uri={miniatura}
-          progresso={progresso}
-          estado={estadoPrevia}
-          altura={260}
-        />
+        <View className="mb-3">
+          <MiniPreview
+            uri={miniatura}
+            progresso={progresso}
+            estado={estadoPrevia}
+            altura={260}
+            rotulo={t('resina.previaRotulo', { p: Math.round(progresso) })}
+          />
+        </View>
       ) : (
         <View
           className="rounded-lg mb-3 items-center justify-center border border-line"
@@ -196,7 +199,8 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
         />
       </View>
 
-      {/* Tempos: duas colunas */}
+      {/* Tempos: duas colunas (só quando há impressão para ler) */}
+      {(aImprimir || emPausa || concluida) && (
       <View className="flex-row justify-between mt-3">
         <View>
           <Text
@@ -229,9 +233,10 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
           </Text>
         </View>
       </View>
+      )}
 
       {/* Separador + linha do ficheiro */}
-      <View className="h-0.5 bg-line mt-4" />
+      <View className="h-px bg-line mt-4" />
       <View className="flex-row items-center justify-between mt-3">
         <Text
           className="text-[11.5px] text-ink-muted flex-1"

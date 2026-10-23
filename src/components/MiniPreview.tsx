@@ -1,8 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Image, Animated, Easing, StyleSheet } from 'react-native';
-import { EstadoPrevia, topoFrente } from '../utils/revelacao';
+import type { EstadoPrevia } from '../utils/revelacao';
+import { limitarProgresso } from '../utils/revelacao';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
+
 export type { EstadoPrevia } from '../utils/revelacao';
 
 interface Props {
@@ -10,174 +12,133 @@ interface Props {
   progresso: number;
   estado: EstadoPrevia;
   altura?: number;
+  /** Texto para leitores de ecrã (já traduzido por quem usa o componente). */
+  rotulo?: string;
 }
 
 const ALTURA_POR_OMISSAO = 260;
+const SEGMENTOS = 24;
 
 /**
  * Pré-visualização com revelação progressiva de baixo para cima.
  *
- * Estrutura (de baixo para cima):
- * 1. Imagem fantasma (opacity 0.22) — o que falta imprimir
- * 2. Camada sólida recortada (overflow hidden, height animado) — o já impresso
- * 3. Frente de impressão: linha de 2 dp + halo de 28 dp
+ * Três camadas, todas com a mesma imagem e a mesma altura para o recorte
+ * coincidir pixel a pixel:
+ * 1. fantasma a 22 % — o que ainda falta imprimir;
+ * 2. recorte sólido ancorado em baixo, com altura proporcional ao progresso;
+ * 3. frente de impressão: linha de 2 dp + halo de 28 dp.
  *
- * Em 'concluida', 'repouso' ou 'parada': mostra a imagem inteira sem fantasma nem frente.
- * Em 'sem-ligacao': mostra só o fantasma (a 22 %).
- * Em 'em-pausa': linha tracejada cinzenta + halo cinzento a 12 %.
+ * Com a máquina desligada mostra a imagem inteira a 45 % (último estado
+ * conhecido, sem inventar progresso). Em pausa a frente passa a tracejado
+ * cinzento. Parada fica congelada, sem frente.
  */
 export const MiniPreview: React.FC<Props> = ({
   uri,
   progresso,
   estado,
   altura = ALTURA_POR_OMISSAO,
+  rotulo,
 }) => {
   const { tema } = useTheme();
+  const p = limitarProgresso(progresso);
 
-  const animProgresso = useRef(new Animated.Value(progresso)).current;
-  const animTopo = useRef(new Animated.Value(topoFrente(progresso, altura))).current;
+  const anim = useRef(new Animated.Value(p)).current;
 
-  // Atualiza animação só quando o progresso muda
   useEffect(() => {
-    const pLim = progresso; // já vem limitado do cartão
-    Animated.timing(animProgresso, {
-      toValue: pLim,
+    Animated.timing(anim, {
+      toValue: p,
       duration: 600,
       easing: Easing.out(Easing.cubic),
-      useNativeDriver: false, // anima height/top → JS thread
+      useNativeDriver: false, // height/top não correm no thread nativo
     }).start();
+  }, [p, anim]);
 
-    Animated.timing(animTopo, {
-      toValue: topoFrente(pLim, altura),
-      duration: 600,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
-    }).start();
-  }, [progresso, altura, animProgresso, animTopo]);
-
-  const estaAImprimirOuPausa =
-    estado === 'a-imprimir' || estado === 'em-pausa';
-  const estaConcluidaOuRepouso =
-    estado === 'concluida' || estado === 'repouso' || estado === 'parada';
+  const revelar =
+    estado === 'a-imprimir' || estado === 'em-pausa' || estado === 'parada';
+  const comFrente = estado === 'a-imprimir' || estado === 'em-pausa';
   const emPausa = estado === 'em-pausa';
+  const semLigacao = estado === 'sem-ligacao';
 
   const corAcento = hexDe(tema.paleta.acento);
   const corMuted = hexDe(tema.paleta.tintaMuted);
+  const corFrente = emPausa ? corMuted : corAcento;
 
-  // Halo: gradiente simulado com opacity — RN não suporta linearGradient nativo sem deps.
-  // Usamos uma View com backgroundColor rgba e height fixa.
-  const haloOpacity = emPausa ? 0.12 : 0.14;
-  const haloCor = emPausa ? corMuted : corAcento;
-
-  // Estilo da linha da frente
-  const linhaCor = emPausa ? corMuted : corAcento;
-
-  // Segmentos para tracejado (24 segmentos flex:1 com margem)
-  const segmentosTracejado = Array.from({ length: 24 }, (_, i) => (
-    <View
-      key={i}
-      style={styles.segmentoTracejado}
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-    />
-  ));
+  const alturaVisivel = anim.interpolate({
+    inputRange: [0, 100],
+    outputRange: [0, altura],
+  });
+  const topoFrenteAnim = anim.interpolate({
+    inputRange: [0, 100],
+    outputRange: [altura, 0],
+  });
 
   return (
     <View
-      style={[
-        styles.frame,
-        { height: altura, backgroundColor: hexDe(tema.paleta.fundoBaixo) },
-      ]}
+      style={[styles.frame, { height: altura, backgroundColor: hexDe(tema.paleta.fundoBaixo) }]}
       accessibilityRole="progressbar"
-      accessibilityValue={{ min: 0, max: 100, now: Math.round(progresso) }}
-      accessibilityLabel={
-        estado === 'sem-ligacao'
-          ? 'Sem ligação à impressora'
-          : `Progresso da impressão ${Math.round(progresso)} por cento`
-      }
+      accessibilityValue={{ min: 0, max: 100, now: Math.round(p) }}
+      accessibilityLabel={rotulo}
     >
-      {/* 1. Fantasma — o que falta imprimir */}
-      {!estaConcluidaOuRepouso && (
-        <Image
-          source={{ uri }}
-          style={[
-            styles.img,
-            styles.ghost,
-            { height: altura, opacity: 0.22 },
-          ]}
-          resizeMode="contain"
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-        />
-      )}
-
-      {/* 2. Camada sólida recortada — o já impresso */}
-      {estaAImprimirOuPausa && (
-        <Animated.View
-          style={[
-            styles.clip,
-            { height: animProgresso.interpolate({
-                inputRange: [0, 100],
-                outputRange: [0, altura],
-              }) },
-          ]}
-        >
+      {revelar ? (
+        <>
+          {/* 1. fantasma — o que falta imprimir */}
           <Image
             source={{ uri }}
-            style={[styles.img, styles.imgBottom, { height: altura }]}
+            style={[styles.img, { height: altura, opacity: 0.22 }]}
             resizeMode="contain"
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
           />
-        </Animated.View>
-      )}
 
-      {/* 3. Frente de impressão: linha + halo */}
-      {estaAImprimirOuPausa && (
-        <Animated.View
-          style={[
-            styles.front,
-            { top: animTopo },
-          ]}
-          pointerEvents="none"
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-        >
-          {/* Linha de 2 dp */}
-          <View
-            style={[
-              styles.line,
-              { backgroundColor: linhaCor },
-              emPausa && styles.linePaused,
-            ]}
-          >
-            {emPausa && <View style={styles.tracejadoContainer}>{segmentosTracejado}</View>}
-          </View>
+          {/* 2. já impresso — recorte ancorado em baixo */}
+          <Animated.View style={[styles.clip, { height: alturaVisivel }]}>
+            <Image
+              source={{ uri }}
+              style={[styles.img, { height: altura }]}
+              resizeMode="contain"
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+            />
+          </Animated.View>
 
-          {/* Halo de 28 dp (aprox. 30 no mockup) */}
-          <View
-            style={[
-              styles.halo,
-              { backgroundColor: `${haloCor}${Math.round(haloOpacity * 255)
-                .toString(16)
-                .padStart(2, '0')}` },
-            ]}
-          />
-        </Animated.View>
-      )}
-
-      {/* Estado final: imagem inteira sem fantasma nem frente */}
-      {estaConcluidaOuRepouso && (
+          {/* 3. frente de impressão: linha de 2 dp + halo */}
+          {comFrente ? (
+            <Animated.View
+              style={[styles.front, { top: topoFrenteAnim }]}
+              pointerEvents="none"
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+            >
+              {emPausa ? (
+                <View style={styles.tracejado}>
+                  {Array.from({ length: SEGMENTOS }).map((_, i) => (
+                    <View
+                      key={i}
+                      style={[styles.segmento, { backgroundColor: corMuted }]}
+                    />
+                  ))}
+                </View>
+              ) : (
+                <View style={[styles.linha, { backgroundColor: corFrente }]} />
+              )}
+              <View
+                style={[
+                  styles.halo,
+                  { backgroundColor: corFrente, opacity: emPausa ? 0.12 : 0.14 },
+                ]}
+              />
+            </Animated.View>
+          ) : null}
+        </>
+      ) : (
         <Image
           source={{ uri }}
-          style={[styles.img, { height: altura, opacity: 1 }]}
+          style={[styles.img, { height: altura, opacity: semLigacao ? 0.45 : 1 }]}
           resizeMode="contain"
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
         />
       )}
-
-      {/* Sem ligação: só fantasma (já renderizado acima via !estaConcluidaOuRepouso) */}
     </View>
   );
 };
@@ -195,9 +156,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: '100%',
   },
-  ghost: {
-    // opacity aplicada inline
-  },
   clip: {
     position: 'absolute',
     left: 0,
@@ -205,35 +163,21 @@ const styles = StyleSheet.create({
     bottom: 0,
     overflow: 'hidden',
   },
-  imgBottom: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
   front: {
     position: 'absolute',
     left: 0,
     right: 0,
   },
-  line: {
+  linha: {
     height: 2,
   },
-  linePaused: {
-    backgroundColor: 'transparent',
-  },
-  tracejadoContainer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
+  tracejado: {
+    height: 2,
     flexDirection: 'row',
   },
-  segmentoTracejado: {
+  segmento: {
     flex: 1,
     height: 2,
-    backgroundColor: 'currentColor', // herda do pai via corMuted
     marginHorizontal: 2,
   },
   halo: {

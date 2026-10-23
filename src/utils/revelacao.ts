@@ -30,7 +30,7 @@ export function limitarProgresso(p: unknown): number {
  * altura: altura total da pré-visualização em dp.
  */
 export function alturaRevelada(progresso: number, altura: number): number {
-  return (progresso / 100) * altura;
+  return (limitarProgresso(progresso) / 100) * altura;
 }
 
 /**

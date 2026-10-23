@@ -396,7 +396,7 @@ const en = {
   'resina.decorrido': 'Elapsed',
   'resina.restante': 'Remaining',
   'resina.camada': 'layer {x} / {y}',
-  'resina.etiquetaFicheiro': 'File',
+  'resina.previaRotulo': 'Preview: {p}% printed',
 } as const satisfies Record<keyof typeof pt, string>;
 
 export default en;
