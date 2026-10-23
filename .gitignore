@@ -200,4 +200,6 @@ fastlane/test_output
 .yarn/unplugged
 .yarn/build-state.yml
 .yarn/install-state.gz
-.pnp.*node_modules
+.pnp.*
+# Ligação simbólica criada nos worktrees (não é a pasta, por isso `node_modules/` não a apanha)
+node_modules
