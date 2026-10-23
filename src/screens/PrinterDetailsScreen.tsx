@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../components/Header';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
+import { Estratos } from '../components/Estratos';
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { WebView } from 'react-native-webview';
 import { useRoute } from '@react-navigation/native';
@@ -547,6 +548,19 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                 : t('camera.inativa')}
           </Text>
         </View>
+
+        {/* Estratos: as camadas reais do trabalho, do piso para cima */}
+        {isPrinting && info && (
+          <View className="mt-4 items-center">
+            <Estratos
+              actual={info.CurrentLayer}
+              total={info.TotalLayer}
+              progresso={progress}
+              tipo="fdm"
+              altura={220}
+            />
+          </View>
+        )}
 
         {/* Cápsulas de telemetria */}
         <View className="flex-row mt-5" style={{ gap: 8 }}>

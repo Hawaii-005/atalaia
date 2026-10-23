@@ -23,6 +23,7 @@ import {
   TX_PERIGO,
 } from '../theme/botoes';
 import { MiniPreview } from './MiniPreview';
+import { Estratos } from './Estratos';
 import { estadoDaPrevia, limitarProgresso } from '../utils/revelacao';
 
 interface Props {
@@ -187,6 +188,19 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
             : '—'}
         </Text>
       </View>
+
+      {/* Estratos: as camadas reais, o mesmo desenho da FDM */}
+      {ligada && (
+        <View className="items-center my-1">
+          <Estratos
+            actual={info?.CurrentLayer ?? 0}
+            total={info?.TotalLayer ?? 0}
+            progresso={progresso}
+            tipo="resina"
+            altura={170}
+          />
+        </View>
+      )}
 
       {/* Barra de progresso: 3dp com miniatura, 6dp sem */}
       <View
