@@ -391,6 +391,12 @@ const en = {
   'resina.confirmarImprimirMsg': '{nome} will start printing. Check that the plate and the resin vat are ready.',
   'resina.confirmarParar': 'The running print will be cancelled. The part is lost.',
   'resina.comandoRecusado': 'Command refused',
+
+  // ——— New keys for the job card (mockup)
+  'resina.decorrido': 'Elapsed',
+  'resina.restante': 'Remaining',
+  'resina.camada': 'layer {x} / {y}',
+  'resina.etiquetaFicheiro': 'File',
 } as const satisfies Record<keyof typeof pt, string>;
 
 export default en;

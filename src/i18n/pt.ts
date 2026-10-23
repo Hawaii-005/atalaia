@@ -393,4 +393,10 @@ export default {
   'resina.confirmarImprimirMsg': '{nome} vai começar a imprimir. Confirma que a mesa e o depósito de resina estão prontos.',
   'resina.confirmarParar': 'A impressão em curso vai ser cancelada. A peça fica perdida.',
   'resina.comandoRecusado': 'Comando recusado',
+
+  // ——— Novas chaves para o cartão de trabalho (mockup)
+  'resina.decorrido': 'Decorrido',
+  'resina.restante': 'Restante',
+  'resina.camada': 'camada {x} / {y}',
+  'resina.etiquetaFicheiro': 'Ficheiro',
 } as const;

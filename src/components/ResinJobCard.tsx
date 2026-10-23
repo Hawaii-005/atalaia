@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, Alert, Image } from 'react-native';
+import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Printer } from '../types';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
@@ -22,6 +22,8 @@ import {
   TX_NEUTRO,
   TX_PERIGO,
 } from '../theme/botoes';
+import { MiniPreview } from './MiniPreview';
+import { estadoDaPrevia, limitarProgresso } from '../utils/revelacao';
 
 interface Props {
   printer: Printer;
@@ -45,7 +47,7 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
   const parada = status === 8;
   const concluida = status === 9;
   const erro = Number(info?.ErrorNumber ?? 0);
-  const progresso = Math.max(0, Math.min(100, info?.Progress ?? 0));
+  const progresso = limitarProgresso(info?.Progress);
   const restante = Math.max(0, (info?.TotalTicks ?? 0) - (info?.CurrentTicks ?? 0));
   const decorrido = Math.max(0, info?.CurrentTicks ?? 0);
   const ligada = printer.connectionStatus === 'connected';
@@ -53,11 +55,16 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
     ? String(info.Filename).split('/').pop() ?? ''
     : '';
 
+  // Extensão do ficheiro para etiqueta
+  const extensao = ficheiro
+    ? ficheiro.split('.').pop()?.toUpperCase() ?? ''
+    : '';
+
   // A miniatura vem do último envio deste ficheiro a partir da app.
   const [miniatura, setMiniatura] = useState<string | null>(null);
   useEffect(() => {
     let vivo = true;
-    miniaturaDe(ficheiro).then(uri => {
+    miniaturaDe(ficheiro).then((uri) => {
       if (vivo) setMiniatura(uri);
     });
     return () => {
@@ -90,7 +97,8 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
       },
     ]);
 
-  const estado = !ligada
+  // Estado textual e cor do ponto (igual a antes, mas usado na linha de topo)
+  const estadoTexto = !ligada
     ? t('resina.naoLigada')
     : concluida
     ? t('comum.impressaoConcluida')
@@ -102,7 +110,7 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
     ? t('comum.aImprimir')
     : t('resina.emRepouso');
 
-  const cor = !ligada
+  const corEstado = !ligada
     ? tema.paleta.tintaMuted
     : erro
     ? tema.paleta.perigo
@@ -112,50 +120,42 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
     ? tema.paleta.aviso ?? tema.paleta.tinta
     : tema.paleta.tintaMuted;
 
+  // Estado da pré-visualização (para o MiniPreview)
+  const estadoPrevia = estadoDaPrevia(status, ligada);
+
   return (
     <View className="rounded-xl2 border border-line bg-cartao p-4 mb-3">
-      {/* Miniatura do projeto: revela-se de baixo para cima com a impressão. */}
-      {miniatura ? (
-        <View
-          className="rounded-lg overflow-hidden mb-3"
-          style={{ height: 170, backgroundColor: hexDe(tema.paleta.fundoBaixo) }}
-        >
-          <Image
-            source={{ uri: miniatura }}
-            style={{ width: '100%', height: '100%' }}
-            resizeMode="contain"
+      {/* Linha de topo: nome da impressora à esquerda, estado à direita */}
+      <View className="flex-row items-center justify-between mb-3">
+        <Text className="text-[14.5px] font-semibold text-ink" style={{ letterSpacing: -0.008 * 14.5 }}>
+          {printer.printerName}
+        </Text>
+        <View className="flex-row items-center gap-1.5">
+          <View
+            className="w-1.5 h-1.5 rounded-full"
+            style={{ backgroundColor: hexDe(corEstado) }}
           />
-          {aImprimir || emPausa ? (
-            <>
-              <View
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  right: 0,
-                  top: 0,
-                  height: `${Math.max(0, 100 - progresso)}%`,
-                  backgroundColor: hexDe(tema.paleta.cartao),
-                  opacity: 0.94,
-                }}
-              />
-              <View
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  right: 0,
-                  top: `${Math.max(0, 100 - progresso)}%`,
-                  height: 2,
-                  backgroundColor: hexDe(tema.paleta.acento),
-                  opacity: 0.85,
-                }}
-              />
-            </>
-          ) : null}
+          <Text
+            className="text-[11.5px] font-semibold"
+            style={{ color: hexDe(corEstado), letterSpacing: -0.008 * 11.5 }}
+          >
+            {estadoTexto}
+          </Text>
         </View>
+      </View>
+
+      {/* Miniatura ou caixa vazia */}
+      {miniatura ? (
+        <MiniPreview
+          uri={miniatura}
+          progresso={progresso}
+          estado={estadoPrevia}
+          altura={260}
+        />
       ) : (
         <View
           className="rounded-lg mb-3 items-center justify-center border border-line"
-          style={{ height: 104, backgroundColor: hexDe(tema.paleta.fundoBaixo) }}
+          style={{ height: 200, backgroundColor: hexDe(tema.paleta.fundoBaixo) }}
         >
           <Ionicons name="layers-outline" size={22} color={hexDe(tema.paleta.tintaSoft)} />
           <Text className="text-[11px] text-ink-soft mt-1.5">
@@ -164,71 +164,110 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
         </View>
       )}
 
-      <View className="flex-row items-start justify-between">
-        <View className="flex-1 pr-3">
-          <Text className="text-[11px] text-ink-soft">
-            {printer.printerName}
+      {/* Métricas: percentagem grande + camada X / Y */}
+      <View className="flex-row items-end justify-between mb-2">
+        <Text
+          className="text-[40px] font-semibold text-ink"
+          style={{ fontVariant: ['tabular-nums'], lineHeight: 40, letterSpacing: -0.035 * 40 }}
+        >
+          {ligada ? `${Math.round(progresso)}` : '—'}
+          <Text className="text-[17px] font-semibold text-ink-muted" style={{ marginLeft: 1, fontVariant: ['tabular-nums'] }}>
+            %
           </Text>
-          <View className="flex-row items-center mt-1">
-            <View
-              className="w-2 h-2 rounded-full mr-2"
-              style={{ backgroundColor: hexDe(cor) }}
-            />
-            <Text className="text-[15px] font-semibold text-ink">{estado}</Text>
-          </View>
-        </View>
-        <View className="items-end">
-          {/* Sem ligação não há dados: "—" em vez de um 0% que parece real. */}
-          <Text className="text-[28px] font-bold text-ink leading-8">
-            {ligada ? `${Math.round(progresso)}%` : '—'}
-          </Text>
-          <Text className="text-[10px] text-ink-soft" style={{ fontFamily: 'monospace' }}>
-            {ligada ? `${info?.CurrentLayer ?? 0}/${info?.TotalLayer ?? 0}` : '—'}
-          </Text>
-        </View>
+        </Text>
+        <Text
+          className="text-[11px] text-ink-muted"
+          style={{ fontFamily: 'monospace', fontWeight: '500', letterSpacing: 0.02 * 11, paddingBottom: 5 }}
+        >
+          {ligada
+            ? `${t('resina.camada', { x: info?.CurrentLayer ?? 0, y: info?.TotalLayer ?? 0 })}`
+            : '—'}
+        </Text>
       </View>
 
-      <View className="h-1.5 rounded-full bg-line mt-3 overflow-hidden">
+      {/* Barra de progresso: 3dp com miniatura, 6dp sem */}
+      <View
+        className="rounded-full bg-line overflow-hidden"
+        style={{ height: miniatura ? 3 : 6, marginTop: 0 }}
+      >
         <View
           className="h-full bg-brand"
           style={{ width: `${Math.max(2, progresso)}%` }}
         />
       </View>
 
-      <Text
-        className="text-[12px] text-ink-muted mt-2"
-        numberOfLines={1}
-        style={{ fontFamily: 'monospace' }}
-      >
-        {ficheiro || t('resina.mesaLivre')}
-      </Text>
+      {/* Tempos: duas colunas */}
+      <View className="flex-row justify-between mt-3">
+        <View>
+          <Text
+            className="text-[9.5px] font-semibold text-ink-muted uppercase"
+            style={{ letterSpacing: 0.9, lineHeight: 12 }}
+          >
+            {t('resina.decorrido')}
+          </Text>
+          <Text
+            className="text-[12.5px] font-medium text-ink mt-1"
+            style={{ fontFamily: 'monospace', fontVariant: ['tabular-nums'], lineHeight: 16 }}
+          >
+            {formatTicksToReadableTime(decorrido)}
+          </Text>
+        </View>
+        <View style={{ alignItems: 'flex-end' }}>
+          <Text
+            className="text-[9.5px] font-semibold text-ink-muted uppercase"
+            style={{ letterSpacing: 0.9, lineHeight: 12 }}
+          >
+            {t('resina.restante')}
+          </Text>
+          <Text
+            className="text-[12.5px] font-medium text-ink mt-1"
+            style={{ fontFamily: 'monospace', fontVariant: ['tabular-nums'], lineHeight: 16, textAlign: 'right' }}
+          >
+            {aImprimir || emPausa
+              ? formatTicksToReadableTime(restante)
+              : '—'}
+          </Text>
+        </View>
+      </View>
 
-      {/* Sem ligação, o que está no cartão é o último dado recebido — dizê-lo. */}
+      {/* Separador + linha do ficheiro */}
+      <View className="h-0.5 bg-line mt-4" />
+      <View className="flex-row items-center justify-between mt-3">
+        <Text
+          className="text-[11.5px] text-ink-muted flex-1"
+          style={{ fontFamily: 'monospace', fontWeight: '500' }}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          {ficheiro || t('resina.mesaLivre')}
+        </Text>
+        {extensao && (
+          <Text
+            className="text-[9.5px] font-semibold text-ink-muted uppercase"
+            style={{ fontFamily: 'monospace', fontWeight: '600', letterSpacing: 0.08 * 9.5 }}
+          >
+            {extensao}
+          </Text>
+        )}
+      </View>
+
+      {/* Sem ligação: aviso de último dado */}
       {!ligada && printer.lastUpdate ? (
-        <Text className="text-[11px] text-ink-soft mt-1">
+        <Text className="text-[11px] text-ink-soft mt-2">
           {t('monitor.ultimoDado', {
             t: formatTimeAgo(printer.lastUpdate, Date.now()),
           })}
         </Text>
       ) : null}
 
-      {(aImprimir || emPausa) && (
-        <View className="flex-row justify-between mt-1">
-          <Text className="text-[11px] text-ink-soft" style={{ fontFamily: 'monospace' }}>
-            {formatTicksToReadableTime(decorrido)}
-          </Text>
-          <Text className="text-[11px] text-ink-soft" style={{ fontFamily: 'monospace' }}>
-            {t('comum.restantes', { t: formatTicksToReadableTime(restante) })}
-          </Text>
-        </View>
-      )}
-
+      {/* Erro da máquina */}
       {erro ? (
         <Text className={`text-[12px] mt-2 ${TX_PERIGO}`}>
           {t('resina.erroMaquina', { n: erro })}
         </Text>
       ) : null}
 
+      {/* Botões — iguais aos de hoje */}
       <View className="flex-row mt-3">
         {aImprimir || emPausa ? (
           <TouchableOpacity
