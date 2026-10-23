@@ -3,7 +3,7 @@ import { View, ScrollView, Text, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { RelogioBancada } from '../components/RelogioBancada';
-import { TrabalhoRelogio } from '../utils/relogio';
+import { TrabalhoRelogio, proximoAFim } from '../utils/relogio';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 import { t } from '../i18n';
@@ -61,6 +61,11 @@ export const BancadaScreen = ({ navigation }: any) => {
     });
   }, [printers]);
 
+  const proximo = useMemo(
+    () => proximoAFim(trabalhos, agora.getHours() + agora.getMinutes() / 60),
+    [trabalhos, agora]
+  );
+
   const subtituloData = agora.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'short' });
 
   const aoTocar = (printerId: string) => {
@@ -91,11 +96,19 @@ export const BancadaScreen = ({ navigation }: any) => {
 
         <View className="items-center mb-8">
           {trabalhos.length > 0 ? (
-            <RelogioBancada
-              agora={agora}
-              trabalhos={trabalhos}
-              aoTocar={aoTocar}
-            />
+            <>
+              <RelogioBancada
+                agora={agora}
+                trabalhos={trabalhos}
+                aoTocar={aoTocar}
+              />
+              {proximo && (
+                <Text className="mt-3 text-[13px] text-ink-soft">
+                  <Text className="font-semibold text-ink">{proximo.nome}</Text>
+                  {` ${t('bancada.acabaPrimeiro')}`}
+                </Text>
+              )}
+            </>
           ) : (
             <View className="items-center justify-center h-[340px]">
               <Text className="text-[16px] text-ink-muted">

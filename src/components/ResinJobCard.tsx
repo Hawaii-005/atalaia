@@ -198,6 +198,10 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
             progresso={progresso}
             tipo="resina"
             altura={170}
+            rotulo={t('resina.camada', {
+              x: info?.CurrentLayer ?? 0,
+              y: info?.TotalLayer ?? 0,
+            })}
           />
         </View>
       )}

@@ -108,7 +108,10 @@ export function RelogioBancada({
     return (
       <G
         key={trabalho.id}
-        onPress={() => aoTocar?.(trabalho.id)}
+        onPress={aoTocar ? () => aoTocar(trabalho.id) : undefined}
+        accessible={!!aoTocar}
+        accessibilityRole={aoTocar ? 'button' : undefined}
+        accessibilityLabel={trabalho.nome}
       >
         <Path
           d={path}

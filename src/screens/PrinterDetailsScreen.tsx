@@ -558,6 +558,10 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
               progresso={progress}
               tipo="fdm"
               altura={220}
+              rotulo={t('comum.camada', {
+                actual: info.CurrentLayer,
+                total: info.TotalLayer,
+              })}
             />
           </View>
         )}

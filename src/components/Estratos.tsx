@@ -15,6 +15,8 @@ export interface EstratosProps {
   progresso: number;   // 0..100
   tipo: TipoEstrato;
   altura?: number;     // dp, por omissão 360
+  /** descrição para leitores de ecrã */
+  rotulo?: string;
 }
 
 /**
@@ -22,12 +24,13 @@ export interface EstratosProps {
  * Puramente decorativo, sem estados nem interação.
  */
 export function Estratos(props: EstratosProps): React.JSX.Element {
-  const { actual, total, progresso, tipo, altura = 360 } = props;
+  const { actual, total, progresso, tipo, altura = 360, rotulo } = props;
   const { tema } = useTheme();
 
   const corAcento = hexDe(tema.paleta.acento);
   const corLinha = hexDe(tema.paleta.linha);
   const corTinta = hexDe(tema.paleta.tinta);
+  const corTintaSoft = hexDe(tema.paleta.tintaSoft);
 
   const n = CAMADAS_DESENHADAS;
   const postas = camadasPostas(actual, total, progresso, n);
@@ -94,7 +97,7 @@ export function Estratos(props: EstratosProps): React.JSX.Element {
         rx={rx}
         ry={ry}
         fill="none"
-        stroke={corLinha}
+        stroke={corTintaSoft}
         strokeWidth={2.4}
         strokeDasharray="4 5"
       />
@@ -105,6 +108,11 @@ export function Estratos(props: EstratosProps): React.JSX.Element {
     <Svg
       viewBox={`0 0 360 ${altura}`}
       preserveAspectRatio="xMidYMax meet"
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel={
+        rotulo ?? `Camadas: ${Math.round(Math.max(0, Math.min(100, progresso)))}% impresso`
+      }
     >
       <Line
         x1={0}
