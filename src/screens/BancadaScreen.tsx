@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { View, ScrollView, Text, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { RelogioBancada } from '../components/RelogioBancada';
@@ -110,8 +111,13 @@ export const BancadaScreen = ({ navigation }: any) => {
               )}
             </>
           ) : (
-            <View className="items-center justify-center h-[340px]">
-              <Text className="text-[16px] text-ink-muted">
+            <View className="items-center justify-center py-14">
+              <Ionicons
+                name="time-outline"
+                size={26}
+                color={hexDe(paleta.tintaMuted)}
+              />
+              <Text className="mt-3 text-[15px] text-ink-soft">
                 {t('bancada.semTrabalho')}
               </Text>
             </View>
