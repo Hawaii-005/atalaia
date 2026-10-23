@@ -324,7 +324,7 @@ export const HomeScreen = ({ navigation }: any) => {
                   onOpenCamera={
                     printer.kind === 'resin'
                       ? undefined
-                      : () => navigation.navigate('Camera', { printerId: printer.id })
+                      : () => navigation.navigate('Monitor', { printerId: printer.id })
                   }
                   onToggleLight={
                     printer.kind === 'resin'

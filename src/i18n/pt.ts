@@ -374,6 +374,13 @@ export default {
   'resina.enviar': 'Enviar para a impressora',
   'resina.enviarDica': 'Ficheiros .goo ou .ctb fatiados para esta máquina. A impressora vai buscá-los por Wi-Fi.',
   'resina.escolher': 'Escolher .goo / .ctb',
+  'monitor.titulo': 'Monitor',
+  'monitor.camara': 'Câmara',
+  'monitor.trabalho': 'Trabalho',
+  'monitor.trabalhoSub': 'O que a impressora de resina está a fazer, camada a camada.',
+  'monitor.abrir': 'Abrir',
+  'monitor.semImpressoras': 'Sem impressoras ligadas. Adiciona uma em Impressoras.',
+  'monitor.semResina': 'Ainda não há impressoras de resina ligadas.',
   'resina.erroMaquina':
     'A impressora registou um erro ({n}) e não arrancou. Erro 4 = ficheiro inválido ou corrompido.',
   'resina.limites': 'Esta impressora não expõe câmara, lista de ficheiros nem temperaturas — o protocolo dela só publica o trabalho em curso.',

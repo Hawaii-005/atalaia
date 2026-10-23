@@ -12,11 +12,12 @@ import {
 import { PrinterDetailsScreen } from '../screens/PrinterDetailsScreen';
 import { AddEditPrinterScreen } from '../screens/AddEditPrinterScreen';
 import { DiscoveryScreen } from '../screens/DiscoveryScreen';
-import { CameraScreen } from '../screens/CameraScreen';
+import { MonitorScreen } from '../screens/MonitorScreen';
 import { ResinScreen } from '../screens/ResinScreen';
 import WhereIsIpScreen from '../screens/WhereIsIpScreen';
 import PrinterIcon from '../components/icons/PrinterIcon';
 import { useTheme } from '../contexts/ThemeContext';
+import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { hexDe } from '../theme/temas';
 import { t } from '../i18n';
 
@@ -44,6 +45,7 @@ const PrintersStackNavigator = () => (
 
 export const AppNavigator = () => {
   const { tema } = useTheme();
+  const { printers } = usePrinterConnections();
 
   return (
     <Tab.Navigator
@@ -57,10 +59,20 @@ export const AppNavigator = () => {
                 color={color}
               />
             );
-          } else if (route.name === 'Camera') {
+          } else if (route.name === 'Monitor') {
+            // A aba mostra vídeo quando há câmara e trabalho quando só há resina.
+            const temCamera = printers.some(p => p.kind !== 'resin');
             return (
               <Ionicons
-                name={focused ? 'videocam' : 'videocam-outline'}
+                name={
+                  temCamera
+                    ? focused
+                      ? 'videocam'
+                      : 'videocam-outline'
+                    : focused
+                    ? 'layers'
+                    : 'layers-outline'
+                }
                 size={size}
                 color={color}
               />
@@ -105,10 +117,10 @@ export const AppNavigator = () => {
         }}
       />
       <Tab.Screen
-        name="Camera"
-        component={CameraScreen}
+        name="Monitor"
+        component={MonitorScreen}
         options={{
-          title: t('camera.title'),
+          title: t('monitor.titulo'),
         }}
       />
       <Tab.Screen

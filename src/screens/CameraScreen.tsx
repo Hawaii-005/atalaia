@@ -68,7 +68,7 @@ const SnapshotAoVivo = ({ host, activo }: { host: string; activo: boolean }) => 
   );
 };
 
-export const CameraScreen = ({ navigation, route }: any) => {
+export const CameraScreen = ({ navigation, route, dentroDoMonitor }: any) => {
   const { tema } = useTheme();
   // Keep the display awake while the camera tab is open.
   useKeepAwake();
@@ -444,7 +444,11 @@ export const CameraScreen = ({ navigation, route }: any) => {
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
+    // Dentro da aba Monitor o topo já é tratado pelo MonitorScreen.
+    <SafeAreaView
+      edges={dentroDoMonitor ? [] : ['top']}
+      className="flex-1 bg-canvas"
+    >
       {/* Cabeçalho discreto: etiqueta + estado */}
       <View className="flex-row items-center justify-between px-4 pt-1 pb-3">
         <View className="flex-row items-center">
