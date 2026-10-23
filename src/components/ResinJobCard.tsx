@@ -183,14 +183,14 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
           className="text-[11px] text-ink-muted"
           style={{ fontFamily: 'monospace', fontWeight: '500', letterSpacing: 0.02 * 11, paddingBottom: 5 }}
         >
-          {ligada
+          {ligada && (info?.TotalLayer ?? 0) > 0
             ? `${t('resina.camada', { x: info?.CurrentLayer ?? 0, y: info?.TotalLayer ?? 0 })}`
             : '—'}
         </Text>
       </View>
 
       {/* Estratos: as camadas reais, o mesmo desenho da FDM */}
-      {ligada && (
+      {ligada && (info?.TotalLayer ?? 0) > 0 && (
         <View className="items-center my-1">
           <Estratos
             actual={info?.CurrentLayer ?? 0}
