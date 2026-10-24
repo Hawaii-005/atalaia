@@ -22,7 +22,7 @@ Só entra nesta lista o que foi **confirmado no código**. O que os revisores ap
 _Feito em 2.3.5 (134): ecrãs mortos apagados, cores do estado vindas da paleta, interruptores do Files com `tinta`._
 
 - [x] **729 linhas de ecrãs mortos** — `HomeScreen.tsx` (380), `BancadaScreen.tsx` (249), `MonitorScreen.tsx` (100). Nenhum é navegado; o `HomeScreen` só aparece num `export` de `src/screens/index.ts`.
-- [~] **Dependências sem uso** — `uuid` e `@noble/hashes` não são importados em lado nenhum. Por remover: o `npm uninstall` pede confirmação e foi bloqueado.
+- [x] **Dependências sem uso** — `uuid` e `@noble/hashes` removidos do `package.json` (2.3.6); o `uuid` que resta no `package-lock` vem de `xcode`, dependência de build, não nossa.
 - [ ] **63 `any`** com `strict: true` no `tsconfig` (contagem por grep em `src/`).
 - [x] **24 cores fora do tema** em 10 ficheiros — `PrinterCard.tsx` (`#1F9D55`, `#F2A900`, `#9AA0A6`, `#C62828`), `CameraScreen.tsx` e `FilesScreen.tsx` (`#FFFFFF`), `HomeScreen.tsx` (`#6B4E00`). Deviam sair de `temas.ts`.
 
