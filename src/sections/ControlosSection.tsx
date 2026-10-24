@@ -14,7 +14,6 @@ import {
   skipPreheatCommand,
   stopFilamentCommand,
   timelapseCommand,
-  videoCommand,
 } from '../utils/commands';
 
 const Linha: React.FC<{
@@ -141,13 +140,6 @@ export const ControlosSection = ({ printer }: { printer?: Printer }) => {
         ligado={luz}
         desactivado={!ligada}
         onPress={() => enviar(lightCommand(!luz, { id: printer?.id }))}
-      />
-      <Linha
-        icone="videocam-outline"
-        titulo={t('controlos.camara')}
-        valor={t('controlos.ligarCamara')}
-        desactivado={!ligada}
-        onPress={() => enviar(videoCommand(true, { id: printer?.id }))}
       />
       <Linha
         icone="film-outline"

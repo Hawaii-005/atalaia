@@ -216,7 +216,9 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
             <View key={item.rotulo} style={{ flex: 1, backgroundColor: hexDe(paleta.cartao), borderRadius: raioToken.interno, padding: espaco.md }}>
               <Text style={{ fontSize: 12, color: hexDe(paleta.tintaSoft) }}>{item.rotulo}</Text>
               <Text style={{ fontSize: 20, fontWeight: '700', color: item.cor, marginTop: 4 }}>{Math.round(item.valor)}°</Text>
-              <Text style={{ fontSize: 11, color: hexDe(paleta.tintaSoft) }}>{`/ ${Math.round(item.alvo)}°`}</Text>
+              {item.alvo > 0 && (
+                <Text style={{ fontSize: 11, color: hexDe(paleta.tintaSoft) }}>{`/ ${Math.round(item.alvo)}°`}</Text>
+              )}
             </View>
           ))}
         </View>
@@ -265,23 +267,6 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
         </TouchableOpacity>
       </View>
 
-      {!resina && onAbrirCamara && (
-        <TouchableOpacity
-          onPress={onAbrirCamara}
-          style={{
-            height: 48,
-            borderRadius: raioToken.botao,
-            backgroundColor: hexDe(paleta.cartao),
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-          }}
-        >
-          <Ionicons name="videocam-outline" size={18} color={hexDe(paleta.acento)} />
-          <Text style={{ fontSize: 15, fontWeight: '600', color: hexDe(paleta.tinta) }}>{t('inicio.camara')}</Text>
-        </TouchableOpacity>
-      )}
     </ScrollView>
   );
 };

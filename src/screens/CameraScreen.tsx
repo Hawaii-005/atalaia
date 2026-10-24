@@ -19,7 +19,6 @@ import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
 import { captureRef } from 'react-native-view-shot';
 import Svg, { Path } from 'react-native-svg';
-import { useGcodePreview } from '../hooks/useGcodePreview';
 import * as DocumentPicker from 'expo-document-picker';
 import { uploadGcode } from '../utils/gcodeUpload';
 import { listFilesCommand } from '../utils/commands';
@@ -85,7 +84,7 @@ const SnapshotAoVivo = ({
   );
 };
 
-export const CameraScreen = ({ navigation, route, dentroDoMonitor }: any) => {
+export const CameraScreen = ({ navigation, route }: any) => {
   const { tema } = useTheme();
   // Keep the display awake while the camera tab is open.
   useKeepAwake();
@@ -404,7 +403,6 @@ export const CameraScreen = ({ navigation, route, dentroDoMonitor }: any) => {
         }
       : null;
 
-  const { preview } = useGcodePreview(printer ? enderecoDe(printer) : undefined, job?.filename);
 
   if (!printer) {
     return (
@@ -418,7 +416,7 @@ export const CameraScreen = ({ navigation, route, dentroDoMonitor }: any) => {
         </Text>
         <TouchableOpacity
           className="mt-4 bg-brand rounded-xl px-6 py-3"
-          onPress={() => navigation?.navigate('Printers')}
+          onPress={() => navigation?.navigate('AddEditPrinter')}
         >
           <Text className="text-white font-bold">{t('camera.irParaImpressoras')}</Text>
         </TouchableOpacity>
@@ -427,24 +425,21 @@ export const CameraScreen = ({ navigation, route, dentroDoMonitor }: any) => {
   }
 
   return (
-    // Dentro da aba Monitor o topo já é tratado pelo MonitorScreen.
     <SafeAreaView
-      edges={dentroDoMonitor ? [] : ['top']}
+      edges={['top']}
       className="flex-1 bg-canvas"
     >
       {/* Cabeçalho discreto: etiqueta + estado */}
       <View className="flex-row items-center justify-between px-4 pt-1 pb-3">
         <View className="flex-row items-center">
-          {dentroDoMonitor ? null : (
-            <TouchableOpacity
-              onPress={() => navigation?.goBack()}
-              className="w-8 h-8 -ml-1 mr-1 items-center justify-center"
-              activeOpacity={0.7}
-              accessibilityLabel={t('details.voltar')}
-            >
-              <Ionicons name="chevron-back" size={20} color={hexDe(tema.paleta.tinta)} />
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+            onPress={() => navigation?.goBack()}
+            className="w-8 h-8 -ml-1 mr-1 items-center justify-center"
+            activeOpacity={0.7}
+            accessibilityLabel={t('details.voltar')}
+          >
+            <Ionicons name="chevron-back" size={20} color={hexDe(tema.paleta.tinta)} />
+          </TouchableOpacity>
           <Text className="text-[10px] tracking-[2.4px] font-semibold text-ink-soft">
             {t('camera.title').toUpperCase()}
           </Text>
@@ -715,28 +710,12 @@ export const CameraScreen = ({ navigation, route, dentroDoMonitor }: any) => {
           <TouchableOpacity
             onPress={handleUpload}
             disabled={uploading}
-            className={`flex-1 ${BT_NEUTRA} h-10 mr-2 ${uploading ? 'opacity-60' : ''}`}
+            className={`flex-1 ${BT_NEUTRA} h-10 ${uploading ? 'opacity-60' : ''}`}
             activeOpacity={0.7}
           >
             <Ionicons name="cloud-upload-outline" size={15} color={hexDe(tema.paleta.tintaSoft)} />
             <Text className="ml-2 text-[10px] font-semibold tracking-[1.2px] text-ink-soft">
               {(uploading ? t('camera.aEnviar', { p: uploadPercent }) : t('camera.enviarGcode')).toUpperCase()}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() =>
-              navigation.navigate('Printers', {
-                screen: 'Files',
-                params: { printerId: printer?.id },
-              })
-            }
-            disabled={uploading}
-            className={`flex-1 ${BT_NEUTRA} h-10 ${uploading ? 'opacity-60' : ''}`}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="folder-open-outline" size={15} color={hexDe(tema.paleta.tintaSoft)} />
-            <Text className="ml-2 text-[10px] font-semibold tracking-[1.2px] text-ink-soft">
-              {t('camera.ficheiros').toUpperCase()}
             </Text>
           </TouchableOpacity>
         </View>

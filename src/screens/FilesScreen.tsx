@@ -501,7 +501,7 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
               return;
             }
             Alert.alert(t('files.aArrancar'), t('files.aArrancarMsg', { nome: label }));
-            navigation.navigate('Printers');
+            navigation.navigate('Impressora');
           } catch (e) {
             Alert.alert(t('files.naoArrancou'), mensagemDeErro(e));
           }
@@ -553,7 +553,7 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
                 return;
               }
               Alert.alert(t('files.aArrancar'), t('files.aArrancarMsg', { nome: asset.name }));
-              navigation.navigate('Printers');
+              navigation.navigate('Impressora');
             } catch (e) {
               Alert.alert(t('files.naoArrancou'), mensagemDeErro(e));
             }

@@ -11,6 +11,7 @@ import { t } from '../i18n';
 import { getPrintStatus, Printer } from '../types';
 import { log } from '../utils/log';
 import { loadHistory, formatDuration, PrintRecord } from '../utils/printHistory';
+import { useJanela } from '../theme/layout';
 
 const TAMANHO_ANEL = 64;
 const TRACO = 7;
@@ -74,6 +75,7 @@ export const InicioScreen = ({ navigation }: any) => {
   const paleta = tema.paleta;
   const { printers } = usePrinterConnections();
   const { mudarMaquina, mudarSecao } = useSelectedPrinter();
+  const { compacta } = useJanela();
   const [historico, setHistorico] = useState<PrintRecord[]>([]);
   const [tick, setTick] = useState(0);
 
@@ -116,6 +118,7 @@ export const InicioScreen = ({ navigation }: any) => {
           >
             <Ionicons name="add" size={22} color={hexDe(paleta.tinta)} />
           </TouchableOpacity>
+          {!compacta && (
           <TouchableOpacity
             onPress={() => navigation.navigate('Settings')}
             accessibilityLabel={t('settings.title')}
@@ -130,6 +133,7 @@ export const InicioScreen = ({ navigation }: any) => {
           >
             <Ionicons name="settings-outline" size={20} color={hexDe(paleta.tinta)} />
           </TouchableOpacity>
+          )}
         </View>
 
         <View style={{ paddingHorizontal: 16, marginTop: 16, gap: 12 }}>
@@ -137,7 +141,12 @@ export const InicioScreen = ({ navigation }: any) => {
             const info = printer.status?.PrintInfo;
             const progresso = info?.Progress ?? 0;
             const estado = estadoTexto(printer, t('inicio.semLigacao'));
-            const corEstado = hexDe((paleta as any)[estado.cor] ?? paleta.tintaSoft);
+            const coresDoEstado: Record<string, string> = {
+              ok: paleta.ok,
+              aviso: paleta.aviso,
+              perigo: paleta.perigo,
+            };
+            const corEstado = hexDe(coresDoEstado[estado.cor] ?? paleta.tintaSoft);
             const resina = printer.kind === 'resin';
             return (
               <TouchableOpacity

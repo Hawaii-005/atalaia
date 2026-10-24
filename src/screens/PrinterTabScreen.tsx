@@ -96,6 +96,7 @@ export const PrinterTabScreen = ({ navigation }: any) => {
 
       <ScrollView
         horizontal
+        style={{ flexGrow: 0 }}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: espaco.lg, paddingVertical: espaco.md, gap: espaco.sm }}
       >
@@ -173,7 +174,7 @@ export const PrinterTabScreen = ({ navigation }: any) => {
         </View>
       )}
 
-      <View style={{ flex: 1, marginTop: espaco.md }}>{corpo()}</View>
+      <View style={{ flex: 1, marginTop: secoes.length > 1 ? espaco.md : 0 }}>{corpo()}</View>
     </SafeAreaView>
   );
 };

@@ -165,7 +165,7 @@ export const HistoryScreen = ({ navigation }: any) => {
           return;
         }
         Alert.alert(t('history.reimprimirTitulo'), t('history.aReimprimir'));
-        navigation.navigate('Printers');
+        navigation.navigate('Impressora');
       } catch (erro) {
         Alert.alert(t('history.reimprimirTitulo'), mensagemDeErro(erro));
       }
