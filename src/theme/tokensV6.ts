@@ -6,7 +6,7 @@
 
 // ───────────────────────── Paleta ─────────────────────────
 
-export type NomeTema = 'conceito' | 'grafite' | 'vidro' | 'nord' | 'papel';
+export type NomeTema = 'conceito' | 'grafite' | 'nord' | 'papel';
 
 export interface Paleta {
   modo: 'escuro' | 'claro';
@@ -99,34 +99,6 @@ const grafite: Paleta = {
   cameraBase: '#5A5148',
 };
 
-const vidro: Paleta = {
-  modo: 'escuro',
-  fundo: '#14112B',
-  cartao: '#1F1A3F',
-  cartaoAlt: '#2B2556',
-  trilha: '#3B3470',
-  contorno: '#3B3470',
-  barraNav: '#1A1638',
-  pilulaNav: '#3A2F6B',
-  texto: '#F2F5FF',
-  textoSecundario: '#A8A6C8',
-  primaria: '#C77DFF',
-  textoSobrePrimaria: '#1A0B2E',
-  sucesso: '#5CF2A6',
-  sucessoFundo: '#16362F',
-  aviso: '#FFD166',
-  avisoFundo: '#41300F',
-  perigo: '#FF2D55',
-  perigoFundo: '#3F1530',
-  textoSobrePerigo: '#2B0010',
-  bico: '#FFD166',
-  mesa: '#C77DFF',
-  camara: '#7DF9FF',
-  sobreposicao: 'rgba(8,6,24,0.66)',
-  cameraTopo: '#251F45',
-  cameraBase: '#5C5470',
-};
-
 const nord: Paleta = {
   modo: 'escuro',
   fundo: '#2E3440',
@@ -183,13 +155,12 @@ const papel: Paleta = {
   cameraBase: '#B9AE9E',
 };
 
-export const temas: Record<NomeTema, Paleta> = { conceito, grafite, vidro, nord, papel };
+export const temas: Record<NomeTema, Paleta> = { conceito, grafite, nord, papel };
 export const temaPredefinido: NomeTema = 'conceito';
 
 export const nomesDosTemas: Record<NomeTema, string> = {
   conceito: 'Conceito',
   grafite: 'Grafite',
-  vidro: 'Vidro',
   nord: 'Nord',
   papel: 'Papel',
 };

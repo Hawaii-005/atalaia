@@ -196,7 +196,6 @@ export default {
   'settings.temaSistema': 'Sistema',
   'settings.tema_grafite': 'Claro e neutro. Azul só no activo.',
   'settings.tema_papel': 'Claro quente, tipo folha de projecto.',
-  'settings.tema_vidro': 'Escuro com violeta vivo e ciano.',
   'settings.tema_nord': 'Frio e calmo, azul gelado e coral.',
   'settings.intervalo': 'Intervalo de actualização',
   'settings.intervaloMsg': 'Com que frequência pedir o estado à impressora',

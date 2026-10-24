@@ -34,6 +34,9 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
         const guardado = (await AsyncStorage.getItem(CHAVE)) as TemaId | null;
         if (guardado && TEMAS[guardado]) {
           _setTemaId(guardado);
+        } else if (guardado) {
+          // Tema que já não existe (ex.: 'vidro', removido em 2.3.7).
+          await AsyncStorage.removeItem(CHAVE);
         }
       } catch (e) {
         console.error('Falha ao ler o tema guardado', e);

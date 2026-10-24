@@ -81,7 +81,6 @@ const traduzir = (p: PaletaV6): Paleta => ({
 const DESCRICOES: Record<TemaId, string> = {
   conceito: 'Roxo escuro do conceito aprovado.',
   grafite: 'Escuro neutro. Azul apenas no que se pode tocar.',
-  vidro: 'Roxo sobre fundo profundo, com brilho.',
   nord: 'Cinza-azulado do Norte, calmo.',
   papel: 'Claro e quente, como papel.',
 };
@@ -101,12 +100,11 @@ const construir = (id: TemaId): Tema => {
 export const TEMAS: Record<TemaId, Tema> = {
   conceito: construir('conceito'),
   grafite: construir('grafite'),
-  vidro: construir('vidro'),
   nord: construir('nord'),
   papel: construir('papel'),
 };
 
-export const ORDEM_TEMAS: TemaId[] = ['conceito', 'grafite', 'papel', 'vidro', 'nord'];
+export const ORDEM_TEMAS: TemaId[] = ['conceito', 'grafite', 'papel', 'nord'];
 export const TEMA_PREDEFINIDO: TemaId = temaPredefinido;
 
 /** "18 16 34" → "#121022" (para sítios que não aceitam variáveis) */
