@@ -36,12 +36,22 @@ interface PrinterCardProps {
 
 const MEDALHA = 58;
 
-const STATUS_DOT: { [key in ConnectionStatus]: string } = {
-  connected: '#1F9D55',
-  connecting: '#F2A900',
-  disconnected: '#9AA0A6',
-  error: '#C62828',
-  timeout: '#C62828',
+// Cores do ponto de estado, tiradas do tema (nunca hex à mão).
+const corDoEstado = (
+  estado: ConnectionStatus,
+  paleta: { ok: string; aviso: string; tintaMuted: string; perigo: string }
+): string => {
+  switch (estado) {
+    case 'connected':
+      return paleta.ok;
+    case 'connecting':
+      return paleta.aviso;
+    case 'error':
+    case 'timeout':
+      return paleta.perigo;
+    default:
+      return paleta.tintaMuted;
+  }
 };
 
 // Etiquetas visíveis para o estado de ligação da impressora (chaves i18n).
@@ -138,7 +148,7 @@ export const PrinterCard = ({
               cx={MEDALHA / 2}
               cy={MEDALHA / 2}
               r={MEDALHA / 2 - 3}
-              stroke={STATUS_DOT[printer.connectionStatus]}
+              stroke={corDoEstado(printer.connectionStatus, tema.paleta)}
               strokeWidth={3}
               fill="none"
               strokeDasharray={`${2 * Math.PI * (MEDALHA / 2 - 3)} ${2 * Math.PI * (MEDALHA / 2 - 3)}`}
@@ -184,7 +194,7 @@ export const PrinterCard = ({
                 width: 6,
                 height: 6,
                 borderRadius: 3,
-                backgroundColor: STATUS_DOT[printer.connectionStatus],
+                backgroundColor: corDoEstado(printer.connectionStatus, tema.paleta),
               }}
             />
             <Text className="text-[11px] font-semibold text-ink-soft ml-1.5">

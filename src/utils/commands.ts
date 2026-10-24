@@ -98,7 +98,7 @@ const construir = <T>(
     Data: payload,
     RequestID: requestId,
     MainboardID: opts.mainboardId ?? '',
-    TimeStamp: Math.floor(Date.now() / 1000),
+    TimeStamp: Date.now(),
     From: 1,
   },
 });

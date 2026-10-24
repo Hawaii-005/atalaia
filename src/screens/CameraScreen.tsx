@@ -175,7 +175,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
         Data: { Enable: 1 },
         RequestID: `enable-video-${Date.now()}`,
         MainboardID: '',
-        TimeStamp: Math.floor(Date.now() / 1000),
+        TimeStamp: Date.now(),
         From: 1,
       },
     });
@@ -204,7 +204,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
         Data: { Enable: 1 },
         RequestID: `enable-video-${Date.now()}`,
         MainboardID: '',
-        TimeStamp: Math.floor(Date.now() / 1000),
+        TimeStamp: Date.now(),
         From: 1,
       },
     });
@@ -335,7 +335,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
         Data: { LightStatus: { SecondLight: next ? 1 : 0 } },
         RequestID: `light-toggle-${Date.now()}`,
         MainboardID: '',
-        TimeStamp: 0,
+        TimeStamp: Date.now(),
         From: 1,
       },
     });

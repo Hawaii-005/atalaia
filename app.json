@@ -61,7 +61,7 @@
   },
   "android": {
     "package": "io.github.brunocrazy15.atalaia",
-    "versionCode": 133
+    "versionCode": 134
   },
-  "version": "2.3.4"
+  "version": "2.3.5"
 }

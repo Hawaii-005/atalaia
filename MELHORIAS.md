@@ -5,24 +5,26 @@ Só entra nesta lista o que foi **confirmado no código**. O que os revisores ap
 
 ## 1. Bugs confirmados
 
-- [ ] **IP curado só fora de impressão** — `src/contexts/PrinterConnectionsContext.tsx:456-460`
+- [x] **IP curado só fora de impressão** — `src/contexts/PrinterConnectionsContext.tsx:456-460`
       `healPrinterIp()` desiste se `aImprimir` for verdadeiro. Se a Saturn muda de IP durante um trabalho, a app fica «sem ligação» até a impressão acabar (horas), que é quando já não serve.
       *Correção:* curar sempre que o estado for `disconnected`, aceitando só o resultado cujo `mainboardId` coincida.
 
-- [ ] **`TimeStamp` em três formatos** — `src/utils/commands.ts:101`, `PrinterConnectionsContext.tsx:1143`, `CameraScreen.tsx:178` e `:207` enviam segundos; `PrinterConnectionsContext.tsx:363` e `:748` enviam milissegundos; `PrinterDetailsScreen.tsx:207` e `CameraScreen.tsx:338` enviam `0`.
+- [x] **`TimeStamp` em três formatos** — `src/utils/commands.ts:101`, `PrinterConnectionsContext.tsx:1143`, `CameraScreen.tsx:178` e `:207` enviam segundos; `PrinterConnectionsContext.tsx:363` e `:748` enviam milissegundos; `PrinterDetailsScreen.tsx:207` e `CameraScreen.tsx:338` enviam `0`.
       A Centauri tolera; a Saturn (SDCP V1) espera milissegundos.
       *Correção:* um só construtor de envelope com `TimeStamp: Date.now()`.
 
-- [ ] **Pedidos de estado sem travão** — `src/contexts/PrinterConnectionsContext.tsx:343-385` (chamado em `:407`, `:759`, `:828`)
+- [x] **Pedidos de estado sem travão** — `src/contexts/PrinterConnectionsContext.tsx:343-385` (chamado em `:407`, `:759`, `:828`)
       O temporizador de 30 s e as chamadas manuais podem sobrepor-se e mandar dois `Cmd:0` seguidos para a mesma impressora.
       *Correção:* guardar o instante do último pedido por impressora e ignorar pedidos dentro de 5 s.
 
 ## 2. Limpeza (baixo risco, ganho imediato)
 
-- [ ] **729 linhas de ecrãs mortos** — `HomeScreen.tsx` (380), `BancadaScreen.tsx` (249), `MonitorScreen.tsx` (100). Nenhum é navegado; o `HomeScreen` só aparece num `export` de `src/screens/index.ts`.
-- [ ] **Dependências sem uso** — `uuid` e `@noble/hashes` estão em `dependencies` e não são importados em lado nenhum.
+_Feito em 2.3.5 (134): ecrãs mortos apagados, cores do estado vindas da paleta, interruptores do Files com `tinta`._
+
+- [x] **729 linhas de ecrãs mortos** — `HomeScreen.tsx` (380), `BancadaScreen.tsx` (249), `MonitorScreen.tsx` (100). Nenhum é navegado; o `HomeScreen` só aparece num `export` de `src/screens/index.ts`.
+- [~] **Dependências sem uso** — `uuid` e `@noble/hashes` não são importados em lado nenhum. Por remover: o `npm uninstall` pede confirmação e foi bloqueado.
 - [ ] **63 `any`** com `strict: true` no `tsconfig` (contagem por grep em `src/`).
-- [ ] **24 cores fora do tema** em 10 ficheiros — `PrinterCard.tsx` (`#1F9D55`, `#F2A900`, `#9AA0A6`, `#C62828`), `CameraScreen.tsx` e `FilesScreen.tsx` (`#FFFFFF`), `HomeScreen.tsx` (`#6B4E00`). Deviam sair de `temas.ts`.
+- [x] **24 cores fora do tema** em 10 ficheiros — `PrinterCard.tsx` (`#1F9D55`, `#F2A900`, `#9AA0A6`, `#C62828`), `CameraScreen.tsx` e `FilesScreen.tsx` (`#FFFFFF`), `HomeScreen.tsx` (`#6B4E00`). Deviam sair de `temas.ts`.
 
 ## 3. Trabalho do pedido v6 ainda por fazer
 

@@ -341,6 +341,14 @@ export const PrinterConnectionsProvider = ({
   };
 
   const sendStatusRequest = (printer: Printer, ws?: WebSocket) => {
+    // O temporizador de 30 s e as chamadas manuais podem sobrepor-se; dois
+    // Cmd:0 seguidos só atrasam a resposta.
+    const agora = Date.now();
+    const ultimo = ultimoPedidoEstadoRef.current[printer.id] ?? 0;
+    if (agora - ultimo < 5000) {
+      return;
+    }
+    ultimoPedidoEstadoRef.current[printer.id] = agora;
     log('Sending status request to printer', printer.printerName);
     const websocket = ws || webSocketsRef.current[printer.id];
     log('websocket', websocket);
@@ -436,6 +444,8 @@ export const PrinterConnectionsProvider = ({
   };
 
   const ipHealRef = useRef<{ [key: string]: number }>({});
+  // Instante do último Cmd:0 por impressora (travão de 5 s).
+  const ultimoPedidoEstadoRef = useRef<{ [key: string]: number }>({});
 
   /**
    * The printer gets its address from DHCP, so it can come back on a different
@@ -456,9 +466,6 @@ export const PrinterConnectionsProvider = ({
     const estado = printer.status?.PrintInfo;
     const aImprimir =
       !!estado?.Filename && ![0, 7, 8, 9].includes(estado.Status ?? 0);
-    if (aImprimir) {
-      return;
-    }
     const ultima = ipHealRef.current[printer.id] ?? 0;
     if (Date.now() - ultima < 5 * 60 * 1000) {
       return;
@@ -467,11 +474,15 @@ export const PrinterConnectionsProvider = ({
 
     try {
       const discovered = await descobrirSoUdp();
-      const match = discovered.find(
-        d =>
-          (!!printer.mainboardId && d.mainboardId === printer.mainboardId) ||
-          d.name.trim().toLowerCase() ===
-            printer.printerName.trim().toLowerCase()
+      // A meio de uma impressão só se aceita a máquina certa: o nome pode
+      // repetir-se na rede, o mainboardId não.
+      const match = discovered.find(d =>
+        aImprimir
+          ? !!printer.mainboardId && d.mainboardId === printer.mainboardId
+          : (!!printer.mainboardId &&
+              d.mainboardId === printer.mainboardId) ||
+            d.name.trim().toLowerCase() ===
+              printer.printerName.trim().toLowerCase()
       );
 
       if (match && match.ip !== printer.ipAddress) {
@@ -1140,7 +1151,7 @@ export const PrinterConnectionsProvider = ({
               Data: command.Data.Data,
               RequestID: requestId,
               MainboardID: printer?.mainboardId ?? '',
-              TimeStamp: Math.floor(Date.now() / 1000),
+              TimeStamp: Date.now(),
               From: 1,
             },
           })

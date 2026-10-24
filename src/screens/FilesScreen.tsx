@@ -342,7 +342,7 @@ const FileDetails = ({
                   value={bedLevel}
                   onValueChange={onChangeBedLevel}
                   trackColor={{ false: hexDe(tema.paleta.linha), true: hexDe(tema.paleta.acento) }}
-                  thumbColor="#FFFFFF"
+                  thumbColor={hexDe(tema.paleta.tinta)}
                   ios_backgroundColor={hexDe(tema.paleta.linha)}
                 />
               </View>
@@ -675,7 +675,7 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
               value={bedLevel}
               onValueChange={setBedLevel}
               trackColor={{ false: hexDe(tema.paleta.linha), true: hexDe(tema.paleta.acento) }}
-              thumbColor="#FFFFFF"
+              thumbColor={hexDe(tema.paleta.tinta)}
               ios_backgroundColor={hexDe(tema.paleta.linha)}
             />
           </View>

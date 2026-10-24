@@ -204,7 +204,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
         },
         RequestID: `${fanType}-fan-${speed}-${Date.now()}`,
         MainboardID: '',
-        TimeStamp: 0,
+        TimeStamp: Date.now(),
         From: 1,
       },
     });
