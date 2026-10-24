@@ -394,9 +394,9 @@ const FileDetails = ({
   );
 };
 
-export const FilesScreen = ({ route, navigation }: any) => {
+export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embutido }: any) => {
   const { tema } = useTheme();
-  const { printerId } = route.params ?? {};
+  const printerId = printerIdProp ?? route?.params?.printerId;
   const { printers, request, adicionarAFila } = usePrinterConnections();
   const printer = printers.find(item => item.id === printerId) ?? printers[0];
   // Só o id: o objeto do printer muda a cada actualização de estado (1 s) e
@@ -597,13 +597,15 @@ export const FilesScreen = ({ route, navigation }: any) => {
   };
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
-      <Header
-        title={t('files.title')}
-        subtitle={printer ? printer.printerName : t('comum.semImpressora')}
-        onBack={() => navigation.goBack()}
-        rightAction={{ icon: 'refresh', onPress: load }}
-      />
+    <SafeAreaView edges={embutido ? [] : ['top']} className="flex-1 bg-canvas">
+      {!embutido && (
+        <Header
+          title={t('files.title')}
+          subtitle={printer ? printer.printerName : t('comum.semImpressora')}
+          onBack={() => navigation.goBack()}
+          rightAction={{ icon: 'refresh', onPress: load }}
+        />
+      )}
 
       {loading ? (
         <View className="flex-1 items-center justify-center">

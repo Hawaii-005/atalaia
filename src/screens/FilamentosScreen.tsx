@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -50,12 +49,17 @@ const nomeDaCor = (hex: string): string => {
   return melhor;
 };
 
-export const FilamentosScreen = () => {
+export const FilamentosScreen = ({
+  printerId,
+  embutido,
+}: { printerId?: string; embutido?: boolean } = {}) => {
   const { tema } = useTheme();
   const paleta = tema.paleta;
   const { printers, request } = usePrinterConnections();
 
-  const fdm = printers.find(p => (p.kind ?? 'fdm') !== 'resin');
+  const fdm =
+    printers.find(p => p.id === printerId) ??
+    printers.find(p => (p.kind ?? 'fdm') !== 'resin');
   const [slots, setSlots] = useState<CanvasTray[] | null>(null);
   const [ativo, setAtivo] = useState<number>(-1);
   const [aCarregar, setACarregar] = useState(false);
@@ -113,7 +117,8 @@ export const FilamentosScreen = () => {
   } as const;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: hexDe(paleta.fundo) }} edges={['top']}>
+    <View style={{ flex: 1, backgroundColor: hexDe(paleta.fundo) }}>
+      {!embutido && (
       <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12 }}>
         <Text style={{ fontSize: 26, fontWeight: '700', color: hexDe(paleta.tinta) }}>
           {t('filamentos.titulo')}
@@ -122,6 +127,7 @@ export const FilamentosScreen = () => {
           {fdm ? `${fdm.printerName} · ${fdm.ipAddress}` : t('filamentos.semMaquina')}
         </Text>
       </View>
+      )}
 
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 28, gap: 12 }}
@@ -232,6 +238,6 @@ export const FilamentosScreen = () => {
           {t('filamentos.notaPeso')}
         </Text>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };

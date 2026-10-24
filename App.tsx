@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { vars } from 'nativewind';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
+import { SelectedPrinterProvider } from './src/contexts/SelectedPrinterContext';
 import { hexDe } from './src/theme/temas';
 import {
   PrinterConnectionsProvider,
@@ -100,7 +101,9 @@ function AppLogic() {
 
   return (
     <PrinterConnectionsProvider>
-      <AppContent />
+      <SelectedPrinterProvider>
+        <AppContent />
+      </SelectedPrinterProvider>
     </PrinterConnectionsProvider>
   );
 }

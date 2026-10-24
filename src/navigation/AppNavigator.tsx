@@ -2,166 +2,52 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  HomeScreen,
-  SettingsScreen,
-  HistoryScreen,
-  FilesScreen,
-  StatsScreen,
-} from '../screens';
-import { BancadaScreen } from '../screens/BancadaScreen';
+import { SettingsScreen, HistoryScreen, FilesScreen, StatsScreen } from '../screens';
 import { PrinterDetailsScreen } from '../screens/PrinterDetailsScreen';
 import { AddEditPrinterScreen } from '../screens/AddEditPrinterScreen';
 import { DiscoveryScreen } from '../screens/DiscoveryScreen';
-import { MonitorScreen } from '../screens/MonitorScreen';
 import { ResinScreen } from '../screens/ResinScreen';
 import { CameraScreen } from '../screens/CameraScreen';
 import WhereIsIpScreen from '../screens/WhereIsIpScreen';
 import { InicioScreen } from '../screens/InicioScreen';
-import { FilamentosScreen } from '../screens/FilamentosScreen';
+import { PrinterTabScreen } from '../screens/PrinterTabScreen';
 import { EditarIpScreen } from '../screens/EditarIpScreen';
 import PrinterIcon from '../components/icons/PrinterIcon';
 import { useTheme } from '../contexts/ThemeContext';
-import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { hexDe } from '../theme/temas';
-import { getPrintStatus } from '../types';
 import { t } from '../i18n';
 
 const Tab = createBottomTabNavigator();
-const Stack = createStackNavigator();
+const Root = createStackNavigator();
 
-const PrintersStackNavigator = () => (
-  <Stack.Navigator
-    screenOptions={{
-      headerShown: false,
-      animation: 'none',
-    }}
-  >
-    <Stack.Screen name="Home" component={HomeScreen} />
-    <Stack.Screen name="PrinterDetails" component={PrinterDetailsScreen} />
-    <Stack.Screen name="AddEditPrinter" component={AddEditPrinterScreen} />
-    <Stack.Screen name="Discovery" component={DiscoveryScreen} />
-    <Stack.Screen name="WhereIsIp" component={WhereIsIpScreen} />
-    <Stack.Screen name="EditarIp" component={EditarIpScreen} />
-    <Stack.Screen name="History" component={HistoryScreen} />
-    <Stack.Screen name="Files" component={FilesScreen} />
-    <Stack.Screen name="Stats" component={StatsScreen} />
-    <Stack.Screen name="Resina" component={ResinScreen} />
-  </Stack.Navigator>
-);
-
-const InicioStackNavigator = () => (
-  <Stack.Navigator screenOptions={{ headerShown: false, animation: 'none' }}>
-    <Stack.Screen name="Inicio" component={InicioScreen} />
-    <Stack.Screen name="PrinterDetails" component={PrinterDetailsScreen} />
-    <Stack.Screen name="Camera" component={CameraScreen} />
-    <Stack.Screen name="History" component={HistoryScreen} />
-    <Stack.Screen name="Resina" component={ResinScreen} />
-    <Stack.Screen name="EditarIp" component={EditarIpScreen} />
-    <Stack.Screen name="Files" component={FilesScreen} />
-  </Stack.Navigator>
-);
-
-const MonitorStackNavigator = () => (
-  <Stack.Navigator
-    screenOptions={{
-      headerShown: false,
-      animation: 'none',
-    }}
-  >
-    <Stack.Screen name="BancadaHome" component={BancadaScreen} />
-    <Stack.Screen name="MonitorLista" component={MonitorScreen} />
-    <Stack.Screen name="PrinterDetails" component={PrinterDetailsScreen} />
-    <Stack.Screen name="Camera" component={CameraScreen} />
-    <Stack.Screen name="Resina" component={ResinScreen} />
-  </Stack.Navigator>
-);
-
-export const AppNavigator = () => {
+/**
+ * Três abas: Início, Impressora (pílulas + secções) e Definições.
+ *
+ * Tudo o que se abre por cima — câmara, histórico, adicionar, descobrir, IP,
+ * detalhe antigo — vive num único stack raiz, para não haver o mesmo ecrã
+ * registado em três sítios.
+ */
+const Abas = () => {
   const { tema } = useTheme();
-  const { printers } = usePrinterConnections();
 
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           if (route.name === 'Inicio') {
-            return (
-              <Ionicons
-                name={focused ? 'home' : 'home-outline'}
-                size={size}
-                color={color}
-              />
-            );
-          } else if (route.name === 'Filamentos') {
-            return (
-              <Ionicons
-                name={focused ? 'layers' : 'layers-outline'}
-                size={size}
-                color={color}
-              />
-            );
-          } else if (route.name === 'Printers') {
-            return (
-              <PrinterIcon
-                variant={focused ? 'filled' : 'outline'}
-                size={size}
-                color={color}
-              />
-            );
-          } else if (route.name === 'Monitor') {
-            // A aba mostra vídeo quando há câmara e trabalho quando só há resina.
-            const temCamera = printers.some(p => p.kind !== 'resin');
-            const temTrabalho = printers.some(p => {
-              const info = p.status?.PrintInfo;
-              if (!info?.Filename) return false;
-              const estado = getPrintStatus(info.Status ?? 0);
-              return estado === 'printing' || estado === 'paused' || estado === 'preparing';
-            });
-
-            if (temTrabalho) {
-              return (
-                <Ionicons
-                  name={focused ? 'time' : 'time-outline'}
-                  size={size}
-                  color={color}
-                />
-              );
-            }
-
-            return (
-              <Ionicons
-                name={
-                  temCamera
-                    ? focused
-                      ? 'videocam'
-                      : 'videocam-outline'
-                    : focused
-                    ? 'layers'
-                    : 'layers-outline'
-                }
-                size={size}
-                color={color}
-              />
-            );
-          } else if (route.name === 'Settings') {
-            return (
-              <Ionicons
-                name={focused ? 'settings' : 'settings-outline'}
-                size={size}
-                color={color}
-              />
-            );
-          } else {
-            return <Ionicons name="help-outline" size={size} color={color} />;
+            return <Ionicons name={focused ? 'home' : 'home-outline'} size={size} color={color} />;
           }
+          if (route.name === 'Impressora') {
+            return <PrinterIcon variant={focused ? 'filled' : 'outline'} size={size} color={color} />;
+          }
+          return <Ionicons name={focused ? 'settings' : 'settings-outline'} size={size} color={color} />;
         },
         tabBarActiveTintColor: hexDe(tema.paleta.acentoTexto),
         tabBarInactiveTintColor: hexDe(tema.paleta.tintaSoft),
         tabBarLabelStyle: {
-          fontSize: 10,
+          fontSize: 12,
           fontWeight: '600',
-          letterSpacing: 0.6,
+          letterSpacing: 0.4,
           marginTop: 2,
         },
         headerShown: false,
@@ -176,37 +62,29 @@ export const AppNavigator = () => {
         },
       })}
     >
+      <Tab.Screen name="Inicio" component={InicioScreen} options={{ title: t('inicio.titulo') }} />
       <Tab.Screen
-        name="Inicio"
-        component={InicioStackNavigator}
-        options={{ title: t('inicio.titulo') }}
+        name="Impressora"
+        component={PrinterTabScreen}
+        options={{ title: t('aba.impressora') }}
       />
-      <Tab.Screen
-        name="Printers"
-        component={PrintersStackNavigator}
-        options={{
-          title: t('abas.impressao'),
-        }}
-      />
-      <Tab.Screen
-        name="Filamentos"
-        component={FilamentosScreen}
-        options={{ title: t('filamentos.titulo') }}
-      />
-      <Tab.Screen
-        name="Monitor"
-        component={MonitorStackNavigator}
-        options={{
-          title: t('monitor.titulo'),
-        }}
-      />
-      <Tab.Screen
-        name="Settings"
-        component={SettingsScreen}
-        options={{
-          title: t('settings.title'),
-        }}
-      />
+      <Tab.Screen name="Settings" component={SettingsScreen} options={{ title: t('settings.title') }} />
     </Tab.Navigator>
   );
 };
+
+export const AppNavigator = () => (
+  <Root.Navigator screenOptions={{ headerShown: false, animation: 'none' }}>
+    <Root.Screen name="Abas" component={Abas} />
+    <Root.Screen name="Camera" component={CameraScreen} />
+    <Root.Screen name="History" component={HistoryScreen} />
+    <Root.Screen name="Files" component={FilesScreen} />
+    <Root.Screen name="Stats" component={StatsScreen} />
+    <Root.Screen name="PrinterDetails" component={PrinterDetailsScreen} />
+    <Root.Screen name="AddEditPrinter" component={AddEditPrinterScreen} />
+    <Root.Screen name="Discovery" component={DiscoveryScreen} />
+    <Root.Screen name="WhereIsIp" component={WhereIsIpScreen} />
+    <Root.Screen name="EditarIp" component={EditarIpScreen} />
+    <Root.Screen name="Resina" component={ResinScreen} />
+  </Root.Navigator>
+);

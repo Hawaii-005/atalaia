@@ -5,6 +5,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useSelectedPrinter } from '../contexts/SelectedPrinterContext';
 import { hexDe } from '../theme/temas';
 import { t } from '../i18n';
 import { getPrintStatus, Printer } from '../types';
@@ -72,6 +73,7 @@ export const InicioScreen = ({ navigation }: any) => {
   const { tema } = useTheme();
   const paleta = tema.paleta;
   const { printers } = usePrinterConnections();
+  const { mudarMaquina, mudarSecao } = useSelectedPrinter();
   const [historico, setHistorico] = useState<PrintRecord[]>([]);
   const [tick, setTick] = useState(0);
 
@@ -125,7 +127,10 @@ export const InicioScreen = ({ navigation }: any) => {
             return (
               <TouchableOpacity
                 key={printer.id}
-                onPress={() => navigation.navigate('PrinterDetails', { printerId: printer.id })}
+                onPress={() => {
+                  mudarMaquina(printer.id);
+                  navigation.navigate('Impressora');
+                }}
                 accessibilityRole="button"
                 accessibilityLabel={`${printer.printerName}, ${estado.texto}`}
                 style={[cartao, { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 16 }]}
@@ -203,7 +208,11 @@ export const InicioScreen = ({ navigation }: any) => {
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={() => navigation.navigate('Files', { printerId: fdm.id })}
+                onPress={() => {
+                  mudarMaquina(fdm.id);
+                  mudarSecao('ficheiros');
+                  navigation.navigate('Impressora');
+                }}
                 accessibilityRole="button"
                 accessibilityLabel={t('inicio.ficheiros')}
                 style={[cartao, { flex: 1, alignItems: 'center', paddingVertical: 16, gap: 8 }]}
