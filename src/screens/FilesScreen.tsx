@@ -32,6 +32,7 @@ import * as FileSystem from 'expo-file-system';
 import * as DocumentPicker from 'expo-document-picker';
 import { uploadGcode } from '../utils/gcodeUpload';
 import { custoDe, euros, getPrecoKg, setPrecoKg } from '../utils/precos';
+import { extrairMiniaturaEmbutida, urlMiniatura } from '../utils/miniatura';
 import { t } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
@@ -72,13 +73,9 @@ const FileRow = ({
 }) => {
   const { tema } = useTheme();
   const size = file.FileSize ?? file.totalSize ?? file.usedSize ?? 0;
-  const { preview } = useGcodePreview(
-    size && size < PREVIEW_LIMIT ? printerIp : undefined,
-    file.name
-  );
   const label = file.name.split('/').pop() ?? file.name;
   const [semMiniatura, setSemMiniatura] = useState(false);
-  const miniUrl = `http://${printerIp}/thumbnail/${encodeURIComponent(label)}.png`;
+  const miniUrl = urlMiniatura(printerIp, file.name);
 
   return (
     <TouchableOpacity
@@ -94,15 +91,6 @@ const FileRow = ({
             resizeMode="cover"
             onError={() => setSemMiniatura(true)}
           />
-        ) : preview ? (
-          <Svg viewBox="0 0 100 100" width={52} height={52}>
-            <Path
-              d={preview.path}
-              stroke={hexDe(tema.paleta.tinta)}
-              strokeWidth={0.6}
-              fill="none"
-            />
-          </Svg>
         ) : (
           <Ionicons name="cube-outline" size={18} color={hexDe(tema.paleta.tintaMuted)} />
         )}
@@ -157,6 +145,20 @@ const FileDetails = ({
   const { request } = usePrinterConnections();
   const [detalhe, setDetalhe] = useState<any>(null);
   const [slots, setSlots] = useState<Record<number, number>>({});
+  const [mini, setMini] = useState<string | null>(
+    urlMiniatura(printerIp, file.name)
+  );
+  const [tentouEmbutida, setTentouEmbutida] = useState(false);
+
+  const falhouMiniatura = async () => {
+    if (!tentouEmbutida) {
+      setTentouEmbutida(true);
+      const embutida = await extrairMiniaturaEmbutida(printerIp, file.name);
+      setMini(embutida);
+      return;
+    }
+    setMini(null);
+  };
   const [precoKg, definirPrecoKg] = useState(0);
   const [precoTexto, definirPrecoTexto] = useState('');
 
@@ -245,7 +247,16 @@ const FileDetails = ({
 
             {/* Pré-visualização */}
             <View className="mt-3">
-              {loading ? (
+              {mini ? (
+                <View className="items-center justify-center" style={{ height: 200 }}>
+                  <Image
+                    source={{ uri: mini }}
+                    style={{ width: 200, height: 200 }}
+                    resizeMode="contain"
+                    onError={falhouMiniatura}
+                  />
+                </View>
+              ) : loading ? (
                 <View className="items-center justify-center" style={{ height: 200 }}>
                   <ActivityIndicator color={hexDe(tema.paleta.acento)} />
                 </View>
