@@ -102,6 +102,21 @@ export const InicioScreen = ({ navigation }: any) => {
             {t('inicio.titulo')}
           </Text>
           <TouchableOpacity
+            onPress={() => navigation.navigate('AddEditPrinter')}
+            accessibilityLabel={t('home.adicionarImpressora')}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              backgroundColor: hexDe(paleta.cartao),
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: 8,
+            }}
+          >
+            <Ionicons name="add" size={22} color={hexDe(paleta.tinta)} />
+          </TouchableOpacity>
+          <TouchableOpacity
             onPress={() => navigation.navigate('Settings')}
             accessibilityLabel={t('settings.title')}
             style={{
