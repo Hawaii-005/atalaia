@@ -1,5 +1,9 @@
 import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { WebView } from 'react-native-webview';
+import { useIsFocused } from '@react-navigation/native';
+import { htmlDoVideo } from '../utils/cameraStream';
+import { enderecoDe } from '../utils/rede';
 import Svg, { Circle } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
@@ -12,6 +16,7 @@ import {
   pausePrintCommand,
   resumePrintCommand,
   stopPrintCommand,
+  videoCommand,
 } from '../utils/commands';
 
 const CAIXA = anel.grande.caixa;
@@ -26,12 +31,15 @@ const restante = (segundos: number) => {
   return h > 0 ? `${h}h${String(m).padStart(2, '0')}` : `${m} min`;
 };
 
-const Anel: React.FC<{ progresso: number; cor: string; trilho: string; children: React.ReactNode }> = ({
-  progresso,
-  cor,
-  trilho,
-  children,
-}) => (
+const DIAMETRO_IMAGEM = 2 * (RAIO - TRACO / 2 - 2);
+
+const Anel: React.FC<{
+  progresso: number;
+  cor: string;
+  trilho: string;
+  imagem?: React.ReactNode;
+  children: React.ReactNode;
+}> = ({ progresso, cor, trilho, imagem, children }) => (
   <View style={{ width: CAIXA, height: CAIXA, alignItems: 'center', justifyContent: 'center' }}>
     <Svg width={CAIXA} height={CAIXA} style={{ position: 'absolute' }}>
       <Circle cx={CAIXA / 2} cy={CAIXA / 2} r={RAIO} stroke={trilho} strokeWidth={TRACO} fill="none" />
@@ -48,6 +56,30 @@ const Anel: React.FC<{ progresso: number; cor: string; trilho: string; children:
         transform={`rotate(-90 ${CAIXA / 2} ${CAIXA / 2})`}
       />
     </Svg>
+    {imagem && (
+      <View
+        style={{
+          position: 'absolute',
+          width: CAIXA,
+          height: CAIXA,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {imagem}
+      </View>
+    )}
+    {imagem && (
+      <View
+        style={{
+          position: 'absolute',
+          width: DIAMETRO_IMAGEM,
+          height: DIAMETRO_IMAGEM,
+          borderRadius: DIAMETRO_IMAGEM / 2,
+          backgroundColor: 'rgba(0,0,0,0.45)',
+        }}
+      />
+    )}
     {children}
   </View>
 );
@@ -57,6 +89,7 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
   const paleta = tema.paleta;
   const { request, sendCommand } = usePrinterConnections();
 
+  const emFoco = useIsFocused();
   const info = printer?.status?.PrintInfo;
   const progresso = info?.Progress ?? 0;
   const ligada = printer?.connectionStatus === 'connected';
@@ -75,6 +108,19 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
   }, [info, ligada, paleta]);
 
   const segundosRestantes = restante((info?.TotalTicks ?? 0) - (info?.CurrentTicks ?? 0));
+
+  // A miniatura precisa do stream ligado (386). Uma vez por entrada em foco.
+  const pedidoFeito = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    if (!printer || !emFoco || !ligada || resina) return;
+    if (pedidoFeito.current === printer.id) return;
+    pedidoFeito.current = printer.id;
+    try {
+      sendCommand(printer.id, videoCommand(true, { id: printer.id }));
+    } catch {
+      // sem ligação: a miniatura fica sem imagem
+    }
+  }, [printer, emFoco, ligada, resina, sendCommand]);
 
   const comandos = async (cmd: any) => {
     if (!printer) return;
@@ -114,8 +160,37 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
 
   return (
     <ScrollView contentContainerStyle={{ padding: espaco.lg, gap: espaco.md, paddingBottom: 32 }}>
+      {emFoco && ligada && !resina && (
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={onAbrirCamara}
+          style={{ borderRadius: raioToken.cartao, overflow: 'hidden', aspectRatio: 16 / 9, backgroundColor: '#000' }}
+        >
+          <WebView
+            key={`cam-${printer.id}`}
+            source={{
+              html: htmlDoVideo(enderecoDe(printer), 'cover', false),
+              baseUrl: `http://${enderecoDe(printer)}`,
+            }}
+            style={{ flex: 1, backgroundColor: '#000' }}
+            allowsInlineMediaPlayback
+            mediaPlaybackRequiresUserAction={false}
+            javaScriptEnabled
+            domStorageEnabled={false}
+            mixedContentMode="always"
+            originWhitelist={['*']}
+            scrollEnabled={false}
+            bounces={false}
+          />
+        </TouchableOpacity>
+      )}
+
       <View style={{ backgroundColor: hexDe(paleta.cartao), borderRadius: raioToken.cartao, padding: espaco.lg, flexDirection: 'row', gap: espaco.lg, alignItems: 'center' }}>
-        <Anel progresso={progresso} cor={hexDe(paleta.acento)} trilho={hexDe(paleta.linha)}>
+        <Anel
+          progresso={progresso}
+          cor={hexDe(paleta.acento)}
+          trilho={hexDe(paleta.linha)}
+        >
           <Text style={{ fontSize: 28, fontWeight: '700', color: hexDe(paleta.tinta) }}>{Math.round(progresso)}%</Text>
           {segundosRestantes && (
             <Text style={{ fontSize: 11, color: hexDe(paleta.tintaSoft), marginTop: 2 }}>{segundosRestantes}</Text>

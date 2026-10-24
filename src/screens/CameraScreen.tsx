@@ -26,6 +26,7 @@ import { listFilesCommand } from '../utils/commands';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
+import { htmlDoVideo } from '../utils/cameraStream';
 import { useIsFocused } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
@@ -372,52 +373,12 @@ export const CameraScreen = ({ navigation, route, dentroDoMonitor }: any) => {
     return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} MB`;
   };
 
-  const streamHtml = useMemo(() => {
-    if (!videoHost) {
-      return '';
-    }
-    const url = `http://${videoHost}:3031/video`;
-    // A impressora aceita UMA ligação de vídeo de cada vez e não a liberta
-    // depressa: qualquer ciclo de recarregamentos acaba em HTTP 500 e a câmara
-    // só volta com um corte de corrente. Portanto: uma <img> carregada uma vez,
-    // sem mensagens, e nova tentativa só se o browser der erro (com recuo).
-    return `<!DOCTYPE html>
-<html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-    <style>
-      html, body { margin: 0; padding: 0; background: #000; height: 100%; overflow: hidden; }
-      img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    </style>
-  </head>
-  <body>
-    <img id="v" src="${url}" />
-    <script>
-      (function () {
-        var im = document.getElementById('v');
-        var espera = 20000;
-        var vivo = true;
-        im.onload = function () { espera = 20000; };
-        im.onerror = function () {
-          if (!vivo) return;
-          setTimeout(function () {
-            if (vivo) im.src = '${url}?t=' + Date.now();
-          }, espera);
-          espera = Math.min(espera * 2, 60000);
-        };
-        window.addEventListener('pagehide', function () {
-          vivo = false;
-          im.removeAttribute('src');
-        });
-      })();
-    </script>
-  </body>
-</html>`;
-  }, [videoHost]);
+  const streamHtml = useMemo(() => htmlDoVideo(videoHost ?? ''), [videoHost]);
 
-  const fullscreenHtml = useMemo(() => {
-    return streamHtml.replace('object-fit: cover', 'object-fit: contain');
-  }, [streamHtml]);
+  const fullscreenHtml = useMemo(
+    () => htmlDoVideo(videoHost ?? '', 'contain'),
+    [videoHost]
+  );
 
   const progress = printer?.status?.PrintInfo?.Progress ?? 0;
   const nozzle = printer?.status?.TempOfNozzle?.toFixed(0) ?? '--';

@@ -1,6 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
+import { createDrawerNavigator } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
 import { SettingsScreen, HistoryScreen, FilesScreen, StatsScreen } from '../screens';
 import { PrinterDetailsScreen } from '../screens/PrinterDetailsScreen';
@@ -13,11 +14,14 @@ import { InicioScreen } from '../screens/InicioScreen';
 import { PrinterTabScreen } from '../screens/PrinterTabScreen';
 import { EditarIpScreen } from '../screens/EditarIpScreen';
 import PrinterIcon from '../components/icons/PrinterIcon';
+import { RailLateral } from '../components/RailLateral';
+import { useJanela } from '../theme/layout';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 import { t } from '../i18n';
 
 const Tab = createBottomTabNavigator();
+const Gaveta = createDrawerNavigator();
 const Root = createStackNavigator();
 
 /**
@@ -73,9 +77,37 @@ const Abas = () => {
   );
 };
 
+/** Tablet: rail à esquerda em vez da barra inferior. */
+const ShellLargo = () => {
+  const { tema } = useTheme();
+
+  return (
+    <Gaveta.Navigator
+      drawerContent={props => <RailLateral {...props} />}
+      screenOptions={{
+        headerShown: false,
+        drawerType: 'permanent',
+        drawerStyle: {
+          width: 88,
+          backgroundColor: hexDe(tema.paleta.cartao),
+        },
+      }}
+    >
+      <Gaveta.Screen name="Inicio" component={InicioScreen} />
+      <Gaveta.Screen name="Impressora" component={PrinterTabScreen} />
+      <Gaveta.Screen name="Settings" component={SettingsScreen} />
+    </Gaveta.Navigator>
+  );
+};
+
+const Conteudo = () => {
+  const { compacta } = useJanela();
+  return compacta ? <Abas /> : <ShellLargo />;
+};
+
 export const AppNavigator = () => (
   <Root.Navigator screenOptions={{ headerShown: false, animation: 'none' }}>
-    <Root.Screen name="Abas" component={Abas} />
+    <Root.Screen name="Abas" component={Conteudo} />
     <Root.Screen name="Camera" component={CameraScreen} />
     <Root.Screen name="History" component={HistoryScreen} />
     <Root.Screen name="Files" component={FilesScreen} />
