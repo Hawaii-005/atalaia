@@ -10,6 +10,7 @@ import {
   Switch,
   Modal,
   TextInput,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +21,7 @@ import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { useGcodePreview } from '../hooks/useGcodePreview';
 import {
   listFilesCommand,
+  fileDetailCommand,
   startPrintCommand,
   deleteFilesCommand,
   descreverAck,
@@ -46,6 +48,13 @@ interface PrinterFile {
 
 const PREVIEW_LIMIT = 15 * 1024 * 1024;
 
+const formatTempo = (seg?: number) => {
+  if (!seg || seg <= 0) return '';
+  const h = Math.floor(seg / 3600);
+  const m = Math.round((seg % 3600) / 60);
+  return h ? `${h}h ${String(m).padStart(2, '0')}m` : `${m}m`;
+};
+
 const formatSize = (bytes?: number) => {
   if (!bytes) return '—';
   if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -68,6 +77,8 @@ const FileRow = ({
     file.name
   );
   const label = file.name.split('/').pop() ?? file.name;
+  const [semMiniatura, setSemMiniatura] = useState(false);
+  const miniUrl = `http://${printerIp}/thumbnail/${encodeURIComponent(label)}.png`;
 
   return (
     <TouchableOpacity
@@ -76,7 +87,14 @@ const FileRow = ({
       className="flex-row items-center px-4 py-3 border-b border-line"
     >
       <View className="w-14 h-14 rounded-lg bg-cartao border border-line items-center justify-center overflow-hidden">
-        {preview ? (
+        {!semMiniatura ? (
+          <Image
+            source={{ uri: miniUrl }}
+            style={{ width: 56, height: 56 }}
+            resizeMode="cover"
+            onError={() => setSemMiniatura(true)}
+          />
+        ) : preview ? (
           <Svg viewBox="0 0 100 100" width={52} height={52}>
             <Path
               d={preview.path}
@@ -105,6 +123,7 @@ const FileRow = ({
 const FileDetails = ({
   file,
   printerIp,
+  printerId,
   bedLevel,
   onChangeBedLevel,
   plateSide,
@@ -117,12 +136,13 @@ const FileDetails = ({
 }: {
   file: PrinterFile;
   printerIp: string;
+  printerId: string;
   bedLevel: boolean;
   onChangeBedLevel: (valor: boolean) => void;
   plateSide: 0 | 1;
   onChangePlateSide: (lado: 0 | 1) => void;
   onClose: () => void;
-  onPrint: () => void;
+  onPrint: (slotMap: any[]) => void;
   onAddToQueue: () => void;
   onDelete: () => void;
   onRename: () => void;
@@ -134,8 +154,33 @@ const FileDetails = ({
     file.name
   );
   const label = file.name.split('/').pop() ?? file.name;
+  const { request } = usePrinterConnections();
+  const [detalhe, setDetalhe] = useState<any>(null);
+  const [slots, setSlots] = useState<Record<number, number>>({});
   const [precoKg, definirPrecoKg] = useState(0);
   const [precoTexto, definirPrecoTexto] = useState('');
+
+  useEffect(() => {
+    let vivo = true;
+    (async () => {
+      try {
+        const dados = await request(printerId, fileDetailCommand(file.name), 10000);
+        const info = dados?.FileInfo;
+        if (!vivo || !info) return;
+        setDetalhe(info);
+        const mapa: Record<number, number> = {};
+        (info.ColorMapping ?? []).forEach((cor: any, i: number) => {
+          mapa[i] = Number(cor?.tray_id ?? i);
+        });
+        setSlots(mapa);
+      } catch {
+        // Sem Cmd 260 fica o que vem do próprio G-code.
+      }
+    })();
+    return () => {
+      vivo = false;
+    };
+  }, [printerId, file.name, request]);
 
   useEffect(() => {
     getPrecoKg().then(valor => {
@@ -146,7 +191,13 @@ const FileDetails = ({
 
   const gramasDoCabecalho = filamentos.reduce((soma, f) => soma + f.gramas, 0);
   // Sem `filament used [g]` no cabeçalho, conta-se o E do próprio G-code.
-  const totalGramas = gramasDoCabecalho > 0 ? gramasDoCabecalho : (consumo?.gramas ?? 0);
+  const gramasDetalhe = Number(detalhe?.EstWeight);
+  const totalGramas =
+    Number.isFinite(gramasDetalhe) && gramasDetalhe > 0
+      ? gramasDetalhe
+      : gramasDoCabecalho > 0
+      ? gramasDoCabecalho
+      : consumo?.gramas ?? 0;
   // O valor escrito conta logo: não se espera que o campo perca o foco.
   const precoEscrito = Number.parseFloat(
     precoTexto.replace(',', '.').replace(/[^0-9.]/g, '')
@@ -177,6 +228,7 @@ const FileDetails = ({
                 </Text>
                 <Text className="text-[12px] text-ink-muted mt-1">
                   {formatSize(size)}
+                  {detalhe?.EstTime ? ` · ${formatTempo(Number(detalhe.EstTime))}` : ''}
                   {filamentos.length > 1
                     ? ` · ${t('files.coresTotal', { n: filamentos.length })}`
                     : ''}
@@ -223,7 +275,9 @@ const FileDetails = ({
                 { rotulo: t('files.custo'), valor: custo > 0 ? `≈ ${euros(custo)}` : '—' },
                 {
                   rotulo: t('files.filamentos'),
-                  valor: String(filamentos.length || 0),
+                  valor: String(
+                    detalhe?.ColorMapping?.length ?? filamentos.length ?? 0
+                  ),
                 },
               ].map(celula => (
                 <View
@@ -244,30 +298,67 @@ const FileDetails = ({
             <Text className="text-[10px] tracking-[1.4px] font-semibold text-ink-soft mt-5">
               {t('files.cores').toUpperCase()}
             </Text>
-            {filamentos.length === 0 ? (
-              <Text className="text-[12px] text-ink-muted mt-1.5">
-                {t('files.coresNenhuma')}
-              </Text>
-            ) : (
-              filamentos.map(filamento => (
-                <View key={filamento.tool} className="flex-row items-center mt-2.5">
-                  <View
-                    className="w-4 h-4 rounded-full border border-line mr-2"
-                    style={{ backgroundColor: filamento.cor ?? hexDe(tema.paleta.linha) }}
-                  />
-                  <Text className="text-[12px] font-semibold text-ink">
-                    T{filamento.tool}
+            {(detalhe?.ColorMapping ?? []).length > 0
+              ? detalhe.ColorMapping.map((cor: any, i: number) => (
+                  <View key={`cor-${i}`} className="flex-row items-center mt-2.5">
+                    <View
+                      className="w-4 h-4 rounded-full border border-line mr-2"
+                      style={{ backgroundColor: cor?.color ?? hexDe(tema.paleta.linha) }}
+                    />
+                    <Text className="text-[12px] font-semibold text-ink">
+                      T{i}
+                    </Text>
+                    <Text className="text-[12px] text-ink-muted ml-2 flex-1">
+                      {cor?.color ?? ''}
+                    </Text>
+                    <View className="flex-row" style={{ gap: 4 }}>
+                      {[0, 1, 2, 3].map(tray => (
+                        <TouchableOpacity
+                          key={tray}
+                          onPress={() => setSlots(anterior => ({ ...anterior, [i]: tray }))}
+                          activeOpacity={0.7}
+                          className={`w-7 h-7 items-center justify-center rounded-md border ${
+                            slots[i] === tray ? 'bg-brand border-brand' : 'border-line'
+                          }`}
+                        >
+                          <Text
+                            className={`text-[10px] font-semibold ${
+                              slots[i] === tray ? 'text-white' : 'text-ink-soft'
+                            }`}
+                          >
+                            A{tray + 1}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                ))
+              : filamentos.length === 0
+              ? (
+                  <Text className="text-[12px] text-ink-muted mt-1.5">
+                    {t('files.coresNenhuma')}
                   </Text>
-                  <Text className="text-[12px] text-ink-muted ml-2 flex-1">
-                    {filamento.gramas.toFixed(2)} g
-                    {filamento.tipo ? ` · ${filamento.tipo}` : ''}
-                  </Text>
-                  <Text className="text-[11px] text-ink-soft">
-                    {t('files.slotSugerido', { slot: filamento.tool + 1 })}
-                  </Text>
-                </View>
-              ))
-            )}
+                )
+              : (
+                  filamentos.map(filamento => (
+                    <View key={filamento.tool} className="flex-row items-center mt-2.5">
+                      <View
+                        className="w-4 h-4 rounded-full border border-line mr-2"
+                        style={{ backgroundColor: filamento.cor ?? hexDe(tema.paleta.linha) }}
+                      />
+                      <Text className="text-[12px] font-semibold text-ink">
+                        T{filamento.tool}
+                      </Text>
+                      <Text className="text-[12px] text-ink-muted ml-2 flex-1">
+                        {filamento.gramas.toFixed(2)} g
+                        {filamento.tipo ? ` · ${filamento.tipo}` : ''}
+                      </Text>
+                      <Text className="text-[11px] text-ink-soft">
+                        {t('files.slotSugerido', { slot: filamento.tool + 1 })}
+                      </Text>
+                    </View>
+                  ))
+                )}
 
             {/* Preço por quilo */}
             <View className="flex-row items-center justify-between mt-3 pt-3 border-t border-line">
@@ -378,7 +469,15 @@ const FileDetails = ({
               <Ionicons name="list-outline" size={18} color={hexDe(tema.paleta.tinta)} />
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={onPrint}
+              onPress={() =>
+                onPrint(
+                  (detalhe?.ColorMapping ?? []).map((_: any, i: number) => ({
+                    t: i,
+                    canvas_id: 0,
+                    tray_id: slots[i] ?? i,
+                  }))
+                )
+              }
               className={`flex-1 h-12 ${BT_ACENTO}`}
               activeOpacity={0.8}
             >
@@ -482,7 +581,7 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
     }
   };
 
-  const handlePrint = (file: PrinterFile) => {
+  const handlePrint = (file: PrinterFile, slotMap: any[] = []) => {
     const label = file.name.split('/').pop() ?? file.name;
     Alert.alert(t('files.imprimirTitulo'), t('files.imprimirMsg', { nome: label }), [
       { text: t('comum.cancelar'), style: 'cancel' },
@@ -493,6 +592,7 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
             const comando = startPrintCommand(file.name, {
               nivelar: bedLevel,
               lado: plateSide,
+              slotMap,
             });
             const response = await request(printer.id, comando, 15000);
             const ack = ackDaResposta(response) ?? 0;
@@ -750,6 +850,7 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
         <FileDetails
           file={selecionado}
           printerIp={enderecoDe(printer)}
+          printerId={printer.id}
           bedLevel={bedLevel}
           onChangeBedLevel={setBedLevel}
           plateSide={plateSide}
@@ -766,10 +867,10 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
             setSelecionado(null);
             Alert.alert(t('files.filaTitulo'), t('files.filaAdicionado'));
           }}
-          onPrint={() => {
+          onPrint={slotMap => {
             const alvo = selecionado;
             setSelecionado(null);
-            handlePrint(alvo);
+            handlePrint(alvo, slotMap);
           }}
           onRename={() => {
             const alvo = selecionado;

@@ -136,6 +136,22 @@ export const attributesCommand = (opts: Emissao = {}): SdcpCommand<{}> =>
 
 // ---------- Cmd 128: começar impressão ----------
 
+// ---------- Cmd 260: detalhe de um ficheiro ----------
+
+export interface FileDetailPayload {
+  Url: string;
+}
+
+/**
+ * Detalhe de um ficheiro: tempo e peso estimados, camadas e ColorMapping
+ * (cor pedida pelo G-code -> tray sugerida). É o que a UI oficial usa.
+ */
+export const fileDetailCommand = (
+  url: string,
+  opts: Emissao = {}
+): SdcpCommand<FileDetailPayload> =>
+  construir(260, { Url: caminhoValido(url, 'Url') }, opts, `detail-${Date.now()}`);
+
 export interface StartPrintOptions {
   /** Nivelar a mesa antes de imprimir (Calibration_switch). */
   nivelar: boolean;
