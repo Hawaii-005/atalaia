@@ -462,4 +462,5 @@ export default {
   'secao.filamentos': 'Filamentos',
   'secao.controlos': 'Controlos',
   'settings.tema_conceito': 'Roxo escuro do conceito aprovado.',
+  'comum.eliminar': 'Eliminar',
 } as const;

@@ -460,6 +460,7 @@ const en = {
   'secao.filamentos': 'Filaments',
   'secao.controlos': 'Controls',
   'settings.tema_conceito': 'Dark purple from the approved concept.',
+  'comum.eliminar': 'Remove',
 } as const satisfies Record<keyof typeof pt, string>;
 
 export default en;

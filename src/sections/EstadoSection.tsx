@@ -199,7 +199,7 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
 
         <View style={{ flex: 1 }}>
           <Text numberOfLines={2} style={{ fontSize: 15, fontWeight: '700', color: hexDe(paleta.tinta) }}>
-            {info?.Filename || estado.texto}
+            {info?.Filename || printer.printerName}
           </Text>
           <Text style={{ fontSize: 12, color: estado.cor, marginTop: 6, fontWeight: '600' }}>{estado.texto}</Text>
           {!!info?.Filename && (

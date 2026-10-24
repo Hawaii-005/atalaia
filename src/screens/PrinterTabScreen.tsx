@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { useSelectedPrinter, secoesDaMaquina, Secao } from '../contexts/SelectedPrinterContext';
@@ -27,7 +27,7 @@ const ETIQUETAS: Record<Secao, string> = {
 export const PrinterTabScreen = ({ navigation }: any) => {
   const { tema } = useTheme();
   const paleta = tema.paleta;
-  const { printers } = usePrinterConnections();
+  const { printers, removePrinter, reconnectAll } = usePrinterConnections();
   const { maquina, secao, mudarMaquina, mudarSecao } = useSelectedPrinter();
 
   const secoes = secoesDaMaquina(maquina);
@@ -107,6 +107,16 @@ export const PrinterTabScreen = ({ navigation }: any) => {
             <TouchableOpacity
               key={p.id}
               onPress={() => mudarMaquina(p.id)}
+              onLongPress={() =>
+                Alert.alert(p.printerName, `${p.ipAddress}`, [
+                  { text: t('comum.cancelar'), style: 'cancel' },
+                  {
+                    text: t('comum.eliminar'),
+                    style: 'destructive',
+                    onPress: () => removePrinter(p.id),
+                  },
+                ])
+              }
               accessibilityRole="button"
               accessibilityState={{ selected: activa }}
               style={{
