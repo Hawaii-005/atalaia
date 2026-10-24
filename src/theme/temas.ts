@@ -1,11 +1,21 @@
 /**
- * Temas da app — cada tema é só um conjunto de tokens (cores em "r g b",
- * para funcionarem com rgb(var(--x) / <alpha-value>) no Tailwind).
+ * Temas da app — ponte entre os tokens v6 (`tokensV6.ts`, cores em hex) e a
+ * forma antiga que o resto da app ainda usa (cores em "r g b" para o NativeWind).
  *
- * Estrutura e layout são os mesmos em todos: muda a pele, não a app.
+ * A fonte única é `tokensV6.ts`. Aqui só se traduzem os nomes antigos
+ * (`tinta`, `acento`, `linha`, …) para os novos (`texto`, `primaria`, `contorno`, …)
+ * e se converte hex → "r g b". Nenhum ecrã novo deve usar os nomes antigos.
  */
 
-export type TemaId = 'grafite' | 'vidro' | 'nord' | 'papel';
+import {
+  temas as paletas,
+  temaPredefinido,
+  nomesDosTemas,
+  type NomeTema,
+  type Paleta as PaletaV6,
+} from './tokensV6';
+
+export type TemaId = NomeTema;
 
 export type Paleta = {
   fundo: string;
@@ -37,118 +47,71 @@ export type Tema = {
   paleta: Paleta;
 };
 
-export const TEMAS: Record<TemaId, Tema> = {
-  // B — Grafite: claro neutro, azul só no activo
-  grafite: {
-    id: 'grafite',
-    nome: 'Grafite',
-    descricao: 'Claro e neutro. Azul apenas no que se pode tocar.',
-    escuro: false,
-    amostra: ['#FFFFFF', '#3E6AE1', '#171A20'],
-    paleta: {
-      fundo: '255 255 255',
-      fundoBaixo: '244 244 244',
-      cartao: '255 255 255',
-      tinta: '23 26 32',
-      tintaSoft: '63 68 77',
-      tintaMuted: '99 103 110',
-      linha: '228 228 228',
-      acento: '62 106 225',
-      acentoForte: '47 85 196',
-      acentoSuave: '237 241 252',
-      acentoTexto: '62 106 225',
-      tintaFixa: '23 26 32',
-      ok: '31 157 85',
-      aviso: '242 169 0',
-      perigo: '198 40 40',
-    },
-  },
-
-  // D — Vidro: escuro com violeta e ciano
-  vidro: {
-    id: 'vidro',
-    nome: 'Vidro',
-    descricao: 'Escuro profundo com violeta vivo e ciano de estado.',
-    escuro: true,
-    amostra: ['#121022', '#8B5CF6', '#7DF9FF'],
-    paleta: {
-      fundo: '18 16 34',
-      fundoBaixo: '30 26 52',
-      cartao: '30 27 50',
-      tinta: '242 245 255',
-      tintaSoft: '205 200 232',
-      tintaMuted: '180 175 208',
-      linha: '62 58 92',
-      acento: '139 92 246',
-      acentoForte: '109 62 214',
-      acentoSuave: '48 40 74',
-      acentoTexto: '167 139 250',
-      tintaFixa: '23 26 32',
-      ok: '143 191 106',
-      aviso: '238 212 159',
-      perigo: '255 100 120',
-    },
-  },
-
-  // J — Nord: escuro frio, azul-acinzentado
-  nord: {
-    id: 'nord',
-    nome: 'Nord',
-    descricao: 'Frio e calmo. Azul gelado, verde e coral nos estados.',
-    escuro: true,
-    amostra: ['#2E3440', '#5E81AC', '#88C0D0'],
-    paleta: {
-      fundo: '46 52 64',
-      fundoBaixo: '59 66 82',
-      cartao: '59 66 82',
-      tinta: '236 239 244',
-      tintaSoft: '216 222 233',
-      tintaMuted: '186 194 207',
-      linha: '76 86 106',
-      acento: '94 129 172',
-      acentoForte: '76 110 150',
-      acentoSuave: '67 76 94',
-      acentoTexto: '136 192 208',
-      tintaFixa: '23 26 32',
-      ok: '163 190 140',
-      aviso: '235 203 139',
-      perigo: '191 97 106',
-    },
-  },
-
-  // L — Papel: claro quente, azul de impressão
-  papel: {
-    id: 'papel',
-    nome: 'Papel',
-    descricao: 'Claro quente, tipo folha de projecto. Azul forte na acção.',
-    escuro: false,
-    amostra: ['#F6F4EF', '#2F6BFF', '#171A20'],
-    paleta: {
-      fundo: '246 244 239',
-      fundoBaixo: '237 233 225',
-      cartao: '255 253 249',
-      tinta: '23 26 32',
-      tintaSoft: '60 65 72',
-      tintaMuted: '108 111 119',
-      linha: '226 222 213',
-      acento: '47 107 255',
-      acentoForte: '34 84 214',
-      acentoSuave: '232 236 250',
-      acentoTexto: '47 107 255',
-      tintaFixa: '23 26 32',
-      ok: '47 125 85',
-      aviso: '214 138 40',
-      perigo: '195 64 44',
-    },
-  },
+/** "#1E1B33" → "30 27 51" */
+const triplo = (hex: string): string => {
+  const limpo = hex.replace('#', '').trim();
+  const cheio = limpo.length === 3 ? limpo.replace(/./g, c => c + c) : limpo;
+  const n = parseInt(cheio, 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  return `${r} ${g} ${b}`;
 };
 
-export const ORDEM_TEMAS: TemaId[] = ['grafite', 'papel', 'vidro', 'nord'];
-export const TEMA_PREDEFINIDO: TemaId = 'grafite';
+const TINTA_FIXA = '23 26 32';
+
+const traduzir = (p: PaletaV6): Paleta => ({
+  fundo: triplo(p.fundo),
+  fundoBaixo: triplo(p.cartaoAlt),
+  cartao: triplo(p.cartao),
+  tinta: triplo(p.texto),
+  tintaSoft: triplo(p.textoSecundario),
+  tintaMuted: triplo(p.textoSecundario),
+  linha: triplo(p.contorno),
+  acento: triplo(p.primaria),
+  acentoForte: triplo(p.primaria),
+  acentoSuave: triplo(p.pilulaNav),
+  acentoTexto: triplo(p.primaria),
+  tintaFixa: TINTA_FIXA,
+  ok: triplo(p.sucesso),
+  aviso: triplo(p.aviso),
+  perigo: triplo(p.perigo),
+});
+
+const DESCRICOES: Record<TemaId, string> = {
+  conceito: 'Roxo escuro do conceito aprovado.',
+  grafite: 'Escuro neutro. Azul apenas no que se pode tocar.',
+  vidro: 'Roxo sobre fundo profundo, com brilho.',
+  nord: 'Cinza-azulado do Norte, calmo.',
+  papel: 'Claro e quente, como papel.',
+};
+
+const construir = (id: TemaId): Tema => {
+  const paleta = paletas[id];
+  return {
+    id,
+    nome: nomesDosTemas[id],
+    descricao: DESCRICOES[id],
+    escuro: paleta.modo === 'escuro',
+    amostra: [paleta.cartao, paleta.primaria, paleta.fundo],
+    paleta: traduzir(paleta),
+  };
+};
+
+export const TEMAS: Record<TemaId, Tema> = {
+  conceito: construir('conceito'),
+  grafite: construir('grafite'),
+  vidro: construir('vidro'),
+  nord: construir('nord'),
+  papel: construir('papel'),
+};
+
+export const ORDEM_TEMAS: TemaId[] = ['conceito', 'grafite', 'papel', 'vidro', 'nord'];
+export const TEMA_PREDEFINIDO: TemaId = temaPredefinido;
 
 /** "18 16 34" → "#121022" (para sítios que não aceitam variáveis) */
-export function hexDe(triplo: string): string {
-  const [r, g, b] = triplo.split(' ').map(v => parseInt(v, 10) || 0);
+export function hexDe(triploDeCores: string): string {
+  const [r, g, b] = triploDeCores.split(' ').map(v => parseInt(v, 10) || 0);
   return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
 }
 
