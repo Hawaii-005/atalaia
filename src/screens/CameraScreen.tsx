@@ -52,18 +52,34 @@ const CONNECTION_LABEL: Record<ConnectionStatus, string> = {
  * Modo poupança: uma fotografia a cada 2 s em vez do MJPEG (~1 MB/s).
  * Serve para quando estás fora de casa, por Tailscale ou dados móveis.
  */
-const SnapshotAoVivo = ({ host, activo }: { host: string; activo: boolean }) => {
+const SnapshotAoVivo = ({
+  host,
+  activo,
+  onFalhar,
+}: {
+  host: string;
+  activo: boolean;
+  onFalhar: () => void;
+}) => {
   const [tick, setTick] = useState(0);
+  const [falhou, setFalhou] = useState(false);
   useEffect(() => {
-    if (!activo) return;
+    if (!activo || falhou) return;
     const id = setInterval(() => setTick(valor => valor + 1), 2000);
     return () => clearInterval(id);
-  }, [activo]);
+  }, [activo, falhou]);
+  if (falhou) return null;
   return (
     <Image
       source={{ uri: `http://${host}:3031/snapshot?t=${tick}` }}
       style={{ flex: 1, backgroundColor: '#000' }}
       resizeMode="cover"
+      onError={() => {
+        // Esta firmware responde 500 a /snapshot (só tem /video, MJPEG).
+        // Em vez de ficar preto, avisa o ecrã para voltar ao vídeo.
+        setFalhou(true);
+        onFalhar();
+      }}
     />
   );
 };
@@ -81,8 +97,14 @@ export const CameraScreen = ({ navigation, route, dentroDoMonitor }: any) => {
   const [lastLightPress, setLastLightPress] = useState(0);
   const [reloadKey, setReloadKey] = useState(0);
   const [pouparDados, setPouparDados] = useState(false);
+  const [snapshotFalhou, setSnapshotFalhou] = useState(false);
   const emFoco = useIsFocused();
   const [fullscreen, setFullscreen] = useState(false);
+
+  // O /snapshot desta firmware devolve 500; se falhar uma vez, fica no vídeo.
+  useEffect(() => {
+    setSnapshotFalhou(false);
+  }, [selectedId]);
 
   // Preferência de poupança de dados (Definições → modo remoto).
   useEffect(() => {
@@ -518,8 +540,8 @@ export const CameraScreen = ({ navigation, route, dentroDoMonitor }: any) => {
         >
           {isConnected && streamHtml && !fullscreen ? (
             <View ref={videoRef} collapsable={false} style={{ flex: 1 }}>
-              {pouparDados ? (
-                <SnapshotAoVivo host={videoHost ?? ''} activo={emFoco} />
+              {pouparDados && !snapshotFalhou ? (
+                <SnapshotAoVivo host={videoHost ?? ''} activo={emFoco} onFalhar={() => setSnapshotFalhou(true)} />
               ) : (
               <WebView
                 key={`${printer.id}-${reloadKey}`}
@@ -766,8 +788,8 @@ export const CameraScreen = ({ navigation, route, dentroDoMonitor }: any) => {
         supportedOrientations={['landscape', 'portrait']}
       >
         <View className="flex-1 bg-black">
-          {pouparDados ? (
-            <SnapshotAoVivo host={videoHost ?? ''} activo={emFoco} />
+          {pouparDados && !snapshotFalhou ? (
+            <SnapshotAoVivo host={videoHost ?? ''} activo={emFoco} onFalhar={() => setSnapshotFalhou(true)} />
           ) : (
           <WebView
             source={{ html: fullscreenHtml, baseUrl: `http://${videoHost}` }}
