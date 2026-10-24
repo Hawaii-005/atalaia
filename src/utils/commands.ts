@@ -437,3 +437,37 @@ export const fanCommand = (
     `fan-${Date.now()}`
   );
 };
+
+// ---------- Cmd 324: slots do Canvas ----------
+// Confirmado na impressora: devolve canvas_list com tray_list (marca, tipo,
+// cor em hex e temperaturas aceites). NÃO traz gramas por rolo.
+
+export interface CanvasTray {
+  tray_id: number;
+  brand: string;
+  filament_type: string;
+  filament_name: string;
+  filament_code: string;
+  /** Cor em hex, como a impressora a reporta (ex.: "#077747"). */
+  filament_color: string;
+  min_nozzle_temp: number;
+  max_nozzle_temp: number;
+  status: number;
+}
+
+export interface CanvasLista {
+  canvas_id: number;
+  connected: number;
+  tray_list: CanvasTray[];
+}
+
+export interface CanvasSlots {
+  active_canvas_id: number;
+  active_tray_id: number;
+  auto_refill: number;
+  canvas_list: CanvasLista[];
+}
+
+/** Lê os slots do sistema de filamento (Canvas). */
+export const canvasSlotsCommand = (opts: Emissao = {}): SdcpCommand<{}> =>
+  construir(324, {}, opts, `canvas-${Date.now()}`);

@@ -60,6 +60,8 @@
     "bundleIdentifier": "io.github.brunocrazy15.atalaia"
   },
   "android": {
-    "package": "io.github.brunocrazy15.atalaia"
-  }
+    "package": "io.github.brunocrazy15.atalaia",
+    "versionCode": 124
+  },
+  "version": "2.2.5"
 }
