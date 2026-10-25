@@ -7,7 +7,7 @@ import { EstadoResina } from './ligacao';
 
 /**
  * Códigos do `PrintInfo.Status` da Saturn (medidos na firmware 1.5.4):
- * 0 repouso, 2/3/4/5/6/7 fases, 8 pausa, 10 a parar, 14 parada/cancelada,
+ * 0 repouso, 2/3/4/5/6/7 fases, 8 pausa, 10 a parar, 13/14 parada/cancelada,
  * 16 concluída.
  */
 export const codigoParaApp = (status: number): number => {
@@ -16,9 +16,10 @@ export const codigoParaApp = (status: number): number => {
   // PrintInfo.Status a 8 e os ticks param; ao retomar volta a 2/3/4).
   if (status === 8) return 20;
   if (status === 20) return 20;
-  // 10 = a parar, 14 = parada/cancelada (medido: ao parar pela app a máquina
-  // fica em cs 0 / ps 14 e mantém o nome do ficheiro).
-  if (status === 10 || status === 14) return 8;
+  // 10 = a parar; 13 e 14 = parada/cancelada (medido: ao parar por comando a
+  // máquina fica em cs 0 com ps 13 — sem esta linha o 13 caía no ramo 1..15 e
+  // a app continuava a dizer «A imprimir» numa peça já cancelada).
+  if (status === 10 || status === 13 || status === 14) return 8;
   if (status === 16) return 9;
   if (status >= 1 && status <= 15) return 6;
   return 8;

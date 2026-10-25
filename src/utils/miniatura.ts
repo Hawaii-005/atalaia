@@ -30,7 +30,7 @@ export const urlGcode = (ip: string, nome: string) => {
 };
 
 const cacheEmbutidas = new Map<string, string | null>();
-const MAX_CACHE = 24;
+const MAX_CACHE = 64;
 
 const guardarCache = (chave: string, valor: string | null) => {
   if (cacheEmbutidas.size >= MAX_CACHE) {
@@ -95,6 +95,7 @@ export const extrairMiniaturaEmbutida = async (
     }
     const uri = `data:image/png;base64,${base64}`;
     guardarCache(chave, uri);
+    log('[miniatura] embutida ok', baseDoNome(nome));
     return uri;
   } catch (erro) {
     log('miniatura embutida falhou', erro instanceof Error ? erro.stack : String(erro));
@@ -103,9 +104,50 @@ export const extrairMiniaturaEmbutida = async (
   }
 };
 
+/**
+ * A mesma extração, mas com fila.
+ *
+ * Na lista há dezenas de ficheiros sem /thumbnail na impressora; disparar 25
+ * leituras de 256 KiB ao mesmo tempo faz o servidor dela largar ligações e
+ * ficam ficheiros sem imagem (era o sintoma de "só algumas carregam").
+ */
+const MAX_PARALELAS = 3;
+let ativas = 0;
+const espera: Array<() => void> = [];
+
+const vez = () =>
+  new Promise<void>(resolve => {
+    if (ativas < MAX_PARALELAS) {
+      ativas += 1;
+      resolve();
+      return;
+    }
+    espera.push(() => {
+      ativas += 1;
+      resolve();
+    });
+  });
+
+const largar = () => {
+  ativas -= 1;
+  const seguinte = espera.shift();
+  if (seguinte) seguinte();
+};
+
+export const extrairMiniaturaEmbutidaFila = async (
+  ip: string,
+  nome: string
+): Promise<string | null> => {
+  await vez();
+  try {
+    return await extrairMiniaturaEmbutida(ip, nome);
+  } finally {
+    largar();
+  }
+};
+
 const cacheUsados = new Map<string, Set<number> | null>();
 const MAX_USADOS = 40;
-
 /**
  * Que ferramentas o .gcode usa mesmo, lido das primeiras linhas.
  *

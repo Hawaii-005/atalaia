@@ -34,7 +34,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { uploadGcode } from '../utils/gcodeUpload';
 import { custoDe, euros, getPrecoKg, setPrecoKg } from '../utils/precos';
 import { slotValido } from '../utils/slots';
-import { extrairMiniaturaEmbutida, ferramentasUsadas, urlMiniatura } from '../utils/miniatura';
+import { extrairMiniaturaEmbutida, extrairMiniaturaEmbutidaFila, ferramentasUsadas, urlMiniatura } from '../utils/miniatura';
 import { descarregarGcode, partilharFicheiro } from '../utils/transferir';
 import { t } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
@@ -81,8 +81,29 @@ const FileRow = ({
   const { tema } = useTheme();
   const size = file.FileSize ?? file.totalSize ?? file.usedSize ?? 0;
   const label = file.name.split('/').pop() ?? file.name;
-  const [semMiniatura, setSemMiniatura] = useState(false);
-  const miniUrl = urlMiniatura(printerIp, file.name);
+  const [mini, setMini] = useState<string | null>(urlMiniatura(printerIp, file.name));
+  const pediuEmbutida = useRef(false);
+  const vivo = useRef(true);
+
+  useEffect(() => {
+    vivo.current = true;
+    return () => {
+      vivo.current = false;
+    };
+  }, []);
+
+  // A impressora só serve /thumbnail dos ficheiros que já pré-visualizou; nos
+  // restantes (404) a imagem vem do cabeçalho do próprio .gcode. Sem isto a
+  // lista mostrava o cubo e parecia que "só algumas miniaturas carregam".
+  const falhouMiniaturaLista = async () => {
+    if (pediuEmbutida.current) {
+      if (vivo.current) setMini(null);
+      return;
+    }
+    pediuEmbutida.current = true;
+    const embutida = await extrairMiniaturaEmbutidaFila(printerIp, file.name);
+    if (vivo.current) setMini(embutida);
+  };
 
   return (
     <TouchableOpacity
@@ -91,12 +112,12 @@ const FileRow = ({
       className="flex-row items-center px-4 py-3 border-b border-line"
     >
       <View className="w-14 h-14 rounded-lg bg-cartao border border-line items-center justify-center overflow-hidden">
-        {!semMiniatura ? (
+        {mini ? (
           <Image
-            source={{ uri: miniUrl }}
+            source={{ uri: mini }}
             style={{ width: 56, height: 56 }}
             resizeMode="cover"
-            onError={() => setSemMiniatura(true)}
+            onError={falhouMiniaturaLista}
           />
         ) : (
           <Ionicons name="cube-outline" size={18} color={hexDe(tema.paleta.tintaMuted)} />
