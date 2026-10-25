@@ -9,11 +9,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { Alert, Linking } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Header } from '../components/Header';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { PrintRecord, loadHistory } from '../utils/printHistory';
 import {
+  historyVideoCommand,
   printHistoryCommand,
   printHistoryDetailCommand,
 } from '../utils/commands';
@@ -31,6 +33,8 @@ interface TaskDetail {
   AlreadyPrintLayer?: number;
   Thumbnail?: string;
   SliceInformation?: { print_time?: number; total_layer_numbers?: number };
+  TimeLapseVideoUrl?: string;
+  TimeLapseVideoStatus?: number;
 }
 
 // Etiquetas visíveis para o estado de cada tarefa (chaves i18n).
@@ -101,6 +105,25 @@ export const StatsScreen = ({ navigation }: any) => {
     // Depender só do id: o objeto `printer` muda a cada actualização de
     // estado (30 s) e isso recarregava a página inteira.
   }, [printer?.id, request]);
+
+  const abrirVideo = async (url: string) => {
+    if (!printer) return;
+    try {
+      const resposta = await request(
+        printer.id,
+        historyVideoCommand(url, { id: printer.id })
+      );
+      const lista = (resposta as any)?.Data ?? resposta;
+      const itens = Array.isArray(lista) ? lista : [];
+      const primeiro =
+        itens.find((x: any) => typeof x === 'string') ??
+        itens.find((x: any) => typeof x?.Url === 'string')?.Url;
+      if (primeiro) await Linking.openURL(String(primeiro));
+      else Alert.alert(t('stats.video'), t('stats.videoIndisponivel'));
+    } catch (e) {
+      Alert.alert(t('comum.erro'), mensagemDeErro(e));
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -247,6 +270,18 @@ export const StatsScreen = ({ navigation }: any) => {
                   )}
                 </Text>
               </View>
+              {task.TimeLapseVideoUrl ? (
+                <TouchableOpacity
+                  onPress={() => abrirVideo(task.TimeLapseVideoUrl!)}
+                  className="ml-2 p-1"
+                >
+                  <Ionicons
+                    name="play-circle-outline"
+                    size={22}
+                    color={hexDe(tema.paleta.acento)}
+                  />
+                </TouchableOpacity>
+              ) : null}
             </View>
           ))}
 

@@ -26,7 +26,7 @@ export const urlMiniatura = (ip: string, nome: string) =>
 
 export const urlGcode = (ip: string, nome: string) => {
   const limpo = nome.replace(/^\/?(local\/)?\/?/, '').replace(/^\//, '');
-  return `http://${ip}:3030/local/${encodeURIComponent(limpo)}`;
+  return `http://${ip}/local/${encodeURIComponent(limpo)}`;
 };
 
 const cacheEmbutidas = new Map<string, string | null>();
@@ -99,6 +99,70 @@ export const extrairMiniaturaEmbutida = async (
   } catch (erro) {
     log('miniatura embutida falhou', erro instanceof Error ? erro.stack : String(erro));
     cacheEmbutidas.set(chave, null);
+    return null;
+  }
+};
+
+const cacheUsados = new Map<string, Set<number> | null>();
+const MAX_USADOS = 40;
+
+/**
+ * Que ferramentas o .gcode usa mesmo, lido das primeiras linhas.
+ *
+ * O fatiador escreve sempre os 8 slots do AMS no Cmd 260, mesmo numa peça de
+ * uma cor. Quem diz a verdade é o cabeçalho:
+ *   ; filament used [g] = 125.96, 0.00, 0.00, 0.00
+ */
+export const ferramentasUsadas = async (
+  ip: string,
+  nome: string,
+  tamanho?: number
+): Promise<Set<number> | null> => {
+  const chave = `u|${ip}|${nome}`;
+  if (cacheUsados.has(chave)) return cacheUsados.get(chave) ?? null;
+  try {
+    const url = urlGcode(ip, nome);
+    let leitura = await lerPrimeirosBytes(url, true);
+    if (!leitura.texto && leitura.estado === 416) {
+      leitura = await lerPrimeirosBytes(url, false);
+    }
+    let texto = leitura.texto;
+    let linha = texto.match(/;\s*filament used \[g\]\s*=\s*(.+)/i);
+    // O fatiador da Elegoo escreve o resumo no FIM do ficheiro: se o cabeçalho
+    // não o traz, lê os últimos 64 KiB pelo tamanho que o Cmd 258 já deu.
+    if (!linha && tamanho && tamanho > 65536) {
+      const inicio = tamanho - 65536;
+      const resposta = await fetch(url, {
+        headers: { Range: `bytes=${inicio}-${tamanho - 1}` },
+      });
+      if (resposta.ok || resposta.status === 206) {
+        texto = await resposta.text();
+        linha = texto.match(/;\s*filament used \[g\]\s*=\s*(.+)/i);
+      }
+    }
+    if (!texto || !linha) return null;
+    if (!linha) {
+      cacheUsados.set(chave, null);
+      return null;
+    }
+    const usados = new Set<number>();
+    linha[1]
+      .split(',')
+      .map(v => Number(v.trim()))
+      .forEach((gramas, i) => {
+        if (Number.isFinite(gramas) && gramas > 0) usados.add(i);
+      });
+    if (usados.size === 0) {
+      cacheUsados.set(chave, null);
+      return null;
+    }
+    if (cacheUsados.size >= MAX_USADOS) {
+      const primeiro = cacheUsados.keys().next().value;
+      if (primeiro) cacheUsados.delete(primeiro);
+    }
+    cacheUsados.set(chave, usados);
+    return usados;
+  } catch {
     return null;
   }
 };

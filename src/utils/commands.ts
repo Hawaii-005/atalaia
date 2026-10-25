@@ -485,5 +485,27 @@ export interface CanvasSlots {
 }
 
 /** Lê os slots do sistema de filamento (Canvas). */
+/** Mover um eixo (Cmd 401). `passo` é a distância em mm; o sinal dá o sentido. */
+/** Pedir os URLs do vídeo de um trabalho (Cmd 323). */
+export const historyVideoCommand = (
+  url: string,
+  opts: Emissao = {}
+): SdcpCommand<{ Url: string }> =>
+  construir(323, { Url: url }, opts, `video-${Date.now()}`);
+
+export const jogCommand = (
+  eixo: 'X' | 'Y' | 'Z',
+  passo: number,
+  opts: Emissao = {}
+): SdcpCommand<{}> =>
+  construir(401, { Axis: eixo, Step: passo }, opts, `jog-${eixo}-${Date.now()}`);
+
+/** Levar os eixos à origem (Cmd 402): 'XYZ' ou 'Z'. */
+export const homeCommand = (
+  eixo: 'XYZ' | 'X' | 'Y' | 'Z',
+  opts: Emissao = {}
+): SdcpCommand<{}> =>
+  construir(402, { Axis: eixo }, opts, `home-${eixo}-${Date.now()}`);
+
 export const canvasSlotsCommand = (opts: Emissao = {}): SdcpCommand<{}> =>
   construir(324, {}, opts, `canvas-${Date.now()}`);

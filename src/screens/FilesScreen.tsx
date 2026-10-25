@@ -33,7 +33,7 @@ import * as FileSystem from 'expo-file-system';
 import * as DocumentPicker from 'expo-document-picker';
 import { uploadGcode } from '../utils/gcodeUpload';
 import { custoDe, euros, getPrecoKg, setPrecoKg } from '../utils/precos';
-import { extrairMiniaturaEmbutida, urlMiniatura } from '../utils/miniatura';
+import { extrairMiniaturaEmbutida, ferramentasUsadas, urlMiniatura } from '../utils/miniatura';
 import { t } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
@@ -150,6 +150,45 @@ const FileDetails = ({
   const [detalhe, setDetalhe] = useState<any>(null);
   const [slots, setSlots] = useState<Record<number, number>>({});
   const [trays, setTrays] = useState<any[]>([]);
+  const [usadosGcode, setUsadosGcode] = useState<Set<number> | null>(null);
+
+  // O cabeçalho do .gcode diz que ferramentas têm peso; vale mesmo para
+  // ficheiros grandes, que não são descarregados para a pré-visualização.
+  useEffect(() => {
+    let vivo = true;
+    (async () => {
+      const usados = await ferramentasUsadas(printerIp, file.name, size);
+      if (vivo && usados) setUsadosGcode(usados);
+    })();
+    return () => {
+      vivo = false;
+    };
+  }, [printerIp, file.name, size]);
+
+  // O fatiador declara sempre os 8 slots do AMS no Cmd 260, mesmo quando a peça
+  // só usa um. Só contam as ferramentas com peso no cabeçalho do .gcode.
+  const coresVisiveis = useMemo(() => {
+    const mapa: any[] = detalhe?.ColorMapping ?? [];
+    if (mapa.length === 0) return [] as { cor: any; indice: number }[];
+    const usados =
+      usadosGcode ?? new Set(filamentos.map(filamento => filamento.tool));
+    if (usados.size > 0) {
+      const filtradas = mapa
+        .map((cor, indice) => ({ cor, indice }))
+        .filter(({ indice }) => usados.has(indice));
+      if (filtradas.length > 0) return filtradas;
+    }
+    // Antes de o .gcode estar lido, junta cores iguais para não mostrar 8 pretos.
+    const vistos = new Set<string>();
+    return mapa
+      .map((cor, indice) => ({ cor, indice }))
+      .filter(({ cor }) => {
+        const chave = String(cor?.color ?? '').toLowerCase();
+        if (vistos.has(chave)) return false;
+        vistos.add(chave);
+        return true;
+      });
+  }, [detalhe, filamentos, usadosGcode]);
 
   // O fatiador usa 255 quando não há slot atribuído: nunca pode virar "A256".
   const slotValido = (valor: any, indice: number) => {
@@ -347,9 +386,7 @@ const FileDetails = ({
                 { rotulo: t('files.custo'), valor: custo > 0 ? `≈ ${euros(custo)}` : '—' },
                 {
                   rotulo: t('files.filamentos'),
-                  valor: String(
-                    detalhe?.ColorMapping?.length ?? filamentos.length ?? 0
-                  ),
+                  valor: String(coresVisiveis.length || filamentos.length || 0),
                 },
               ].map(celula => (
                 <View
@@ -375,8 +412,8 @@ const FileDetails = ({
                 {t('files.corImpressa')}
               </Text>
             ) : null}
-            {(detalhe?.ColorMapping ?? []).length > 0
-              ? detalhe.ColorMapping.map((cor: any, i: number) => {
+            {coresVisiveis.length > 0
+              ? coresVisiveis.map(({ cor, indice: i }) => {
                   const escolhido = slotValido(slots[i], i);
                   const impressa = trays.length > 0 ? corDoSlot(escolhido) : null;
                   return (

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
@@ -8,7 +8,10 @@ import { espaco, raio as raioToken } from '../theme/tokensV6';
 import { t } from '../i18n';
 import { Printer } from '../types';
 import {
+  ackDaResposta,
   fanCommand,
+  homeCommand,
+  jogCommand,
   lightCommand,
   printSpeedCommand,
   skipPreheatCommand,
@@ -73,6 +76,37 @@ export const ControlosSection = ({ printer }: { printer?: Printer }) => {
   const timeLapse = (printer?.status?.TimeLapseStatus ?? 0) > 0;
   const velocidade = printer?.status?.PrintInfo?.PrintSpeedPct ?? 100;
   const ventoinhas = printer?.status?.CurrentFanSpeed ?? { ModelFan: 0, AuxiliaryFan: 0, BoxFan: 0 };
+
+  const [passo, setPasso] = useState(10);
+  const corrente = Number(printer?.status?.CurrentStatus?.[0] ?? 0);
+  const ocupada = [1, 6, 13, 16, 20].includes(corrente);
+
+  const mover = async (eixo: 'X' | 'Y' | 'Z', sentido: 1 | -1) => {
+    if (!printer) return;
+    try {
+      const resposta = await request(
+        printer.id,
+        jogCommand(eixo, sentido * passo, { id: printer.id }),
+        8000
+      );
+      if (ackDaResposta(resposta) === 3) {
+        Alert.alert(t('controlos.movimento'), t('controlos.precisaHome'));
+      }
+    } catch (e) {
+      Alert.alert(t('comum.erro'), e instanceof Error ? e.message : String(e));
+    }
+  };
+
+  const fazerHome = (eixo: 'XYZ' | 'Z') => {
+    Alert.alert(t('controlos.confirmarHome'), t('controlos.confirmarHomeMsg'), [
+      { text: t('comum.cancelar'), style: 'cancel' },
+      {
+        text: t('comum.confirmar'),
+        style: 'destructive',
+        onPress: () => enviar(homeCommand(eixo, { id: printer?.id })),
+      },
+    ]);
+  };
 
   const enviar = async (cmd: any) => {
     if (!printer) return;
@@ -148,6 +182,74 @@ export const ControlosSection = ({ printer }: { printer?: Printer }) => {
         desactivado={!ligada}
         onPress={() => enviar(timelapseCommand(!timeLapse, { id: printer?.id }))}
       />
+
+      <Text style={{ fontSize: 13, fontWeight: '700', color: hexDe(paleta.tintaSoft), marginTop: espaco.md }}>
+        {t('controlos.movimento')}
+      </Text>
+      <View style={{ backgroundColor: hexDe(paleta.cartao), borderRadius: raioToken.interno, padding: espaco.md, gap: espaco.sm }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: espaco.sm }}>
+          <Text style={{ fontSize: 12, color: hexDe(paleta.tintaSoft), flex: 1 }}>
+            {printer?.status?.CurrenCoord || ''}
+          </Text>
+          {[1, 10, 50].map(mm => (
+            <TouchableOpacity
+              key={mm}
+              onPress={() => setPasso(mm)}
+              style={{
+                paddingHorizontal: 10,
+                height: 30,
+                borderRadius: raioToken.chip,
+                justifyContent: 'center',
+                backgroundColor: passo === mm ? hexDe(paleta.acento) : hexDe(paleta.fundoBaixo),
+              }}
+            >
+              <Text style={{ fontSize: 12, fontWeight: '700', color: passo === mm ? '#fff' : hexDe(paleta.tinta) }}>
+                {`${mm} mm`}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {(['X', 'Y', 'Z'] as const).map(eixo => (
+          <View key={eixo} style={{ flexDirection: 'row', alignItems: 'center', gap: espaco.sm }}>
+            <Text style={{ width: 20, fontSize: 14, fontWeight: '700', color: hexDe(paleta.tinta) }}>{eixo}</Text>
+            <TouchableOpacity
+              onPress={() => mover(eixo, -1)}
+              disabled={!ligada || ocupada}
+              style={{ flex: 1, height: 40, borderRadius: raioToken.chip, alignItems: 'center', justifyContent: 'center', backgroundColor: hexDe(paleta.fundoBaixo), opacity: !ligada || ocupada ? 0.4 : 1 }}
+            >
+              <Ionicons name="remove" size={18} color={hexDe(paleta.tinta)} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => mover(eixo, 1)}
+              disabled={!ligada || ocupada}
+              style={{ flex: 1, height: 40, borderRadius: raioToken.chip, alignItems: 'center', justifyContent: 'center', backgroundColor: hexDe(paleta.fundoBaixo), opacity: !ligada || ocupada ? 0.4 : 1 }}
+            >
+              <Ionicons name="add" size={18} color={hexDe(paleta.tinta)} />
+            </TouchableOpacity>
+          </View>
+        ))}
+
+        <View style={{ flexDirection: 'row', gap: espaco.sm, marginTop: 2 }}>
+          <TouchableOpacity
+            onPress={() => fazerHome('Z')}
+            disabled={!ligada || ocupada}
+            style={{ flex: 1, height: 38, borderRadius: raioToken.chip, alignItems: 'center', justifyContent: 'center', backgroundColor: hexDe(paleta.fundoBaixo), opacity: !ligada || ocupada ? 0.4 : 1 }}
+          >
+            <Text style={{ fontSize: 12, fontWeight: '700', color: hexDe(paleta.tinta) }}>{t('controlos.homeZ')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => fazerHome('XYZ')}
+            disabled={!ligada || ocupada}
+            style={{ flex: 1, height: 38, borderRadius: raioToken.chip, alignItems: 'center', justifyContent: 'center', backgroundColor: hexDe(paleta.fundoBaixo), opacity: !ligada || ocupada ? 0.4 : 1 }}
+          >
+            <Text style={{ fontSize: 12, fontWeight: '700', color: hexDe(paleta.tinta) }}>{t('controlos.home')}</Text>
+          </TouchableOpacity>
+        </View>
+        {ocupada ? (
+          <Text style={{ fontSize: 11, color: hexDe(paleta.tintaSoft) }}>{t('controlos.aImprimir')}</Text>
+        ) : null}
+      </View>
 
       <Text style={{ fontSize: 13, fontWeight: '700', color: hexDe(paleta.tintaSoft), marginTop: espaco.md }}>
         {t('controlos.velocidade')}
