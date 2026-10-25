@@ -22,6 +22,7 @@ import { useGcodePreview } from '../hooks/useGcodePreview';
 import {
   listFilesCommand,
   fileDetailCommand,
+  canvasSlotsCommand,
   startPrintCommand,
   deleteFilesCommand,
   descreverAck,
@@ -148,6 +149,35 @@ const FileDetails = ({
   const { request } = usePrinterConnections();
   const [detalhe, setDetalhe] = useState<any>(null);
   const [slots, setSlots] = useState<Record<number, number>>({});
+  const [trays, setTrays] = useState<any[]>([]);
+
+  // Cores reais das bobines (Cmd 324): sem isto só se via a cor pedida pelo
+  // ficheiro, não a que vai ser impressa.
+  useEffect(() => {
+    let vivo = true;
+    (async () => {
+      try {
+        const dados = await request(printerId, canvasSlotsCommand(), 10000);
+        const lista = dados?.canvas_list?.[0]?.tray_list ?? [];
+        if (vivo) setTrays(lista);
+      } catch {
+        // Sem CANVAS fica a cor do ficheiro.
+      }
+    })();
+    return () => {
+      vivo = false;
+    };
+  }, [printerId, request]);
+
+  const corDoSlot = (id: number) => {
+    const tray = trays.find((t: any) => Number(t.tray_id) === Number(id));
+    const cor = tray?.filament_color;
+    return /^#[0-9a-f]{6}$/i.test(cor || '') ? cor : null;
+  };
+  const slotVazio = (id: number) => {
+    const tray = trays.find((t: any) => Number(t.tray_id) === Number(id));
+    return tray ? Number(tray.status) !== 1 : false;
+  };
   const [mini, setMini] = useState<string | null>(
     urlMiniatura(printerIp, file.name)
   );
@@ -334,41 +364,66 @@ const FileDetails = ({
             <Text className="text-[10px] tracking-[1.4px] font-semibold text-ink-soft mt-5">
               {t('files.cores').toUpperCase()}
             </Text>
+            <Text className="text-[9px] tracking-[1.2px] text-ink-soft mt-1">
+              {t('files.corImpressa')}
+            </Text>
             {(detalhe?.ColorMapping ?? []).length > 0
-              ? detalhe.ColorMapping.map((cor: any, i: number) => (
-                  <View key={`cor-${i}`} className="flex-row items-center mt-2.5">
-                    <View
-                      className="w-4 h-4 rounded-full border border-line mr-2"
-                      style={{ backgroundColor: cor?.color ?? hexDe(tema.paleta.linha) }}
-                    />
-                    <Text className="text-[12px] font-semibold text-ink">
-                      T{i}
-                    </Text>
-                    <Text className="text-[12px] text-ink-muted ml-2 flex-1">
-                      {cor?.color ?? ''}
-                    </Text>
-                    <View className="flex-row" style={{ gap: 4 }}>
-                      {[0, 1, 2, 3].map(tray => (
-                        <TouchableOpacity
-                          key={tray}
-                          onPress={() => setSlots(anterior => ({ ...anterior, [i]: tray }))}
-                          activeOpacity={0.7}
-                          className={`w-7 h-7 items-center justify-center rounded-md border ${
-                            slots[i] === tray ? 'bg-brand border-brand' : 'border-line'
-                          }`}
-                        >
-                          <Text
-                            className={`text-[10px] font-semibold ${
-                              slots[i] === tray ? 'text-white' : 'text-ink-soft'
+              ? detalhe.ColorMapping.map((cor: any, i: number) => {
+                  const escolhido = slots[i] ?? i;
+                  const impressa = corDoSlot(escolhido);
+                  return (
+                    <View key={`cor-${i}`} className="mt-3">
+                      <View className="flex-row items-center">
+                        <View
+                          className="w-4 h-4 rounded-full border border-line mr-2"
+                          style={{ backgroundColor: cor?.color ?? hexDe(tema.paleta.linha) }}
+                        />
+                        <Text className="text-[12px] font-semibold text-ink">T{i}</Text>
+                        <Text className="text-[12px] text-ink-muted ml-2">
+                          {cor?.color ?? ''}
+                        </Text>
+                        <Text className="text-[12px] text-ink-soft mx-1.5">→</Text>
+                        <View
+                          className="w-4 h-4 rounded-full border border-line mr-1.5"
+                          style={{ backgroundColor: impressa ?? 'transparent' }}
+                        />
+                        <Text className="text-[12px] font-semibold text-ink">
+                          A{escolhido + 1}
+                        </Text>
+                        <Text className="text-[12px] text-ink-muted ml-1">
+                          {impressa ?? t('files.slotVazio')}
+                        </Text>
+                      </View>
+                      <View className="flex-row mt-1.5" style={{ gap: 6 }}>
+                        {[0, 1, 2, 3].map(tray => (
+                          <TouchableOpacity
+                            key={tray}
+                            onPress={() =>
+                              setSlots(anterior => ({ ...anterior, [i]: tray }))
+                            }
+                            activeOpacity={0.7}
+                            className={`h-7 px-2 flex-row items-center rounded-md border ${
+                              escolhido === tray ? 'border-brand bg-brand/10' : 'border-line'
                             }`}
                           >
-                            A{tray + 1}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
+                            <View
+                              className="w-2 h-2 rounded-full mr-1"
+                              style={{ backgroundColor: corDoSlot(tray) ?? '#555' }}
+                            />
+                            <Text
+                              className={`text-[10px] font-semibold ${
+                                escolhido === tray ? 'text-ink' : 'text-ink-soft'
+                              }`}
+                            >
+                              A{tray + 1}
+                              {slotVazio(tray) ? '*' : ''}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
                     </View>
-                  </View>
-                ))
+                  );
+                })
               : !detalhe && loading
               ? (
                   <View className="flex-row items-center mt-2">

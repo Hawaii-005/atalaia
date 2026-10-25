@@ -86,6 +86,8 @@ const en = {
   'files.tentarDeNovo': 'Try again',
   'files.cores': 'Filaments in this file',
   'files.coresDica': 'Read from the slicer G-code header',
+  'files.corImpressa': 'FILE COLOUR → PRINTED COLOUR',
+  'files.slotVazio': 'empty',
   'files.aLer': 'Reading filaments…',
   'files.coresNenhuma': 'The file declares no filaments.',
   'files.coresTotal': '{n} colours in this file',
