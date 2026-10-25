@@ -151,6 +151,12 @@ const FileDetails = ({
   const [slots, setSlots] = useState<Record<number, number>>({});
   const [trays, setTrays] = useState<any[]>([]);
 
+  // O fatiador usa 255 quando não há slot atribuído: nunca pode virar "A256".
+  const slotValido = (valor: any, indice: number) => {
+    const n = Number(valor);
+    return Number.isFinite(n) && n >= 0 && n <= 3 ? n : indice % 4;
+  };
+
   // Cores reais das bobines (Cmd 324): sem isto só se via a cor pedida pelo
   // ficheiro, não a que vai ser impressa.
   useEffect(() => {
@@ -211,7 +217,7 @@ const FileDetails = ({
       setDetalhe(guardado);
       const mapaGuardado: Record<number, number> = {};
       (guardado.ColorMapping ?? []).forEach((cor: any, i: number) => {
-        mapaGuardado[i] = Number(cor?.tray_id ?? i);
+        mapaGuardado[i] = slotValido(cor?.tray_id, i);
       });
       setSlots(mapaGuardado);
       return () => {
@@ -227,7 +233,7 @@ const FileDetails = ({
         setDetalhe(info);
         const mapa: Record<number, number> = {};
         (info.ColorMapping ?? []).forEach((cor: any, i: number) => {
-          mapa[i] = Number(cor?.tray_id ?? i);
+          mapa[i] = slotValido(cor?.tray_id, i);
         });
         setSlots(mapa);
       } catch {
@@ -364,13 +370,15 @@ const FileDetails = ({
             <Text className="text-[10px] tracking-[1.4px] font-semibold text-ink-soft mt-5">
               {t('files.cores').toUpperCase()}
             </Text>
-            <Text className="text-[9px] tracking-[1.2px] text-ink-soft mt-1">
-              {t('files.corImpressa')}
-            </Text>
+            {trays.length > 0 ? (
+              <Text className="text-[9px] tracking-[1.2px] text-ink-soft mt-1">
+                {t('files.corImpressa')}
+              </Text>
+            ) : null}
             {(detalhe?.ColorMapping ?? []).length > 0
               ? detalhe.ColorMapping.map((cor: any, i: number) => {
-                  const escolhido = slots[i] ?? i;
-                  const impressa = corDoSlot(escolhido);
+                  const escolhido = slotValido(slots[i], i);
+                  const impressa = trays.length > 0 ? corDoSlot(escolhido) : null;
                   return (
                     <View key={`cor-${i}`} className="mt-3">
                       <View className="flex-row items-center">
@@ -382,18 +390,23 @@ const FileDetails = ({
                         <Text className="text-[12px] text-ink-muted ml-2">
                           {cor?.color ?? ''}
                         </Text>
-                        <Text className="text-[12px] text-ink-soft mx-1.5">→</Text>
-                        <View
-                          className="w-4 h-4 rounded-full border border-line mr-1.5"
-                          style={{ backgroundColor: impressa ?? 'transparent' }}
-                        />
-                        <Text className="text-[12px] font-semibold text-ink">
-                          A{escolhido + 1}
-                        </Text>
-                        <Text className="text-[12px] text-ink-muted ml-1">
-                          {impressa ?? t('files.slotVazio')}
-                        </Text>
+                        {trays.length > 0 ? (
+                          <>
+                            <Text className="text-[12px] text-ink-soft mx-1.5">→</Text>
+                            <View
+                              className="w-4 h-4 rounded-full border border-line mr-1.5"
+                              style={{ backgroundColor: impressa ?? 'transparent' }}
+                            />
+                            <Text className="text-[12px] font-semibold text-ink">
+                              A{escolhido + 1}
+                            </Text>
+                            <Text className="text-[12px] text-ink-muted ml-1">
+                              {impressa ?? t('files.slotVazio')}
+                            </Text>
+                          </>
+                        ) : null}
                       </View>
+                      {trays.length > 0 ? (
                       <View className="flex-row mt-1.5" style={{ gap: 6 }}>
                         {[0, 1, 2, 3].map(tray => (
                           <TouchableOpacity
@@ -421,6 +434,7 @@ const FileDetails = ({
                           </TouchableOpacity>
                         ))}
                       </View>
+                      ) : null}
                     </View>
                   );
                 })
@@ -574,7 +588,7 @@ const FileDetails = ({
                   (detalhe?.ColorMapping ?? []).map((_: any, i: number) => ({
                     t: i,
                     canvas_id: 0,
-                    tray_id: slots[i] ?? i,
+                    tray_id: slotValido(slots[i], i),
                   }))
                 )
               }
