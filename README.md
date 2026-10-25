@@ -140,7 +140,7 @@ registo da câmara e os slots do CANVAS — 112 testes em `tests/`.
 
 ## Limitações conhecidas
 
-- **Só Android.** O projecto iOS existe no papel, mas nunca foi testado nem assinado.
+- **Só Android.** O iOS está fora do âmbito: existe no papel, nunca foi compilado nem assinado.
 - **A impressora não autentica.** Quem estiver na mesma rede pode falar com ela; a app não inventa segurança que o protocolo não tem. Não exponhas a porta 3030 à internet — usa Tailscale ou uma VPN.
 - **Gramas são estimativa** quando não vêm do fatiador; o firmware devolve `EstFilamentLength` a zero e o histórico não traz consumo.
 - **O espaço livre da impressora não existe no `Cmd 258`** — a app não o mostra porque não o pode saber.
@@ -294,7 +294,7 @@ npm test
 
 ## Known limitations
 
-- **Android only.** The iOS project exists on paper but has never been tested or signed.
+- **Android only.** iOS is out of scope: the project exists on paper but has never been built or signed.
 - **The printer does not authenticate.** Anyone on the same network can talk to it; the app does not invent security the protocol lacks. Do not expose port 3030 to the internet — use Tailscale or a VPN.
 - **Grams are an estimate** when they do not come from the slicer; the firmware reports `EstFilamentLength` as zero and the history carries no consumption.
 - **Free space is not in `Cmd 258`** — the app does not show it because it cannot know it.
