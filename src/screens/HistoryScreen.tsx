@@ -31,6 +31,7 @@ import {
 import { mensagemDeErro } from '../utils/errors';
 import { hexDe } from '../theme/temas';
 import { EstadoVazio } from '../ui/EstadoVazio';
+import { lerTimelapse } from '../utils/timelapse';
 
 // Etiquetas visíveis para o desfecho de cada impressão (chaves i18n).
 const outcomeLabel: Record<PrintRecord['outcome'], string> = {
@@ -157,7 +158,11 @@ export const HistoryScreen = ({ navigation }: any) => {
         }
         const resposta = await request(
           printer.id,
-          startPrintCommand(alvo.name, { nivelar: false, lado: 0 }),
+          startPrintCommand(alvo.name, {
+            nivelar: false,
+            lado: 0,
+            timelapse: (await lerTimelapse(printer.id)) ? 1 : 0,
+          }),
           15000
         );
         const ack = ackDaResposta(resposta) ?? 0;

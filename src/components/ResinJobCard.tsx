@@ -48,6 +48,10 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
   const parada = status === 8;
   const concluida = status === 9;
   const erro = Number(info?.ErrorNumber ?? 0);
+  // A Saturn mantém o PrintInfo do último trabalho mesmo em repouso (com
+  // Progress e camadas): só mostrar números quando há trabalho a correr ou
+  // acabado de concluir.
+  const emCurso = aImprimir || emPausa || concluida;
   const progresso = limitarProgresso(info?.Progress);
   const restante = Math.max(0, (info?.TotalTicks ?? 0) - (info?.CurrentTicks ?? 0));
   const decorrido = Math.max(0, info?.CurrentTicks ?? 0);
@@ -174,7 +178,7 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
           className="text-[40px] font-semibold text-ink"
           style={{ fontVariant: ['tabular-nums'], lineHeight: 40, letterSpacing: -0.035 * 40 }}
         >
-          {ligada ? `${Math.round(progresso)}` : '—'}
+          {emCurso ? `${Math.round(progresso)}` : '—'}
           <Text className="text-[17px] font-semibold text-ink-muted" style={{ marginLeft: 1, fontVariant: ['tabular-nums'] }}>
             %
           </Text>
@@ -183,14 +187,14 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
           className="text-[11px] text-ink-muted"
           style={{ fontFamily: 'monospace', fontWeight: '500', letterSpacing: 0.02 * 11, paddingBottom: 5 }}
         >
-          {ligada && (info?.TotalLayer ?? 0) > 0
+          {emCurso && (info?.TotalLayer ?? 0) > 0
             ? `${t('resina.camada', { x: info?.CurrentLayer ?? 0, y: info?.TotalLayer ?? 0 })}`
             : '—'}
         </Text>
       </View>
 
       {/* Estratos: as camadas reais, o mesmo desenho da FDM */}
-      {ligada && (info?.TotalLayer ?? 0) > 0 && (
+      {emCurso && (info?.TotalLayer ?? 0) > 0 && (
         <View className="items-center my-1">
           <Estratos
             actual={info?.CurrentLayer ?? 0}

@@ -259,6 +259,26 @@ export const DiscoveryScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
         )}
+
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Abas')}
+          accessibilityRole="button"
+          activeOpacity={0.8}
+          style={{
+            marginTop: 24,
+            marginBottom: 8,
+            borderWidth: 1.5,
+            borderColor: hexDe(tema.paleta.linha),
+            backgroundColor: hexDe(tema.paleta.fundoBaixo),
+            borderRadius: 14,
+            paddingVertical: 12,
+            alignItems: 'center',
+          }}
+        >
+          <Text style={{ fontSize: 11, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase', color: hexDe(tema.paleta.tinta) }}>
+            {t('discovery.voltarInicio')}
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );

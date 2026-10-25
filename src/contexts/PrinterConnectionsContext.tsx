@@ -33,6 +33,7 @@ import * as Notifications from 'expo-notifications';
 import { ItemFila, carregarFila, gravarFila } from '../utils/fila';
 import { notify } from '../utils/notifications';
 import { mensagemDoErro } from '../utils/errors';
+import { lerTimelapse } from '../utils/timelapse';
 
 interface PrinterConnectionsContextType {
   printers: Printer[];
@@ -57,6 +58,7 @@ interface PrinterConnectionsContextType {
   filaAuto: boolean;
   adicionarAFila: (item: ItemFila) => void;
   removerDaFila: (id: string) => void;
+  limparFila: () => void;
   definirFilaAuto: (ligada: boolean) => void;
   setStatusInterval: (ms: number) => Promise<void>;
   /** Envia um .goo/.ctb para uma impressora de resina (comando 256). */
@@ -1249,6 +1251,12 @@ export const PrinterConnectionsProvider = ({
     gravarFila(nova);
   }, []);
 
+  const limparFila = useCallback(() => {
+    filaRef.current = [];
+    setFila([]);
+    gravarFila([]);
+  }, []);
+
   const definirFilaAuto = useCallback((ligada: boolean) => {
     setFilaAuto(ligada);
     AsyncStorage.setItem('filaAuto', ligada ? '1' : '0').catch(() => undefined);
@@ -1269,7 +1277,17 @@ export const PrinterConnectionsProvider = ({
       if (!proximo) return;
 
       aArrancarRef.current[printer.id] = true;
-      request(printer.id, startPrintCommand(proximo.name, { nivelar: false, lado: 0 }))
+      lerTimelapse(printer.id)
+        .then(timelapse =>
+          request(
+            printer.id,
+            startPrintCommand(proximo.name, {
+              nivelar: false,
+              lado: 0,
+              timelapse: timelapse ? 1 : 0,
+            })
+          )
+        )
         .then(() => {
           // Só sai da fila depois de a máquina aceitar: se falhar, fica lá.
           removerDaFila(proximo.id);
@@ -1431,6 +1449,7 @@ export const PrinterConnectionsProvider = ({
         filaAuto,
         adicionarAFila,
         removerDaFila,
+        limparFila,
         definirFilaAuto,
       }}
     >

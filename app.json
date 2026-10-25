@@ -12,14 +12,14 @@
         }
       ]
     ],
-    "version": "2.7.3",
+    "version": "2.8.3",
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "experiments": {
       "tsconfigPaths": true
     },
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
@@ -50,7 +50,7 @@
         "backgroundColor": "#141226"
       },
       "package": "io.github.brunocrazy15.atalaia",
-      "versionCode": 162
+      "versionCode": 173
     },
     "developmentClient": {
       "silenceDeploymentWarnings": true

@@ -13,6 +13,8 @@ import { log } from '../utils/log';
 import { loadHistory, formatDuration, PrintRecord } from '../utils/printHistory';
 import { useJanela } from '../theme/layout';
 import { Mascote } from '../ui/Mascote';
+import { CartaoCamara } from '../components/CartaoCamara';
+import { CartaoFila } from '../components/CartaoFila';
 
 const TAMANHO_ANEL = 64;
 const TRACO = 7;
@@ -76,12 +78,20 @@ export const InicioScreen = ({ navigation }: any) => {
   const paleta = tema.paleta;
   const { printers } = usePrinterConnections();
   const { mudarMaquina, mudarSecao } = useSelectedPrinter();
-  const { compacta } = useJanela();
+  const { compacta, height, expandida } = useJanela();
+  // Tablet (≥ 840 dp): duas colunas, como no conceito aprovado.
+  const duasColunas = expandida;
+  // Num ecrã alto (S25: 1085 dp) três registos deixavam ~310 dp vazios antes
+  // da barra; mostrar mais preenche sem inventar conteúdo.
+  const quantosHistorico = height >= 1000 ? 6 : height >= 850 ? 5 : 3;
+  // Em ecrãs altos sobra muito espaço em baixo: centrar o bloco de cartões
+  // fica equilibrado, em vez de deixar ~380 dp de vazio antes da barra.
+  const centrarConteudo = height >= 1000;
   const [historico, setHistorico] = useState<PrintRecord[]>([]);
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
-    loadHistory().then(r => setHistorico(r.slice(0, 3))).catch(() => {});
+    loadHistory().then(r => setHistorico(r.slice(0, 8))).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -99,7 +109,7 @@ export const InicioScreen = ({ navigation }: any) => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: hexDe(paleta.fundo) }} edges={['top']}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 24, flexGrow: 1 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 8 }}>
           <Text style={{ flex: 1, fontSize: 26, fontWeight: '700', color: hexDe(paleta.tinta) }}>
             {t('inicio.titulo')}
@@ -137,7 +147,9 @@ export const InicioScreen = ({ navigation }: any) => {
           )}
         </View>
 
-        <View style={{ paddingHorizontal: 16, marginTop: 16, gap: 12 }}>
+        <View style={{ paddingHorizontal: 16, marginTop: 16, gap: 12, flex: 1, justifyContent: centrarConteudo ? 'center' : 'flex-start' }}>
+          <View style={{ flexDirection: duasColunas ? 'row' : 'column', gap: 12 }}>
+          <View style={{ flex: duasColunas ? 1.1 : undefined, gap: 12 }}>
           {printers.map(printer => {
             const info = printer.status?.PrintInfo;
             const progresso = info?.Progress ?? 0;
@@ -149,6 +161,11 @@ export const InicioScreen = ({ navigation }: any) => {
             };
             const corEstado = hexDe(coresDoEstado[estado.cor] ?? paleta.tintaSoft);
             const resina = printer.kind === 'resin';
+            // Sem trabalho a correr a Saturn mantém o PrintInfo do último
+            // trabalho (com Progress), por isso o anel e o nome do ficheiro
+            // têm de sair do estado da máquina, não do que ficou para trás.
+            const fase = getPrintStatus(printer.status?.PrintInfo?.Status ?? 0);
+            const aCorrer = fase === 'printing' || fase === 'paused' || fase === 'preparing';
             return (
               <TouchableOpacity
                 key={printer.id}
@@ -160,9 +177,9 @@ export const InicioScreen = ({ navigation }: any) => {
                 accessibilityLabel={`${printer.printerName}, ${estado.texto}`}
                 style={[cartao, { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 16 }]}
               >
-                <Anel progresso={progresso} cor={hexDe(paleta.acento)} trilho={hexDe(paleta.linha)}>
+                <Anel progresso={aCorrer ? progresso : 0} cor={hexDe(paleta.acento)} trilho={hexDe(paleta.linha)}>
                   <Text style={{ fontSize: 14, fontWeight: '700', color: hexDe(paleta.tinta) }}>
-                    {Math.round(progresso)}%
+                    {aCorrer ? `${Math.round(progresso)}%` : '—'}
                   </Text>
                 </Anel>
 
@@ -191,7 +208,7 @@ export const InicioScreen = ({ navigation }: any) => {
                     numberOfLines={1}
                     style={{ fontSize: 12, color: hexDe(paleta.tintaSoft), marginTop: 6 }}
                   >
-                    {info?.Filename || printer.ipAddress}
+                    {aCorrer ? info?.Filename || printer.ipAddress : printer.ipAddress}
                   </Text>
                   <Text style={{ fontSize: 12, color: corEstado, marginTop: 4, fontWeight: '600' }}>
                     {estado.texto}
@@ -217,6 +234,15 @@ export const InicioScreen = ({ navigation }: any) => {
               </TouchableOpacity>
             );
           })}
+
+          {duasColunas && temCamera && fdm && (
+            <CartaoCamara
+              host={fdm.ipAddress}
+              printerName={fdm.printerName}
+              altura={200}
+              onAbrir={() => navigation.navigate('Camera', { printerId: fdm.id })}
+            />
+          )}
 
           {temCamera && fdm && (
             <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -250,6 +276,8 @@ export const InicioScreen = ({ navigation }: any) => {
             </View>
           )}
 
+          </View>
+          <View style={{ flex: duasColunas ? 1 : undefined, gap: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
             <Text style={{ flex: 1, fontSize: 15, fontWeight: '700', color: hexDe(paleta.tinta) }}>
               {t('inicio.historico')}
@@ -270,7 +298,7 @@ export const InicioScreen = ({ navigation }: any) => {
                 </Text>
               </View>
             )}
-            {historico.map((registo, indice) => {
+            {historico.slice(0, quantosHistorico).map((registo, indice) => {
               const falhou = registo.outcome === 'stopped';
               return (
                 <View
@@ -315,6 +343,10 @@ export const InicioScreen = ({ navigation }: any) => {
                 </View>
               );
             })}
+          </View>
+
+          <CartaoFila onAbrir={() => navigation.navigate('Fila')} />
+          </View>
           </View>
         </View>
       </ScrollView>

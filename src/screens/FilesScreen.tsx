@@ -36,6 +36,7 @@ import { custoDe, euros, getPrecoKg, setPrecoKg } from '../utils/precos';
 import { slotValido } from '../utils/slots';
 import { extrairMiniaturaEmbutida, extrairMiniaturaEmbutidaFila, ferramentasUsadas, urlMiniatura } from '../utils/miniatura';
 import { descarregarGcode, partilharFicheiro } from '../utils/transferir';
+import { lerTimelapse } from '../utils/timelapse';
 import { t } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
@@ -715,23 +716,43 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
   const [novoNome, setNovoNome] = useState('');
   const [ocupado, setOcupado] = useState<string | null>(null);
 
+  // O Cmd 258 é paginado (Page/Limit) e o firmware devolve no máximo 100 por
+  // página: pedir só a página 1 escondia tudo o que passasse dos 100 ficheiros.
+  const listarTodosOsFicheiros = useCallback(async () => {
+    const PAGINA = 100;
+    const MAX_PAGINAS = 20;
+    const todos: PrinterFile[] = [];
+    const vistos = new Set<string>();
+    for (let pagina = 1; pagina <= MAX_PAGINAS; pagina++) {
+      const dados = await request(
+        printerIdAtual as string,
+        listFilesCommand('/local/', pagina, PAGINA)
+      );
+      const lote: PrinterFile[] = dados?.FileList ?? [];
+      for (const f of lote) {
+        if (f.name && !vistos.has(f.name)) {
+          vistos.add(f.name);
+          todos.push(f);
+        }
+      }
+      if (lote.length < PAGINA) break;
+    }
+    return todos;
+  }, [printerIdAtual, request]);
+
   const load = useCallback(async () => {
     if (!printerIdAtual) return;
     setLoading(true);
     setError(null);
     try {
-      const data = await request(
-        printerIdAtual,
-        listFilesCommand('/local/', 1, 100)
-      );
-      const list: PrinterFile[] = data?.FileList ?? [];
+      const list = await listarTodosOsFicheiros();
       setFiles(list.filter(item => item.name?.toLowerCase().endsWith('.gcode')));
     } catch (e) {
       setError(mensagemDeErro(e));
     } finally {
       setLoading(false);
     }
-  }, [printerIdAtual, request]);
+  }, [printerIdAtual, listarTodosOsFicheiros]);
 
   useFocusEffect(
     useCallback(() => {
@@ -795,6 +816,7 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
               nivelar: bedLevel,
               lado: plateSide,
               slotMap,
+              timelapse: (await lerTimelapse(printer.id)) ? 1 : 0,
             });
             const response = await request(printer.id, comando, 15000);
             const ack = ackDaResposta(response) ?? 0;
@@ -834,11 +856,7 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
           onPress: async () => {
             try {
               // O nome tem de ser o que a máquina devolve no Cmd 258.
-              const dados = await request(
-                printer.id,
-                listFilesCommand('/local/', 1, 100)
-              );
-              const lista: PrinterFile[] = dados?.FileList ?? [];
+              const lista = await listarTodosOsFicheiros();
               const alvo = lista.find(f => f.name.endsWith(`/${asset.name}`));
               if (!alvo) {
                 Alert.alert(t('files.naoArrancou'), t('files.naoEncontrado'));
@@ -847,6 +865,7 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
               const comando = startPrintCommand(alvo.name, {
                 nivelar: bedLevel,
                 lado: plateSide,
+                timelapse: (await lerTimelapse(printer.id)) ? 1 : 0,
               });
               const resposta = await request(printer.id, comando, 15000);
               const ack = ackDaResposta(resposta) ?? 0;

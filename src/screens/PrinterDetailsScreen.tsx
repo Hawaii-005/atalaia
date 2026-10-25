@@ -41,6 +41,7 @@ import { classificarEstado } from '../types';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 import { BT_ACENTO, BT_APAGADA, BT_NEUTRA, BT_PERIGO, TX_ACENTO, TX_PERIGO } from '../theme/botoes';
+import { lerTimelapse, guardarTimelapse } from '../utils/timelapse';
 
 // Etiquetas visíveis para o estado de ligação da impressora (chaves i18n).
 const ANEL_TAM = 196;
@@ -70,6 +71,19 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
   const ultimosTicks = useRef({ valor: -1, desde: Date.now() });
   const [speedPercent, setSpeedPercent] = useState(100);
   const [timelapse, setTimelapse] = useState(false);
+
+  // A preferência fica guardada por impressora: é ela que o ecrã de ficheiros
+  // envia no arranque (Tlp_Switch), senão a máquina grava sem timelapse.
+  useEffect(() => {
+    if (!printer?.id) return;
+    let vivo = true;
+    lerTimelapse(printer.id).then(v => {
+      if (vivo) setTimelapse(v);
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [printer?.id]);
   const [fanSpeeds, setFanSpeeds] = useState({
     model: 0,
     chamber: 0,
@@ -241,6 +255,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
   const handleTimelapse = (enabled: boolean) => {
     if (!printer) return;
     setTimelapse(enabled);
+    guardarTimelapse(printer.id, enabled);
     sendCommand(
       printer.id,
       timelapseCommand(enabled, { id: `timelapse-${Date.now()}` })

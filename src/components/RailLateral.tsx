@@ -77,6 +77,26 @@ export const RailLateral = ({ state, navigation }: any) => {
           </TouchableOpacity>
         );
       })}
+
+      <TouchableOpacity
+        accessibilityRole="button"
+        accessibilityLabel={t('fila.titulo')}
+        onPress={() => navigation.getParent()?.navigate('Fila')}
+        style={{
+          width: larguraRail - 16,
+          minHeight: 64,
+          borderRadius: 18,
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 4,
+          paddingVertical: 8,
+        }}
+      >
+        <Ionicons name="list-outline" size={24} color={hexDe(paleta.tintaSoft)} />
+        <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: '600', color: hexDe(paleta.tintaSoft) }}>
+          {t('fila.curto')}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 };

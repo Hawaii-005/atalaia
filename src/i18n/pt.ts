@@ -328,6 +328,16 @@ export default {
   'welcome.comecar': 'Começar',
 
   // ——— Discovery
+  'fila.curto': 'Fila',
+  'fila.titulo': 'Fila de impressão',
+  'fila.vazia': 'A fila está vazia. Acrescenta trabalhos pelo ícone de lista, nos ficheiros.',
+  'fila.limparTudo': 'Limpar tudo',
+  'fila.limpar': 'Limpar',
+  'fila.confirmarLimpar': 'Apagar {n} trabalhos da fila?',
+  'fila.remover': 'Remover da fila',
+  'inicio.verAoVivo': 'Ver ao vivo',
+  'inicio.camaraAjuda': 'Abre o vídeo ao vivo da máquina',
+  'discovery.voltarInicio': 'Voltar ao início',
   'discovery.title': 'Encontrar impressoras',
   'discovery.redeLocal': 'Rede local',
   'discovery.falhou': 'A análise da rede falhou.',

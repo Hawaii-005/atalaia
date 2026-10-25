@@ -11,11 +11,13 @@ import { ResinScreen } from '../screens/ResinScreen';
 import { CameraScreen } from '../screens/CameraScreen';
 import WhereIsIpScreen from '../screens/WhereIsIpScreen';
 import { InicioScreen } from '../screens/InicioScreen';
+import { FilaScreen } from '../screens/FilaScreen';
 import { PrinterTabScreen } from '../screens/PrinterTabScreen';
 import { EditarIpScreen } from '../screens/EditarIpScreen';
 import PrinterIcon from '../components/icons/PrinterIcon';
 import { RailLateral } from '../components/RailLateral';
 import { useJanela } from '../theme/layout';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 import { t } from '../i18n';
@@ -33,6 +35,10 @@ const Root = createStackNavigator();
  */
 const Abas = () => {
   const { tema } = useTheme();
+  // A altura fixa da barra tem de incluir a área do gesto: sem isto, num
+  // telemóvel com navegação por gestos (S25) as legendas ficam a 23 dp do
+  // fundo e a barra do sistema passa por cima.
+  const insets = useSafeAreaInsets();
 
   return (
     <Tab.Navigator
@@ -60,9 +66,9 @@ const Abas = () => {
           backgroundColor: hexDe(tema.paleta.cartao),
           borderTopWidth: 1,
           borderTopColor: hexDe(tema.paleta.linha),
-          paddingBottom: 6,
+          paddingBottom: 6 + insets.bottom,
           paddingTop: 6,
-          height: 66,
+          height: 66 + insets.bottom,
         },
       })}
     >
@@ -118,5 +124,6 @@ export const AppNavigator = () => (
     <Root.Screen name="WhereIsIp" component={WhereIsIpScreen} />
     <Root.Screen name="EditarIp" component={EditarIpScreen} />
     <Root.Screen name="Resina" component={ResinScreen} />
+    <Root.Screen name="Fila" component={FilaScreen} />
   </Root.Navigator>
 );

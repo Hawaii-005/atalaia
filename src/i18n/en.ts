@@ -326,6 +326,16 @@ const en = {
   'welcome.comecar': 'Get started',
 
   // ——— Discovery
+  'fila.curto': 'Queue',
+  'fila.titulo': 'Print queue',
+  'fila.vazia': 'The queue is empty. Add jobs with the list icon in Files.',
+  'fila.limparTudo': 'Clear all',
+  'fila.limpar': 'Clear',
+  'fila.confirmarLimpar': 'Delete {n} jobs from the queue?',
+  'fila.remover': 'Remove from queue',
+  'inicio.verAoVivo': 'View live',
+  'inicio.camaraAjuda': "Opens the machine's live video",
+  'discovery.voltarInicio': 'Back to home',
   'discovery.title': 'Find printers',
   'discovery.redeLocal': 'Local network',
   'discovery.falhou': 'The network scan failed.',
