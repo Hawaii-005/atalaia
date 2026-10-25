@@ -84,6 +84,7 @@ export default {
   'files.tentarDeNovo': 'Tentar de novo',
   'files.cores': 'Filamentos neste ficheiro',
   'files.coresDica': 'Lido do cabeçalho do G-code do fatiador',
+  'files.aLer': 'A ler os filamentos…',
   'files.coresNenhuma': 'O ficheiro não declara filamentos.',
   'files.coresTotal': '{n} cores neste ficheiro',
   'files.slotSugerido': 'slot {slot}',

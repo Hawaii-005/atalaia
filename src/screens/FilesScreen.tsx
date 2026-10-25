@@ -1,5 +1,5 @@
 import { enderecoDe } from '../utils/rede';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -48,6 +48,9 @@ interface PrinterFile {
 }
 
 const PREVIEW_LIMIT = 15 * 1024 * 1024;
+
+// O Cmd 260 é rápido, mas repetir o pedido a cada abertura do painel nota-se.
+const cacheDetalhe = new Map<string, any>();
 
 const formatTempo = (seg?: number) => {
   if (!seg || seg <= 0) return '';
@@ -148,27 +151,49 @@ const FileDetails = ({
   const [mini, setMini] = useState<string | null>(
     urlMiniatura(printerIp, file.name)
   );
-  const [tentouEmbutida, setTentouEmbutida] = useState(false);
+  const vivoRef = useRef(true);
+  const pediuEmbutida = useRef(false);
+
+  useEffect(() => {
+    vivoRef.current = true;
+    return () => {
+      vivoRef.current = false;
+    };
+  }, []);
 
   const falhouMiniatura = async () => {
-    if (!tentouEmbutida) {
-      setTentouEmbutida(true);
+    if (!pediuEmbutida.current) {
+      pediuEmbutida.current = true;
       const embutida = await extrairMiniaturaEmbutida(printerIp, file.name);
-      setMini(embutida);
+      if (vivoRef.current) setMini(embutida);
       return;
     }
-    setMini(null);
+    if (vivoRef.current) setMini(null);
   };
   const [precoKg, definirPrecoKg] = useState(0);
   const [precoTexto, definirPrecoTexto] = useState('');
 
   useEffect(() => {
     let vivo = true;
+    const chave = `${printerId}|${file.name}`;
+    const guardado = cacheDetalhe.get(chave);
+    if (guardado) {
+      setDetalhe(guardado);
+      const mapaGuardado: Record<number, number> = {};
+      (guardado.ColorMapping ?? []).forEach((cor: any, i: number) => {
+        mapaGuardado[i] = Number(cor?.tray_id ?? i);
+      });
+      setSlots(mapaGuardado);
+      return () => {
+        vivo = false;
+      };
+    }
     (async () => {
       try {
         const dados = await request(printerId, fileDetailCommand(file.name), 10000);
         const info = dados?.FileInfo;
         if (!vivo || !info) return;
+        cacheDetalhe.set(chave, info);
         setDetalhe(info);
         const mapa: Record<number, number> = {};
         (info.ColorMapping ?? []).forEach((cor: any, i: number) => {
@@ -344,6 +369,15 @@ const FileDetails = ({
                     </View>
                   </View>
                 ))
+              : !detalhe && loading
+              ? (
+                  <View className="flex-row items-center mt-2">
+                    <ActivityIndicator size="small" color={hexDe(tema.paleta.acento)} />
+                    <Text className="text-[12px] text-ink-muted ml-2">
+                      {t('files.aLer')}
+                    </Text>
+                  </View>
+                )
               : filamentos.length === 0
               ? (
                   <Text className="text-[12px] text-ink-muted mt-1.5">
