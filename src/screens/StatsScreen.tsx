@@ -21,6 +21,7 @@ import {
 } from '../utils/commands';
 import { mensagemDeErro } from '../utils/errors';
 import { t } from '../i18n';
+import { enderecoDe } from '../utils/rede';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 
@@ -106,24 +107,43 @@ export const StatsScreen = ({ navigation }: any) => {
     // estado (30 s) e isso recarregava a página inteira.
   }, [printer?.id, request]);
 
+  const [videoAberto, setVideoAberto] = useState<string | null>(null);
+
   const abrirVideo = async (url: string) => {
     if (!printer) return;
+    setVideoAberto(url);
     try {
       const resposta = await request(
         printer.id,
         historyVideoCommand(url, { id: printer.id })
       );
-      const lista = (resposta as any)?.Data ?? resposta;
-      const itens = Array.isArray(lista) ? lista : [];
-      const primeiro =
-        itens.find((x: any) => typeof x === 'string') ??
-        itens.find((x: any) => typeof x?.Url === 'string')?.Url;
-      if (primeiro) await Linking.openURL(String(primeiro));
-      else Alert.alert(t('stats.video'), t('stats.videoIndisponivel'));
+      // A placa tanto devolve uma lista como um objecto com Url.
+      const corpo: any = (resposta as any)?.Data?.Data ?? (resposta as any)?.Data ?? resposta;
+      const lista = Array.isArray(corpo) ? corpo : [];
+      let alvo: string | null =
+        typeof corpo === 'string'
+          ? corpo
+          : typeof corpo?.Url === 'string'
+          ? corpo.Url
+          : (lista.find((x: any) => typeof x === 'string') as string | undefined) ??
+            (lista.find((x: any) => typeof x?.Url === 'string')?.Url ?? null);
+
+      if (!alvo) {
+        Alert.alert(t('stats.video'), t('stats.videoIndisponivel'));
+        return;
+      }
+      // Caminho relativo: o vídeo é servido pela própria impressora.
+      if (!/^https?:/i.test(alvo)) {
+        alvo = `http://${enderecoDe(printer)}/${String(alvo).replace(/^\/+/, '')}`;
+      }
+      await Linking.openURL(alvo);
     } catch (e) {
       Alert.alert(t('comum.erro'), mensagemDeErro(e));
+    } finally {
+      setVideoAberto(null);
     }
   };
+;
 
   useFocusEffect(
     useCallback(() => {
@@ -274,12 +294,17 @@ export const StatsScreen = ({ navigation }: any) => {
                 <TouchableOpacity
                   onPress={() => abrirVideo(task.TimeLapseVideoUrl!)}
                   className="ml-2 p-1"
+                  disabled={videoAberto !== null}
                 >
-                  <Ionicons
-                    name="play-circle-outline"
-                    size={22}
-                    color={hexDe(tema.paleta.acento)}
-                  />
+                  {videoAberto === task.TimeLapseVideoUrl ? (
+                    <ActivityIndicator size="small" color={hexDe(tema.paleta.acento)} />
+                  ) : (
+                    <Ionicons
+                      name="play-circle-outline"
+                      size={22}
+                      color={hexDe(tema.paleta.acento)}
+                    />
+                  )}
                 </TouchableOpacity>
               ) : null}
             </View>

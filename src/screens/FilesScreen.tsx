@@ -34,6 +34,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { uploadGcode } from '../utils/gcodeUpload';
 import { custoDe, euros, getPrecoKg, setPrecoKg } from '../utils/precos';
 import { extrairMiniaturaEmbutida, ferramentasUsadas, urlMiniatura } from '../utils/miniatura';
+import { descarregarGcode, partilharFicheiro } from '../utils/transferir';
 import { t } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
@@ -164,6 +165,20 @@ const FileDetails = ({
       vivo = false;
     };
   }, [printerIp, file.name, size]);
+
+  // Guardar no telemóvel: descarrega por HTTP e abre o menu do sistema.
+  const [aGuardar, setAGuardar] = useState<number | null>(null);
+  const guardar = async () => {
+    setAGuardar(0);
+    try {
+      const { uri } = await descarregarGcode(printerIp, file.name, p => setAGuardar(p));
+      setAGuardar(null);
+      await partilharFicheiro(uri, file.name.split('/').pop() ?? file.name);
+    } catch (e) {
+      setAGuardar(null);
+      Alert.alert(t('files.naoGuardou'), mensagemDeErro(e));
+    }
+  };
 
   // O fatiador declara sempre os 8 slots do AMS no Cmd 260, mesmo quando a peça
   // só usa um. Só contam as ferramentas com peso no cabeçalho do .gcode.
@@ -592,6 +607,11 @@ const FileDetails = ({
           </ScrollView>
 
           {/* Acções fixas */}
+          {aGuardar !== null && (
+            <Text className="text-[11px] text-ink-muted px-4 pt-2">
+              {t('files.aDescarregar', { pct: String(Math.round(aGuardar * 100)) })}
+            </Text>
+          )}
           <View
             className="flex-row items-center px-4 pt-3 border-t border-line"
             style={{ gap: 8, paddingBottom: 18 }}
@@ -602,6 +622,20 @@ const FileDetails = ({
               activeOpacity={0.7}
             >
               <Ionicons name="pencil-outline" size={18} color={hexDe(tema.paleta.tinta)} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={guardar}
+              disabled={aGuardar !== null}
+              accessibilityLabel={t('files.guardar')}
+              className="h-12 w-12 items-center justify-center rounded-md border-[1.5px] border-line bg-canvas-sunken"
+              activeOpacity={0.7}
+              style={{ opacity: aGuardar !== null ? 0.6 : 1 }}
+            >
+              {aGuardar !== null ? (
+                <ActivityIndicator size="small" color={hexDe(tema.paleta.tinta)} />
+              ) : (
+                <Ionicons name="download-outline" size={18} color={hexDe(tema.paleta.tinta)} />
+              )}
             </TouchableOpacity>
             <TouchableOpacity
               onPress={onDelete}

@@ -77,6 +77,9 @@ O fork não é uma camada de pintura sobre o original: herdou o protocolo e a es
 - **Package Android novo** (`io.github.brunocrazy15.atalaia`), para não colidir com o original nem herdar a assinatura dele.
 - **Câmara reconstruída**: anel de progresso em SVG com o vídeo lá dentro, recorte circular, ecrã inteiro e captura 16:9.
 - **Notificações accionáveis** por categoria, com botões que não abrem a app.
+- **Guardar no telemóvel**: o `.gcode` é descarregado da impressora por HTTP, com
+  percentagem, e entregue ao menu do sistema (Ficheiros, Drive, Quick Share). A app
+  não escreve directamente em Downloads — o Android não o permite sem permissões.
 - **Fila de impressão** persistida, com arranque automático opcional e aviso em caso de falha.
 - **Erros do protocolo traduzidos**: cada `Ack` tem uma explicação e uma sugestão.
 - **Rede mais barata**: descoberta por um único datagrama, single-flight, e cura de IP limitada (app à frente, nunca a imprimir).
@@ -141,6 +144,12 @@ npm test
 - **Controlo de temperatura** não está implementado (o firmware stock não expõe comando utilizável).
 - **Pausa/retomar** depende do estado interno da máquina; quando fica inconsistente, o corte de corrente na tomada é o que o limpa.
 - **Renomear** é feito no cliente (descarregar, enviar, apagar), não pelo protocolo.
+- **Gerir bobinas CANVAS** (criar, editar, apagar) não é possível: a interface web
+  oficial só lê o `Cmd 324`. A edição existe no ecrã da impressora, não no protocolo.
+- **O vídeo do time-lapse** (`Cmd 323`) está implementado e o botão aparece no
+  histórico, mas **nunca foi visto a funcionar**: a impressora não tinha vídeos.
+  Com um `Url` inválido o firmware responde `Ack 1`. O caminho relativo devolvido
+  é completado com o IP da impressora.
 
 ---
 
