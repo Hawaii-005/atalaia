@@ -239,14 +239,6 @@ export const stopPrintCommand = (opts: Emissao = {}): SdcpCommand<{}> =>
 export const resumePrintCommand = (opts: Emissao = {}): SdcpCommand<{}> =>
   construir(131, {}, opts, `resume-${Date.now()}`);
 
-/** Salta o pré-aquecimento. */
-export const skipPreheatCommand = (opts: Emissao = {}): SdcpCommand<{}> =>
-  construir(132, {}, opts, `skip-preheat-${Date.now()}`);
-
-/** Para a alimentação de filamento. */
-export const stopFilamentCommand = (opts: Emissao = {}): SdcpCommand<{}> =>
-  construir(133, {}, opts, `stop-filament-${Date.now()}`);
-
 // ---------- Cmd 258: listar ficheiros ----------
 
 export interface ListFilesPayload {

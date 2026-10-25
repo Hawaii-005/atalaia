@@ -14,8 +14,6 @@ import {
   jogCommand,
   lightCommand,
   printSpeedCommand,
-  skipPreheatCommand,
-  stopFilamentCommand,
   timelapseCommand,
 } from '../utils/commands';
 
@@ -286,21 +284,6 @@ export const ControlosSection = ({ printer }: { printer?: Printer }) => {
       <Ventoinha rotulo={t('controlos.ventoinhaAuxiliar')} valor={ventoinhas.AuxiliaryFan ?? 0} campo="side" />
       <Ventoinha rotulo={t('controlos.ventoinhaCaixa')} valor={ventoinhas.BoxFan ?? 0} campo="chamber" />
 
-      <Text style={{ fontSize: 13, fontWeight: '700', color: hexDe(paleta.tintaSoft), marginTop: espaco.md }}>
-        {t('controlos.avancado')}
-      </Text>
-      <Linha
-        titulo={t('controlos.saltarPreAquecimento')}
-        valor={t('comum.enviar')}
-        desactivado={!ligada}
-        onPress={() => enviar(skipPreheatCommand({ id: printer?.id }))}
-      />
-      <Linha
-        titulo={t('controlos.pararFilamento')}
-        valor={t('comum.enviar')}
-        desactivado={!ligada}
-        onPress={() => enviar(stopFilamentCommand({ id: printer?.id }))}
-      />
     </ScrollView>
   );
 };

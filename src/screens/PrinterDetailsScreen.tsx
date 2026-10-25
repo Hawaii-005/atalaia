@@ -29,8 +29,6 @@ import {
   pausePrintCommand,
   resumePrintCommand,
   stopPrintCommand,
-  skipPreheatCommand,
-  stopFilamentCommand,
   lightCommand,
   fanCommand,
   printSpeedCommand,
@@ -796,34 +794,6 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
             />
           </View>
 
-          {/* Emergência */}
-          <View className="px-4 py-3 border-t border-line">
-            <Text className="text-[11px] font-semibold tracking-widest text-ink-muted">
-              {t('details.duranteImpressao')}
-            </Text>
-            <View className="flex-row mt-2">
-              <TouchableOpacity
-                disabled={!isConnected}
-                onPress={() => handleQuickCommand(skipPreheatCommand())}
-                className="flex-1 rounded-xl border border-line py-2.5 items-center mr-1.5"
-                activeOpacity={0.7}
-              >
-                <Text className="text-[12px] font-semibold text-ink">
-                  {t('details.saltarPreaquecimento')}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                disabled={!isConnected}
-                onPress={() => handleQuickCommand(stopFilamentCommand())}
-                className="flex-1 rounded-xl border border-line py-2.5 items-center"
-                activeOpacity={0.7}
-              >
-                <Text className="text-[12px] font-semibold text-ink">
-                  {t('details.pararFilamento')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
         </View>
 
         {/* Printer */}
