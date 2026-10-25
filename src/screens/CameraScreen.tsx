@@ -119,15 +119,16 @@ export const CameraScreen = ({ navigation, route }: any) => {
   const [uploading, setUploading] = useState(false);
   const [uploadPercent, setUploadPercent] = useState(0);
 
-  // Só este ecrã roda: ao abrir o modo cheio passa a horizontal e ao fechar
-  // volta a portrait (a app está bloqueada em portrait no app.json).
+  // Só o modo cheio roda para horizontal; fora dele a app segue o sensor (o
+  // tablet usa horizontal). Bloquear em PORTRAIT_UP ao sair deixava a app
+  // presa na vertical depois de abrir a câmara uma vez.
   useEffect(() => {
     const lock = async () => {
       try {
         await ScreenOrientation.lockAsync(
           fullscreen
             ? ScreenOrientation.OrientationLock.LANDSCAPE
-            : ScreenOrientation.OrientationLock.PORTRAIT_UP
+            : ScreenOrientation.OrientationLock.DEFAULT
         );
       } catch (error) {
         log('orientation lock failed', error);
@@ -136,7 +137,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
     lock();
   }, [fullscreen]);
 
-  useEffect(() => () => { ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {}); }, []);
+  useEffect(() => () => { ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.DEFAULT).catch(() => {}); }, []);
 
   // A resina não tem câmara: a aba só olha para as impressoras que têm vídeo.
   const printer = useMemo(() => {
