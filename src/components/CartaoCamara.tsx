@@ -10,6 +10,8 @@ type Props = {
   printerName: string;
   onAbrir: () => void;
   altura?: number;
+  /** Ocupa o espaço que sobra na coluna (tablet em horizontal). */
+  esticar?: boolean;
 };
 
 /**
@@ -19,14 +21,14 @@ type Props = {
  * existe em `/video`, MJPEG, que o <Image> não lê). Fica como porta de entrada
  * para o ecrã da câmara, com o nome da máquina.
  */
-export const CartaoCamara = ({ printerName, onAbrir, altura = 180 }: Props) => {
+export const CartaoCamara = ({ printerName, onAbrir, altura = 180, esticar }: Props) => {
   const { tema } = useTheme();
   const p = tema.paleta;
 
   return (
     <View
       style={{
-        height: altura,
+        ...(esticar ? { flex: 1 } : { height: altura }),
         borderRadius: 20,
         borderWidth: 1.5,
         borderColor: hexDe(p.linha),

@@ -83,10 +83,11 @@ export const InicioScreen = ({ navigation }: any) => {
   const duasColunas = expandida;
   // Num ecrã alto (S25: 1085 dp) três registos deixavam ~310 dp vazios antes
   // da barra; mostrar mais preenche sem inventar conteúdo.
-  const quantosHistorico = height >= 1000 ? 6 : height >= 850 ? 5 : 3;
+  const quantosHistorico = duasColunas ? 8 : height >= 1000 ? 6 : height >= 850 ? 5 : 3;
   // Em ecrãs altos sobra muito espaço em baixo: centrar o bloco de cartões
   // fica equilibrado, em vez de deixar ~380 dp de vazio antes da barra.
-  const centrarConteudo = height >= 1000;
+  // Só nos telemóveis altos: no tablet o conteúdo estica até ao fundo.
+  const centrarConteudo = height >= 1000 && !duasColunas;
   const [historico, setHistorico] = useState<PrintRecord[]>([]);
   const [tick, setTick] = useState(0);
 
@@ -148,7 +149,7 @@ export const InicioScreen = ({ navigation }: any) => {
         </View>
 
         <View style={{ paddingHorizontal: 16, marginTop: 16, gap: 12, flex: 1, justifyContent: centrarConteudo ? 'center' : 'flex-start' }}>
-          <View style={{ flexDirection: duasColunas ? 'row' : 'column', gap: 12 }}>
+          <View style={{ flexDirection: duasColunas ? 'row' : 'column', gap: 12, flex: duasColunas ? 1 : undefined }}>
           <View style={{ flex: duasColunas ? 1.1 : undefined, gap: 12 }}>
           {printers.map(printer => {
             const info = printer.status?.PrintInfo;
@@ -240,6 +241,7 @@ export const InicioScreen = ({ navigation }: any) => {
               host={fdm.ipAddress}
               printerName={fdm.printerName}
               altura={200}
+              esticar
               onAbrir={() => navigation.navigate('Camera', { printerId: fdm.id })}
             />
           )}
@@ -289,7 +291,7 @@ export const InicioScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
 
-          <View style={[cartao, { paddingVertical: 6, paddingHorizontal: 14 }]}>
+          <View style={[cartao, { paddingVertical: 6, paddingHorizontal: 14 }, duasColunas ? { flex: 1 } : null]}>
             {historico.length === 0 && (
               <View style={{ alignItems: 'center', paddingVertical: 12 }}>
                 <Mascote pose="ocioso" tamanho={120} />
