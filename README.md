@@ -24,6 +24,10 @@ Este projecto começou como fork do [CC-Tool](https://github.com/WalkerFrederick
 |---|---|
 | ![Câmara](docs/img/camara.png) | ![Definições](docs/img/definicoes.png) |
 
+| Movimento | Mascote (sem ligação) |
+|---|---|
+| ![Movimento](docs/img/movimento.png) | ![Mascote](docs/img/mascote.png) |
+
 ---
 
 ## O que faz
@@ -177,6 +181,10 @@ Same images as above — the interface is localised, so the Portuguese shots sho
 | Camera | Settings |
 |---|---|
 | ![Camera](docs/img/camara.png) | ![Settings](docs/img/definicoes.png) |
+
+| Movement | Mascot (no connection) |
+|---|---|
+| ![Movement](docs/img/movimento.png) | ![Mascot](docs/img/mascote.png) |
 
 ## What it does
 

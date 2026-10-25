@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { useNavigation } from '@react-navigation/native';
 import { EstadoVazio } from '../ui/EstadoVazio';
+import { Mascote } from '../ui/Mascote';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 import { anel, espaco, raio as raioToken } from '../theme/tokensV6';
@@ -112,6 +113,16 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
 
   const segundosRestantes = restante((info?.TotalTicks ?? 0) - (info?.CurrentTicks ?? 0));
 
+  // Cartão de fim de impressão: fecha-se, volta a aparecer na impressão seguinte.
+  const chaveFim = `${info?.Filename ?? ''}|${info?.TotalTicks ?? 0}`;
+  const [fimFechado, setFimFechado] = React.useState<string | null>(null);
+  const concluido = getPrintStatus(info?.Status ?? 0) === 'completed' && !!info?.Filename;
+  const duracao = restante(info?.TotalTicks ?? 0);
+
+  // A Saturn não tem acesso remoto: sem ligação e sem dados é porque não está
+  // na mesma rede (ou está desligada). O eTailscale não serve: o IP dela é da LAN.
+  const foraDeCasa = resina;
+
   // A miniatura precisa do stream ligado (386). Uma vez por entrada em foco.
   const pedidoFeito = React.useRef<string | null>(null);
   React.useEffect(() => {
@@ -161,6 +172,33 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
     );
   }
 
+  // Resina fora da rede local: a Saturn precisa do Wi-Fi de casa.
+  if (foraDeCasa && !ligada && !printer.status) {
+    return (
+      <EstadoVazio
+        pose="foraDeCasa"
+        titulo={t('vazio.foraDeCasa.titulo', { nome: printer.printerName })}
+        descricao={t('vazio.foraDeCasa.descricao')}
+        acaoPrimaria={{ rotulo: t('vazio.tentarNovamente'), aoTocar: reconnectAll }}
+        acaoSecundaria={{
+          rotulo: t('vazio.editarIp'),
+          aoTocar: () => navigation.navigate('EditarIp', { printerId: printer.id }),
+        }}
+      />
+    );
+  }
+
+  // Primeira ligação, sem dados nenhuns: é espera, não é erro.
+  if (printer.connectionStatus === 'connecting' && !printer.status) {
+    return (
+      <EstadoVazio
+        pose="imprimindo"
+        titulo={t('vazio.aLigar.titulo', { nome: printer.printerName })}
+        descricao={t('vazio.aLigar.descricao')}
+      />
+    );
+  }
+
   // Sem ligação e sem dados nenhuns: ainda não vale a pena mostrar números velhos.
   if (!ligada && !printer.status) {
     return (
@@ -202,6 +240,54 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
             bounces={false}
           />
         </TouchableOpacity>
+      )}
+
+      {concluido && fimFechado !== chaveFim && (
+        <View
+          style={{
+            backgroundColor: hexDe(paleta.cartao),
+            borderRadius: raioToken.cartao,
+            borderWidth: 1,
+            borderColor: hexDe(paleta.linha),
+            padding: espaco.md,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: espaco.sm,
+          }}
+        >
+          <Mascote pose="concluido" tamanho={56} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 14, fontWeight: '700', color: hexDe(paleta.tinta) }}>
+              {t('vazio.concluido.titulo')}
+            </Text>
+            <Text
+              numberOfLines={1}
+              style={{ fontSize: 11, color: hexDe(paleta.tintaSoft), marginTop: 2 }}
+            >
+              {info?.Filename}
+              {duracao ? ` · ${duracao}` : ''}
+            </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Stats')}>
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontWeight: '600',
+                  color: hexDe(paleta.acento),
+                  marginTop: 4,
+                }}
+              >
+                {t('vazio.verHistorico')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity
+            onPress={() => setFimFechado(chaveFim)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityLabel={t('comum.cancelar')}
+          >
+            <Ionicons name="close" size={18} color={hexDe(paleta.tintaSoft)} />
+          </TouchableOpacity>
+        </View>
       )}
 
       <View style={{ backgroundColor: hexDe(paleta.cartao), borderRadius: raioToken.cartao, padding: espaco.lg, flexDirection: 'row', gap: espaco.lg, alignItems: 'center' }}>
