@@ -95,6 +95,21 @@ export const ControlosSection = ({ printer }: { printer?: Printer }) => {
     }
   };
 
+  const fazerHomeXY = () => {
+    Alert.alert(t('controlos.confirmarHome'), t('controlos.confirmarHomeMsg'), [
+      { text: t('comum.cancelar'), style: 'cancel' },
+      {
+        text: t('comum.confirmar'),
+        style: 'destructive',
+        onPress: async () => {
+          await enviar(homeCommand('X', { id: printer?.id }));
+          await new Promise(resolver => setTimeout(resolver, 1200));
+          await enviar(homeCommand('Y', { id: printer?.id }));
+        },
+      },
+    ]);
+  };
+
   const fazerHome = (eixo: 'XYZ' | 'Z') => {
     Alert.alert(t('controlos.confirmarHome'), t('controlos.confirmarHomeMsg'), [
       { text: t('comum.cancelar'), style: 'cancel' },
@@ -114,6 +129,39 @@ export const ControlosSection = ({ printer }: { printer?: Printer }) => {
       Alert.alert(t('comum.erro'), e instanceof Error ? e.message : String(e));
     }
   };
+
+  const numeros = (printer?.status?.CurrenCoord ?? '').match(/-?\d+(?:\.\d+)?/g) ?? [];
+  const coord = (i: number) => numeros[i] ?? '0.00';
+  const desactivado = !ligada || ocupada;
+
+  const Tecla: React.FC<{ etiqueta: string; onPress: () => void; largo?: boolean }> = ({
+    etiqueta,
+    onPress,
+    largo,
+  }) => (
+    <TouchableOpacity
+      onPress={onPress}
+      disabled={desactivado}
+      activeOpacity={0.75}
+      style={{
+        flex: largo ? 1 : undefined,
+        minWidth: largo ? 0 : 58,
+        height: 46,
+        paddingHorizontal: 10,
+        borderRadius: 14,
+        borderWidth: 1.2,
+        borderColor: hexDe(paleta.linha),
+        backgroundColor: hexDe(paleta.fundoBaixo),
+        alignItems: 'center',
+        justifyContent: 'center',
+        opacity: desactivado ? 0.4 : 1,
+      }}
+    >
+      <Text style={{ fontSize: 12, fontWeight: '700', color: hexDe(paleta.tinta) }}>
+        {etiqueta}
+      </Text>
+    </TouchableOpacity>
+  );
 
   const alterarVentoinha = (campo: 'model' | 'side' | 'chamber', passo: number) => {
     const actual = {
@@ -184,68 +232,111 @@ export const ControlosSection = ({ printer }: { printer?: Printer }) => {
       <Text style={{ fontSize: 13, fontWeight: '700', color: hexDe(paleta.tintaSoft), marginTop: espaco.md }}>
         {t('controlos.movimento')}
       </Text>
-      <View style={{ backgroundColor: hexDe(paleta.cartao), borderRadius: raioToken.interno, padding: espaco.md, gap: espaco.sm }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: espaco.sm }}>
-          <Text style={{ fontSize: 12, color: hexDe(paleta.tintaSoft), flex: 1 }}>
-            {printer?.status?.CurrenCoord || ''}
-          </Text>
-          {[1, 10, 50].map(mm => (
+      <View
+        style={{
+          backgroundColor: hexDe(paleta.cartao),
+          borderRadius: raioToken.interno,
+          borderWidth: 1,
+          borderColor: hexDe(paleta.linha),
+          padding: espaco.md,
+          gap: espaco.sm,
+        }}
+      >
+        <View style={{ flexDirection: 'row', gap: 6 }}>
+          {[0.1, 1, 10, 50].map(mm => (
             <TouchableOpacity
               key={mm}
               onPress={() => setPasso(mm)}
+              activeOpacity={0.8}
               style={{
-                paddingHorizontal: 10,
-                height: 30,
-                borderRadius: raioToken.chip,
+                flex: 1,
+                height: 34,
+                borderRadius: 17,
+                alignItems: 'center',
                 justifyContent: 'center',
                 backgroundColor: passo === mm ? hexDe(paleta.acento) : hexDe(paleta.fundoBaixo),
               }}
             >
-              <Text style={{ fontSize: 12, fontWeight: '700', color: passo === mm ? '#fff' : hexDe(paleta.tinta) }}>
-                {`${mm} mm`}
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontWeight: '700',
+                  color: passo === mm ? '#fff' : hexDe(paleta.tintaSoft),
+                }}
+              >
+                {mm === 0.1 ? '0.1 mm' : `${mm} mm`}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        {(['X', 'Y', 'Z'] as const).map(eixo => (
-          <View key={eixo} style={{ flexDirection: 'row', alignItems: 'center', gap: espaco.sm }}>
-            <Text style={{ width: 20, fontSize: 14, fontWeight: '700', color: hexDe(paleta.tinta) }}>{eixo}</Text>
-            <TouchableOpacity
-              onPress={() => mover(eixo, -1)}
-              disabled={!ligada || ocupada}
-              style={{ flex: 1, height: 40, borderRadius: raioToken.chip, alignItems: 'center', justifyContent: 'center', backgroundColor: hexDe(paleta.fundoBaixo), opacity: !ligada || ocupada ? 0.4 : 1 }}
+        <View style={{ flexDirection: 'row', gap: 6 }}>
+          {(['X', 'Y', 'Z'] as const).map((eixo, i) => (
+            <View
+              key={eixo}
+              style={{
+                flex: 1,
+                height: 28,
+                borderRadius: 8,
+                backgroundColor: hexDe(paleta.fundoBaixo),
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'row',
+              }}
             >
-              <Ionicons name="remove" size={18} color={hexDe(paleta.tinta)} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => mover(eixo, 1)}
-              disabled={!ligada || ocupada}
-              style={{ flex: 1, height: 40, borderRadius: raioToken.chip, alignItems: 'center', justifyContent: 'center', backgroundColor: hexDe(paleta.fundoBaixo), opacity: !ligada || ocupada ? 0.4 : 1 }}
-            >
-              <Ionicons name="add" size={18} color={hexDe(paleta.tinta)} />
-            </TouchableOpacity>
-          </View>
-        ))}
-
-        <View style={{ flexDirection: 'row', gap: espaco.sm, marginTop: 2 }}>
-          <TouchableOpacity
-            onPress={() => fazerHome('Z')}
-            disabled={!ligada || ocupada}
-            style={{ flex: 1, height: 38, borderRadius: raioToken.chip, alignItems: 'center', justifyContent: 'center', backgroundColor: hexDe(paleta.fundoBaixo), opacity: !ligada || ocupada ? 0.4 : 1 }}
-          >
-            <Text style={{ fontSize: 12, fontWeight: '700', color: hexDe(paleta.tinta) }}>{t('controlos.homeZ')}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => fazerHome('XYZ')}
-            disabled={!ligada || ocupada}
-            style={{ flex: 1, height: 38, borderRadius: raioToken.chip, alignItems: 'center', justifyContent: 'center', backgroundColor: hexDe(paleta.fundoBaixo), opacity: !ligada || ocupada ? 0.4 : 1 }}
-          >
-            <Text style={{ fontSize: 12, fontWeight: '700', color: hexDe(paleta.tinta) }}>{t('controlos.home')}</Text>
-          </TouchableOpacity>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: hexDe(paleta.acento) }}>
+                {eixo}:{' '}
+              </Text>
+              <Text style={{ fontSize: 12, fontWeight: '600', color: hexDe(paleta.tinta) }}>
+                {coord(i)}
+              </Text>
+            </View>
+          ))}
         </View>
+
+        <View style={{ flexDirection: 'row', gap: espaco.md, marginTop: 2 }}>
+          <View style={{ flex: 1, alignItems: 'center', gap: 6 }}>
+            <Tecla etiqueta="▲ Y+" onPress={() => mover('Y', 1)} />
+            <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+              <Tecla etiqueta="◀ X−" onPress={() => mover('X', -1)} />
+              <TouchableOpacity
+                onPress={() => fazerHome('XYZ')}
+                disabled={desactivado}
+                activeOpacity={0.75}
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 22,
+                  borderWidth: 1.5,
+                  borderColor: hexDe(paleta.acento),
+                  backgroundColor: hexDe(paleta.fundoBaixo),
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  opacity: desactivado ? 0.4 : 1,
+                }}
+              >
+                <Ionicons name="home" size={18} color={hexDe(paleta.tinta)} />
+              </TouchableOpacity>
+              <Tecla etiqueta="X+ ▶" onPress={() => mover('X', 1)} />
+            </View>
+            <Tecla etiqueta="▼ Y−" onPress={() => mover('Y', -1)} />
+          </View>
+
+          <View style={{ width: 104, justifyContent: 'center', gap: 10 }}>
+            <Tecla etiqueta="▲ Z+" onPress={() => mover('Z', 1)} />
+            <Tecla etiqueta="▼ Z−" onPress={() => mover('Z', -1)} />
+          </View>
+        </View>
+
+        <View style={{ flexDirection: 'row', gap: 6, marginTop: 2 }}>
+          <Tecla etiqueta="Home XY" largo onPress={fazerHomeXY} />
+          <Tecla etiqueta="Home Z" largo onPress={() => fazerHome('Z')} />
+        </View>
+
         {ocupada ? (
-          <Text style={{ fontSize: 11, color: hexDe(paleta.tintaSoft) }}>{t('controlos.aImprimir')}</Text>
+          <Text style={{ fontSize: 11, color: hexDe(paleta.tintaSoft) }}>
+            {t('controlos.aImprimir')}
+          </Text>
         ) : null}
       </View>
 
