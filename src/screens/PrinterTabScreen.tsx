@@ -5,6 +5,7 @@ import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { useSelectedPrinter, secoesDaMaquina, Secao } from '../contexts/SelectedPrinterContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
+import { EstadoVazio } from '../ui/EstadoVazio';
 import { hexDe } from '../theme/temas';
 import { espaco, raio as raioToken, texto as textoToken } from '../theme/tokensV6';
 import { t } from '../i18n';
@@ -39,27 +40,19 @@ export const PrinterTabScreen = ({ navigation }: any) => {
   const corpo = () => {
     if (!maquina) {
       return (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: espaco.xl }}>
-          <Text style={{ fontSize: 15, color: hexDe(paleta.tintaSoft), textAlign: 'center' }}>
-            {t('filamentos.semMaquina')}
-          </Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('AddEditPrinter')}
-            style={{
-              marginTop: espaco.lg,
-              paddingHorizontal: espaco.xl,
-              height: 48,
-              borderRadius: raioToken.botao,
-              backgroundColor: hexDe(paleta.acento),
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text style={{ fontSize: 15, fontWeight: '700', color: '#fff' }}>
-              {t('home.adicionarImpressora')}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <EstadoVazio
+          pose="ocioso"
+          titulo={t('vazio.semImpressoras.titulo')}
+          descricao={t('vazio.semImpressoras.descricao')}
+          acaoPrimaria={{
+            rotulo: t('home.adicionarImpressora'),
+            aoTocar: () => navigation.navigate('AddEditPrinter'),
+          }}
+          acaoSecundaria={{
+            rotulo: t('vazio.analisarRede'),
+            aoTocar: () => navigation.navigate('Discovery'),
+          }}
+        />
       );
     }
 

@@ -12,7 +12,7 @@
         }
       ]
     ],
-    "version": "2.5.2",
+    "version": "2.5.3",
     "web": {
       "favicon": "./assets/favicon.png"
     },
@@ -23,9 +23,9 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/adaptive-foreground.png",
       "resizeMode": "contain",
-      "backgroundColor": "#FFFFFF"
+      "backgroundColor": "#141226"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -44,13 +44,13 @@
     "android": {
       "softwareKeyboardLayoutMode": "pan",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/adaptive-foreground.png",
         "backgroundImage": "./assets/adaptive-background.png",
         "monochromeImage": "./assets/adaptive-monochrome.png",
         "backgroundColor": "#141226"
       },
       "package": "io.github.brunocrazy15.atalaia",
-      "versionCode": 152
+      "versionCode": 153
     },
     "developmentClient": {
       "silenceDeploymentWarnings": true

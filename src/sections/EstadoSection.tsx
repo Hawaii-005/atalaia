@@ -7,6 +7,8 @@ import { enderecoDe } from '../utils/rede';
 import Svg, { Circle } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
+import { useNavigation } from '@react-navigation/native';
+import { EstadoVazio } from '../ui/EstadoVazio';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 import { anel, espaco, raio as raioToken } from '../theme/tokensV6';
@@ -87,7 +89,8 @@ const Anel: React.FC<{
 export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; onAbrirCamara?: () => void }) => {
   const { tema } = useTheme();
   const paleta = tema.paleta;
-  const { request, sendCommand } = usePrinterConnections();
+  const { request, sendCommand, reconnectAll } = usePrinterConnections();
+  const navigation = useNavigation<any>();
 
   const emFoco = useIsFocused();
   const info = printer?.status?.PrintInfo;
@@ -155,6 +158,22 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
       <View style={{ padding: espaco.lg }}>
         <Text style={{ color: hexDe(paleta.tintaSoft), fontSize: 13 }}>{t('filamentos.semMaquina')}</Text>
       </View>
+    );
+  }
+
+  // Sem ligação e sem dados nenhuns: ainda não vale a pena mostrar números velhos.
+  if (!ligada && !printer.status) {
+    return (
+      <EstadoVazio
+        pose="semLigacao"
+        titulo={t('vazio.semLigacao.titulo', { nome: printer.printerName })}
+        descricao={t('vazio.semLigacao.descricao')}
+        acaoPrimaria={{ rotulo: t('vazio.tentarNovamente'), aoTocar: reconnectAll }}
+        acaoSecundaria={{
+          rotulo: t('vazio.editarIp'),
+          aoTocar: () => navigation.navigate('EditarIp', { printerId: printer.id }),
+        }}
+      />
     );
   }
 
