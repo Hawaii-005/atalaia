@@ -97,6 +97,10 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
   const info = printer?.status?.PrintInfo;
   const progresso = info?.Progress ?? 0;
   const ligada = printer?.connectionStatus === 'connected';
+  // Marca se já houve ligação desde que o ecrã montou: o `status` fica guardado
+  // entre arranques, por isso não serve para saber se é a primeira ligação.
+  const jaLigouAntes = React.useRef(false);
+  if (ligada) jaLigouAntes.current = true;
   const resina = (printer?.kind ?? 'fdm') === 'resin';
 
   const estado = useMemo(() => {
@@ -188,8 +192,8 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
     );
   }
 
-  // Primeira ligação, sem dados nenhuns: é espera, não é erro.
-  if (printer.connectionStatus === 'connecting' && !printer.status) {
+  // Primeira ligação desde que a app abriu: é espera, não é erro.
+  if (printer.connectionStatus === 'connecting' && !jaLigouAntes.current) {
     return (
       <EstadoVazio
         pose="imprimindo"
