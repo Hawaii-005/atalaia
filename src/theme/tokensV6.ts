@@ -6,7 +6,7 @@
 
 // ───────────────────────── Paleta ─────────────────────────
 
-export type NomeTema = 'conceito' | 'grafite' | 'nord' | 'papel';
+export type NomeTema = 'ametista' | 'esmeralda' | 'cobre' | 'citrino';
 
 export interface Paleta {
   modo: 'escuro' | 'claro';
@@ -42,8 +42,11 @@ export interface Paleta {
   cameraBase: string;
 }
 
-/** Tema do conceito aprovado (roxo escuro). É o predefinido. */
-const conceito: Paleta = {
+/**
+ * Quatro temas, todos escuros, o mesmo conceito visual. Os nomes são de pedra
+ * e metal: Ametista (o aprovado), Esmeralda, Cobre e Citrino (verde+laranja).
+ */
+const ametista: Paleta = {
   modo: 'escuro',
   fundo: '#141226',
   cartao: '#1E1B33',
@@ -71,102 +74,103 @@ const conceito: Paleta = {
   cameraBase: '#6B5E50',
 };
 
-const grafite: Paleta = {
+const esmeralda: Paleta = {
   modo: 'escuro',
-  fundo: '#0F1115',
-  cartao: '#1A1D23',
-  cartaoAlt: '#242830',
-  trilha: '#343945',
-  contorno: '#343945',
-  barraNav: '#14171C',
-  pilulaNav: '#2B3140',
-  texto: '#F2F4F7',
-  textoSecundario: '#8B93A1',
-  primaria: '#3B82F6',
-  textoSobrePrimaria: '#FFFFFF',
-  sucesso: '#22C55E',
-  sucessoFundo: '#12301E',
+  fundo: '#0E1A15',
+  cartao: '#16261F',
+  cartaoAlt: '#1E3329',
+  trilha: '#2A4438',
+  contorno: '#2A4438',
+  barraNav: '#0C1712',
+  pilulaNav: '#1E4B3A',
+  texto: '#FFFFFF',
+  textoSecundario: '#9CB3A8',
+  primaria: '#34D399',
+  textoSobrePrimaria: '#06261A',
+  sucesso: '#4ADE80',
+  sucessoFundo: '#16352A',
   aviso: '#FBBF24',
   avisoFundo: '#3A2A08',
-  perigo: '#EF4444',
-  perigoFundo: '#3A1717',
-  textoSobrePerigo: '#1F0A0A',
-  bico: '#FB923C',
-  mesa: '#A78BFA',
-  camara: '#22D3EE',
+  perigo: '#F87171',
+  perigoFundo: '#3B1F22',
+  textoSobrePerigo: '#2B0B0B',
+  bico: '#FBBF24',
+  mesa: '#34D399',
+  camara: '#A3E635',
   sobreposicao: 'rgba(0,0,0,0.62)',
-  cameraTopo: '#22252B',
-  cameraBase: '#5A5148',
+  cameraTopo: '#1B2B24',
+  cameraBase: '#4F5F45',
 };
 
-const nord: Paleta = {
+const cobre: Paleta = {
   modo: 'escuro',
-  fundo: '#2E3440',
-  cartao: '#3B4252',
-  cartaoAlt: '#434C5E',
-  trilha: '#4C566A',
-  contorno: '#4C566A',
-  barraNav: '#272C36',
-  pilulaNav: '#4C566A',
-  texto: '#ECEFF4',
-  textoSecundario: '#A3ABBA',
-  primaria: '#88C0D0',
-  textoSobrePrimaria: '#2E3440',
-  sucesso: '#A3BE8C',
-  sucessoFundo: '#33403A',
-  aviso: '#EBCB8B',
-  avisoFundo: '#4A4231',
-  perigo: '#BF616A',
-  perigoFundo: '#4A3036',
-  textoSobrePerigo: '#ECEFF4',
-  bico: '#D08770',
-  mesa: '#B48EAD',
-  camara: '#8FBCBB',
-  sobreposicao: 'rgba(20,24,32,0.64)',
-  cameraTopo: '#3B4252',
-  cameraBase: '#6B6A63',
+  fundo: '#1A1210',
+  cartao: '#241A16',
+  cartaoAlt: '#2F211C',
+  trilha: '#40302A',
+  contorno: '#40302A',
+  barraNav: '#150F0D',
+  pilulaNav: '#4A2C21',
+  texto: '#FFF6F0',
+  textoSecundario: '#B9A196',
+  primaria: '#F97316',
+  textoSobrePrimaria: '#2A1206',
+  sucesso: '#4ADE80',
+  sucessoFundo: '#1E3527',
+  aviso: '#FBBF24',
+  avisoFundo: '#3A2A08',
+  perigo: '#F87171',
+  perigoFundo: '#3B1F1F',
+  textoSobrePerigo: '#2B0B0B',
+  bico: '#FDBA74',
+  mesa: '#F97316',
+  camara: '#4ADE80',
+  sobreposicao: 'rgba(0,0,0,0.62)',
+  cameraTopo: '#2A211D',
+  cameraBase: '#6B5344',
 };
 
-const papel: Paleta = {
-  modo: 'claro',
-  fundo: '#F3EFE6',
-  cartao: '#FFFFFF',
-  cartaoAlt: '#ECE7DA',
-  trilha: '#D9D3C3',
-  contorno: '#D9D3C3',
-  barraNav: '#FFFFFF',
-  pilulaNav: '#E5DCFA',
-  texto: '#1D1B26',
-  textoSecundario: '#6B6677',
-  primaria: '#6D3FD6',
-  textoSobrePrimaria: '#FFFFFF',
-  sucesso: '#15803D',
-  sucessoFundo: '#DDF3E4',
-  aviso: '#B45309',
-  avisoFundo: '#FDEBC8',
-  perigo: '#C62828',
-  perigoFundo: '#FBE0E0',
-  textoSobrePerigo: '#FFFFFF',
-  bico: '#B45309',
-  mesa: '#6D3FD6',
-  camara: '#15803D',
-  sobreposicao: 'rgba(20,18,38,0.5)',
-  cameraTopo: '#8E8A84',
-  cameraBase: '#B9AE9E',
+/** Verde-lima sobre base azeitona: o verde e o laranja juntos. */
+const citrino: Paleta = {
+  modo: 'escuro',
+  fundo: '#131A12',
+  cartao: '#1C261A',
+  cartaoAlt: '#26331F',
+  trilha: '#35452A',
+  contorno: '#35452A',
+  barraNav: '#101610',
+  pilulaNav: '#3E5222',
+  texto: '#F7FFF0',
+  textoSecundario: '#A8B79B',
+  primaria: '#A3E635',
+  textoSobrePrimaria: '#1A2405',
+  sucesso: '#22C55E',
+  sucessoFundo: '#1B3320',
+  aviso: '#FB923C',
+  avisoFundo: '#3A2410',
+  perigo: '#F87171',
+  perigoFundo: '#3B1F1F',
+  textoSobrePerigo: '#2B0B0B',
+  bico: '#FB923C',
+  mesa: '#A3E635',
+  camara: '#FB923C',
+  sobreposicao: 'rgba(0,0,0,0.62)',
+  cameraTopo: '#222B1B',
+  cameraBase: '#5F6540',
 };
 
-export const temas: Record<NomeTema, Paleta> = { conceito, grafite, nord, papel };
-export const temaPredefinido: NomeTema = 'conceito';
+export const temas: Record<NomeTema, Paleta> = { ametista, esmeralda, cobre, citrino };
+export const temaPredefinido: NomeTema = 'ametista';
 
 export const nomesDosTemas: Record<NomeTema, string> = {
-  conceito: 'Conceito',
-  grafite: 'Grafite',
-  nord: 'Nord',
-  papel: 'Papel',
+  ametista: 'Ametista',
+  esmeralda: 'Esmeralda',
+  cobre: 'Cobre',
+  citrino: 'Citrino',
 };
 
 export const obterPaleta = (nome: NomeTema | undefined): Paleta =>
-  temas[nome ?? temaPredefinido] ?? conceito;
+  temas[nome ?? temaPredefinido] ?? ametista;
 
 // ───────────────────────── Forma e espaço ─────────────────────────
 

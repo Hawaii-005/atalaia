@@ -79,10 +79,10 @@ const traduzir = (p: PaletaV6): Paleta => ({
 });
 
 const DESCRICOES: Record<TemaId, string> = {
-  conceito: 'Roxo escuro do conceito aprovado.',
-  grafite: 'Escuro neutro. Azul apenas no que se pode tocar.',
-  nord: 'Cinza-azulado do Norte, calmo.',
-  papel: 'Claro e quente, como papel.',
+  ametista: 'Roxo do conceito aprovado. O predefinido.',
+  esmeralda: 'Verde profundo, para quem prefere calma.',
+  cobre: 'Laranja quente sobre castanho-escuro.',
+  citrino: 'Verde-lima com laranja nos avisos.',
 };
 
 const construir = (id: TemaId): Tema => {
@@ -98,13 +98,13 @@ const construir = (id: TemaId): Tema => {
 };
 
 export const TEMAS: Record<TemaId, Tema> = {
-  conceito: construir('conceito'),
-  grafite: construir('grafite'),
-  nord: construir('nord'),
-  papel: construir('papel'),
+  ametista: construir('ametista'),
+  esmeralda: construir('esmeralda'),
+  cobre: construir('cobre'),
+  citrino: construir('citrino'),
 };
 
-export const ORDEM_TEMAS: TemaId[] = ['conceito', 'grafite', 'papel', 'nord'];
+export const ORDEM_TEMAS: TemaId[] = ['ametista', 'esmeralda', 'cobre', 'citrino'];
 export const TEMA_PREDEFINIDO: TemaId = temaPredefinido;
 
 /** "18 16 34" → "#121022" (para sítios que não aceitam variáveis) */

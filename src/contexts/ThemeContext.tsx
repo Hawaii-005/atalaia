@@ -31,7 +31,9 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const carregar = async () => {
       try {
-        const guardado = (await AsyncStorage.getItem(CHAVE)) as TemaId | null;
+        const bruto = await AsyncStorage.getItem(CHAVE);
+        // 'conceito' era o tema roxo antes de passar a chamar-se 'ametista'.
+        const guardado = (bruto === 'conceito' ? 'ametista' : bruto) as TemaId | null;
         if (guardado && TEMAS[guardado]) {
           _setTemaId(guardado);
         } else if (guardado) {
