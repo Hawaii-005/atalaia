@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react';
-import { View, Text, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, ScrollView, Image } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useIsFocused } from '@react-navigation/native';
 import { htmlDoVideo } from '../utils/cameraStream';
 import { enderecoDe } from '../utils/rede';
+import { extrairMiniaturaEmbutida, urlMiniatura } from '../utils/miniatura';
 import Svg, { Circle } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
@@ -139,6 +140,32 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
       // sem ligação: a miniatura fica sem imagem
     }
   }, [printer, emFoco, ligada, resina, sendCommand]);
+
+  // Miniatura do ficheiro em curso, para ficar dentro do anel: dá contexto ao
+  // progresso sem tirar espaço à percentagem (fica por baixo, com um véu escuro).
+  const ficheiroEmCurso = info?.Filename;
+  const [miniatura, setMiniatura] = React.useState<string | null>(null);
+  const tentouEmbutida = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    setMiniatura(null);
+    tentouEmbutida.current = null;
+    if (!printer || !ficheiroEmCurso) return;
+    setMiniatura(urlMiniatura(enderecoDe(printer), ficheiroEmCurso));
+  }, [printer, ficheiroEmCurso]);
+
+  const semMiniaturaNoServidor = async () => {
+    if (!printer || !ficheiroEmCurso) return;
+    // Segunda falha (já era a PNG embutida): não insiste mais neste ficheiro.
+    if (tentouEmbutida.current === ficheiroEmCurso) {
+      setMiniatura(null);
+      return;
+    }
+    tentouEmbutida.current = ficheiroEmCurso;
+    // O servidor só tem /thumbnail para ficheiros que ele próprio fatiou; nos
+    // outros vale a PNG que vem no cabeçalho do .gcode.
+    const embutida = await extrairMiniaturaEmbutida(enderecoDe(printer), ficheiroEmCurso);
+    setMiniatura(embutida);
+  };
 
   const comandos = async (cmd: any) => {
     if (!printer) return;
@@ -299,6 +326,20 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
           progresso={progresso}
           cor={hexDe(paleta.acento)}
           trilho={hexDe(paleta.linha)}
+          imagem={
+            miniatura ? (
+              <Image
+                source={{ uri: miniatura as string }}
+                onError={semMiniaturaNoServidor}
+                style={{
+                  width: DIAMETRO_IMAGEM,
+                  height: DIAMETRO_IMAGEM,
+                  borderRadius: DIAMETRO_IMAGEM / 2,
+                }}
+                resizeMode="cover"
+              />
+            ) : undefined
+          }
         >
           <Text style={{ fontSize: 28, fontWeight: '700', color: hexDe(paleta.tinta) }}>{Math.round(progresso)}%</Text>
           {segundosRestantes && (
