@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { useSelectedPrinter, secoesDaMaquina, Secao } from '../contexts/SelectedPrinterContext';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 import { espaco, raio as raioToken, texto as textoToken } from '../theme/tokensV6';
@@ -81,18 +82,78 @@ export const PrinterTabScreen = ({ navigation }: any) => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: hexDe(paleta.fundo) }} edges={['top']}>
-      <Text
+      <View
         style={{
-          fontSize: textoToken.tituloEcra.fontSize,
-          lineHeight: textoToken.tituloEcra.lineHeight,
-          fontWeight: '700',
-          color: hexDe(paleta.tinta),
+          flexDirection: 'row',
+          alignItems: 'center',
           paddingHorizontal: 20,
           paddingTop: 8,
+          gap: 8,
         }}
       >
-        {t('aba.impressora')}
-      </Text>
+        <Text
+          style={{
+            flex: 1,
+            fontSize: textoToken.tituloEcra.fontSize,
+            lineHeight: textoToken.tituloEcra.lineHeight,
+            fontWeight: '700',
+            color: hexDe(paleta.tinta),
+          }}
+        >
+          {t('aba.impressora')}
+        </Text>
+        {maquina ? (
+          <>
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate('EditarIp', { printerId: maquina.id })
+              }
+              accessibilityRole="button"
+              accessibilityLabel={t('editarIp.titulo')}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                backgroundColor: hexDe(paleta.cartao),
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Ionicons name="pencil" size={16} color={hexDe(paleta.tintaSoft)} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() =>
+                Alert.alert(
+                  t('details.desassociar'),
+                  t('details.desassociarMsg', { nome: maquina.printerName }),
+                  [
+                    { text: t('comum.cancelar'), style: 'cancel' },
+                    {
+                      text: t('details.desassociar'),
+                      style: 'destructive',
+                      onPress: () => removePrinter(maquina.id),
+                    },
+                  ]
+                )
+              }
+              accessibilityRole="button"
+              accessibilityLabel={t('details.desassociar')}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                backgroundColor: hexDe(paleta.cartao),
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Ionicons name="trash-outline" size={16} color={hexDe(paleta.perigo)} />
+            </TouchableOpacity>
+          </>
+        ) : null}
+      </View>
 
       <ScrollView
         horizontal

@@ -187,7 +187,7 @@ const en = {
   'details.seccaoImpressora': 'PRINTER',
   'details.ligacao': 'Connection',
   'details.diretaLan': 'Direct over LAN · SDCP',
-  'details.desassociar': 'Unlink printer',
+  'details.desassociar': 'Remove printer',
   'details.desassociarMsg': 'Remove {nome}? This action cannot be undone.',
 
   // ——— Settings

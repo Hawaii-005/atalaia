@@ -186,7 +186,7 @@ export default {
   'details.seccaoImpressora': 'IMPRESSORA',
   'details.ligacao': 'Ligação',
   'details.diretaLan': 'Direta por LAN · SDCP',
-  'details.desassociar': 'Desassociar impressora',
+  'details.desassociar': 'Remover impressora',
   'details.desassociarMsg': 'Remover {nome}? Esta ação é irreversível.',
 
   // ——— Settings

@@ -12,6 +12,7 @@ import { getPrintStatus, Printer } from '../types';
 import { log } from '../utils/log';
 import { loadHistory, formatDuration, PrintRecord } from '../utils/printHistory';
 import { useJanela } from '../theme/layout';
+import { Mascote } from '../ui/Mascote';
 
 const TAMANHO_ANEL = 64;
 const TRACO = 7;
@@ -262,9 +263,12 @@ export const InicioScreen = ({ navigation }: any) => {
 
           <View style={[cartao, { paddingVertical: 6, paddingHorizontal: 14 }]}>
             {historico.length === 0 && (
-              <Text style={{ fontSize: 12, color: hexDe(paleta.tintaSoft), paddingVertical: 14 }}>
-                {t('inicio.semHistorico')}
-              </Text>
+              <View style={{ alignItems: 'center', paddingVertical: 12 }}>
+                <Mascote pose="ocioso" tamanho={120} />
+                <Text style={{ fontSize: 12, color: hexDe(paleta.tintaSoft), paddingTop: 8 }}>
+                  {t('inicio.semHistorico')}
+                </Text>
+              </View>
             )}
             {historico.map((registo, indice) => {
               const falhou = registo.outcome === 'stopped';

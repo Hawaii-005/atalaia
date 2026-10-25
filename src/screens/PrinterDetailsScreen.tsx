@@ -410,6 +410,10 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
               : t(CONNECTION_LABEL[printer.connectionStatus]).toUpperCase()
         }
         onBack={() => navigation.goBack()}
+        rightAction={{
+          icon: 'pencil',
+          onPress: () => navigation.navigate('EditarIp', { printerId: printer.id }),
+        }}
       />
 
       {!isConnected && printer.status && (

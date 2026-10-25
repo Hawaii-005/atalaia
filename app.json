@@ -12,7 +12,7 @@
         }
       ]
     ],
-    "version": "2.5.0",
+    "version": "2.5.2",
     "web": {
       "favicon": "./assets/favicon.png"
     },
@@ -45,10 +45,12 @@
       "softwareKeyboardLayoutMode": "pan",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#100E20"
+        "backgroundImage": "./assets/adaptive-background.png",
+        "monochromeImage": "./assets/adaptive-monochrome.png",
+        "backgroundColor": "#141226"
       },
       "package": "io.github.brunocrazy15.atalaia",
-      "versionCode": 150
+      "versionCode": 152
     },
     "developmentClient": {
       "silenceDeploymentWarnings": true
