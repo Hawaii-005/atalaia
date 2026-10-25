@@ -71,7 +71,7 @@ Este projecto começou como fork do [CC-Tool](https://github.com/WalkerFrederick
 
 ## O que mudou em relação ao CC-Tool
 
-O fork não é uma camada de pintura sobre o original: herdou o protocolo e a estrutura, e depois foi reescrito por dentro, versão a versão (1.13 → 2.0.0).
+O fork não é uma camada de pintura sobre o original: herdou o protocolo e a estrutura, e depois foi reescrito por dentro, versão a versão (1.13 → 2.7.0).
 
 - **Identidade própria**: nome, ícone (torre de vigia com farol), splash, textos e ecrãs de boas-vindas. O antigo nome e marca desapareceram da interface.
 - **Package Android novo** (`io.github.brunocrazy15.atalaia`), para não colidir com o original nem herdar a assinatura dele.
@@ -132,6 +132,9 @@ Testes:
 ```bash
 npm test
 ```
+
+Cobrem os comandos SDCP, os estados da impressora, o parsing do G-code, o
+registo da câmara e os slots do CANVAS — 112 testes em `tests/`.
 
 ---
 
@@ -234,7 +237,7 @@ Same images as above — the interface is localised, so the Portuguese shots sho
 
 ## What changed from CC-Tool
 
-This fork is not a coat of paint over the original: it inherited the protocol and structure, then was rewritten from the inside, version after version (1.13 → 2.0.0).
+This fork is not a coat of paint over the original: it inherited the protocol and structure, then was rewritten from the inside, version after version (1.13 → 2.7.0).
 
 - **Its own identity**: name, icon (a watchtower with a beacon), splash, texts and welcome screens. The old name and branding are gone from the interface.
 - **New Android package** (`io.github.brunocrazy15.atalaia`), so it neither collides with the original nor inherits its signature.

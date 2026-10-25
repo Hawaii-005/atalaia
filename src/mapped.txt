@@ -1,0 +1,13 @@
+screens/CameraScreen.tsx
+screens/DiscoveryScreen.tsx
+screens/FilamentosScreen.tsx
+screens/FilesScreen.tsx
+screens/HistoryScreen.tsx
+screens/InicioScreen.tsx
+screens/PrinterDetailsScreen.tsx
+screens/PrinterTabScreen.tsx
+screens/SettingsScreen.tsx
+screens/StatsScreen.tsx
+screens/WelcomeScreen.tsx
+sections/ControlosSection.tsx
+sections/EstadoSection.tsx

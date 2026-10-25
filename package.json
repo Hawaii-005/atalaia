@@ -1,6 +1,6 @@
 {
   "name": "atalaia",
-  "version": "2.6.3",
+  "version": "2.7.0",
   "license": "MIT",
   "scripts": {
     "android": "expo start --android --dev-client",
@@ -34,6 +34,7 @@
     "expo-network": "~7.1.5",
     "expo-notifications": "~0.31.5",
     "expo-screen-orientation": "~8.1.7",
+    "expo-sharing": "~13.1.5",
     "expo-status-bar": "~2.2.3",
     "nativewind": "latest",
     "react": "19.0.0",
@@ -52,8 +53,7 @@
     "react-native-web": "^0.20.0",
     "react-native-webview": "^13.15.0",
     "spark-md5": "^3.0.2",
-    "yup": "^1.6.1",
-    "expo-sharing": "~13.1.5"
+    "yup": "^1.6.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

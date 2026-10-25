@@ -1,0 +1,2 @@
+screens/PrinterTabScreen.tsx
+sections/EstadoSection.tsx

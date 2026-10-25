@@ -33,12 +33,14 @@ import * as FileSystem from 'expo-file-system';
 import * as DocumentPicker from 'expo-document-picker';
 import { uploadGcode } from '../utils/gcodeUpload';
 import { custoDe, euros, getPrecoKg, setPrecoKg } from '../utils/precos';
+import { slotValido } from '../utils/slots';
 import { extrairMiniaturaEmbutida, ferramentasUsadas, urlMiniatura } from '../utils/miniatura';
 import { descarregarGcode, partilharFicheiro } from '../utils/transferir';
 import { t } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 import { BT_ACENTO, BT_APAGADA, BT_NEUTRA, BT_PERIGO, TX_ACENTO, TX_PERIGO } from '../theme/botoes';
+import { EstadoVazio } from '../ui/EstadoVazio';
 
 interface PrinterFile {
   name: string;
@@ -204,12 +206,6 @@ const FileDetails = ({
         return true;
       });
   }, [detalhe, filamentos, usadosGcode]);
-
-  // O fatiador usa 255 quando não há slot atribuído: nunca pode virar "A256".
-  const slotValido = (valor: any, indice: number) => {
-    const n = Number(valor);
-    return Number.isFinite(n) && n >= 0 && n <= 3 ? n : indice % 4;
-  };
 
   // Cores reais das bobines (Cmd 324): sem isto só se via a cor pedida pelo
   // ficheiro, não a que vai ser impressa.
@@ -1007,14 +1003,13 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
           </View>
 
           {files.length === 0 ? (
-            <View className="items-center justify-center py-16">
-              <Ionicons name="folder-open-outline" size={36} color={hexDe(tema.paleta.tintaMuted)} />
-              <Text className="text-[14px] font-semibold text-ink mt-3">
-                {t('files.semFicheiros')}
-              </Text>
-              <Text className="text-[12px] text-ink-muted mt-1 text-center px-8">
-                {t('files.semFicheirosDica')}
-              </Text>
+            <View style={{ height: 380 }}>
+              <EstadoVazio
+                pose="ocioso"
+                titulo={t('files.semFicheiros')}
+                descricao={t('files.semFicheirosDica')}
+                acaoPrimaria={{ rotulo: t('files.enviar'), aoTocar: handleUpload }}
+              />
             </View>
           ) : (
             <View className="mt-2">

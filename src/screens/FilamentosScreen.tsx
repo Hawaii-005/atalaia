@@ -6,6 +6,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 import { canvasSlotsCommand, CanvasTray } from '../utils/commands';
 import { t } from '../i18n';
+import { EstadoVazio } from '../ui/EstadoVazio';
 
 /**
  * Filamentos — lê os slots do Canvas com o comando 324.
@@ -207,13 +208,13 @@ export const FilamentosScreen = ({
         )}
 
         {slots && slots.length === 0 && !erro && (
-          <View style={[cartao, { gap: 6 }]}>
-            <Text style={{ fontSize: 14, fontWeight: '600', color: hexDe(paleta.tinta) }}>
-              {t('filamentos.semSlots')}
-            </Text>
-            <Text style={{ fontSize: 12, color: hexDe(paleta.tintaSoft), lineHeight: 18 }}>
-              {t('filamentos.semSlotsNota')}
-            </Text>
+          <View style={{ height: 320 }}>
+            <EstadoVazio
+              pose="ocioso"
+              titulo={t('filamentos.semSlots')}
+              descricao={t('filamentos.semSlotsNota')}
+              acaoPrimaria={{ rotulo: t('filamentos.atualizar'), aoTocar: ler }}
+            />
           </View>
         )}
 

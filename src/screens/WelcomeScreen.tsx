@@ -4,7 +4,6 @@ import {
   Text,
   TouchableOpacity,
   SafeAreaView,
-  Image,
   Linking,
   Alert,
 } from 'react-native';
@@ -14,6 +13,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 import { t } from '../i18n';
+import { Mascote } from '../ui/Mascote';
 
 const SLIDES = [
   {
@@ -105,11 +105,7 @@ const WelcomeScreen = ({ onComplete }: { onComplete: () => void }) => {
                   />
                 </View>
               ) : (
-                <Image
-                  source={require('../../assets/CC.png')}
-                  style={{ width: 88, height: 88 }}
-                  resizeMode="contain"
-                />
+                <Mascote pose="ocioso" tamanho={132} />
               )}
 
               <Text className="mt-8 text-[10px] tracking-widest font-semibold text-ink-soft">

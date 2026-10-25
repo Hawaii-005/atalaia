@@ -30,6 +30,7 @@ import {
 } from '../utils/commands';
 import { mensagemDeErro } from '../utils/errors';
 import { hexDe } from '../theme/temas';
+import { EstadoVazio } from '../ui/EstadoVazio';
 
 // Etiquetas visíveis para o desfecho de cada impressão (chaves i18n).
 const outcomeLabel: Record<PrintRecord['outcome'], string> = {
@@ -219,14 +220,12 @@ export const HistoryScreen = ({ navigation }: any) => {
         showsVerticalScrollIndicator={false}
       >
         {records.length === 0 ? (
-          <View className="items-center justify-center py-16">
-            <Ionicons name="time-outline" size={40} color={hexDe(tema.paleta.tintaMuted)} />
-            <Text className="text-[15px] font-semibold text-ink mt-3">
-              {t('history.semImpressoes')}
-            </Text>
-            <Text className="text-[12px] text-ink-muted mt-1 text-center px-8">
-              {t('history.semImpressoesDica')}
-            </Text>
+          <View style={{ height: 400 }}>
+            <EstadoVazio
+              pose="ocioso"
+              titulo={t('history.semImpressoes')}
+              descricao={t('history.semImpressoesDica')}
+            />
           </View>
         ) : (
           <View className="bg-canvas-sunken rounded-xl overflow-hidden">
