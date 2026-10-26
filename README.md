@@ -6,7 +6,7 @@
 
 **[Descarregar o APK](https://github.com/Hawaii-005/atalaia/releases/latest)** · [Releases](https://github.com/Hawaii-005/atalaia/releases) · [Problemas](https://github.com/Hawaii-005/atalaia/issues)
 
-**A tua impressora, à vista.** Aplicação Android para controlar e vigiar a **Elegoo Centauri Carbon** a partir da rede onde ela está — sem conta, sem nuvem, sem servidor pelo meio.
+**A tua impressora, à vista.** Aplicação Android para controlar e vigiar as tuas **Elegoo** — a **Centauri Carbon** (filamento) e a **Saturn 3 Ultra** (resina) — a partir da rede onde estão — sem conta, sem nuvem, sem servidor pelo meio.
 
 A impressora fala SDCP por WebSocket (`ws://<ip>:3030/websocket`) e a câmara serve MJPEG em `http://<ip>:3031/video`. A app liga-se directamente a esses dois endereços. Nada sai da tua rede, excepto quando escolhes a ligação remota por Tailscale.
 
@@ -28,6 +28,10 @@ Este projecto começou como fork do [CC-Tool](https://github.com/WalkerFrederick
 |---|---|
 | ![Movimento](docs/img/movimento.png) | ![Mascote](docs/img/mascote.png) |
 
+| Saturn 3 Ultra (resina) | Fila de impressão |
+|---|---|
+| ![Saturno](docs/img/resina.png) | ![Fila](docs/img/fila.png) |
+
 ---
 
 ## O que faz
@@ -47,9 +51,15 @@ Este projecto começou como fork do [CC-Tool](https://github.com/WalkerFrederick
 **Impressão**
 - Enviar G-code do telemóvel por HTTP em blocos de 1 MB, com tempo limite e limpeza de ficheiros temporários.
 - Listar, pré-visualizar e imprimir ficheiros da máquina; ecrã de detalhe com miniatura, cores, camadas e custo.
-- Fila de trabalhos com arranque automático **opcional** (desligado por omissão).
+- Fila de trabalhos com arranque automático **opcional**; o trabalho só sai da fila depois de a máquina aceitar o comando, e há uma pausa de 2 minutos para o mesmo fim não arrancar dois itens.
 - Pausar, retomar, parar; luz da câmara; ventoinhas por percentagem; presets PLA / ABS / silencioso.
 - Reimprimir a partir do histórico, verificando primeiro se o ficheiro ainda está na máquina.
+
+**Resina (Saturn 3 Ultra)**
+- SDCP por TCP (porta 3000): estado, camada, tempo restante e o trabalho em curso.
+- Pausar, retomar e parar — só depois do `Ack` da máquina; a prova é o `PrintInfo.Status` a 14 com a camada congelada.
+- Enviar `.ctb`, imprimir e desligar a máquina.
+- Uma ligação de cada vez: com a app aberta noutro aparelho, o SDCP recusa o segundo cliente e o ecrã diz exactamente isso. Nada de câmara, time-lapse ou filamentos onde a máquina não os tem.
 
 **Vigia**
 - Avisos com botões: **Pausar**, **Parar** e **Ver câmara**, mesmo com a app em segundo plano.
@@ -61,7 +71,7 @@ Este projecto começou como fork do [CC-Tool](https://github.com/WalkerFrederick
 - Modo de poupança de dados: fotografia a cada 2 s em vez de ~1 MB/s de MJPEG.
 
 **Organização**
-- Quatro temas (Grafite, Papel, Vidro, Nord) só com tokens: cor, tipografia, raio e densidade.
+- Seis temas (Ametista, Esmeralda, Cobre, Citrino, Quartzo e Azulejo — dois claros) só com tokens: cor, tipografia, raio e densidade.
 - Interface em português e inglês, com queda para português quando falta uma chave.
 - Histórico local com resultado, duração, gramas e custo; estatísticas agregadas.
 - Preço por quilo configurável; custo por peça calculado a partir das gramas.
@@ -71,7 +81,7 @@ Este projecto começou como fork do [CC-Tool](https://github.com/WalkerFrederick
 
 ## O que mudou em relação ao CC-Tool
 
-O fork não é uma camada de pintura sobre o original: herdou o protocolo e a estrutura, e depois foi reescrito por dentro, versão a versão (1.13 → 2.7.0).
+O fork não é uma camada de pintura sobre o original: herdou o protocolo e a estrutura, e depois foi reescrito por dentro, versão a versão (1.13 → 2.9.10).
 
 - **Identidade própria**: nome, ícone (torre de vigia com farol), splash, textos e ecrãs de boas-vindas. O antigo nome e marca desapareceram da interface.
 - **Package Android novo** (`io.github.brunocrazy15.atalaia`), para não colidir com o original nem herdar a assinatura dele.
@@ -176,7 +186,7 @@ MIT — ver [LICENSE](LICENSE).
 
 **[Download the APK](https://github.com/Hawaii-005/atalaia/releases/latest)** · [Releases](https://github.com/Hawaii-005/atalaia/releases) · [Issues](https://github.com/Hawaii-005/atalaia/issues)
 
-**Your printer, in sight.** An Android app to control and watch the **Elegoo Centauri Carbon** from the network it lives on — no account, no cloud, no server in between.
+**Your printer, in sight.** An Android app to control and watch your **Elegoo** printers — the **Centauri Carbon** (filament) and the **Saturn 3 Ultra** (resin) — from the network they live on — no account, no cloud, no server in between.
 
 The printer speaks SDCP over WebSocket (`ws://<ip>:3030/websocket`) and the camera serves MJPEG at `http://<ip>:3031/video`. The app talks to those two addresses directly. Nothing leaves your network, except when you choose the remote connection over Tailscale.
 
@@ -229,7 +239,7 @@ Same images as above — the interface is localised, so the Portuguese shots sho
 - Data-saving mode: one photo every 2 seconds instead of ~1 MB/s of MJPEG.
 
 **Organisation**
-- Four themes (Grafite, Papel, Vidro, Nord) built only from tokens: colour, typography, radius and density.
+- Six themes (Ametista, Esmeralda, Cobre, Citrino, Quartzo, Azulejo — two of them light) built only from tokens: colour, typography, radius and density.
 - Portuguese and English, falling back to Portuguese when a key is missing.
 - Local history with outcome, duration, grams and cost; aggregate statistics.
 - Configurable price per kilogram; per-part cost computed from grams.
@@ -237,7 +247,7 @@ Same images as above — the interface is localised, so the Portuguese shots sho
 
 ## What changed from CC-Tool
 
-This fork is not a coat of paint over the original: it inherited the protocol and structure, then was rewritten from the inside, version after version (1.13 → 2.7.0).
+This fork is not a coat of paint over the original: it inherited the protocol and structure, then was rewritten from the inside, version after version (1.13 → 2.9.10).
 
 - **Its own identity**: name, icon (a watchtower with a beacon), splash, texts and welcome screens. The old name and branding are gone from the interface.
 - **New Android package** (`io.github.brunocrazy15.atalaia`), so it neither collides with the original nor inherits its signature.
