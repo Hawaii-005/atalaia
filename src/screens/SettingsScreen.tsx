@@ -92,7 +92,7 @@ const Row = ({
           {label}
         </Text>
         {!!description && (
-          <Text className="text-[10px] text-ink-muted mt-0.5" numberOfLines={1}>
+          <Text className="text-[10px] text-ink-soft mt-0.5" numberOfLines={1}>
             {description}
           </Text>
         )}
@@ -145,7 +145,7 @@ const SwitchRow = ({
     </View>
     <View className="ml-3 flex-1 pr-2">
       <Text className="text-[13px] font-semibold text-ink">{label}</Text>
-      <Text className="text-[10px] text-ink-muted mt-0.5">{description}</Text>
+      <Text className="text-[10px] text-ink-soft mt-0.5">{description}</Text>
     </View>
     <Switch
       value={value}
@@ -187,7 +187,7 @@ const AcaoRow = ({
       </View>
       <View className="ml-3 flex-1 pr-2">
         <Text className="text-[13px] font-semibold text-ink">{label}</Text>
-        <Text className="text-[10px] text-ink-muted mt-0.5">{description}</Text>
+        <Text className="text-[10px] text-ink-soft mt-0.5">{description}</Text>
       </View>
       <Ionicons name="chevron-forward" size={15} color={hexDe(tema.paleta.tintaMuted)} />
     </TouchableOpacity>
@@ -351,7 +351,7 @@ export const SettingsScreen = () => {
 
       <ScrollView
         className="flex-1 bg-canvas"
-        contentContainerStyle={{ padding: 16, paddingBottom: 40, gap: 12 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 88, gap: 12 }}
         showsVerticalScrollIndicator={false}
       >
         <Section title={t('settings.seccaoMaquinas')}>
@@ -416,7 +416,7 @@ export const SettingsScreen = () => {
                       borderRadius: 8,
                       backgroundColor: item.amostra[0],
                       borderWidth: activo ? 2 : 1,
-                      borderColor: activo ? '#FFFFFF' : hexDe(tema.paleta.linha),
+                      borderColor: activo ? '#FFFFFF' : hexDe(tema.paleta.tintaMuted),
                     }}
                   />
                 );
