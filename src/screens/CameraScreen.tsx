@@ -140,8 +140,9 @@ export const CameraScreen = ({ navigation, route }: any) => {
   useEffect(() => () => { ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.DEFAULT).catch(() => {}); }, []);
 
   // A resina não tem câmara: a aba só olha para as impressoras que têm vídeo.
+  const comCamera = useMemo(() => printers.filter(p => p.kind !== 'resin'), [printers]);
+
   const printer = useMemo(() => {
-    const comCamera = printers.filter(p => p.kind !== 'resin');
     const bySelection = comCamera.find(p => p.id === selectedId);
     if (bySelection) {
       return bySelection;
@@ -149,7 +150,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
     return (
       comCamera.find(p => p.connectionStatus === 'connected') ?? comCamera[0]
     );
-  }, [printers, selectedId]);
+  }, [comCamera, selectedId]);
 
   const isConnected = printer?.connectionStatus === 'connected';
   const videoHost = printer ? enderecoDe(printer) : undefined;
@@ -467,9 +468,9 @@ export const CameraScreen = ({ navigation, route }: any) => {
         showsVerticalScrollIndicator={false}
       >
         {/* Selector de impressora */}
-        {printers.length > 1 && (
+        {comCamera.length > 1 && (
           <View className="flex-row px-4 pb-3">
-            {printers.map(p => (
+            {comCamera.map(p => (
               <TouchableOpacity
                 key={p.id}
                 onPress={() => setSelectedId(p.id)}

@@ -1267,6 +1267,9 @@ export const PrinterConnectionsProvider = ({
   // transição disparava em cada actualização de estado com 9.
   const aArrancarRef = useRef<Record<string, boolean>>({});
   const imprimiuRef = useRef<Record<string, boolean>>({});
+  // Depois de arrancar um trabalho a máquina demora a sair do estado 9; sem
+  // esta pausa o mesmo fim de trabalho podia arrancar dois itens da fila.
+  const ultimoArranqueRef = useRef<Record<string, number>>({});
 
   // Arranca o primeiro item da fila desta impressora. Só sai da fila quando a
   // máquina aceita (Ack 0); fora disso repete, porque o Cmd 128 leva Ack != 0
@@ -1275,6 +1278,7 @@ export const PrinterConnectionsProvider = ({
     async (printer: Printer | undefined): Promise<boolean> => {
       if (!printer || !filaAuto) return false;
       if (aArrancarRef.current[printer.id]) return false;
+      if (Date.now() - (ultimoArranqueRef.current[printer.id] ?? 0) < 120_000) return false;
       const proximo = filaRef.current.find(item => item.printerId === printer.id);
       if (!proximo) return false;
 
@@ -1291,6 +1295,7 @@ export const PrinterConnectionsProvider = ({
             const resposta = await request(printer.id, comando, 15000);
             const ack = ackDaResposta(resposta) ?? 0;
             if (ack === 0) {
+              ultimoArranqueRef.current[printer.id] = Date.now();
               removerDaFila(proximo.id);
               notify(
                 'A arrancar o próximo',
