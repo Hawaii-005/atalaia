@@ -12,7 +12,7 @@
         }
       ]
     ],
-    "version": "2.9.13",
+    "version": "2.0.0",
     "web": {
       "favicon": "./assets/favicon.png"
     },
@@ -32,7 +32,7 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "io.github.brunocrazy15.atalaia",
+      "bundleIdentifier": "io.github.hawaii005.atalaia",
       "infoPlist": {
         "NSLocalNetworkUsageDescription": "This app needs to access your local network to connect to your 3D printers.",
         "NSBonjourServices": [
@@ -49,8 +49,8 @@
         "monochromeImage": "./assets/adaptive-monochrome.png",
         "backgroundColor": "#141226"
       },
-      "package": "io.github.brunocrazy15.atalaia",
-      "versionCode": 190
+      "package": "io.github.hawaii005.atalaia",
+      "versionCode": 200
     },
     "developmentClient": {
       "silenceDeploymentWarnings": true

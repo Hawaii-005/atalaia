@@ -1,4 +1,4 @@
-package io.github.brunocrazy15.atalaia
+package io.github.hawaii005.atalaia
 
 import android.os.Build
 import android.os.Bundle

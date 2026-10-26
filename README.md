@@ -32,6 +32,10 @@ Este projecto começou como fork do [CC-Tool](https://github.com/WalkerFrederick
 |---|---|
 | ![Saturno](docs/img/resina.png) | ![Fila](docs/img/fila.png) |
 
+| Ficheiros (grelha) | Histórico por duração |
+|---|---|
+| ![Ficheiros](docs/img/ficheiros.png) | ![Histórico](docs/img/historico.png) |
+
 ---
 
 ## O que faz
@@ -51,6 +55,8 @@ Este projecto começou como fork do [CC-Tool](https://github.com/WalkerFrederick
 **Impressão**
 - Enviar G-code do telemóvel por HTTP em blocos de 1 MB, com tempo limite e limpeza de ficheiros temporários.
 - Listar, pré-visualizar e imprimir ficheiros da máquina; ecrã de detalhe com miniatura, cores, camadas e custo.
+- Ficheiros com procura por nome, vista em lista ou grelha, tamanho de miniatura (P/M/G) e ordem por data, nome, tamanho ou duração — a escolha fica guardada.
+- Histórico com procura, ordem por data, duração ou nome, agrupado por Hoje / Ontem / data, e a duração lida do nome do ficheiro.
 - Fila de trabalhos com arranque automático **opcional**; o trabalho só sai da fila depois de a máquina aceitar o comando, e há uma pausa de 2 minutos para o mesmo fim não arrancar dois itens.
 - Pausar, retomar, parar; luz da câmara; ventoinhas por percentagem; presets PLA / ABS / silencioso.
 - Reimprimir a partir do histórico, verificando primeiro se o ficheiro ainda está na máquina.
@@ -71,7 +77,7 @@ Este projecto começou como fork do [CC-Tool](https://github.com/WalkerFrederick
 - Modo de poupança de dados: fotografia a cada 2 s em vez de ~1 MB/s de MJPEG.
 
 **Organização**
-- Seis temas (Ametista, Esmeralda, Cobre, Citrino, Quartzo e Azulejo — dois claros) só com tokens: cor, tipografia, raio e densidade.
+- Seis temas (Meia-noite, Esmeralda, Cobre, Citrino, Quartzo e Azulejo — dois claros) só com tokens: cor, tipografia, raio e densidade.
 - Interface em português e inglês, com queda para português quando falta uma chave.
 - Histórico local com resultado, duração, gramas e custo; estatísticas agregadas.
 - Preço por quilo configurável; custo por peça calculado a partir das gramas.
@@ -81,10 +87,10 @@ Este projecto começou como fork do [CC-Tool](https://github.com/WalkerFrederick
 
 ## O que mudou em relação ao CC-Tool
 
-O fork não é uma camada de pintura sobre o original: herdou o protocolo e a estrutura, e depois foi reescrito por dentro, versão a versão (1.13 → 2.9.10).
+O fork não é uma camada de pintura sobre o original: herdou o protocolo e a estrutura, e depois foi reescrito por dentro, versão a versão (1.13 → 2.0.0).
 
 - **Identidade própria**: nome, ícone (torre de vigia com farol), splash, textos e ecrãs de boas-vindas. O antigo nome e marca desapareceram da interface.
-- **Package Android novo** (`io.github.brunocrazy15.atalaia`), para não colidir com o original nem herdar a assinatura dele.
+- **Package Android próprio** (`io.github.hawaii005.atalaia`), para não colidir com o original nem herdar a assinatura dele. A 2.0.0 mudou de `io.github.brunocrazy15.atalaia` para aqui: é uma instalação nova, sem herdar dados da anterior.
 - **Câmara reconstruída**: anel de progresso em SVG com o vídeo lá dentro, recorte circular, ecrã inteiro e captura 16:9.
 - **Notificações accionáveis** por categoria, com botões que não abrem a app.
 - **Guardar no telemóvel**: o `.gcode` é descarregado da impressora por HTTP, com
@@ -239,7 +245,7 @@ Same images as above — the interface is localised, so the Portuguese shots sho
 - Data-saving mode: one photo every 2 seconds instead of ~1 MB/s of MJPEG.
 
 **Organisation**
-- Six themes (Ametista, Esmeralda, Cobre, Citrino, Quartzo, Azulejo — two of them light) built only from tokens: colour, typography, radius and density.
+- Six themes (Midnight, Esmeralda, Cobre, Citrino, Quartzo, Azulejo — two of them light) built only from tokens: colour, typography, radius and density.
 - Portuguese and English, falling back to Portuguese when a key is missing.
 - Local history with outcome, duration, grams and cost; aggregate statistics.
 - Configurable price per kilogram; per-part cost computed from grams.
@@ -247,10 +253,10 @@ Same images as above — the interface is localised, so the Portuguese shots sho
 
 ## What changed from CC-Tool
 
-This fork is not a coat of paint over the original: it inherited the protocol and structure, then was rewritten from the inside, version after version (1.13 → 2.9.10).
+This fork is not a coat of paint over the original: it inherited the protocol and structure, then was rewritten from the inside, version after version (1.13 → 2.0.0).
 
 - **Its own identity**: name, icon (a watchtower with a beacon), splash, texts and welcome screens. The old name and branding are gone from the interface.
-- **New Android package** (`io.github.brunocrazy15.atalaia`), so it neither collides with the original nor inherits its signature.
+- **Its own Android package** (`io.github.hawaii005.atalaia`), so it neither collides with the original nor inherits its signature. Version 2.0.0 moved from `io.github.brunocrazy15.atalaia` to this one: it installs as a new app and keeps no data from the old one.
 - **Camera rebuilt**: SVG progress ring with the video inside, circular crop, fullscreen and 16:9 capture.
 - **Actionable notifications** by category, with buttons that do not open the app.
 - **Print queue** persisted, with optional auto-start and a warning when a job fails to start.

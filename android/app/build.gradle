@@ -87,13 +87,13 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'io.github.brunocrazy15.atalaia'
+    namespace 'io.github.hawaii005.atalaia'
     defaultConfig {
-        applicationId 'io.github.brunocrazy15.atalaia'
+        applicationId 'io.github.hawaii005.atalaia'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 190
-        versionName "2.9.13"
+        versionCode 200
+        versionName "2.0.0"
     }
     def credenciaisReleaseValidas = new File(System.getProperty('user.home'), '.hermes/cctool-release/credenciais.txt').exists()
 

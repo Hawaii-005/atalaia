@@ -1,4 +1,4 @@
-package io.github.brunocrazy15.atalaia
+package io.github.hawaii005.atalaia
 
 import android.app.Notification
 import android.app.NotificationChannel
