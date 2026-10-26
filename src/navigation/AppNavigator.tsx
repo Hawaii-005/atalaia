@@ -12,6 +12,7 @@ import { CameraScreen } from '../screens/CameraScreen';
 import WhereIsIpScreen from '../screens/WhereIsIpScreen';
 import { InicioScreen } from '../screens/InicioScreen';
 import { FilaScreen } from '../screens/FilaScreen';
+import { InventarioScreen } from '../screens/InventarioScreen';
 import { PrinterTabScreen } from '../screens/PrinterTabScreen';
 import { EditarIpScreen } from '../screens/EditarIpScreen';
 import PrinterIcon from '../components/icons/PrinterIcon';
@@ -125,5 +126,6 @@ export const AppNavigator = () => (
     <Root.Screen name="EditarIp" component={EditarIpScreen} />
     <Root.Screen name="Resina" component={ResinScreen} />
     <Root.Screen name="Fila" component={FilaScreen} />
+    <Root.Screen name="Inventario" component={InventarioScreen} />
   </Root.Navigator>
 );

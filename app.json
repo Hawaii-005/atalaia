@@ -12,7 +12,7 @@
         }
       ]
     ],
-    "version": "2.3.0",
+    "version": "2.4.1",
     "web": {
       "favicon": "./assets/favicon.png"
     },
@@ -50,7 +50,7 @@
         "backgroundColor": "#141226"
       },
       "package": "io.github.hawaii005.atalaia",
-      "versionCode": 206
+      "versionCode": 208
     },
     "developmentClient": {
       "silenceDeploymentWarnings": true

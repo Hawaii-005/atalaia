@@ -1,6 +1,6 @@
 {
   "name": "atalaia",
-  "version": "2.3.0",
+  "version": "2.4.1",
   "license": "MIT",
   "scripts": {
     "android": "expo start --android --dev-client",

@@ -390,6 +390,16 @@ export const SettingsScreen = () => {
           )}
         </Section>
 
+        <Section title={t('settings.seccaoConsumiveis')}>
+          <Row
+            icon="layers-outline"
+            label={t('settings.consumiveis')}
+            description={t('settings.consumiveisDesc')}
+            onPress={() => navigation.navigate('Inventario')}
+            last
+          />
+        </Section>
+
         <Section title={t('settings.seccaoAparencia')}>
           <View className="flex-row items-center px-4 py-3">
             <View className="flex-1">

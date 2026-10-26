@@ -12,6 +12,7 @@ import {
   usePrinterConnections,
 } from './src/contexts/PrinterConnectionsContext';
 import { usePrintNotifications } from './src/hooks/usePrintNotifications';
+import { useConsumoFilamento } from './src/hooks/useConsumoFilamento';
 import { prepareNotifications } from './src/utils/notifications';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -28,6 +29,7 @@ function AppContent() {
   const { escuro, tema } = useTheme();
   const { printers } = usePrinterConnections();
   usePrintNotifications(printers);
+  useConsumoFilamento();
 
   useEffect(() => {
     prepareNotifications();
