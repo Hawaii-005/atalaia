@@ -38,6 +38,7 @@ const outcomeLabel: Record<PrintRecord['outcome'], string> = {
   printing: 'history.aImprimir',
   completed: 'history.concluida',
   stopped: 'history.parada',
+  unknown: 'history.semConfirmacao',
 };
 
 // Locale de formatação de datas segue o idioma detectado.

@@ -313,6 +313,7 @@ export default {
   'history.aImprimir': 'A imprimir',
   'history.concluida': 'Concluída',
   'history.parada': 'Parada',
+  'history.semConfirmacao': 'Sem confirmação',
 
   // ——— Welcome
   'welcome.overlineBemVindo': 'BEM-VINDO AO ATALAIA',

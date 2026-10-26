@@ -311,6 +311,7 @@ const en = {
   'history.aImprimir': 'Printing',
   'history.concluida': 'Completed',
   'history.parada': 'Stopped',
+  'history.semConfirmacao': 'Unconfirmed',
 
   // ——— Welcome
   'welcome.overlineBemVindo': 'WELCOME TO ATALAIA',

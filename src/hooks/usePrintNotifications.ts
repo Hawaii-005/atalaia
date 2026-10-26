@@ -73,12 +73,24 @@ export const usePrintNotifications = (printers: Printer[]) => {
         });
       }
 
-      if (connected && !nowPrinting && wasPrinting) {
+      // Fecha também quando a app arranca já com a máquina parada: pode haver
+      // um registo aberto de uma sessão anterior (o fim aconteceu com a app
+      // fechada). Sem isto, o histórico ficava com um «A imprimir» eterno.
+      if (connected && !nowPrinting && (wasPrinting || !previous)) {
         if (status === 'completed') {
           finishRecord(printer.printerName, 'completed', info?.CurrentLayer);
         } else if (status === 'stopped') {
           finishRecord(printer.printerName, 'stopped', info?.CurrentLayer);
+        } else {
+          finishRecord(printer.printerName, 'unknown', info?.CurrentLayer, !wasPrinting);
         }
+      }
+
+      // Máquina desligada ou fora da rede com um registo aberto: o fim não foi
+      // visto. Fecha-se como «sem confirmação», sem hora de fim inventada —
+      // senão ficava a contar dias a fio no histórico.
+      if (!connected && !previous) {
+        finishRecord(printer.printerName, 'unknown', undefined, true);
       }
 
       if (previous) {
