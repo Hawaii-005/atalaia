@@ -10,15 +10,15 @@ import { hexDe } from '../theme/temas';
 import { espaco, raio as raioToken, texto as textoToken } from '../theme/tokensV6';
 import { t } from '../i18n';
 import { EstadoSection } from '../sections/EstadoSection';
-import { ControlosSection } from '../sections/ControlosSection';
+import { PainelSection } from '../sections/PainelSection';
 import { FilamentosScreen } from '../screens/FilamentosScreen';
 import { FilesScreen } from '../screens/FilesScreen';
 
 const ETIQUETAS: Record<Secao, string> = {
+  painel: 'secao.painel',
   estado: 'secao.estado',
   ficheiros: 'secao.ficheiros',
   filamentos: 'secao.filamentos',
-  controlos: 'secao.controlos',
 };
 
 /**
@@ -61,11 +61,16 @@ export const PrinterTabScreen = ({ navigation }: any) => {
         return <FilesScreen printerId={maquina.id} embutido navigation={navigation} />;
       case 'filamentos':
         return <FilamentosScreen printerId={maquina.id} embutido />;
-      case 'controlos':
-        return <ControlosSection printer={maquina} />;
-      default:
+      case 'estado':
         return (
           <EstadoSection
+            printer={maquina}
+            onAbrirCamara={() => navigation.navigate('Camera', { printerId: maquina.id })}
+          />
+        );
+      default:
+        return (
+          <PainelSection
             printer={maquina}
             onAbrirCamara={() => navigation.navigate('Camera', { printerId: maquina.id })}
           />

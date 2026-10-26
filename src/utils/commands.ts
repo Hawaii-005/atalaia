@@ -446,6 +446,36 @@ export const fanCommand = (
   );
 };
 
+export const temperatureCommand = (
+  alvos: { nozzle?: number; bed?: number; chamber?: number },
+  opts: Emissao = {}
+): SdcpCommand<{
+  TempTargetNozzle?: number;
+  TempTargetHotbed?: number;
+  TempTargetBox?: number;
+}> => {
+  const limites: [keyof typeof alvos, number, number][] = [
+    ['nozzle', 0, 300],
+    ['bed', 0, 110],
+    ['chamber', 0, 60],
+  ];
+  const dados: Record<string, number> = {};
+  for (const [campo, minimo, maximo] of limites) {
+    const valor = alvos[campo];
+    if (valor === undefined) continue;
+    if (typeof valor !== 'number' || Number.isNaN(valor) || valor < minimo || valor > maximo) {
+      throw new CommandValidationError(`${campo} tem de estar entre ${minimo} e ${maximo} °C.`);
+    }
+    dados[
+      campo === 'nozzle' ? 'TempTargetNozzle' : campo === 'bed' ? 'TempTargetHotbed' : 'TempTargetBox'
+    ] = valor;
+  }
+  if (Object.keys(dados).length === 0) {
+    throw new CommandValidationError('Nenhuma temperatura indicada.');
+  }
+  return construir(403, dados, opts, `temp-${Date.now()}`);
+};
+
 // ---------- Cmd 324: slots do Canvas ----------
 // Confirmado na impressora: devolve canvas_list com tray_list (marca, tipo,
 // cor em hex e temperaturas aceites). NÃO traz gramas por rolo.

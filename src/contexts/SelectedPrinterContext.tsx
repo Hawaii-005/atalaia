@@ -11,14 +11,14 @@ import { Printer } from '../types';
  * existir na máquina de destino, cai em `estado`.
  */
 
-export type Secao = 'estado' | 'ficheiros' | 'filamentos' | 'controlos';
+export type Secao = 'painel' | 'estado' | 'ficheiros' | 'filamentos';
 
 const CHAVE = 'atalaia.maquina';
 
 export const secoesDaMaquina = (printer: Printer | undefined): Secao[] => {
-  if (!printer) return ['estado'];
+  if (!printer) return ['painel'];
   if ((printer.kind ?? 'fdm') === 'resin') return ['estado'];
-  return ['estado', 'ficheiros', 'filamentos', 'controlos'];
+  return ['painel', 'ficheiros', 'filamentos'];
 };
 
 interface Contexto {
@@ -34,7 +34,7 @@ const SelectedPrinterContext = createContext<Contexto | undefined>(undefined);
 export const SelectedPrinterProvider = ({ children }: { children: React.ReactNode }) => {
   const { printers } = usePrinterConnections();
   const [maquinaId, setMaquinaId] = useState<string | null>(null);
-  const [secao, setSecao] = useState<Secao>('estado');
+  const [secao, setSecao] = useState<Secao>('painel');
 
   useEffect(() => {
     AsyncStorage.getItem(CHAVE)
@@ -63,7 +63,7 @@ export const SelectedPrinterProvider = ({ children }: { children: React.ReactNod
       AsyncStorage.setItem(CHAVE, id).catch(() => undefined);
       const destino = printers.find(p => p.id === id);
       const permitidas = secoesDaMaquina(destino);
-      setSecao(actual => (permitidas.includes(actual) ? actual : 'estado'));
+      setSecao(actual => (permitidas.includes(actual) ? actual : permitidas[0]));
     },
     [printers]
   );
