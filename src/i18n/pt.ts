@@ -97,6 +97,9 @@ export default {
   'vazio.aLigar.descricao': 'A procurar a impressora na rede.',
   'vazio.foraDeCasa.titulo': 'A {nome} só funciona em casa',
   'vazio.foraDeCasa.descricao': 'Ela liga-se ao telemóvel, por isso precisa da mesma rede Wi-Fi.',
+  'vazio.resinaSemResposta.titulo': 'A {nome} não respondeu',
+  'vazio.resinaSemResposta.descricao':
+    'Confirma que está ligada e na mesma rede. A Saturn só aceita uma ligação de cada vez: fecha a app nos outros dispositivos (tablet ou telemóvel) e tenta novamente.',
   'vazio.concluido.titulo': 'Impressão concluída',
   'vazio.verHistorico': 'Ver no histórico',
   'files.guardar': 'Guardar no telemóvel',

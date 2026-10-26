@@ -99,6 +99,9 @@ const en = {
   'vazio.aLigar.descricao': 'Looking for the printer on the network.',
   'vazio.foraDeCasa.titulo': '{nome} only works at home',
   'vazio.foraDeCasa.descricao': 'It connects to your phone, so it needs the same Wi-Fi network.',
+  'vazio.resinaSemResposta.titulo': '{nome} did not answer',
+  'vazio.resinaSemResposta.descricao':
+    'Check that it is on and on the same network. The Saturn accepts one connection at a time: close the app on the other devices (tablet or phone) and try again.',
   'vazio.concluido.titulo': 'Print finished',
   'vazio.verHistorico': 'View in history',
   'files.guardar': 'Save to phone',

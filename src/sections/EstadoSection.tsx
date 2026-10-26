@@ -124,8 +124,9 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
   const concluido = getPrintStatus(info?.Status ?? 0) === 'completed' && !!info?.Filename;
   const duracao = restante(info?.TotalTicks ?? 0);
 
-  // A Saturn não tem acesso remoto: sem ligação e sem dados é porque não está
-  // na mesma rede (ou está desligada). O eTailscale não serve: o IP dela é da LAN.
+  // Resina: quando não responde pode ser rede, estar desligada — ou, o mais
+  // comum, outro dispositivo com a app aberta. O SDCP da Saturn só aceita um
+  // cliente de cada vez (do telemóvel, a porta 3000 dá 'connection refused').
   const foraDeCasa = resina;
 
   // A miniatura precisa do stream ligado (386). Uma vez por entrada em foco.
@@ -208,8 +209,8 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
     return (
       <EstadoVazio
         pose="foraDeCasa"
-        titulo={t('vazio.foraDeCasa.titulo', { nome: printer.printerName })}
-        descricao={t('vazio.foraDeCasa.descricao')}
+        titulo={t('vazio.resinaSemResposta.titulo', { nome: printer.printerName })}
+        descricao={t('vazio.resinaSemResposta.descricao')}
         acaoPrimaria={{ rotulo: t('vazio.tentarNovamente'), aoTocar: reconnectAll }}
         acaoSecundaria={{
           rotulo: t('vazio.editarIp'),
