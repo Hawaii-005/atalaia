@@ -27,10 +27,22 @@ export const usePrintNotifications = (printers: Printer[]) => {
   const [prefs, setPrefs] = useState<NotificationPrefs>(DEFAULT_PREFS);
   const snapshotRef = useRef<Record<string, Snapshot>>({});
   // A pausa não muda o código de estado: o sinal é o CurrentTicks parar.
-  const ticksRef = useRef<Record<string, { valor: number; desde: number }>>({});
+  // Só se conclui pausa com duas leituras seguidas iguais e mais de 45 s
+  // parados, e só com a app à frente — em segundo plano o socket adormece e
+  // os ticks ficam «parados» sem a máquina ter pausado nada.
+  const ticksRef = useRef<Record<string, { valor: number; desde: number; iguais: number }>>({});
 
   useEffect(() => {
     loadNotificationPrefs().then(setPrefs);
+  }, []);
+
+  // Ao voltar ao primeiro plano esquece-se a contagem: a leitura que chega
+  // pode ser a última de antes de o Android suspender o socket.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', estado => {
+      if (estado === 'active') ticksRef.current = {};
+    });
+    return () => sub.remove();
   }, []);
 
   useEffect(() => {
@@ -43,18 +55,24 @@ export const usePrintNotifications = (printers: Printer[]) => {
       const statusBase =
         rawStatus === undefined ? previous?.status ?? 'idle' : getPrintStatus(rawStatus);
 
+      const emPrimeiroPlano = AppState.currentState === 'active';
       const ticksAtuais = info?.CurrentTicks ?? 0;
       const agora = Date.now();
-      const marco = ticksRef.current[printer.id];
-      if (!marco || marco.valor !== ticksAtuais) {
-        ticksRef.current[printer.id] = { valor: ticksAtuais, desde: agora };
+      const anterior = ticksRef.current[printer.id];
+      if (!anterior || anterior.valor !== ticksAtuais) {
+        ticksRef.current[printer.id] = { valor: ticksAtuais, desde: agora, iguais: 0 };
+      } else if (emPrimeiroPlano) {
+        anterior.iguais += 1;
       }
-      const paradoDesde = ticksRef.current[printer.id]?.desde ?? agora;
+      const marco = ticksRef.current[printer.id];
+      const paradoDesde = marco?.desde ?? agora;
       const emPausa =
         connected &&
+        emPrimeiroPlano &&
         statusBase === 'printing' &&
         ticksAtuais > 0 &&
-        agora - paradoDesde > 6000;
+        (marco?.iguais ?? 0) >= 2 &&
+        agora - paradoDesde > 45000;
 
       const status: PrintStatus = emPausa ? 'paused' : statusBase;
       const progress = info?.Progress ?? 0;
