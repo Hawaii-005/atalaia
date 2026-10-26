@@ -120,6 +120,7 @@ const en = {
   'files.vistaLista': 'List',
   'files.vistaGrelha': 'Grid',
   'files.semResultados': 'Nothing for "{q}".',
+  'files.recarregarMiniaturas': 'Thumbnails',
   'files.miniatura': 'Thumbnail',
   'history.procurar': 'Search print…',
   'history.hoje': 'Today',

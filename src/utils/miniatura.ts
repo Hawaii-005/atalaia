@@ -30,6 +30,9 @@ export const urlGcode = (ip: string, nome: string) => {
 };
 
 const cacheEmbutidas = new Map<string, string | null>();
+
+/** Esquece as miniaturas já tentadas (o botão de recarregar volta a pedi-las). */
+export const limparCacheMiniaturas = () => cacheEmbutidas.clear();
 const MAX_CACHE = 64;
 
 const guardarCache = (chave: string, valor: string | null) => {

@@ -35,7 +35,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { uploadGcode } from '../utils/gcodeUpload';
 import { custoDe, euros, getPrecoKg, setPrecoKg } from '../utils/precos';
 import { slotValido } from '../utils/slots';
-import { extrairMiniaturaEmbutida, extrairMiniaturaEmbutidaFila, ferramentasUsadas, urlMiniatura } from '../utils/miniatura';
+import { extrairMiniaturaEmbutida, extrairMiniaturaEmbutidaFila, ferramentasUsadas, limparCacheMiniaturas, urlMiniatura } from '../utils/miniatura';
 import { duracaoDoNome, formatDuracao } from '../utils/duracao';
 import { descarregarGcode, partilharFicheiro } from '../utils/transferir';
 import { lerTimelapse } from '../utils/timelapse';
@@ -78,19 +78,30 @@ const FileRow = ({
   onOpen,
   modo = 'lista',
   lado = 56,
+  recarga = 0,
 }: {
   file: PrinterFile;
   printerIp: string;
   onOpen: () => void;
   modo?: 'lista' | 'grelha';
   lado?: number;
+  /** Muda quando o utilizador pede para recarregar: força nova tentativa. */
+  recarga?: number;
 }) => {
   const { tema } = useTheme();
   const size = file.FileSize ?? file.totalSize ?? file.usedSize ?? 0;
   const label = file.name.split('/').pop() ?? file.name;
-  const [mini, setMini] = useState<string | null>(urlMiniatura(printerIp, file.name));
+  // O `?r=` evita que o <Image> reaproveite o 404 em cache do mesmo URL.
+  const urlBase = urlMiniatura(printerIp, file.name);
+  const urlComToken = recarga ? `${urlBase}?r=${recarga}` : urlBase;
+  const [mini, setMini] = useState<string | null>(urlComToken);
   const pediuEmbutida = useRef(false);
   const vivo = useRef(true);
+
+  useEffect(() => {
+    pediuEmbutida.current = false;
+    setMini(urlComToken);
+  }, [urlComToken]);
 
   useEffect(() => {
     vivo.current = true;
@@ -751,6 +762,8 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
   const [bedLevel, setBedLevel] = useState(false);
   const [plateSide, setPlateSide] = useState<0 | 1>(0);
   const [selecionado, setSelecionado] = useState<PrinterFile | null>(null);
+  const [recarga, setRecarga] = useState(0);
+  const [aRecarregar, setARecarregar] = useState(false);
   const [ordem, setOrdem] = useState<'nome' | 'data' | 'tamanho' | 'duracao'>('nome');
   const [crescente, setCrescente] = useState(true);
   const [procura, setProcura] = useState('');
@@ -1180,8 +1193,30 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
               ))}
             </View>
 
+            <TouchableOpacity
+              onPress={() => {
+                limparCacheMiniaturas();
+                setRecarga(r => r + 1);
+                setARecarregar(true);
+                setTimeout(() => setARecarregar(false), 1500);
+              }}
+              activeOpacity={0.7}
+              accessibilityLabel={t('files.recarregarMiniaturas')}
+              style={{ marginLeft: 'auto' }}
+              className="flex-row items-center h-8 px-2.5 rounded-lg border border-line"
+            >
+              <Ionicons
+                name={aRecarregar ? 'sync' : 'refresh'}
+                size={14}
+                color={hexDe(tema.paleta.tintaSoft)}
+              />
+              <Text className="text-[12px] font-semibold text-ink-soft ml-1.5">
+                {t('files.recarregarMiniaturas')}
+              </Text>
+            </TouchableOpacity>
+
             {vista === 'grelha' && (
-              <View className="flex-row items-center ml-auto">
+              <View className="flex-row items-center ml-2">
                 <Text className="text-[11px] text-ink-muted mr-1.5">
                   {t('files.miniatura')}
                 </Text>
@@ -1230,6 +1265,7 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
                   key={file.name}
                   file={file}
                   printerIp={enderecoDe(printer)}
+                  recarga={recarga}
                   modo="grelha"
                   lado={tamanhoMini === 'p' ? 1 : tamanhoMini === 'm' ? 2 : 0}
                   onOpen={() => setSelecionado(file)}
@@ -1243,6 +1279,7 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
                   key={file.name}
                   file={file}
                   printerIp={enderecoDe(printer)}
+                  recarga={recarga}
                   onOpen={() => setSelecionado(file)}
                 />
               ))}

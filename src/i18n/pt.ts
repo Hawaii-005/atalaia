@@ -118,6 +118,7 @@ export default {
   'files.vistaLista': 'Lista',
   'files.vistaGrelha': 'Grelha',
   'files.semResultados': 'Nada com «{q}».',
+  'files.recarregarMiniaturas': 'Miniaturas',
   'files.miniatura': 'Miniatura',
   'history.procurar': 'Procurar impressão…',
   'history.hoje': 'Hoje',
