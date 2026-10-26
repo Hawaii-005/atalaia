@@ -213,6 +213,7 @@ export default {
   'settings.tema_esmeralda': 'Verde profundo, calmo.',
   'settings.tema_cobre': 'Laranja quente sobre castanho-escuro.',
   'settings.tema_citrino': 'Verde-lima com laranja nos avisos.',
+  'settings.tema_quartzo': 'Claro em porcelana, com o roxo do conceito.',
   'settings.temaClaro': 'Claro',
   'settings.temaEscuro': 'Escuro',
   'settings.temaSistema': 'Sistema',

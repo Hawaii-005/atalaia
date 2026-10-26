@@ -6,7 +6,7 @@
 
 // ───────────────────────── Paleta ─────────────────────────
 
-export type NomeTema = 'ametista' | 'esmeralda' | 'cobre' | 'citrino';
+export type NomeTema = 'ametista' | 'esmeralda' | 'cobre' | 'citrino' | 'quartzo';
 
 export interface Paleta {
   modo: 'escuro' | 'claro';
@@ -159,7 +159,36 @@ const citrino: Paleta = {
   cameraBase: '#5F6540',
 };
 
-export const temas: Record<NomeTema, Paleta> = { ametista, esmeralda, cobre, citrino };
+/** Claro: a mesma ideia do Ametista, em fundo de porcelana. */
+const quartzo: Paleta = {
+  modo: 'claro',
+  fundo: '#F6F4FB',
+  cartao: '#FFFFFF',
+  cartaoAlt: '#EDE9F7',
+  trilha: '#D9D3EA',
+  contorno: '#D9D3EA',
+  barraNav: '#FFFFFF',
+  pilulaNav: '#E4DBFA',
+  texto: '#1B1730',
+  textoSecundario: '#6B6480',
+  primaria: '#7C3AED',
+  textoSobrePrimaria: '#FFFFFF',
+  sucesso: '#15803D',
+  sucessoFundo: '#DCFCE7',
+  aviso: '#B45309',
+  avisoFundo: '#FEF3C7',
+  perigo: '#DC2626',
+  perigoFundo: '#FEE2E2',
+  textoSobrePerigo: '#FFFFFF',
+  bico: '#B45309',
+  mesa: '#7C3AED',
+  camara: '#15803D',
+  sobreposicao: 'rgba(18,14,40,0.45)',
+  cameraTopo: '#CFCADD',
+  cameraBase: '#A9A2BA',
+};
+
+export const temas: Record<NomeTema, Paleta> = { ametista, esmeralda, cobre, citrino, quartzo };
 export const temaPredefinido: NomeTema = 'ametista';
 
 export const nomesDosTemas: Record<NomeTema, string> = {
@@ -167,6 +196,7 @@ export const nomesDosTemas: Record<NomeTema, string> = {
   esmeralda: 'Esmeralda',
   cobre: 'Cobre',
   citrino: 'Citrino',
+  quartzo: 'Quartzo',
 };
 
 export const obterPaleta = (nome: NomeTema | undefined): Paleta =>
