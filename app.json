@@ -12,7 +12,7 @@
         }
       ]
     ],
-    "version": "2.9.2",
+    "version": "2.9.4",
     "web": {
       "favicon": "./assets/favicon.png"
     },
@@ -50,7 +50,7 @@
         "backgroundColor": "#141226"
       },
       "package": "io.github.brunocrazy15.atalaia",
-      "versionCode": 179
+      "versionCode": 181
     },
     "developmentClient": {
       "silenceDeploymentWarnings": true

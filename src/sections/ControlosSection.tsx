@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
@@ -16,6 +16,7 @@ import {
   printSpeedCommand,
   timelapseCommand,
 } from '../utils/commands';
+import { guardarTimelapse, lerTimelapse } from '../utils/timelapse';
 
 const Linha: React.FC<{
   titulo: string;
@@ -71,7 +72,20 @@ export const ControlosSection = ({ printer }: { printer?: Printer }) => {
 
   const ligada = printer?.connectionStatus === 'connected';
   const luz = !!printer?.status?.LightStatus?.SecondLight;
-  const timeLapse = (printer?.status?.TimeLapseStatus ?? 0) > 0;
+  // A máquina recusa o comando fora de uma impressão; o que conta é a
+  // preferência guardada, que vai no Tlp_Switch do próximo arranque.
+  const [tlPref, setTlPref] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!printer?.id) return;
+    let vivo = true;
+    lerTimelapse(printer.id).then(valor => {
+      if (vivo) setTlPref(valor);
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [printer?.id]);
+  const timeLapse = tlPref ?? (printer?.status?.TimeLapseStatus ?? 0) > 0;
   const velocidade = printer?.status?.PrintInfo?.PrintSpeedPct ?? 100;
   const ventoinhas = printer?.status?.CurrentFanSpeed ?? { ModelFan: 0, AuxiliaryFan: 0, BoxFan: 0 };
 
@@ -121,12 +135,12 @@ export const ControlosSection = ({ printer }: { printer?: Printer }) => {
     ]);
   };
 
-  const enviar = async (cmd: any) => {
+  const enviar = async (cmd: any, avisar = true) => {
     if (!printer) return;
     try {
       await request(printer.id, cmd, 8000);
     } catch (e) {
-      Alert.alert(t('comum.erro'), e instanceof Error ? e.message : String(e));
+      if (avisar) Alert.alert(t('comum.erro'), e instanceof Error ? e.message : String(e));
     }
   };
 
@@ -226,7 +240,13 @@ export const ControlosSection = ({ printer }: { printer?: Printer }) => {
         titulo={t('controlos.timeLapse')}
         ligado={timeLapse}
         desactivado={!ligada}
-        onPress={() => enviar(timelapseCommand(!timeLapse, { id: printer?.id }))}
+        onPress={() => {
+          if (!printer?.id) return;
+          const novo = !timeLapse;
+          setTlPref(novo);
+          guardarTimelapse(printer.id, novo);
+          enviar(timelapseCommand(novo, { id: printer.id }), false);
+        }}
       />
 
       <Text style={{ fontSize: 13, fontWeight: '700', color: hexDe(paleta.tintaSoft), marginTop: espaco.md }}>

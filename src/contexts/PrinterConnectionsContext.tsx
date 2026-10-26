@@ -24,6 +24,7 @@ import {
   PrinterTimeoutError,
 } from '../utils/errors';
 import {
+  ackDaResposta,
   pausePrintCommand,
   resumePrintCommand,
   startPrintCommand,
@@ -1277,39 +1278,48 @@ export const PrinterConnectionsProvider = ({
       if (!proximo) return;
 
       aArrancarRef.current[printer.id] = true;
-      lerTimelapse(printer.id)
-        .then(timelapse =>
-          request(
-            printer.id,
-            startPrintCommand(proximo.name, {
-              nivelar: false,
-              lado: 0,
-              timelapse: timelapse ? 1 : 0,
-            })
-          )
-        )
-        .then(() => {
-          // Só sai da fila depois de a máquina aceitar: se falhar, fica lá.
-          removerDaFila(proximo.id);
-          notify(
-            'A arrancar o próximo',
-            `${printer.printerName} começou ${proximo.label}.`,
-            { printerId: printer.id }
-          );
-        })
-        .catch(async (erro: unknown) => {
-          await notify(
-            'Não arrancou',
-            `${proximo.label}: ${mensagemDoErro(erro)}`,
-            { printerId: printer.id }
-          );
-        })
-        .finally(() => {
-          aArrancarRef.current[printer.id] = false;
+      (async () => {
+        const timelapse = await lerTimelapse(printer.id).catch(() => false);
+        const comando = startPrintCommand(proximo.name, {
+          nivelar: false,
+          lado: 0,
+          timelapse: timelapse ? 1 : 0,
         });
+        // A máquina ainda está a fechar o trabalho anterior: o Cmd 128 leva
+        // Ack != 0 durante alguns segundos. Antes bastava a resposta para o
+        // trabalho sair da fila e anunciar que arrancou — e não imprimia nada.
+        for (let tentativa = 1; tentativa <= 4; tentativa++) {
+          try {
+            const resposta = await request(printer.id, comando, 15000);
+            const ack = ackDaResposta(resposta) ?? 0;
+            if (ack === 0) {
+              removerDaFila(proximo.id);
+              notify(
+                'A arrancar o próximo',
+                `${printer.printerName} começou ${proximo.label}.`,
+                { printerId: printer.id }
+              );
+              return;
+            }
+            log('fila: a máquina recusou', descreverAck(ack, 'imprimir').mensagem, 'tentativa', tentativa);
+          } catch (erro) {
+            log('fila: tentativa falhou', tentativa, erro);
+          }
+          if (tentativa < 4) {
+            await new Promise(resolver => setTimeout(resolver, 6000));
+          }
+        }
+        // Sem sucesso fica na fila: o Bruno vê o aviso e pode arrancar à mão.
+        notify(
+          'Não arrancou',
+          `${proximo.label}: a máquina não aceitou. O trabalho fica na fila.`,
+          { printerId: printer.id }
+        );
+      })().finally(() => {
+        aArrancarRef.current[printer.id] = false;
+      });
     });
   }, [printers, filaAuto, request, removerDaFila]);
-
 
   const sendCommand = (printerId: string, command: SdcpCommand<unknown>) => {
     // Erro de programação: rejeita já, sem tocar na rede.

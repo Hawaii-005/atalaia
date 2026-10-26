@@ -256,10 +256,12 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
     if (!printer) return;
     setTimelapse(enabled);
     guardarTimelapse(printer.id, enabled);
-    sendCommand(
-      printer.id,
-      timelapseCommand(enabled, { id: `timelapse-${Date.now()}` })
-    );
+    // Fora de uma impressão a máquina recusa o comando e a app mostrava um
+    // alerta de erro. A preferência fica guardada e é ela que segue no
+    // Tlp_Switch do próximo arranque; o comando é um extra quando aceite.
+    Promise.resolve(
+      sendCommand(printer.id, timelapseCommand(enabled, { id: `timelapse-${Date.now()}` }))
+    ).catch(() => undefined);
   };
 
   // Envia um comando sem payload já construído (132/133).
