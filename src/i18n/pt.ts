@@ -155,6 +155,13 @@ export default {
 
   // ——— Camera
   'camera.title': 'Câmara',
+  'camera.aImprimir': 'A imprimir',
+  'camera.pronta': 'Pronta',
+  'camera.escolherFicheiro': 'Escolher ficheiro',
+  'camera.guardarFoto': 'Guardar foto',
+  'camera.ecraCheio': 'Ecrã cheio',
+  'camera.luzOn': 'Luz ligada',
+  'camera.luzOff': 'Luz desligada',
   'camera.imagemEmDireto': 'Imagem em direto',
   'camera.semImpressoras': 'Ainda não há impressoras adicionadas.',
   'camera.irParaImpressoras': 'IR PARA IMPRESSORAS',

@@ -157,6 +157,13 @@ const en = {
 
   // ——— Camera
   'camera.title': 'Camera',
+  'camera.aImprimir': 'Printing',
+  'camera.pronta': 'Ready',
+  'camera.escolherFicheiro': 'Choose file',
+  'camera.guardarFoto': 'Save photo',
+  'camera.ecraCheio': 'Full screen',
+  'camera.luzOn': 'Light on',
+  'camera.luzOff': 'Light off',
   'camera.imagemEmDireto': 'Live feed',
   'camera.semImpressoras': 'No printers added yet.',
   'camera.irParaImpressoras': 'GO TO PRINTERS',

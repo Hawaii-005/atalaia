@@ -18,10 +18,9 @@ import { useKeepAwake } from 'expo-keep-awake';
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
 import { captureRef } from 'react-native-view-shot';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Circle } from 'react-native-svg';
 import * as DocumentPicker from 'expo-document-picker';
 import { uploadGcode } from '../utils/gcodeUpload';
-import { listFilesCommand } from '../utils/commands';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
@@ -38,6 +37,9 @@ import { hexDe } from '../theme/temas';
 import { BT_ACENTO, BT_APAGADA, BT_NEUTRA, BT_PERIGO, TX_ACENTO, TX_PERIGO } from '../theme/botoes';
 
 const LIGHT_COMMAND = 403;
+const CAIXA_ANEL = 44;
+const RAIO_ANEL = 18;
+const TRACO_ANEL = 5;
 
 // Etiquetas visíveis para o estado de ligação da impressora (chaves i18n).
 const CONNECTION_LABEL: Record<ConnectionStatus, string> = {
@@ -343,37 +345,6 @@ export const CameraScreen = ({ navigation, route }: any) => {
     });
   }, [printer, isConnected, lightOn, sendCommand]);
 
-  const [recentes, setRecentes] = useState<{ nome: string; tamanho: number }[]>([]);
-
-  useEffect(() => {
-    if (!isConnected || !printerId) return;
-    let vivo = true;
-    request(printerId, listFilesCommand('/local/', 1, 50))
-      .then((dados: any) => {
-        if (!vivo) return;
-        const lista = (dados?.FileList ?? [])
-          .filter((f: any) => String(f.name ?? '').toLowerCase().endsWith('.gcode'))
-          .sort((a: any, b: any) => (b.CreateTime ?? 0) - (a.CreateTime ?? 0))
-          .slice(0, 3);
-        setRecentes(
-          lista.map((f: any) => ({
-            nome: String(f.name).split('/').pop() ?? '',
-            tamanho: f.FileSize ?? 0,
-          }))
-        );
-      })
-      .catch(() => {});
-    return () => {
-      vivo = false;
-    };
-  }, [isConnected, printerId, request]);
-
-  const tamanhoLegivel = (bytes: number) => {
-    if (!bytes) return '—';
-    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} MB`;
-  };
-
   const streamHtml = useMemo(() => htmlDoVideo(videoHost ?? ''), [videoHost]);
 
   const fullscreenHtml = useMemo(
@@ -431,29 +402,28 @@ export const CameraScreen = ({ navigation, route }: any) => {
       edges={['top']}
       className="flex-1 bg-canvas"
     >
-      {/* Cabeçalho discreto: etiqueta + estado */}
-      <View className="flex-row items-center justify-between px-4 pt-1 pb-3">
-        <View className="flex-row items-center">
-          <TouchableOpacity
-            onPress={() => navigation?.goBack()}
-            className="w-8 h-8 -ml-1 mr-1 items-center justify-center"
-            activeOpacity={0.7}
-            accessibilityLabel={t('details.voltar')}
-          >
-            <Ionicons name="chevron-back" size={20} color={hexDe(tema.paleta.tinta)} />
-          </TouchableOpacity>
-          <Text className="text-[10px] tracking-[2.4px] font-semibold text-ink-soft">
-            {t('camera.title').toUpperCase()}
-          </Text>
-          <View
-            className="w-1.5 h-1.5 rounded-full ml-2"
-            style={{
-              backgroundColor: isConnected
-                ? hexDe(tema.paleta.ok)
-                : hexDe(tema.paleta.perigo),
-            }}
-          />
-        </View>
+      {/* Cabeçalho: voltar · CÂMARA · estado · recarregar */}
+      <View className="flex-row items-center px-4 pt-1 pb-3">
+        <TouchableOpacity
+          onPress={() => navigation?.goBack()}
+          className="w-8 h-8 -ml-1 mr-1 items-center justify-center"
+          activeOpacity={0.7}
+          accessibilityLabel={t('details.voltar')}
+        >
+          <Ionicons name="chevron-back" size={20} color={hexDe(tema.paleta.tinta)} />
+        </TouchableOpacity>
+        <Text className="text-[10px] tracking-[2.4px] font-semibold text-ink-soft">
+          {t('camera.title').toUpperCase()}
+        </Text>
+        {isConnected && (
+          <View className="flex-row items-center ml-2 bg-black/40 rounded-full px-2 py-1">
+            <View className="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5" />
+            <Text className="text-[8px] font-bold tracking-[1.2px] text-ink">
+              {t('comum.emDireto').toUpperCase()}
+            </Text>
+          </View>
+        )}
+        <View className="flex-1" />
         <TouchableOpacity
           onPress={restartStream}
           className="w-8 h-8 items-center justify-center rounded-md border border-line"
@@ -490,7 +460,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
           </View>
         )}
 
-        {/* Cartão de vídeo 16:9 */}
+        {/* Vídeo 16:9 */}
         <View
           className="mx-4 rounded-2xl overflow-hidden bg-ink"
           style={{ aspectRatio: 16 / 9 }}
@@ -534,43 +504,23 @@ export const CameraScreen = ({ navigation, route }: any) => {
             </View>
           )}
 
-          {/* Etiqueta em direto */}
-          {isConnected && (
-            <View className="absolute top-2.5 left-2.5 bg-black/55 rounded-full px-2 py-1 flex-row items-center">
-              <View className="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5" />
-              <Text className="text-white text-[9px] font-bold tracking-[1.4px]">
-                {t('comum.emDireto').toUpperCase()}
-              </Text>
-            </View>
-          )}
-
           {/* Acções do vídeo */}
           {isConnected && streamHtml && (
             <View className="absolute top-2.5 right-2.5 flex-row">
               <TouchableOpacity
                 onPress={() => setFullscreen(true)}
                 className="w-8 h-8 rounded-full bg-black/55 items-center justify-center mr-2"
+                accessibilityLabel={t('camera.ecraCheio')}
               >
                 <Ionicons name="expand" size={15} color="#FFFFFF" />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleSnapshot}
                 className="w-8 h-8 rounded-full bg-black/55 items-center justify-center"
+                accessibilityLabel={t('camera.guardarFoto')}
               >
                 <Ionicons name="camera-outline" size={15} color="#FFFFFF" />
               </TouchableOpacity>
-            </View>
-          )}
-
-          {/* Rodapé do vídeo: camada e tempo restante */}
-          {job && (
-            <View className="absolute bottom-2 left-3 right-3 flex-row justify-between">
-              <Text className="text-white text-[10px]">
-                {t('comum.camada', { actual: job.layer, total: job.totalLayers })}
-              </Text>
-              <Text className="text-white text-[10px]">
-                {t('camera.faltam', { tempo: job.remaining })}
-              </Text>
             </View>
           )}
 
@@ -585,124 +535,196 @@ export const CameraScreen = ({ navigation, route }: any) => {
           )}
         </View>
 
-        {/* Bico · Mesa · Luz */}
-        <View className="flex-row items-center px-4 mt-3">
-          <Text
-            className="text-[11px] text-ink"
-            style={{ fontFamily: 'monospace' }}
-          >
-            {t('comum.bico').toUpperCase()} {nozzle}°C
-          </Text>
-          <Text
-            className="text-[11px] text-ink ml-4"
-            style={{ fontFamily: 'monospace' }}
-          >
-            {t('comum.mesa').toUpperCase()} {bed}°C
-          </Text>
-          <View className="flex-1" />
+        {/* Cartão de estado: o que a máquina está a fazer e o que podes fazer */}
+        <View className="mx-4 mt-3 rounded-2xl border border-line bg-cartao px-4 py-3.5">
+          <View className="flex-row items-center">
+            <View
+              className="w-2 h-2 rounded-full"
+              style={{
+                backgroundColor: !isConnected
+                  ? hexDe(tema.paleta.perigo)
+                  : job
+                    ? hexDe(tema.paleta.ok)
+                    : hexDe(tema.paleta.tintaSoft),
+              }}
+            />
+            <View className="flex-1 ml-2.5">
+              <Text className="text-[13px] font-semibold text-ink">
+                {!isConnected
+                  ? t(CONNECTION_LABEL[printer.connectionStatus])
+                  : job
+                    ? t('camera.aImprimir')
+                    : t('camera.pronta')}
+              </Text>
+              <Text className="text-[10px] text-ink-muted mt-0.5" numberOfLines={1}>
+                {job
+                  ? `${(job.filename.split('/').pop() ?? '').replace(/\.gcode$/i, '')} · ${t('comum.camada', {
+                      actual: job.layer,
+                      total: job.totalLayers,
+                    })}`
+                  : t('camera.mesaLivre')}
+              </Text>
+            </View>
+
+            {job && (
+              <View
+                style={{ width: CAIXA_ANEL, height: CAIXA_ANEL, alignItems: 'center', justifyContent: 'center' }}
+              >
+                <Svg width={CAIXA_ANEL} height={CAIXA_ANEL} style={{ position: 'absolute' }}>
+                  <Circle
+                    cx={CAIXA_ANEL / 2}
+                    cy={CAIXA_ANEL / 2}
+                    r={RAIO_ANEL}
+                    stroke={hexDe(tema.paleta.linha)}
+                    strokeWidth={TRACO_ANEL}
+                    fill="none"
+                  />
+                  <Circle
+                    cx={CAIXA_ANEL / 2}
+                    cy={CAIXA_ANEL / 2}
+                    r={RAIO_ANEL}
+                    stroke={hexDe(tema.paleta.acento)}
+                    strokeWidth={TRACO_ANEL}
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeDasharray={2 * Math.PI * RAIO_ANEL}
+                    strokeDashoffset={2 * Math.PI * RAIO_ANEL * (1 - Math.min(100, Math.max(0, progress)) / 100)}
+                    transform={`rotate(-90 ${CAIXA_ANEL / 2} ${CAIXA_ANEL / 2})`}
+                  />
+                </Svg>
+                <Text className="text-[10px] font-bold text-ink" style={{ fontFamily: 'monospace' }}>
+                  {Math.round(progress)}%
+                </Text>
+              </View>
+            )}
+          </View>
+
+          <View className="flex-row mt-3" style={{ gap: 8 }}>
+            {job ? (
+              <>
+                <TouchableOpacity
+                  onPress={handlePrintControl}
+                  className={`flex-1 h-11 rounded-xl items-center justify-center flex-row bg-brand border border-brand ${!isConnected ? 'opacity-40' : ''}`}
+                  activeOpacity={0.8}
+                  disabled={!isConnected}
+                >
+                  <Ionicons
+                    name={isResumable(printer?.status?.PrintInfo?.Status ?? 0) ? 'play' : 'pause'}
+                    size={13}
+                    color="#FFFFFF"
+                  />
+                  <Text className="ml-1.5 text-[12px] font-semibold text-white">
+                    {isResumable(printer?.status?.PrintInfo?.Status ?? 0)
+                      ? t('comum.retomar')
+                      : t('comum.pausar')}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleStopPrint}
+                  className={`flex-1 h-11 rounded-xl items-center justify-center flex-row border border-state-danger ${!isConnected ? 'opacity-40' : ''}`}
+                  activeOpacity={0.8}
+                  disabled={!isConnected}
+                >
+                  <Ionicons name="stop" size={13} color={hexDe(tema.paleta.perigo)} />
+                  <Text className="ml-1.5 text-[12px] font-semibold text-state-danger">
+                    {t('comum.parar')}
+                  </Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Files', { printerId: printer.id })}
+                disabled={!isConnected}
+                className={`flex-1 h-11 rounded-xl items-center justify-center flex-row bg-brand ${!isConnected ? 'opacity-40' : ''}`}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="play" size={13} color="#FFFFFF" />
+                <Text className="ml-1.5 text-[12px] font-semibold text-white">
+                  {t('camera.escolherFicheiro')}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {/* Térmica */}
+        <View className="flex-row mx-4 mt-3" style={{ gap: 8 }}>
+          {[
+            { rotulo: t('comum.bico'), valor: `${nozzle}°`, alvo: printer.status?.TempTargetNozzle ?? 0, cor: hexDe(tema.paleta.aviso) },
+            { rotulo: t('comum.mesa'), valor: `${bed}°`, alvo: printer.status?.TempTargetHotbed ?? 0, cor: hexDe(tema.paleta.acento) },
+            {
+              rotulo: t('comum.camara'),
+              valor: `${printer.status?.TempOfBox?.toFixed(0) ?? '--'}°`,
+              alvo: printer.status?.TempTargetBox ?? 0,
+              cor: hexDe(tema.paleta.ok),
+            },
+          ].map(item => (
+            <View
+              key={item.rotulo}
+              className="flex-1 rounded-xl border border-line bg-cartao px-3 py-2"
+            >
+              <Text className="text-[9px] font-semibold tracking-[0.6px] text-ink-soft">
+                {item.rotulo.toUpperCase()}
+              </Text>
+              <View className="flex-row items-baseline mt-0.5">
+                <Text className="text-[15px] font-bold" style={{ color: item.cor, fontFamily: 'monospace' }}>
+                  {item.valor}
+                </Text>
+                <Text className="text-[9px] text-ink-muted ml-1" style={{ fontFamily: 'monospace' }}>
+                  {item.alvo > 0 ? `/ ${Math.round(item.alvo)}°` : t('painel.ambiente')}
+                </Text>
+              </View>
+            </View>
+          ))}
+        </View>
+
+        {/* Ferramentas */}
+        <View className="flex-row mx-4 mt-3" style={{ gap: 8 }}>
           <TouchableOpacity
             onPress={toggleLight}
             disabled={!isConnected}
-            className={`rounded-md border px-3 py-1.5 ${
-              lightOn
-                ? 'border-state-light bg-state-light/15'
-                : 'border-line bg-canvas-sunken'
+            className={`flex-1 h-14 rounded-xl border items-center justify-center ${
+              lightOn ? 'border-state-light bg-state-light/15' : 'border-line bg-cartao'
             } ${!isConnected ? 'opacity-40' : ''}`}
-            activeOpacity={0.7}
+            activeOpacity={0.75}
           >
+            <Ionicons
+              name={lightOn ? 'bulb' : 'bulb-outline'}
+              size={17}
+              color={lightOn ? hexDe(tema.paleta.aviso) : hexDe(tema.paleta.tintaSoft)}
+            />
             <Text
-              className={`text-[10px] font-semibold tracking-[1.2px] ${
-                lightOn ? 'text-state-light' : 'text-ink-soft'
-              }`}
+              className={`text-[9px] font-semibold mt-1 ${lightOn ? 'text-state-light' : 'text-ink-soft'}`}
             >
-              {lightOn ? t('camera.luzLigada') : t('camera.luzDesligada')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Recentes */}
-        <View className="px-4 mt-6">
-          <Text className="text-[10px] tracking-[1.6px] font-semibold text-ink-soft">
-            {t('camera.recentes').toUpperCase()}
-          </Text>
-          {recentes.length === 0 ? (
-            <Text className="text-[11px] text-ink-muted mt-2">
-              {t('camera.semFicheiros')}
-            </Text>
-          ) : (
-            recentes.map((f, i) => (
-              <View
-                key={f.nome}
-                className={`flex-row items-center py-2.5 ${
-                  i === 0 ? 'border-t border-line mt-1' : ''
-                } border-b border-line`}
-              >
-                <Text className="flex-1 text-[12px] text-ink" numberOfLines={1}>
-                  {f.nome}
-                </Text>
-                <Text className="text-[11px] text-ink-muted ml-3">
-                  {tamanhoLegivel(f.tamanho)}
-                </Text>
-              </View>
-            ))
-          )}
-        </View>
-
-        {/* Estado quando não está a imprimir */}
-        {!job && (
-          <View className="mx-4 mt-5 rounded-xl border border-line px-4 py-3">
-            <Text className="text-[10px] tracking-[1.4px] font-semibold text-ink-soft">
-              {t('camera.inativa').toUpperCase()}
-            </Text>
-            <Text className="text-[12px] text-ink-muted mt-1">
-              {t('camera.mesaLivre')}
-            </Text>
-          </View>
-        )}
-
-        {/* Pausa · Parar */}
-        <View className="flex-row px-4 mt-6" style={{ gap: 10 }}>
-          <TouchableOpacity
-            onPress={handlePrintControl}
-            disabled={!job}
-            className={`flex-1 h-12 rounded-xl items-center justify-center border ${
-              job ? 'bg-brand border-brand' : 'border-line'
-            }`}
-            activeOpacity={0.8}
-          >
-            <Text
-              className={`text-[13px] font-semibold ${
-                job ? 'text-white' : 'text-ink-muted'
-              }`}
-            >
-              {isResumable(printer?.status?.PrintInfo?.Status ?? 0)
-                ? t('comum.retomar')
-                : t('comum.pausar')}
+              {lightOn ? t('camera.luzOn') : t('camera.luzOff')}
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={handleStopPrint}
-            disabled={!job}
-            className={`flex-1 h-12 rounded-xl items-center justify-center border ${
-              job ? 'border-state-danger' : 'border-line'
-            }`}
-            activeOpacity={0.8}
+            onPress={() => setFullscreen(true)}
+            disabled={!isConnected}
+            className={`flex-1 h-14 rounded-xl border border-line bg-cartao items-center justify-center ${!isConnected ? 'opacity-40' : ''}`}
+            activeOpacity={0.75}
           >
-            <Text
-              className={`text-[13px] font-semibold ${
-                job ? 'text-state-danger' : 'text-ink-muted'
-              }`}
-            >
-              {t('comum.parar')}
-            </Text>
+            <Ionicons name="expand" size={17} color={hexDe(tema.paleta.tintaSoft)} />
+            <Text className="text-[9px] font-semibold mt-1 text-ink-soft">{t('camera.ecraCheio')}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handleSnapshot}
+            disabled={!isConnected}
+            className={`flex-1 h-14 rounded-xl border border-line bg-cartao items-center justify-center ${!isConnected ? 'opacity-40' : ''}`}
+            activeOpacity={0.75}
+          >
+            <Ionicons name="camera-outline" size={17} color={hexDe(tema.paleta.tintaSoft)} />
+            <Text className="text-[9px] font-semibold mt-1 text-ink-soft">{t('camera.guardarFoto')}</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Enviar · Ficheiros */}
-        <View className="flex-row px-4 mt-3">
+        {/* Enviar G-code */}
+        <View className="mx-4 mt-3">
           {uploading && (
-            <View className="absolute -top-1 left-4 right-4 h-1 rounded-full bg-line overflow-hidden">
+            <View className="absolute -top-1 left-0 right-0 h-1 rounded-full bg-line overflow-hidden">
               <View
                 className="h-full rounded-full bg-brand"
                 style={{ width: `${Math.max(2, uploadPercent)}%` }}
@@ -711,9 +733,9 @@ export const CameraScreen = ({ navigation, route }: any) => {
           )}
           <TouchableOpacity
             onPress={handleUpload}
-            disabled={uploading}
-            className={`flex-1 ${BT_NEUTRA} h-10 ${uploading ? 'opacity-60' : ''}`}
-            activeOpacity={0.7}
+            disabled={uploading || !isConnected}
+            className={`h-11 rounded-xl border border-line items-center justify-center flex-row ${uploading || !isConnected ? 'opacity-50' : ''}`}
+            activeOpacity={0.75}
           >
             <Ionicons name="cloud-upload-outline" size={15} color={hexDe(tema.paleta.tintaSoft)} />
             <Text className="ml-2 text-[10px] font-semibold tracking-[1.2px] text-ink-soft">
