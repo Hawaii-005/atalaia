@@ -463,7 +463,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
         {/* Vídeo 16:9 */}
         <View
           className="mx-4 rounded-2xl overflow-hidden bg-ink"
-          style={{ aspectRatio: 16 / 9 }}
+          style={{ flexGrow: 1, minHeight: 219, maxHeight: 460 }}
           onLayout={event => setVideoWidth(event.nativeEvent.layout.width)}
         >
           {isConnected && streamHtml && !fullscreen ? (
@@ -556,14 +556,19 @@ export const CameraScreen = ({ navigation, route }: any) => {
                     ? t('camera.aImprimir')
                     : t('camera.pronta')}
               </Text>
-              <Text className="text-[10px] text-ink-muted mt-0.5" numberOfLines={1}>
+              <Text className="text-[10px] text-ink-soft mt-0.5" numberOfLines={1}>
                 {job
-                  ? `${(job.filename.split('/').pop() ?? '').replace(/\.gcode$/i, '')} · ${t('comum.camada', {
-                      actual: job.layer,
-                      total: job.totalLayers,
-                    })}`
+                  ? (job.filename.split('/').pop() ?? '').replace(/\.gcode$/i, '')
                   : t('camera.mesaLivre')}
               </Text>
+              {job && (
+                <Text className="text-[10px] text-ink-soft mt-0.5" numberOfLines={1}>
+                  {`${t('comum.camada', {
+                    actual: job.layer,
+                    total: job.totalLayers,
+                  })} · ${job.remaining}`}
+                </Text>
+              )}
             </View>
 
             {job && (
@@ -670,7 +675,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
                 <Text className="text-[15px] font-bold" style={{ color: item.cor, fontFamily: 'monospace' }}>
                   {item.valor}
                 </Text>
-                <Text className="text-[9px] text-ink-muted ml-1" style={{ fontFamily: 'monospace' }}>
+                <Text className="text-[10px] text-ink-soft ml-1" style={{ fontFamily: 'monospace' }}>
                   {item.alvo > 0 ? `/ ${Math.round(item.alvo)}°` : t('painel.ambiente')}
                 </Text>
               </View>
