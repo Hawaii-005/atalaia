@@ -28,6 +28,8 @@ import {
   saveNotificationPrefs,
 } from '../utils/notifications';
 import { t } from '../i18n';
+import { getPrintStatus } from '../types';
+import { useNavigation } from '@react-navigation/native';
 
 const Section = ({
   title,
@@ -36,30 +38,32 @@ const Section = ({
   title: string;
   children: React.ReactNode;
 }) => (
-  <View className="mt-6">
-    <Text className="mb-2 ml-1 text-[10px] tracking-widest font-semibold text-ink-soft">
+  <View className="rounded-2xl border border-line bg-cartao overflow-hidden">
+    <Text className="px-4 pt-3 pb-1 text-[9px] tracking-[1.3px] font-bold text-ink-muted">
       {title}
     </Text>
-    <View className="rounded-xl2 border border-line bg-cartao overflow-hidden">
-      {children}
-    </View>
+    {children}
   </View>
 );
 
 const Row = ({
   icon,
   label,
+  description,
   value,
   onPress,
   destructive,
   last,
+  acento,
 }: {
   icon: string;
   label: string;
+  description?: string;
   value?: string;
   onPress?: () => void;
   destructive?: boolean;
   last?: boolean;
+  acento?: string;
 }) => {
   const { tema } = useTheme();
   const paleta = tema.paleta;
@@ -69,25 +73,35 @@ const Row = ({
         last ? '' : 'border-b border-line'
       }`}
     >
-      <View className="w-8 h-8 rounded-lg bg-canvas-sunken items-center justify-center">
+      <View
+        className="w-8 h-8 rounded-[10px] items-center justify-center"
+        style={{ backgroundColor: destructive ? hexDe(paleta.perigo) + '1F' : (acento ?? hexDe(paleta.acento)) + '1F' }}
+      >
         <Ionicons
           name={icon as any}
           size={16}
-          color={destructive ? '#C62828' : '#3F444D'}
+          color={destructive ? hexDe(paleta.perigo) : (acento ?? hexDe(paleta.acento))}
         />
       </View>
-      <Text
-        className={`ml-3 flex-1 text-[14px] font-medium ${
-          destructive ? 'text-state-danger' : 'text-ink'
-        }`}
-      >
-        {label}
-      </Text>
+      <View className="ml-3 flex-1 pr-2">
+        <Text
+          className={`text-[13px] font-semibold ${
+            destructive ? 'text-state-danger' : 'text-ink'
+          }`}
+        >
+          {label}
+        </Text>
+        {!!description && (
+          <Text className="text-[10px] text-ink-muted mt-0.5" numberOfLines={1}>
+            {description}
+          </Text>
+        )}
+      </View>
       {!!value && (
-        <Text className="text-[13px] text-ink-muted mr-1">{value}</Text>
+        <Text className="text-[12px] font-semibold text-ink-soft mr-1">{value}</Text>
       )}
-      {onPress && !value && (
-        <Ionicons name="chevron-forward" size={16} color="#9AA0A6" />
+      {(onPress || !!value) && (
+        <Ionicons name="chevron-forward" size={15} color={hexDe(paleta.tintaMuted)} />
       )}
     </View>
   );
@@ -123,12 +137,15 @@ const SwitchRow = ({
       last ? '' : 'border-b border-line'
     }`}
   >
-    <View className="w-8 h-8 rounded-lg bg-canvas-sunken items-center justify-center">
-      <Ionicons name={icon as any} size={16} color={hexDe(paleta.tintaSoft)} />
+    <View
+      className="w-8 h-8 rounded-[10px] items-center justify-center"
+      style={{ backgroundColor: hexDe(paleta.acento) + '1F' }}
+    >
+      <Ionicons name={icon as any} size={16} color={hexDe(paleta.acento)} />
     </View>
     <View className="ml-3 flex-1 pr-2">
-      <Text className="text-[14px] font-medium text-ink">{label}</Text>
-      <Text className="text-[11px] text-ink-muted mt-0.5">{description}</Text>
+      <Text className="text-[13px] font-semibold text-ink">{label}</Text>
+      <Text className="text-[10px] text-ink-muted mt-0.5">{description}</Text>
     </View>
     <Switch
       value={value}
@@ -162,14 +179,17 @@ const AcaoRow = ({
       className="flex-row items-center px-4 py-3 border-b border-line"
       style={{ minHeight: 56 }}
     >
-      <View className="w-8 h-8 rounded-lg bg-canvas-sunken items-center justify-center">
-        <Ionicons name={icon as any} size={16} color={hexDe(tema.paleta.tintaSoft)} />
+      <View
+        className="w-8 h-8 rounded-[10px] items-center justify-center"
+        style={{ backgroundColor: hexDe(tema.paleta.acento) + '1F' }}
+      >
+        <Ionicons name={icon as any} size={16} color={hexDe(tema.paleta.acento)} />
       </View>
       <View className="ml-3 flex-1 pr-2">
-        <Text className="text-[14px] font-medium text-ink">{label}</Text>
-        <Text className="text-[11px] text-ink-muted mt-0.5">{description}</Text>
+        <Text className="text-[13px] font-semibold text-ink">{label}</Text>
+        <Text className="text-[10px] text-ink-muted mt-0.5">{description}</Text>
       </View>
-      <Ionicons name="chevron-forward" size={16} color={hexDe(tema.paleta.tintaMuted)} />
+      <Ionicons name="chevron-forward" size={15} color={hexDe(tema.paleta.tintaMuted)} />
     </TouchableOpacity>
   );
 };
@@ -184,7 +204,8 @@ const formatarIntervalo = (ms: number) => {
 const INTERVALOS = [30000, 60000, 120000, 300000];
 
 export const SettingsScreen = () => {
-  const { temaId, setTema } = useTheme();
+  const { tema, temaId, setTema } = useTheme();
+  const navigation = useNavigation<any>();
   const {
     statusIntervalMs,
     setStatusInterval,
@@ -319,17 +340,67 @@ export const SettingsScreen = () => {
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
-      <Header title={t('settings.title')} subtitle={t('settings.subtitulo')} />
+      <Header
+        title={t('settings.title')}
+        subtitle={
+          printers.length > 0
+            ? printers.map(pr => pr.printerName).slice(0, 3).join(' · ')
+            : t('settings.subtitulo')
+        }
+      />
 
       <ScrollView
         className="flex-1 bg-canvas"
-        contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 40, gap: 12 }}
         showsVerticalScrollIndicator={false}
       >
-        <Section title={t('settings.seccaoPrefs')}>
-          <View className="px-4 py-4">
-            <Text className="text-[14px] font-medium text-ink">{t('settings.tema')}</Text>
-            <View className="mt-3 flex-row flex-wrap" style={{ gap: 8 }}>
+        <Section title={t('settings.seccaoMaquinas')}>
+          {printers.length === 0 ? (
+            <Row
+              icon="add-circle-outline"
+              label={t('settings.adicionarImpressora')}
+              description={t('camera.semImpressoras')}
+              onPress={() => navigation.navigate('AddEditPrinter')}
+              last
+            />
+          ) : (
+            printers.map((pr, i) => {
+              const info = pr.status?.PrintInfo;
+              const aCorrer =
+                getPrintStatus(info?.Status ?? 0) === 'printing' && !!info?.Filename;
+              return (
+                <Row
+                  key={pr.id}
+                  icon={pr.kind === 'resin' ? 'layers-outline' : 'print-outline'}
+                  acento={pr.kind === 'resin' ? hexDe(tema.paleta.ok) : undefined}
+                  label={pr.printerName}
+                  description={`${pr.ipAddress} · ${
+                    pr.connectionStatus === 'connected'
+                      ? aCorrer
+                        ? t('camera.aImprimir')
+                        : t('camera.pronta')
+                      : t('camera.impDesligada')
+                  }`}
+                  value={aCorrer ? `${Math.round(info?.Progress ?? 0)}%` : undefined}
+                  onPress={() => navigation.navigate('AddEditPrinter', { printerId: pr.id })}
+                  last={i === printers.length - 1}
+                />
+              );
+            })
+          )}
+        </Section>
+
+        <Section title={t('settings.seccaoAparencia')}>
+          <View className="flex-row items-center px-4 py-3">
+            <View className="flex-1">
+              <Text className="text-[13px] font-semibold text-ink">
+                {TEMAS[temaId]?.nome ?? t('settings.tema')}
+              </Text>
+              <Text className="text-[10px] text-ink-muted mt-0.5">
+                {t(`settings.tema_${temaId}`)}
+              </Text>
+            </View>
+            <View className="flex-row" style={{ gap: 6 }}>
               {ORDEM_TEMAS.map(id => {
                 const item = TEMAS[id];
                 const activo = temaId === id;
@@ -338,42 +409,20 @@ export const SettingsScreen = () => {
                     key={id}
                     onPress={() => setTema(id)}
                     activeOpacity={0.8}
-                    className={`rounded-xl border p-3 ${
-                      activo ? 'border-brand bg-brand-soft' : 'border-line bg-cartao'
-                    }`}
-                    style={{ width: '48%' }}
-                  >
-                    <View className="flex-row" style={{ gap: 4 }}>
-                      {item.amostra.map(cor => (
-                        <View
-                          key={cor}
-                          style={{
-                            backgroundColor: cor,
-                            width: 18,
-                            height: 18,
-                            borderRadius: 9,
-                            borderWidth: 1,
-                            borderColor: hexDe(item.paleta.linha),
-                          }}
-                        />
-                      ))}
-                    </View>
-                    <Text
-                      className={`mt-2 text-[13px] ${
-                        activo ? 'font-semibold text-ink' : 'font-medium text-ink-soft'
-                      }`}
-                    >
-                      {item.nome}
-                    </Text>
-                    <Text className="mt-0.5 text-[10px] leading-4 text-ink-muted">
-                      {t(`settings.tema_${id}`)}
-                    </Text>
-                  </TouchableOpacity>
+                    accessibilityLabel={item.nome}
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 8,
+                      backgroundColor: item.amostra[0],
+                      borderWidth: activo ? 2 : 1,
+                      borderColor: activo ? '#FFFFFF' : hexDe(tema.paleta.linha),
+                    }}
+                  />
                 );
               })}
             </View>
           </View>
-
           <Row
             icon="time-outline"
             label={t('settings.intervalo')}
@@ -453,25 +502,21 @@ export const SettingsScreen = () => {
             onChange={definirFilaAuto}
           />
 
-          <View className="mt-6">
-            <Text className="text-[10px] tracking-[1.4px] font-semibold text-ink-soft mb-2 px-4">
-              {t('settings.seccaoBackup').toUpperCase()}
-            </Text>
-            <View className="bg-canvas-sunken rounded-xl overflow-hidden">
-              <AcaoRow
-                icon="share-outline"
-                label={t('settings.exportar')}
-                description={t('settings.exportarDesc')}
-                onPress={exportar}
-              />
-              <AcaoRow
-                icon="download-outline"
-                label={t('settings.importar')}
-                description={t('settings.importarDesc')}
-                onPress={importar}
-              />
-            </View>
-          </View>
+        </Section>
+
+        <Section title={t('settings.seccaoBackup')}>
+          <AcaoRow
+            icon="share-outline"
+            label={t('settings.exportar')}
+            description={t('settings.exportarDesc')}
+            onPress={exportar}
+          />
+          <AcaoRow
+            icon="download-outline"
+            label={t('settings.importar')}
+            description={t('settings.importarDesc')}
+            onPress={importar}
+          />
           <Row
             icon="notifications-outline"
             label={t('settings.notificacaoTeste')}
