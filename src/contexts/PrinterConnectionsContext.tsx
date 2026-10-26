@@ -1266,28 +1266,26 @@ export const PrinterConnectionsProvider = ({
   // Só arranca com a fila ligada e na transição para "terminada" (9). Sem a
   // transição disparava em cada actualização de estado com 9.
   const aArrancarRef = useRef<Record<string, boolean>>({});
-  useEffect(() => {
-    printers.forEach(printer => {
-      const estado = printer.status?.PrintInfo?.Status;
-      const anterior = estadoAnteriorRef.current[printer.id];
-      estadoAnteriorRef.current[printer.id] = estado;
-      if (!filaAuto || anterior === estado || anterior !== 9 || estado !== 9) return;
-      if (aArrancarRef.current[printer.id]) return;
+  const imprimiuRef = useRef<Record<string, boolean>>({});
 
+  // Arranca o primeiro item da fila desta impressora. Só sai da fila quando a
+  // máquina aceita (Ack 0); fora disso repete, porque o Cmd 128 leva Ack != 0
+  // nos segundos seguintes ao fim do trabalho anterior.
+  const arrancarProximo = useCallback(
+    async (printer: Printer | undefined): Promise<boolean> => {
+      if (!printer || !filaAuto) return false;
+      if (aArrancarRef.current[printer.id]) return false;
       const proximo = filaRef.current.find(item => item.printerId === printer.id);
-      if (!proximo) return;
+      if (!proximo) return false;
 
       aArrancarRef.current[printer.id] = true;
-      (async () => {
+      try {
         const timelapse = await lerTimelapse(printer.id).catch(() => false);
         const comando = startPrintCommand(proximo.name, {
           nivelar: false,
           lado: 0,
           timelapse: timelapse ? 1 : 0,
         });
-        // A máquina ainda está a fechar o trabalho anterior: o Cmd 128 leva
-        // Ack != 0 durante alguns segundos. Antes bastava a resposta para o
-        // trabalho sair da fila e anunciar que arrancou — e não imprimia nada.
         for (let tentativa = 1; tentativa <= 4; tentativa++) {
           try {
             const resposta = await request(printer.id, comando, 15000);
@@ -1299,7 +1297,7 @@ export const PrinterConnectionsProvider = ({
                 `${printer.printerName} começou ${proximo.label}.`,
                 { printerId: printer.id }
               );
-              return;
+              return true;
             }
             log('fila: a máquina recusou', descreverAck(ack, 'imprimir').mensagem, 'tentativa', tentativa);
           } catch (erro) {
@@ -1309,17 +1307,55 @@ export const PrinterConnectionsProvider = ({
             await new Promise(resolver => setTimeout(resolver, 6000));
           }
         }
-        // Sem sucesso fica na fila: o Bruno vê o aviso e pode arrancar à mão.
+        // Sem sucesso fica na fila: o aviso diz porquê e o Bruno pode arrancar à mão.
         notify(
           'Não arrancou',
           `${proximo.label}: a máquina não aceitou. O trabalho fica na fila.`,
           { printerId: printer.id }
         );
-      })().finally(() => {
+        return false;
+      } finally {
         aArrancarRef.current[printer.id] = false;
-      });
+      }
+    },
+    [filaAuto, request, removerDaFila]
+  );
+
+  // Dispara na transição para "terminada" (9). Sem exigir a transição, corria
+  // em cada actualização de estado com 9.
+  useEffect(() => {
+    printers.forEach(printer => {
+      const estado = printer.status?.PrintInfo?.Status;
+      const anterior = estadoAnteriorRef.current[printer.id];
+      estadoAnteriorRef.current[printer.id] = estado;
+      // 9 = terminada; 5/6/13 = a imprimir. Só conta como fim de um trabalho se
+      // antes o vimos a imprimir: sem isto, um 9 passageiro logo a seguir ao
+      // arranque consumia mais um item da fila.
+      if (estado === 5 || estado === 6 || estado === 13) {
+        imprimiuRef.current[printer.id] = true;
+        return;
+      }
+      if (anterior == null || anterior === estado || estado !== 9) return;
+      if (!imprimiuRef.current[printer.id]) return;
+      imprimiuRef.current[printer.id] = false;
+      void arrancarProximo(printer);
     });
-  }, [printers, filaAuto, request, removerDaFila]);
+  }, [printers, arrancarProximo]);
+
+  // Com o ecrã desligado a app deixa de receber actualizações e a transição
+  // perde-se (o aviso do sistema chega, mas o estado não). Ao voltar ao primeiro
+  // plano, se a máquina está em "terminada" e há fila, tenta outra vez.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', estado => {
+      if (estado !== 'active') return;
+      setTimeout(() => {
+        printersRef.current.forEach(printer => {
+          if (printer.status?.PrintInfo?.Status === 9) void arrancarProximo(printer);
+        });
+      }, 1500);
+    });
+    return () => sub.remove();
+  }, [arrancarProximo]);
 
   const sendCommand = (printerId: string, command: SdcpCommand<unknown>) => {
     // Erro de programação: rejeita já, sem tocar na rede.
