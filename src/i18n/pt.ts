@@ -214,6 +214,7 @@ export default {
   'settings.tema_cobre': 'Laranja quente sobre castanho-escuro.',
   'settings.tema_citrino': 'Verde-lima com laranja nos avisos.',
   'settings.tema_quartzo': 'Claro em porcelana, com o roxo do conceito.',
+  'settings.tema_azulejo': 'Claro e azul, sem roxo.',
   'settings.temaClaro': 'Claro',
   'settings.temaEscuro': 'Escuro',
   'settings.temaSistema': 'Sistema',

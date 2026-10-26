@@ -215,6 +215,7 @@ const en = {
   'settings.tema_cobre': 'Warm orange on dark brown.',
   'settings.tema_citrino': 'Lime green with orange for warnings.',
   'settings.tema_quartzo': 'Light porcelain with the concept purple.',
+  'settings.tema_azulejo': 'Light and blue, no purple.',
   'settings.temaClaro': 'Light',
   'settings.temaEscuro': 'Dark',
   'settings.temaSistema': 'System',

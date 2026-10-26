@@ -84,6 +84,7 @@ const DESCRICOES: Record<TemaId, string> = {
   cobre: 'Laranja quente sobre castanho-escuro.',
   citrino: 'Verde-lima com laranja nos avisos.',
   quartzo: 'Claro, em porcelana, com o roxo do conceito.',
+  azulejo: 'Claro e azul, sem roxo.',
 };
 
 const construir = (id: TemaId): Tema => {
@@ -104,9 +105,10 @@ export const TEMAS: Record<TemaId, Tema> = {
   cobre: construir('cobre'),
   citrino: construir('citrino'),
   quartzo: construir('quartzo'),
+  azulejo: construir('azulejo'),
 };
 
-export const ORDEM_TEMAS: TemaId[] = ['ametista', 'esmeralda', 'cobre', 'citrino', 'quartzo'];
+export const ORDEM_TEMAS: TemaId[] = ['ametista', 'esmeralda', 'cobre', 'citrino', 'quartzo', 'azulejo'];
 export const TEMA_PREDEFINIDO: TemaId = temaPredefinido;
 
 /** "18 16 34" → "#121022" (para sítios que não aceitam variáveis) */
