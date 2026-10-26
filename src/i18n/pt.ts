@@ -447,6 +447,7 @@ export default {
   'inicio.titulo': 'Início',
   'inicio.pronta': 'Pronta',
   'inicio.prontaResina': 'Pronta para imprimir',
+  'inicio.falta': 'falta {t}',
   'inicio.semLigacao': 'Sem ligação',
   'inicio.camara': 'Câmara',
   'inicio.aoVivo': 'AO VIVO',
@@ -504,6 +505,6 @@ export default {
   'secao.ficheiros': 'Ficheiros',
   'secao.filamentos': 'Filamentos',
   'secao.controlos': 'Controlos',
-  'settings.tema_ametista': 'Roxo escuro do conceito aprovado.',
+  'settings.tema_ametista': 'Azul-noite com roxo. O predefinido.',
   'comum.eliminar': 'Eliminar',
 } as const;

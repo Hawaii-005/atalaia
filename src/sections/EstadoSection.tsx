@@ -1,3 +1,4 @@
+import { fonteNumeros } from '~/theme/tokensV6';
 import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, Alert, ScrollView, Image } from 'react-native';
 import { WebView } from 'react-native-webview';
@@ -366,9 +367,19 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
           {temperaturas.map(item => (
             <View key={item.rotulo} style={{ flex: 1, backgroundColor: hexDe(paleta.cartao), borderRadius: raioToken.interno, padding: espaco.md }}>
               <Text style={{ fontSize: 12, color: hexDe(paleta.tintaSoft) }}>{item.rotulo}</Text>
-              <Text style={{ fontSize: 20, fontWeight: '700', color: item.cor, marginTop: 4 }}>{Math.round(item.valor)}°</Text>
+              <Text
+                style={{
+                  fontSize: 21,
+                  fontWeight: '700',
+                  fontFamily: fonteNumeros,
+                  color: item.cor,
+                  marginTop: 4,
+                }}
+              >
+                {Math.round(item.valor)}°
+              </Text>
               {item.alvo > 0 && (
-                <Text style={{ fontSize: 11, color: hexDe(paleta.tintaSoft) }}>{`/ ${Math.round(item.alvo)}°`}</Text>
+                <Text style={{ fontSize: 11, fontFamily: fonteNumeros, color: hexDe(paleta.tintaSoft) }}>{`/ ${Math.round(item.alvo)}°`}</Text>
               )}
             </View>
           ))}

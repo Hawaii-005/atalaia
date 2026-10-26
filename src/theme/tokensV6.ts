@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 /**
  * Ataláia — tokens de design (v6)
  * Valores em dp, para um ecrã de referência de 412 × 915.
@@ -43,35 +45,37 @@ export interface Paleta {
 }
 
 /**
- * Quatro temas, todos escuros, o mesmo conceito visual. Os nomes são de pedra
- * e metal: Ametista (o aprovado), Esmeralda, Cobre e Citrino (verde+laranja).
+ * Seis temas com o mesmo conceito visual, dois deles claros. Os nomes são de
+ * pedra e metal; «Meia-noite» (o predefinido) usa o azul-noite do conceito de
+ * 2026. O identificador interno continua `ametista` para não perder a escolha
+ * já guardada nos telefones que têm a app instalada.
  */
-const ametista: Paleta = {
+const meiaNoite: Paleta = {
   modo: 'escuro',
-  fundo: '#141226',
-  cartao: '#1E1B33',
-  cartaoAlt: '#2A2646',
-  trilha: '#3A3560',
-  contorno: '#3A3560',
-  barraNav: '#1B1830',
-  pilulaNav: '#3F3270',
-  texto: '#FFFFFF',
-  textoSecundario: '#A29DB8',
-  primaria: '#8B5CF6',
-  textoSobrePrimaria: '#FFFFFF',
-  sucesso: '#4ADE80',
-  sucessoFundo: '#1F3A33',
+  fundo: '#05080F',
+  cartao: '#0D1424',
+  cartaoAlt: '#1A2540',
+  trilha: '#222E4A',
+  contorno: '#222E4A',
+  barraNav: '#080E1A',
+  pilulaNav: '#26345E',
+  texto: '#F2F6FF',
+  textoSecundario: '#93A1BE',
+  primaria: '#8B7CF6',
+  textoSobrePrimaria: '#0A0D18',
+  sucesso: '#34D399',
+  sucessoFundo: '#0E3A2A',
   aviso: '#FBBF24',
-  avisoFundo: '#422006',
+  avisoFundo: '#3A2C0C',
   perigo: '#F87171',
-  perigoFundo: '#3B1F2B',
-  textoSobrePerigo: '#2B0B0B',
+  perigoFundo: '#3C1620',
+  textoSobrePerigo: '#FFFFFF',
   bico: '#FBBF24',
-  mesa: '#8B5CF6',
-  camara: '#4ADE80',
-  sobreposicao: 'rgba(0,0,0,0.62)',
-  cameraTopo: '#2B2B33',
-  cameraBase: '#6B5E50',
+  mesa: '#8B7CF6',
+  camara: '#34D399',
+  sobreposicao: 'rgba(2,5,12,0.70)',
+  cameraTopo: '#0D1424',
+  cameraBase: '#05080F',
 };
 
 const esmeralda: Paleta = {
@@ -217,11 +221,11 @@ const azulejo: Paleta = {
   cameraBase: '#A2B0C2',
 };
 
-export const temas: Record<NomeTema, Paleta> = { ametista, esmeralda, cobre, citrino, quartzo, azulejo };
+export const temas: Record<NomeTema, Paleta> = { ametista: meiaNoite, esmeralda, cobre, citrino, quartzo, azulejo };
 export const temaPredefinido: NomeTema = 'ametista';
 
 export const nomesDosTemas: Record<NomeTema, string> = {
-  ametista: 'Ametista',
+  ametista: 'Meia-noite',
   esmeralda: 'Esmeralda',
   cobre: 'Cobre',
   citrino: 'Citrino',
@@ -230,7 +234,7 @@ export const nomesDosTemas: Record<NomeTema, string> = {
 };
 
 export const obterPaleta = (nome: NomeTema | undefined): Paleta =>
-  temas[nome ?? temaPredefinido] ?? ametista;
+  temas[nome ?? temaPredefinido] ?? meiaNoite;
 
 // ───────────────────────── Forma e espaço ─────────────────────────
 
@@ -262,6 +266,16 @@ export const fonte = {
   alternativa: 'Roboto',
 } as const;
 
+/**
+ * Números de largura fixa: 62 % e 61 % ocupam o mesmo espaço, por isso a
+ * leitura não treme a cada actualização de estado.
+ */
+export const fonteNumeros: string = (Platform.select({
+  ios: 'Menlo',
+  android: 'monospace',
+  default: 'monospace',
+}) ?? 'monospace') as string;
+
 export interface EstiloTexto {
   fontSize: number;
   lineHeight: number;
@@ -284,6 +298,7 @@ export const texto: Record<string, EstiloTexto> = {
   valorTemperatura: { fontSize: 25, lineHeight: 30, fontWeight: '700' },
   percentagemGrande: { fontSize: 32, lineHeight: 38, fontWeight: '700' },
   percentagemAnel: { fontSize: 28, lineHeight: 32, fontWeight: '700' },
+  percentagemCartao: { fontSize: 17, lineHeight: 20, fontWeight: '700' },
 };
 
 // ───────────────────────── Dimensões dos componentes ─────────────────────────

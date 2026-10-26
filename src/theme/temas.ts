@@ -79,7 +79,7 @@ const traduzir = (p: PaletaV6): Paleta => ({
 });
 
 const DESCRICOES: Record<TemaId, string> = {
-  ametista: 'Roxo do conceito aprovado. O predefinido.',
+  ametista: 'Azul-noite com roxo. O predefinido.',
   esmeralda: 'Verde profundo, para quem prefere calma.',
   cobre: 'Laranja quente sobre castanho-escuro.',
   citrino: 'Verde-lima com laranja nos avisos.',

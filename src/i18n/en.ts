@@ -445,6 +445,7 @@ const en = {
   'inicio.titulo': 'Home',
   'inicio.pronta': 'Ready',
   'inicio.prontaResina': 'Ready to print',
+  'inicio.falta': '{t} left',
   'inicio.semLigacao': 'Disconnected',
   'inicio.camara': 'Camera',
   'inicio.aoVivo': 'LIVE',
@@ -502,7 +503,7 @@ const en = {
   'secao.ficheiros': 'Files',
   'secao.filamentos': 'Filaments',
   'secao.controlos': 'Controls',
-  'settings.tema_ametista': 'Dark purple from the approved concept.',
+  'settings.tema_ametista': 'Midnight blue with purple. The default.',
   'comum.eliminar': 'Remove',
 } as const satisfies Record<keyof typeof pt, string>;
 

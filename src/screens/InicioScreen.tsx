@@ -12,6 +12,8 @@ import { getPrintStatus, Printer } from '../types';
 import { log } from '../utils/log';
 import { loadHistory, formatDuration, PrintRecord } from '../utils/printHistory';
 import { useJanela } from '../theme/layout';
+import { fonteNumeros } from '../theme/tokensV6';
+import { formatTicksToReadableTime } from '~/utils/FormatUtils';
 import { Mascote } from '../ui/Mascote';
 import { CartaoCamara } from '../components/CartaoCamara';
 import { CartaoFila } from '../components/CartaoFila';
@@ -167,6 +169,11 @@ export const InicioScreen = ({ navigation }: any) => {
             // têm de sair do estado da máquina, não do que ficou para trás.
             const fase = getPrintStatus(printer.status?.PrintInfo?.Status ?? 0);
             const aCorrer = fase === 'printing' || fase === 'paused' || fase === 'preparing';
+            // Só há «falta» quando o firmware diz quanto dura o trabalho; sem
+            // TotalTicks (a Saturn) a linha fica como estava, sem inventar.
+            const ticksPorFazer = (info?.TotalTicks ?? 0) - (info?.CurrentTicks ?? 0);
+            const falta =
+              aCorrer && ticksPorFazer > 0 ? formatTicksToReadableTime(ticksPorFazer) : '';
             return (
               <TouchableOpacity
                 key={printer.id}
@@ -179,7 +186,15 @@ export const InicioScreen = ({ navigation }: any) => {
                 style={[cartao, { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 16 }]}
               >
                 <Anel progresso={aCorrer ? progresso : 0} cor={hexDe(paleta.acento)} trilho={hexDe(paleta.linha)}>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: hexDe(paleta.tinta) }}>
+                  <Text
+                    style={{
+                      fontSize: 17,
+                      lineHeight: 20,
+                      fontWeight: '700',
+                      fontFamily: fonteNumeros,
+                      color: hexDe(paleta.tinta),
+                    }}
+                  >
                     {aCorrer ? `${Math.round(progresso)}%` : '—'}
                   </Text>
                 </Anel>
@@ -188,7 +203,7 @@ export const InicioScreen = ({ navigation }: any) => {
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <Text
                       numberOfLines={1}
-                      style={{ flex: 1, fontSize: 16, fontWeight: '700', color: hexDe(paleta.tinta) }}
+                      style={{ flex: 1, fontSize: 17, fontWeight: '700', color: hexDe(paleta.tinta) }}
                     >
                       {printer.printerName}
                     </Text>
@@ -207,12 +222,18 @@ export const InicioScreen = ({ navigation }: any) => {
                   </View>
                   <Text
                     numberOfLines={1}
-                    style={{ fontSize: 12, color: hexDe(paleta.tintaSoft), marginTop: 6 }}
+                    style={{ fontSize: 11, color: hexDe(paleta.tintaSoft), marginTop: 5 }}
                   >
                     {aCorrer ? info?.Filename || printer.ipAddress : printer.ipAddress}
                   </Text>
-                  <Text style={{ fontSize: 12, color: corEstado, marginTop: 4, fontWeight: '600' }}>
-                    {estado.texto}
+                  <Text style={{ fontSize: 12, marginTop: 4, fontWeight: '600' }}>
+                    <Text style={{ color: corEstado }}>{estado.texto}</Text>
+                    {falta ? (
+                      <Text style={{ color: hexDe(paleta.tintaSoft), fontFamily: fonteNumeros }}>
+                        {'  ·  '}
+                        {t('inicio.falta', { t: falta })}
+                      </Text>
+                    ) : null}
                   </Text>
                 </View>
 
