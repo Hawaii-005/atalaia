@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   Alert,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -51,6 +52,26 @@ const formatDate = (timestamp: number) => {
     month: 'short',
   });
 };
+
+// «Hoje» / «Ontem» / data — os dias mais recentes não precisam de data.
+const rotuloDoDia = (timestamp: number) => {
+  const dia = new Date(timestamp);
+  const hoje = new Date();
+  const ontem = new Date();
+  ontem.setDate(hoje.getDate() - 1);
+  const igual = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+  if (igual(dia, hoje)) return t('history.hoje');
+  if (igual(dia, ontem)) return t('history.ontem');
+  return dia.toLocaleDateString(LOCALE, { day: '2-digit', month: 'long' });
+};
+
+const segundosDe = (record: PrintRecord) =>
+  record.startedAt && record.endedAt
+    ? Math.max(0, Math.round((record.endedAt - record.startedAt) / 1000))
+    : 0;
 
 const HistoryRow = ({
   record,
@@ -134,6 +155,31 @@ export const HistoryScreen = ({ navigation }: any) => {
   const { tema } = useTheme();
   const { printers, request } = usePrinterConnections();
   const [records, setRecords] = useState<PrintRecord[]>([]);
+  const [procura, setProcura] = useState('');
+  const [ordem, setOrdem] = useState<'data' | 'duracao' | 'nome'>('data');
+
+  const visiveis = useMemo(() => {
+    const termo = procura.trim().toLowerCase();
+    const lista = records.filter(
+      r => !termo || (r.filename.split('/').pop() ?? r.filename).toLowerCase().includes(termo)
+    );
+    if (ordem === 'duracao') return [...lista].sort((a, b) => segundosDe(b) - segundosDe(a));
+    if (ordem === 'nome') return [...lista].sort((a, b) => a.filename.localeCompare(b.filename));
+    return [...lista].sort((a, b) => b.startedAt - a.startedAt);
+  }, [records, procura, ordem]);
+
+  // Agrupamento por dia só faz sentido na ordem cronológica.
+  const grupos = useMemo(() => {
+    if (ordem !== 'data') return null;
+    const lista: { rotulo: string; itens: PrintRecord[] }[] = [];
+    for (const r of visiveis) {
+      const rotulo = rotuloDoDia(r.startedAt);
+      const ultimo = lista[lista.length - 1];
+      if (!ultimo || ultimo.rotulo !== rotulo) lista.push({ rotulo, itens: [r] });
+      else ultimo.itens.push(r);
+    }
+    return lista;
+  }, [visiveis, ordem]);
 
   // Reimprimir só com o ficheiro ainda na máquina: o histórico guarda o nome,
   // não o ficheiro. Se já não estiver lá, diz-se isso em vez de falhar em silêncio.
@@ -234,15 +280,92 @@ export const HistoryScreen = ({ navigation }: any) => {
             />
           </View>
         ) : (
-          <View className="bg-canvas-sunken rounded-xl overflow-hidden">
-            {records.map(record => (
-              <HistoryRow
-                key={record.id}
-                record={record}
-                onReprint={() => reimprimir(record)}
+          <>
+            <View className="flex-row items-center rounded-lg border border-line bg-cartao px-2.5 h-10">
+              <Ionicons name="search" size={15} color={hexDe(tema.paleta.tintaMuted)} />
+              <TextInput
+                value={procura}
+                onChangeText={setProcura}
+                placeholder={t('history.procurar')}
+                placeholderTextColor={hexDe(tema.paleta.tintaMuted)}
+                className="flex-1 ml-2 text-[13px] text-ink"
+                autoCorrect={false}
+                returnKeyType="search"
               />
-            ))}
-          </View>
+              {procura.length > 0 && (
+                <TouchableOpacity onPress={() => setProcura('')} activeOpacity={0.7}>
+                  <Ionicons name="close-circle" size={16} color={hexDe(tema.paleta.tintaMuted)} />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            <View className="flex-row items-center mt-2 mb-3">
+              {(['data', 'duracao', 'nome'] as const).map(criterio => (
+                <TouchableOpacity
+                  key={criterio}
+                  onPress={() => setOrdem(criterio)}
+                  activeOpacity={0.7}
+                  className={`px-3 h-8 items-center justify-center rounded-lg mr-1.5 border ${
+                    ordem === criterio ? 'bg-brand border-brand' : 'border-line'
+                  }`}
+                >
+                  <Text
+                    className={`text-[12px] font-semibold ${
+                      ordem === criterio ? 'text-white' : 'text-ink-soft'
+                    }`}
+                  >
+                    {t(
+                      criterio === 'data'
+                        ? 'files.ordemData'
+                        : criterio === 'duracao'
+                        ? 'files.ordemDuracao'
+                        : 'files.ordemNome'
+                    )}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {visiveis.length === 0 ? (
+              <View className="px-4 py-8 items-center">
+                <Ionicons name="search" size={20} color={hexDe(tema.paleta.tintaMuted)} />
+                <Text className="text-[13px] text-ink-muted mt-2 text-center">
+                  {t('history.semResultados', { q: procura.trim() })}
+                </Text>
+              </View>
+            ) : grupos ? (
+              grupos.map(grupo => (
+                <View key={grupo.rotulo} className="mb-3">
+                  <View className="flex-row items-center mb-1.5 px-1">
+                    <Text className="text-[11px] font-semibold text-ink-soft">
+                      {grupo.rotulo}
+                    </Text>
+                    <View className="flex-1 h-px bg-line mx-2" />
+                    <Text className="text-[10px] text-ink-muted">{grupo.itens.length}</Text>
+                  </View>
+                  <View className="bg-canvas-sunken rounded-xl overflow-hidden">
+                    {grupo.itens.map(record => (
+                      <HistoryRow
+                        key={record.id}
+                        record={record}
+                        onReprint={() => reimprimir(record)}
+                      />
+                    ))}
+                  </View>
+                </View>
+              ))
+            ) : (
+              <View className="bg-canvas-sunken rounded-xl overflow-hidden">
+                {visiveis.map(record => (
+                  <HistoryRow
+                    key={record.id}
+                    record={record}
+                    onReprint={() => reimprimir(record)}
+                  />
+                ))}
+              </View>
+            )}
+          </>
         )}
 
         {records.length > 0 && (

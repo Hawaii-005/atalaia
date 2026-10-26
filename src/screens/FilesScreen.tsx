@@ -30,11 +30,13 @@ import {
 } from '../utils/commands';
 import { mensagemDeErro } from '../utils/errors';
 import * as FileSystem from 'expo-file-system';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as DocumentPicker from 'expo-document-picker';
 import { uploadGcode } from '../utils/gcodeUpload';
 import { custoDe, euros, getPrecoKg, setPrecoKg } from '../utils/precos';
 import { slotValido } from '../utils/slots';
 import { extrairMiniaturaEmbutida, extrairMiniaturaEmbutidaFila, ferramentasUsadas, urlMiniatura } from '../utils/miniatura';
+import { duracaoDoNome, formatDuracao } from '../utils/duracao';
 import { descarregarGcode, partilharFicheiro } from '../utils/transferir';
 import { lerTimelapse } from '../utils/timelapse';
 import { t } from '../i18n';
@@ -74,10 +76,14 @@ const FileRow = ({
   file,
   printerIp,
   onOpen,
+  modo = 'lista',
+  lado = 56,
 }: {
   file: PrinterFile;
   printerIp: string;
   onOpen: () => void;
+  modo?: 'lista' | 'grelha';
+  lado?: number;
 }) => {
   const { tema } = useTheme();
   const size = file.FileSize ?? file.totalSize ?? file.usedSize ?? 0;
@@ -106,6 +112,43 @@ const FileRow = ({
     if (vivo.current) setMini(embutida);
   };
 
+  const duracao = duracaoDoNome(file.name);
+  const legenda = `${formatSize(size)}${duracao ? ` · ${formatDuracao(duracao)}` : ''}`;
+
+  // Na grelha a miniatura manda: cartão quadrado, nome em duas linhas.
+  if (modo === 'grelha') {
+    return (
+      <TouchableOpacity
+        onPress={onOpen}
+        activeOpacity={0.8}
+        style={{ width: lado === 0 ? '100%' : lado === 1 ? '31.5%' : '48.5%' }}
+        className="mb-3 rounded-xl bg-cartao border border-line overflow-hidden"
+      >
+        <View
+          style={{ width: '100%', aspectRatio: lado === 0 ? 1.6 : 1 }}
+          className="items-center justify-center bg-canvas-sunken"
+        >
+          {mini ? (
+            <Image
+              source={{ uri: mini }}
+              style={{ width: '100%', height: '100%' }}
+              resizeMode="cover"
+              onError={falhouMiniaturaLista}
+            />
+          ) : (
+            <Ionicons name="cube-outline" size={22} color={hexDe(tema.paleta.tintaMuted)} />
+          )}
+        </View>
+        <View className="p-2">
+          <Text className="text-[11px] font-semibold text-ink" numberOfLines={2}>
+            {label}
+          </Text>
+          <Text className="text-[10px] text-ink-muted mt-1">{legenda}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  }
+
   return (
     <TouchableOpacity
       onPress={onOpen}
@@ -128,9 +171,7 @@ const FileRow = ({
         <Text className="text-[13px] font-semibold text-ink" numberOfLines={2}>
           {label}
         </Text>
-        <Text className="text-[11px] text-ink-muted mt-1">
-          {formatSize(size)}
-        </Text>
+        <Text className="text-[11px] text-ink-muted mt-1">{legenda}</Text>
       </View>
       <Ionicons name="chevron-forward" size={18} color={hexDe(tema.paleta.tintaMuted)} />
     </TouchableOpacity>
@@ -710,8 +751,41 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
   const [bedLevel, setBedLevel] = useState(false);
   const [plateSide, setPlateSide] = useState<0 | 1>(0);
   const [selecionado, setSelecionado] = useState<PrinterFile | null>(null);
-  const [ordem, setOrdem] = useState<'nome' | 'data' | 'tamanho'>('nome');
+  const [ordem, setOrdem] = useState<'nome' | 'data' | 'tamanho' | 'duracao'>('nome');
   const [crescente, setCrescente] = useState(true);
+  const [procura, setProcura] = useState('');
+  const [vista, setVista] = useState<'lista' | 'grelha'>('lista');
+  const [tamanhoMini, setTamanhoMini] = useState<'p' | 'm' | 'g'>('m');
+
+  // As escolhas de vista ficam guardadas, como no dashboard.
+  useEffect(() => {
+    AsyncStorage.getItem('atalaia.ficheiros.prefs')
+      .then(bruto => {
+        if (!bruto) return;
+        const g = JSON.parse(bruto);
+        if (g.vista === 'lista' || g.vista === 'grelha') setVista(g.vista);
+        if (g.tamanhoMini === 'p' || g.tamanhoMini === 'm' || g.tamanhoMini === 'g') {
+          setTamanhoMini(g.tamanhoMini);
+        }
+      })
+      .catch(() => undefined);
+  }, []);
+
+  const escolherVista = (valor: 'lista' | 'grelha') => {
+    setVista(valor);
+    AsyncStorage.setItem(
+      'atalaia.ficheiros.prefs',
+      JSON.stringify({ vista: valor, tamanhoMini })
+    ).catch(() => undefined);
+  };
+
+  const escolherTamanho = (valor: 'p' | 'm' | 'g') => {
+    setTamanhoMini(valor);
+    AsyncStorage.setItem(
+      'atalaia.ficheiros.prefs',
+      JSON.stringify({ vista, tamanhoMini: valor })
+    ).catch(() => undefined);
+  };
   const [aRenomear, setARenomear] = useState<PrinterFile | null>(null);
   const [novoNome, setNovoNome] = useState('');
   const [ocupado, setOcupado] = useState<string | null>(null);
@@ -761,14 +835,29 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
   );
 
   const visiveis = useMemo(() => {
-    const lista = [...files];
+    const termo = procura.trim().toLowerCase();
+    const lista = files.filter(
+      f => !termo || (f.name.split('/').pop() ?? f.name).toLowerCase().includes(termo)
+    );
+    if (ordem === 'duracao') {
+      // Sem duração conhecida fica sempre no fim, cresça ou decresça.
+      lista.sort((a, b) => {
+        const da = duracaoDoNome(a.name);
+        const db = duracaoDoNome(b.name);
+        if (!da && !db) return a.name.localeCompare(b.name);
+        if (!da) return 1;
+        if (!db) return -1;
+        return crescente ? da - db : db - da;
+      });
+      return lista;
+    }
     lista.sort((a, b) => {
       if (ordem === 'data') return (a.CreateTime ?? 0) - (b.CreateTime ?? 0);
       if (ordem === 'tamanho') return (a.FileSize ?? 0) - (b.FileSize ?? 0);
       return a.name.localeCompare(b.name);
     });
     return crescente ? lista : lista.reverse();
-  }, [files, ordem, crescente]);
+  }, [files, ordem, crescente, procura]);
 
   const handleRename = async () => {
     if (!aRenomear || !printer) return;
@@ -1001,38 +1090,60 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
             />
           </View>
 
+          <View className="px-4 pt-2 pb-2 border-b border-line">
+            <View className="flex-row items-center rounded-lg border border-line bg-cartao px-2.5 h-10">
+              <Ionicons name="search" size={15} color={hexDe(tema.paleta.tintaMuted)} />
+              <TextInput
+                value={procura}
+                onChangeText={setProcura}
+                placeholder={t('files.procurar')}
+                placeholderTextColor={hexDe(tema.paleta.tintaMuted)}
+                className="flex-1 ml-2 text-[13px] text-ink"
+                autoCorrect={false}
+                returnKeyType="search"
+              />
+              {procura.length > 0 && (
+                <TouchableOpacity onPress={() => setProcura('')} activeOpacity={0.7}>
+                  <Ionicons name="close-circle" size={16} color={hexDe(tema.paleta.tintaMuted)} />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+
           <View className="flex-row items-center px-4 py-2 border-b border-line">
-            <Text className="text-[12px] text-ink-muted mr-2">
-              {t('files.ordenar')}
-            </Text>
-            {(['nome', 'data', 'tamanho'] as const).map(criterio => (
-              <TouchableOpacity
-                key={criterio}
-                onPress={() => setOrdem(criterio)}
-                activeOpacity={0.7}
-                className={`px-3 h-8 items-center justify-center rounded-lg mr-1.5 border ${
-                  ordem === criterio ? 'bg-brand border-brand' : 'border-line'
-                }`}
-              >
-                <Text
-                  className={`text-[12px] font-semibold ${
-                    ordem === criterio ? 'text-white' : 'text-ink-soft'
+            <Text className="text-[12px] text-ink-muted mr-2">{t('files.ordenar')}</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-1">
+              {(['nome', 'data', 'tamanho', 'duracao'] as const).map(criterio => (
+                <TouchableOpacity
+                  key={criterio}
+                  onPress={() => setOrdem(criterio)}
+                  activeOpacity={0.7}
+                  className={`px-3 h-8 items-center justify-center rounded-lg mr-1.5 border ${
+                    ordem === criterio ? 'bg-brand border-brand' : 'border-line'
                   }`}
                 >
-                  {t(
-                    criterio === 'nome'
-                      ? 'files.ordemNome'
-                      : criterio === 'data'
-                      ? 'files.ordemData'
-                      : 'files.ordemTamanho'
-                  )}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    className={`text-[12px] font-semibold ${
+                      ordem === criterio ? 'text-white' : 'text-ink-soft'
+                    }`}
+                  >
+                    {t(
+                      criterio === 'nome'
+                        ? 'files.ordemNome'
+                        : criterio === 'data'
+                        ? 'files.ordemData'
+                        : criterio === 'tamanho'
+                        ? 'files.ordemTamanho'
+                        : 'files.ordemDuracao'
+                    )}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
             <TouchableOpacity
               onPress={() => setCrescente(v => !v)}
               activeOpacity={0.7}
-              className="w-8 h-8 items-center justify-center rounded-lg border border-line ml-auto"
+              className="w-8 h-8 items-center justify-center rounded-lg border border-line ml-1.5"
             >
               <Ionicons
                 name={crescente ? 'arrow-up' : 'arrow-down'}
@@ -1040,6 +1151,60 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
                 color={hexDe(tema.paleta.tinta)}
               />
             </TouchableOpacity>
+          </View>
+
+          <View className="flex-row items-center px-4 py-2 border-b border-line">
+            <View className="flex-row rounded-lg border border-line overflow-hidden">
+              {(['lista', 'grelha'] as const).map(modo => (
+                <TouchableOpacity
+                  key={modo}
+                  onPress={() => escolherVista(modo)}
+                  activeOpacity={0.7}
+                  className={`flex-row items-center px-3 h-8 ${
+                    vista === modo ? 'bg-brand' : ''
+                  }`}
+                >
+                  <Ionicons
+                    name={modo === 'lista' ? 'list' : 'grid'}
+                    size={14}
+                    color={vista === modo ? '#FFFFFF' : hexDe(tema.paleta.tintaSoft)}
+                  />
+                  <Text
+                    className={`text-[12px] font-semibold ml-1.5 ${
+                      vista === modo ? 'text-white' : 'text-ink-soft'
+                    }`}
+                  >
+                    {t(modo === 'lista' ? 'files.vistaLista' : 'files.vistaGrelha')}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {vista === 'grelha' && (
+              <View className="flex-row items-center ml-auto">
+                <Text className="text-[11px] text-ink-muted mr-1.5">
+                  {t('files.miniatura')}
+                </Text>
+                {(['p', 'm', 'g'] as const).map(tam => (
+                  <TouchableOpacity
+                    key={tam}
+                    onPress={() => escolherTamanho(tam)}
+                    activeOpacity={0.7}
+                    className={`w-8 h-8 items-center justify-center rounded-lg mr-1 border ${
+                      tamanhoMini === tam ? 'bg-brand border-brand' : 'border-line'
+                    }`}
+                  >
+                    <Text
+                      className={`text-[12px] font-semibold ${
+                        tamanhoMini === tam ? 'text-white' : 'text-ink-soft'
+                      }`}
+                    >
+                      {tam.toUpperCase()}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </View>
 
           {files.length === 0 ? (
@@ -1050,6 +1215,26 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
                 descricao={t('files.semFicheirosDica')}
                 acaoPrimaria={{ rotulo: t('files.enviar'), aoTocar: handleUpload }}
               />
+            </View>
+          ) : visiveis.length === 0 ? (
+            <View className="px-6 py-10 items-center">
+              <Ionicons name="search" size={20} color={hexDe(tema.paleta.tintaMuted)} />
+              <Text className="text-[13px] text-ink-muted mt-2 text-center">
+                {t('files.semResultados', { q: procura.trim() })}
+              </Text>
+            </View>
+          ) : vista === 'grelha' ? (
+            <View className="flex-row flex-wrap justify-between px-3 pt-3">
+              {visiveis.map(file => (
+                <FileRow
+                  key={file.name}
+                  file={file}
+                  printerIp={enderecoDe(printer)}
+                  modo="grelha"
+                  lado={tamanhoMini === 'p' ? 1 : tamanhoMini === 'm' ? 2 : 0}
+                  onOpen={() => setSelecionado(file)}
+                />
+              ))}
             </View>
           ) : (
             <View className="mt-2">
