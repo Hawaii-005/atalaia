@@ -202,17 +202,25 @@ This project started as a fork of [CC-Tool](https://github.com/WalkerFrederick/C
 
 Same images as above — the interface is localised, so the Portuguese shots show exactly what the app looks like in Portuguese.
 
-| Home | Detail |
+| Home | Files (list) |
 |---|---|
-| ![Home](docs/img/inicio.png) | ![Detail](docs/img/detalhe.png) |
+| ![Home](docs/img/inicio.png) | ![Files in a list](docs/img/ficheiros-lista.png) |
 
-| Camera | Settings |
+| Files (grid) | File detail |
 |---|---|
-| ![Camera](docs/img/camara.png) | ![Settings](docs/img/definicoes.png) |
+| ![Files in a grid](docs/img/ficheiros.png) | ![Detail](docs/img/detalhe.png) |
 
-| Movement | Mascot (no connection) |
+| Camera | Controls |
 |---|---|
-| ![Movement](docs/img/movimento.png) | ![Mascot](docs/img/mascote.png) |
+| ![Camera](docs/img/camara.png) | ![Controls](docs/img/movimento.png) |
+
+| Themes | History |
+|---|---|
+| ![Settings](docs/img/definicoes.png) | ![History](docs/img/historico.png) |
+
+| Saturn 3 Ultra (resin) | Print queue |
+|---|---|
+| ![Saturn](docs/img/resina.png) | ![Queue](docs/img/fila.png) |
 
 ## What it does
 
