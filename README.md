@@ -87,10 +87,10 @@ Este projecto começou como fork do [CC-Tool](https://github.com/WalkerFrederick
 
 ## O que mudou em relação ao CC-Tool
 
-O fork não é uma camada de pintura sobre o original: herdou o protocolo e a estrutura, e depois foi reescrito por dentro, versão a versão (1.13 → 2.0.0).
+O fork não é uma camada de pintura sobre o original: herdou o protocolo e a estrutura, e depois foi reescrito por dentro, versão a versão (1.13 → 2.2.0).
 
 - **Identidade própria**: nome, ícone (torre de vigia com farol), splash, textos e ecrãs de boas-vindas. O antigo nome e marca desapareceram da interface.
-- **Package Android próprio** (`io.github.hawaii005.atalaia`), para não colidir com o original nem herdar a assinatura dele. A 2.0.0 é uma instalação nova, sem herdar dados de versões anteriores.
+- **Package Android próprio** (`io.github.hawaii005.atalaia`), para não colidir com o original nem herdar a assinatura dele. A 2.0.0 foi instalada de novo; daí para cá as actualizações mantêm os dados.
 - **Câmara reconstruída**: anel de progresso em SVG com o vídeo lá dentro, recorte circular, ecrã inteiro e captura 16:9.
 - **Notificações accionáveis** por categoria, com botões que não abrem a app.
 - **Guardar no telemóvel**: o `.gcode` é descarregado da impressora por HTTP, com
@@ -261,7 +261,7 @@ Same images as above — the interface is localised, so the Portuguese shots sho
 
 ## What changed from CC-Tool
 
-This fork is not a coat of paint over the original: it inherited the protocol and structure, then was rewritten from the inside, version after version (1.13 → 2.0.0).
+This fork is not a coat of paint over the original: it inherited the protocol and structure, then was rewritten from the inside, version after version (1.13 → 2.2.0).
 
 - **Its own identity**: name, icon (a watchtower with a beacon), splash, texts and welcome screens. The old name and branding are gone from the interface.
 - **Its own Android package** (`io.github.hawaii005.atalaia`), so it neither collides with the original nor inherits its signature. Version 2.0.0 installs as a new app and keeps no data from earlier versions.
