@@ -20,6 +20,11 @@ const ja = {
   'notifications.milestoneTitle': '{n}% 印刷済み',
   'notifications.milestoneBody': '{nome} の進捗が {n}% に達しました。',
   'notifications.monitorBody': 'アプリが印刷状況を監視しています',
+  'notifications.monitorTitle': '{nome} · {estado}',
+  'notifications.monitorActive': '印刷処理中',
+  'notifications.monitorProgressUnknown': '進捗不明',
+  'notifications.monitorLastKnown': '最終確認: {progresso}',
+  'notifications.monitorEta': '残り{n}分',
   'network.permissionTitle': 'ローカルネットワークへのアクセスが必要です',
   'network.permissionBody':
     'プリンターに接続するには、ローカルネットワークへのアクセスが必要です。設定で許可して続行してください。',

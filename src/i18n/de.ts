@@ -20,6 +20,11 @@ const de = {
   'notifications.milestoneTitle': '{n}% gedruckt',
   'notifications.milestoneBody': '{nome} hat {n}% erreicht.',
   'notifications.monitorBody': 'Die App überwacht deinen Druck',
+  'notifications.monitorTitle': '{nome} · {estado}',
+  'notifications.monitorActive': 'Druck läuft',
+  'notifications.monitorProgressUnknown': 'Fortschritt nicht verfügbar',
+  'notifications.monitorLastKnown': 'Letzter Stand: {progresso}',
+  'notifications.monitorEta': 'Noch {n} Min.',
   'network.permissionTitle': 'Zugriff auf das lokale Netzwerk erforderlich',
   'network.permissionBody':
     'Diese App benötigt Zugriff auf das lokale Netzwerk, um sich mit deinen Druckern zu verbinden. Aktiviere ihn in den Einstellungen, um fortzufahren.',

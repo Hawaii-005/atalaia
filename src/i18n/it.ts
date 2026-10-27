@@ -20,6 +20,11 @@ const it = {
   'notifications.milestoneTitle': '{n}% stampato',
   'notifications.milestoneBody': '{nome} ha raggiunto il {n}%.',
   'notifications.monitorBody': 'L’app sta monitorando la tua stampa',
+  'notifications.monitorTitle': '{nome} · {estado}',
+  'notifications.monitorActive': 'Stampa in corso',
+  'notifications.monitorProgressUnknown': 'Avanzamento non disponibile',
+  'notifications.monitorLastKnown': 'Ultimo stato: {progresso}',
+  'notifications.monitorEta': '{n} min rimanenti',
   'network.permissionTitle': 'È necessario l’accesso alla rete locale',
   'network.permissionBody':
     'Questa app richiede l’accesso alla rete locale per connettersi alle tue stampanti. Attivalo nelle impostazioni per continuare.',

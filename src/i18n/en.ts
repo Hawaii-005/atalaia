@@ -23,6 +23,11 @@ const en = {
   'notifications.milestoneTitle': '{n}% printed',
   'notifications.milestoneBody': '{nome} reached {n}%.',
   'notifications.monitorBody': 'The app is monitoring your print',
+  'notifications.monitorTitle': '{nome} · {estado}',
+  'notifications.monitorActive': 'Print in progress',
+  'notifications.monitorProgressUnknown': 'Progress unavailable',
+  'notifications.monitorLastKnown': 'Last known: {progresso}',
+  'notifications.monitorEta': '{n} min left',
   'network.permissionTitle': 'Local network access needed',
   'network.permissionBody':
     'This app needs local network access to connect to your printers. Enable it in Settings to continue.',

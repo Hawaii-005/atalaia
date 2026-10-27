@@ -20,6 +20,11 @@ const nl = {
   'notifications.milestoneTitle': '{n}% geprint',
   'notifications.milestoneBody': '{nome} heeft {n}% bereikt.',
   'notifications.monitorBody': 'De app houdt je print in de gaten',
+  'notifications.monitorTitle': '{nome} · {estado}',
+  'notifications.monitorActive': 'Print bezig',
+  'notifications.monitorProgressUnknown': 'Voortgang niet beschikbaar',
+  'notifications.monitorLastKnown': 'Laatst bekend: {progresso}',
+  'notifications.monitorEta': 'Nog {n} min',
   'network.permissionTitle': 'Toegang tot lokaal netwerk nodig',
   'network.permissionBody':
     'Deze app heeft toegang tot het lokale netwerk nodig om verbinding te maken met je printers. Schakel dit in bij Instellingen om door te gaan.',

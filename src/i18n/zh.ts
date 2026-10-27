@@ -19,6 +19,11 @@ const zh = {
   'notifications.milestoneTitle': '已打印 {n}%',
   'notifications.milestoneBody': '{nome} 的进度已达到 {n}%。',
   'notifications.monitorBody': '应用正在监控你的打印任务',
+  'notifications.monitorTitle': '{nome} · {estado}',
+  'notifications.monitorActive': '打印进行中',
+  'notifications.monitorProgressUnknown': '进度未知',
+  'notifications.monitorLastKnown': '上次状态：{progresso}',
+  'notifications.monitorEta': '剩余{n}分钟',
   'network.permissionTitle': '需要本地网络访问权限',
   'network.permissionBody':
     '此应用需要访问本地网络才能连接打印机。请在设置中启用权限以继续。',

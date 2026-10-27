@@ -20,6 +20,11 @@ const pl = {
   'notifications.milestoneTitle': 'Wydrukowano {n}%',
   'notifications.milestoneBody': '{nome} osiągnęła {n}%.',
   'notifications.monitorBody': 'Aplikacja monitoruje Twój wydruk',
+  'notifications.monitorTitle': '{nome} · {estado}',
+  'notifications.monitorActive': 'Drukowanie w toku',
+  'notifications.monitorProgressUnknown': 'Postęp niedostępny',
+  'notifications.monitorLastKnown': 'Ostatni stan: {progresso}',
+  'notifications.monitorEta': 'Pozostało {n} min',
   'network.permissionTitle': 'Wymagany dostęp do sieci lokalnej',
   'network.permissionBody':
     'Aplikacja potrzebuje dostępu do sieci lokalnej, aby łączyć się z drukarkami. Włącz go w Ustawieniach, aby kontynuować.',
