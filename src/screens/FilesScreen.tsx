@@ -39,7 +39,7 @@ import { extrairMiniaturaEmbutida, extrairMiniaturaEmbutidaFila, ferramentasUsad
 import { duracaoDoNome, formatDuracao } from '../utils/duracao';
 import { descarregarGcode, partilharFicheiro } from '../utils/transferir';
 import { lerTimelapse } from '../utils/timelapse';
-import { t } from '../i18n';
+import { t, useIdioma } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 import { BT_ACENTO, BT_APAGADA, BT_NEUTRA, BT_PERIGO, TX_ACENTO, TX_PERIGO } from '../theme/botoes';
@@ -216,6 +216,7 @@ const FileDetails = ({
   onDelete: () => void;
   onRename: () => void;
 }) => {
+  useIdioma();
   const { tema } = useTheme();
   const size = file.FileSize ?? file.totalSize ?? file.usedSize ?? 0;
   const { preview, filamentos, consumo, loading } = useGcodePreview(
@@ -749,6 +750,7 @@ const FileDetails = ({
 };
 
 export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embutido }: any) => {
+  useIdioma();
   const { tema } = useTheme();
   const printerId = printerIdProp ?? route?.params?.printerId;
   const { printers, request, adicionarAFila } = usePrinterConnections();

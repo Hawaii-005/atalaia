@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { hexDe } from '../theme/temas';
-import { t } from '../i18n';
+import { t, useIdioma } from '../i18n';
 
 type Props = {
   /** Deixa o cartão crescer até ao fundo do ecrã (ecrã da fila). */
@@ -22,6 +22,7 @@ type Props = {
  * apagar o que estava à espera.
  */
 export const CartaoFila = ({ esticar, mostrarAuto = true, mostrarTitulo = true, onAbrir }: Props) => {
+  useIdioma();
   const { tema } = useTheme();
   const p = tema.paleta;
   const { fila, removerDaFila, limparFila, filaAuto, definirFilaAuto, printers } = usePrinterConnections();

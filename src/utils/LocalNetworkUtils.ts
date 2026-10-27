@@ -1,4 +1,5 @@
 import { Platform, Alert, Linking } from 'react-native';
+import { t } from '../i18n';
 import {
   checkLocalNetworkAccess,
   requestLocalNetworkAccess,
@@ -17,22 +18,18 @@ export const checkLocalNetworkPermission = async (): Promise<boolean> => {
     const hasAccess = await checkLocalNetworkAccess();
 
     if (!hasAccess) {
-      Alert.alert(
-        'Acesso à rede local necessário',
-        'Esta app precisa de acesso à rede local para ligar às impressoras. Activa o acesso em Definições para continuar.',
-        [
-          {
-            text: 'Cancelar',
-            style: 'cancel',
+      Alert.alert(t('network.permissionTitle'), t('network.permissionBody'), [
+        {
+          text: t('comum.cancelar'),
+          style: 'cancel',
+        },
+        {
+          text: t('network.openSettings'),
+          onPress: () => {
+            Linking.openSettings();
           },
-          {
-            text: 'Abrir definições',
-            onPress: () => {
-              Linking.openSettings();
-            },
-          },
-        ]
-      );
+        },
+      ]);
       return false;
     }
 
@@ -40,8 +37,8 @@ export const checkLocalNetworkPermission = async (): Promise<boolean> => {
   } catch (error) {
     console.error('Error checking local network access:', error);
     Alert.alert(
-      'Erro de acesso à rede',
-      'Não foi possível verificar o acesso à rede local. Confirma as permissões.',
+      t('network.permissionErrorTitle'),
+      t('network.permissionErrorBody'),
       [{ text: 'OK' }]
     );
     return false;

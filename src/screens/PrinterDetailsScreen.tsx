@@ -35,7 +35,7 @@ import {
   timelapseCommand,
   type SdcpCommand,
 } from '../utils/commands';
-import { t } from '../i18n';
+import { t, useIdioma, localeActual } from '../i18n';
 import type { ConnectionStatus } from '../types';
 import { classificarEstado } from '../types';
 import { useTheme } from '../contexts/ThemeContext';
@@ -58,6 +58,7 @@ const CONNECTION_LABEL: { [key in ConnectionStatus]: string } = {
 };
 
 export const PrinterDetailsScreen = ({ navigation }: any) => {
+  useIdioma();
   const { tema } = useTheme();
   const route = useRoute();
   const { printerId } = route.params as { printerId: string };
@@ -439,7 +440,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
           <Text className="ml-2 text-[11px] text-ink-soft">
             {printer.lastUpdate
               ? t('details.ultimoEstado', {
-                  hora: new Date(printer.lastUpdate).toLocaleTimeString('pt-PT', {
+                  hora: new Date(printer.lastUpdate).toLocaleTimeString(localeActual(), {
                     hour: '2-digit',
                     minute: '2-digit',
                   }),

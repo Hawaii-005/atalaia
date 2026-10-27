@@ -16,7 +16,7 @@ import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 import { anel, espaco, raio as raioToken } from '../theme/tokensV6';
-import { t } from '../i18n';
+import { t, useIdioma } from '../i18n';
 import { getPrintStatus, Printer } from '../types';
 import { htmlDoVideo } from '../utils/cameraStream';
 import { enderecoDe } from '../utils/rede';
@@ -137,6 +137,7 @@ export const PainelSection = ({
   printer?: Printer;
   onAbrirCamara?: () => void;
 }) => {
+  useIdioma();
   const { tema } = useTheme();
   const paleta = tema.paleta;
   const { request } = usePrinterConnections();

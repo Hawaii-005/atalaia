@@ -5,7 +5,7 @@ import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 import { canvasSlotsCommand, CanvasTray } from '../utils/commands';
-import { t } from '../i18n';
+import { t, useIdioma } from '../i18n';
 import { EstadoVazio } from '../ui/EstadoVazio';
 
 /**
@@ -54,6 +54,7 @@ export const FilamentosScreen = ({
   printerId,
   embutido,
 }: { printerId?: string; embutido?: boolean } = {}) => {
+  useIdioma();
   const { tema } = useTheme();
   const paleta = tema.paleta;
   const { printers, request } = usePrinterConnections();

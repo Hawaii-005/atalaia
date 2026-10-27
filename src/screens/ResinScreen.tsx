@@ -21,7 +21,7 @@ import {
 import { mensagemDoErro } from '../utils/errors';
 import { extrairMiniatura } from '../saturn/miniatura';
 import { isPausable, isResumable, isStoppable } from '../types';
-import { t } from '../i18n';
+import { t, useIdioma } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 import {
@@ -50,6 +50,7 @@ const formatoTempo = (segundos: number) => {
 
 /** Ecrã de uma impressora de resina (Saturn 3 Ultra). */
 export const ResinScreen = ({ navigation, route }: any) => {
+  useIdioma();
   const { printerId } = route.params ?? {};
   const { tema } = useTheme();
   const { printers, request, reconnectAll, carregarParaSaturno, imprimirNoSaturno } =

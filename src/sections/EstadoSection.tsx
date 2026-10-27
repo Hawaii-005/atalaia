@@ -1,5 +1,5 @@
 import { fonteNumeros } from '~/theme/tokensV6';
-import React, { useMemo } from 'react';
+import React from 'react';
 import { View, Text, TouchableOpacity, Alert, ScrollView, Image } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useIsFocused } from '@react-navigation/native';
@@ -15,7 +15,7 @@ import { Mascote } from '../ui/Mascote';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 import { anel, espaco, raio as raioToken } from '../theme/tokensV6';
-import { t } from '../i18n';
+import { t, useIdioma } from '../i18n';
 import { getPrintStatus, Printer } from '../types';
 import {
   pausePrintCommand,
@@ -90,6 +90,7 @@ const Anel: React.FC<{
 );
 
 export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; onAbrirCamara?: () => void }) => {
+  useIdioma();
   const { tema } = useTheme();
   const paleta = tema.paleta;
   const { request, sendCommand, reconnectAll } = usePrinterConnections();
@@ -105,7 +106,7 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
   if (ligada) jaLigouAntes.current = true;
   const resina = (printer?.kind ?? 'fdm') === 'resin';
 
-  const estado = useMemo(() => {
+  const estado = (() => {
     if (!ligada) return { texto: t('inicio.semLigacao'), cor: hexDe(paleta.perigo) };
     if (!info?.Filename) return { texto: t('inicio.pronta'), cor: hexDe(paleta.ok) };
     const s = getPrintStatus(info.Status ?? 0);
@@ -115,7 +116,7 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
     if (s === 'completed') return { texto: t('estado.terminada'), cor: hexDe(paleta.tintaSoft) };
     if (s === 'stopped') return { texto: t('estado.parada'), cor: hexDe(paleta.perigo) };
     return { texto: t('inicio.pronta'), cor: hexDe(paleta.ok) };
-  }, [info, ligada, paleta]);
+  })();
 
   const segundosRestantes = restante((info?.TotalTicks ?? 0) - (info?.CurrentTicks ?? 0));
 

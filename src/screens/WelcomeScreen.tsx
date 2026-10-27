@@ -12,7 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
-import { t } from '../i18n';
+import { t, useIdioma } from '../i18n';
 import { Mascote } from '../ui/Mascote';
 
 const SLIDES = [
@@ -40,6 +40,7 @@ const SLIDES = [
 ];
 
 const WelcomeScreen = ({ onComplete }: { onComplete: () => void }) => {
+  useIdioma();
   const { escuro: isDark, tema } = useTheme();
   const pagerRef = React.useRef<PagerView>(null);
   const [page, setPage] = React.useState(0);

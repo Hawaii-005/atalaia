@@ -31,7 +31,7 @@ import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { Header } from '../components/Header';
 import { isResumable } from '../types';
 import type { ConnectionStatus } from '../types';
-import { t } from '../i18n';
+import { t, useIdioma } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 import { BT_ACENTO, BT_APAGADA, BT_NEUTRA, BT_PERIGO, TX_ACENTO, TX_PERIGO } from '../theme/botoes';
@@ -87,6 +87,7 @@ const SnapshotAoVivo = ({
 };
 
 export const CameraScreen = ({ navigation, route }: any) => {
+  useIdioma();
   const { tema } = useTheme();
   // Keep the display awake while the camera tab is open.
   useKeepAwake();

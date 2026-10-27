@@ -7,7 +7,7 @@ import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSelectedPrinter } from '../contexts/SelectedPrinterContext';
 import { hexDe } from '../theme/temas';
-import { t } from '../i18n';
+import { t, useIdioma } from '../i18n';
 import { getPrintStatus, isResumable, Printer } from '../types';
 import { loadHistory, formatDuration, PrintRecord } from '../utils/printHistory';
 import { useJanela } from '../theme/layout';
@@ -40,6 +40,7 @@ const nomeCurto = (ficheiro?: string) => {
 const euros = (valor: number) => `${valor.toFixed(2).replace('.', ',')} €`;
 
 export const InicioScreen = ({ navigation }: any) => {
+  useIdioma();
   const { tema } = useTheme();
   const paleta = tema.paleta;
   const { printers, request } = usePrinterConnections();

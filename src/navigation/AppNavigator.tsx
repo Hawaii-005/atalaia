@@ -21,7 +21,7 @@ import { useJanela } from '../theme/layout';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
-import { t } from '../i18n';
+import { t, useIdioma } from '../i18n';
 
 const Tab = createBottomTabNavigator();
 const Gaveta = createDrawerNavigator();
@@ -35,6 +35,7 @@ const Root = createStackNavigator();
  * registado em três sítios.
  */
 const Abas = () => {
+  useIdioma();
   const { tema } = useTheme();
   // A altura fixa da barra tem de incluir a área do gesto: sem isto, num
   // telemóvel com navegação por gestos (S25) as legendas ficam a 23 dp do

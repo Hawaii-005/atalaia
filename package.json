@@ -1,6 +1,6 @@
 {
   "name": "atalaia",
-  "version": "2.4.1",
+  "version": "2.4.2",
   "license": "MIT",
   "scripts": {
     "android": "expo start --android --dev-client",
@@ -29,6 +29,7 @@
     "expo-document-picker": "~13.1.6",
     "expo-file-system": "~18.1.11",
     "expo-keep-awake": "~14.1.4",
+    "expo-localization": "~16.1.6",
     "expo-media-library": "~17.1.7",
     "expo-navigation-bar": "~4.2.7",
     "expo-network": "~7.1.5",
@@ -59,6 +60,7 @@
     "@babel/core": "^7.20.0",
     "@types/jest": "^30.0.0",
     "@types/react": "~19.0.10",
+    "@types/react-test-renderer": "^19.0.0",
     "@types/spark-md5": "^3.0.5",
     "eslint": "^9.25.1",
     "eslint-config-expo": "^9.2.0",
@@ -66,6 +68,7 @@
     "jest": "^30.5.2",
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.5.11",
+    "react-test-renderer": "19.0.0",
     "tailwindcss": "^3.4.0",
     "ts-jest": "^29.4.15",
     "typescript": "~5.8.3"

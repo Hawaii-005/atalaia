@@ -11,7 +11,7 @@ import {
 import { mensagemDoErro } from '../utils/errors';
 import { formatTicksToReadableTime, formatTimeAgo } from '../utils/FormatUtils';
 import { miniaturaDe } from '../saturn/miniatura';
-import { t } from '../i18n';
+import { t, useIdioma } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 import {
@@ -38,6 +38,7 @@ interface Props {
  * (ficheiro, camada, tempos, estado) — nada de temperaturas nem pré-visualização.
  */
 export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
+  useIdioma();
   const { tema } = useTheme();
   const { request } = usePrinterConnections();
 

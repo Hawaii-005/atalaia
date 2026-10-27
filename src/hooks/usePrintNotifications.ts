@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { getPrintStatus, Printer, PrintStatus } from '../types';
 import { finishRecord, startRecord } from '../utils/printHistory';
+import { t } from '../i18n';
 import {
   DEFAULT_PREFS,
   NotificationPrefs,
@@ -53,14 +54,20 @@ export const usePrintNotifications = (printers: Printer[]) => {
       const previous = snapshotRef.current[printer.id];
 
       const statusBase =
-        rawStatus === undefined ? previous?.status ?? 'idle' : getPrintStatus(rawStatus);
+        rawStatus === undefined
+          ? (previous?.status ?? 'idle')
+          : getPrintStatus(rawStatus);
 
       const emPrimeiroPlano = AppState.currentState === 'active';
       const ticksAtuais = info?.CurrentTicks ?? 0;
       const agora = Date.now();
       const anterior = ticksRef.current[printer.id];
       if (!anterior || anterior.valor !== ticksAtuais) {
-        ticksRef.current[printer.id] = { valor: ticksAtuais, desde: agora, iguais: 0 };
+        ticksRef.current[printer.id] = {
+          valor: ticksAtuais,
+          desde: agora,
+          iguais: 0,
+        };
       } else if (emPrimeiroPlano) {
         anterior.iguais += 1;
       }
@@ -76,7 +83,7 @@ export const usePrintNotifications = (printers: Printer[]) => {
 
       const status: PrintStatus = emPausa ? 'paused' : statusBase;
       const progress = info?.Progress ?? 0;
-      const filename = info?.Filename || 'your print';
+      const filename = info?.Filename || t('notifications.defaultPrint');
 
       const nowPrinting = status === 'printing';
       const wasPrinting = previous?.status === 'printing';
@@ -125,8 +132,8 @@ export const usePrintNotifications = (printers: Printer[]) => {
           previous.status === 'printing'
         ) {
           notify(
-            'Impressora desligada',
-            `${printer.printerName} perdeu a ligação à rede a imprimir.`,
+            t('comum.impressoraDesligada'),
+            t('notifications.offlineBody', { nome: printer.printerName }),
             { printerId: printer.id }
           );
         }
@@ -134,15 +141,21 @@ export const usePrintNotifications = (printers: Printer[]) => {
         if (connected && previous.status !== status) {
           if (status === 'completed' && prefs.finished) {
             notify(
-              'Impressão terminada',
-              `${printer.printerName} concluiu ${filename}.`,
+              t('comum.impressaoConcluida'),
+              t('notifications.completedBody', {
+                nome: printer.printerName,
+                ficheiro: filename,
+              }),
               { printerId: printer.id }
             );
           }
           if (status === 'paused' && prefs.paused) {
             notify(
-              'Impressão em pausa',
-              `${printer.printerName} pausou ${filename}.`,
+              t('notifications.pausedTitle'),
+              t('notifications.pausedBody', {
+                nome: printer.printerName,
+                ficheiro: filename,
+              }),
               { printerId: printer.id },
               'em-pausa',
               enderecoDe(printer)
@@ -150,8 +163,11 @@ export const usePrintNotifications = (printers: Printer[]) => {
           }
           if (status === 'stopped' && prefs.paused) {
             notify(
-              'Impressão parada',
-              `${printer.printerName} parou ${filename}.`,
+              t('notifications.stoppedTitle'),
+              t('notifications.stoppedBody', {
+                nome: printer.printerName,
+                ficheiro: filename,
+              }),
               { printerId: printer.id },
               'em-curso',
               enderecoDe(printer)
@@ -168,8 +184,11 @@ export const usePrintNotifications = (printers: Printer[]) => {
           MILESTONES.forEach(mark => {
             if (previous.progress < mark && progress >= mark) {
               notify(
-                `${mark}% impressos`,
-                `${printer.printerName} chegou aos ${mark}%.`,
+                t('notifications.milestoneTitle', { n: mark }),
+                t('notifications.milestoneBody', {
+                  nome: printer.printerName,
+                  n: mark,
+                }),
                 { printerId: printer.id }
               );
             }

@@ -20,7 +20,7 @@ import {
   printHistoryDetailCommand,
 } from '../utils/commands';
 import { mensagemDeErro } from '../utils/errors';
-import { t } from '../i18n';
+import { t, useIdioma } from '../i18n';
 import { enderecoDe } from '../utils/rede';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
@@ -69,6 +69,7 @@ const StatCard = ({
 );
 
 export const StatsScreen = ({ navigation }: any) => {
+  useIdioma();
   const { tema } = useTheme();
   const { printers, request } = usePrinterConnections();
   const printer = printers[0];

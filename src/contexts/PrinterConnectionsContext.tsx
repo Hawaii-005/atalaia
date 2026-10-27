@@ -36,7 +36,7 @@ import { notify } from '../utils/notifications';
 import { mensagemDoErro } from '../utils/errors';
 import { lerTimelapse } from '../utils/timelapse';
 import { requestPrinterRecovery } from '../utils/printerDiscoverySafety';
-import { t } from '../i18n';
+import { t, useIdioma } from '../i18n';
 
 interface PrinterConnectionsContextType {
   printers: Printer[];
@@ -110,6 +110,7 @@ export const PrinterConnectionsProvider = ({
 }: {
   children: ReactNode;
 }) => {
+  const { idioma } = useIdioma();
   const [printers, setPrinters] = useState<Printer[]>([]);
   const [fila, setFila] = useState<ItemFila[]>([]);
   const [hidratado, setHidratado] = useState(false);
@@ -1261,6 +1262,7 @@ export const PrinterConnectionsProvider = ({
   // Enquanto há impressão, o Android pode matar a app e os avisos morrem com
   // ela. Uma notificação fixa do serviço evita isso; para quando acaba.
   const monitorActivoRef = useRef(false);
+  const monitorIdiomaRef = useRef<string | null>(null);
   useEffect(() => {
     const emCurso = printers.some(printer => {
       const info = printer.status?.PrintInfo;
@@ -1269,16 +1271,22 @@ export const PrinterConnectionsProvider = ({
     });
     const servico = NativeModules.MonitorServico;
     if (!servico) return;
-    if (emCurso && !monitorActivoRef.current) {
+    if (
+      emCurso &&
+      (!monitorActivoRef.current || monitorIdiomaRef.current !== idioma)
+    ) {
       monitorActivoRef.current = true;
+      monitorIdiomaRef.current = idioma;
       servico
-        .iniciar('A imprimir', 'A app está a acompanhar a impressão')
-        .catch(() => undefined);
+        .iniciar(t('comum.aImprimir'), t('notifications.monitorBody'))
+        .catch((error: unknown) =>
+          console.error('Failed to update print monitor:', error)
+        );
     } else if (!emCurso && monitorActivoRef.current) {
       monitorActivoRef.current = false;
       servico.parar().catch(() => undefined);
     }
-  }, [printers]);
+  }, [printers, idioma]);
 
   // ---------- Fila de impressão ----------
   useEffect(() => {

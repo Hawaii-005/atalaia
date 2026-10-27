@@ -20,7 +20,6 @@ class MonitorService : Service() {
   override fun onBind(intent: Intent?): IBinder? = null
 
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-    criarCanal()
     val abrir = PendingIntent.getActivity(
       this,
       0,
@@ -28,7 +27,8 @@ class MonitorService : Service() {
       PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
     )
     val titulo = intent?.getStringExtra("titulo") ?: "Atalaia"
-    val texto = intent?.getStringExtra("texto") ?: "A acompanhar a impressão"
+    val texto = intent?.getStringExtra("texto") ?: "Monitoring your print"
+    criarCanal(titulo)
 
     val notificacao: Notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       Notification.Builder(this, CANAL)
@@ -53,15 +53,15 @@ class MonitorService : Service() {
     return START_NOT_STICKY
   }
 
-  private fun criarCanal() {
+  private fun criarCanal(nome: String) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
     val gerente = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-    if (gerente.getNotificationChannel(CANAL) != null) return
-    val canal = NotificationChannel(
+    val canal = gerente.getNotificationChannel(CANAL) ?: NotificationChannel(
       CANAL,
-      "Acompanhar impressão",
+      nome,
       NotificationManager.IMPORTANCE_LOW
     )
+    canal.name = nome
     canal.setShowBadge(false)
     gerente.createNotificationChannel(canal)
   }
