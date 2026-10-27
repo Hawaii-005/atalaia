@@ -35,6 +35,8 @@ import { ItemFila, carregarFila, gravarFila } from '../utils/fila';
 import { notify } from '../utils/notifications';
 import { mensagemDoErro } from '../utils/errors';
 import { lerTimelapse } from '../utils/timelapse';
+import { requestPrinterRecovery } from '../utils/printerDiscoverySafety';
+import { t } from '../i18n';
 
 interface PrinterConnectionsContextType {
   printers: Printer[];
@@ -117,7 +119,9 @@ export const PrinterConnectionsProvider = ({
   const webSocketsRef = useRef<{ [key: string]: WebSocket }>({});
   // Impressoras de resina: falam SDCP V1 sobre MQTT, não WebSocket.
   const saturnoRef = useRef<{ [key: string]: LigacaoSaturno }>({});
-  const vigiasSaturnoRef = useRef<{ [key: string]: ReturnType<typeof setInterval> }>({});
+  const vigiasSaturnoRef = useRef<{
+    [key: string]: ReturnType<typeof setInterval>;
+  }>({});
   const statusTimersRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
   // Vigia de silêncio: se a impressora não enviar nada neste tempo, a ligação
   // TCP pode estar morta sem `onclose` (foi desligada da corrente, Wi-Fi caiu).
@@ -133,6 +137,7 @@ export const PrinterConnectionsProvider = ({
     DEFAULT_STATUS_INTERVAL
   );
   const printersRef = useRef<Printer[]>([]);
+  const pendingIpChangesRef = useRef(new Set<string>());
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
   const pendingRequestsRef = useRef<{
     [key: string]: {
@@ -145,9 +150,9 @@ export const PrinterConnectionsProvider = ({
 
   // Reconexão automática: temporizadores por impressora, nº de tentativas e
   // marca de fecho intencional (não reconectar quando fomos nós que fechámos).
-  const reconnectTimersRef = useRef<{ [key: string]: ReturnType<typeof setTimeout> }>(
-    {}
-  );
+  const reconnectTimersRef = useRef<{
+    [key: string]: ReturnType<typeof setTimeout>;
+  }>({});
   const reconnectAttemptsRef = useRef<{ [key: string]: number }>({});
   const intentionalCloseRef = useRef<{ [key: string]: boolean }>({});
   const timerPrimeiroPlano = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -158,6 +163,7 @@ export const PrinterConnectionsProvider = ({
   }>({});
 
   useEffect(() => {
+    const pendingIpChanges = pendingIpChangesRef.current;
     const loadPrinters = async () => {
       try {
         const savedPrintersJSON = await AsyncStorage.getItem('printers');
@@ -185,6 +191,7 @@ export const PrinterConnectionsProvider = ({
     loadPrinters();
 
     return () => {
+      pendingIpChanges.clear();
       // Sem reconexões nem pedidos órfãos depois do unmount: mata timers,
       // rejeita pedidos pendentes e tira os handlers antes de fechar, para o
       // `onclose` não tentar fazer setState sobre um componente morto.
@@ -287,7 +294,15 @@ export const PrinterConnectionsProvider = ({
     const savePrinters = async () => {
       try {
         const printersToSave = printers.map(
-          ({ id, printerName, ipAddress, alternateIp, mainboardId, kind, sdcpId }) => ({
+          ({
+            id,
+            printerName,
+            ipAddress,
+            alternateIp,
+            mainboardId,
+            kind,
+            sdcpId,
+          }) => ({
             id,
             printerName,
             ipAddress,
@@ -452,8 +467,8 @@ export const PrinterConnectionsProvider = ({
 
   /**
    * The printer gets its address from DHCP, so it can come back on a different
-   * IP after a reboot. When a connection drops, rescan the network once a
-   * minute and reconnect silently if the same machine answers elsewhere.
+   * IP after a reboot. Discovery can suggest a replacement, but cannot
+   * authenticate it: require approval before changing the saved destination.
    */
   const healPrinterIp = async (printer: Printer) => {
     // Pelo Tailscale não se "cura" IP: a rede é outra e a descoberta UDP
@@ -469,33 +484,71 @@ export const PrinterConnectionsProvider = ({
     const estado = printer.status?.PrintInfo;
     const aImprimir =
       !!estado?.Filename && ![0, 7, 8, 9].includes(estado.Status ?? 0);
+    if (aImprimir || pendingIpChangesRef.current.has(printer.id)) {
+      return;
+    }
     const ultima = ipHealRef.current[printer.id] ?? 0;
     if (Date.now() - ultima < 5 * 60 * 1000) {
       return;
     }
     ipHealRef.current[printer.id] = Date.now();
+    pendingIpChangesRef.current.add(printer.id);
 
     try {
       const discovered = await descobrirSoUdp();
-      // A meio de uma impressão só se aceita a máquina certa: o nome pode
-      // repetir-se na rede, o mainboardId não.
-      const match = discovered.find(d =>
-        aImprimir
-          ? !!printer.mainboardId && d.mainboardId === printer.mainboardId
-          : (!!printer.mainboardId &&
-              d.mainboardId === printer.mainboardId) ||
-            d.name.trim().toLowerCase() ===
-              printer.printerName.trim().toLowerCase()
+      const currentPrinter = () => {
+        const current = printersRef.current.find(p => p.id === printer.id);
+        const info = current?.status?.PrintInfo;
+        if (
+          !pendingIpChangesRef.current.has(printer.id) ||
+          AppState.currentState !== 'active' ||
+          !current ||
+          current.ipAddress !== printer.ipAddress ||
+          current.mainboardId !== printer.mainboardId ||
+          current.connectionStatus === 'connected' ||
+          (current.activeIp && current.activeIp !== current.ipAddress) ||
+          (info?.Filename && ![0, 7, 8, 9].includes(info.Status ?? 0))
+        ) {
+          return undefined;
+        }
+        return current;
+      };
+      if (!currentPrinter()) return;
+      const match = await requestPrinterRecovery(
+        printer,
+        discovered,
+        candidate =>
+          new Promise<boolean>(resolve => {
+            Alert.alert(
+              t('home.confirmarIpTitulo'),
+              t('home.confirmarIpMensagem', {
+                nome: printer.printerName,
+                antigo: printer.ipAddress,
+                novo: candidate.ip,
+              }),
+              [
+                {
+                  text: t('comum.cancelar'),
+                  style: 'cancel',
+                  onPress: () => resolve(false),
+                },
+                {
+                  text: t('home.confirmarIpAceitar'),
+                  onPress: () => resolve(true),
+                },
+              ],
+              { cancelable: true, onDismiss: () => resolve(false) }
+            );
+          })
       );
-
-      if (match && match.ip !== printer.ipAddress) {
-        log(
-          `Auto-healed ${printer.printerName}: ${printer.ipAddress} -> ${match.ip}`
-        );
+      if (match && currentPrinter()) {
+        log(`Approved IP change for ${printer.printerName}`);
         updatePrinterIp(printer.id, match.ip);
       }
     } catch (error) {
       log('Auto IP heal failed', error);
+    } finally {
+      pendingIpChangesRef.current.delete(printer.id);
     }
   };
 
