@@ -1,0 +1,33 @@
+name: Ataláia CI
+
+on:
+  push:
+    branches: [ main, 'fase-*' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Verificação do Linter
+        run: npm run lint
+
+      - name: Verificação de Tipos TypeScript
+        run: npx tsc --noEmit
+
+      - name: Testes Unitários e Cobertura
+        run: npm test -- --coverage
