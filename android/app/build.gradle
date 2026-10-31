@@ -92,8 +92,8 @@ android {
         applicationId 'io.github.hawaii005.atalaia'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 210
-        versionName "2.4.3"
+        versionCode 211
+        versionName "2.4.4"
     }
     def credenciaisReleaseValidas = new File(System.getProperty('user.home'), '.hermes/cctool-release/credenciais.txt').exists()
 
