@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    <!-- Tráfego HTTP/WS sem TLS permitido para redes privadas locais, localhost e nomes locais -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">local</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
+        <domain includeSubdomains="true">ts.net</domain>
+        <domain includeSubdomains="true">10.in-addr.arpa</domain>
+        <domain includeSubdomains="true">168.192.in-addr.arpa</domain>
+    </domain-config>
+</network-security-config>
