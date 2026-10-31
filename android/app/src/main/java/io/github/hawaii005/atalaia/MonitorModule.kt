@@ -2,6 +2,7 @@ package io.github.hawaii005.atalaia
 
 import android.content.Intent
 import android.os.Build
+import android.os.SystemClock
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
@@ -15,11 +16,37 @@ class MonitorModule(private val contexto: ReactApplicationContext) :
 
   @ReactMethod
   fun iniciar(titulo: String, texto: String, promise: Promise?) {
+    iniciarServico(Intent(contexto, MonitorService::class.java).apply {
+      putExtra("titulo", titulo)
+      putExtra("texto", texto)
+    }, promise)
+  }
+
+  @ReactMethod
+  fun atualizar(
+    titulo: String,
+    texto: String,
+    progresso: Double,
+    indeterminado: Boolean,
+    tituloOffline: String,
+    textoOffline: String,
+    validadeMs: Double,
+    promise: Promise?
+  ) {
+    iniciarServico(Intent(contexto, MonitorService::class.java).apply {
+      putExtra("titulo", titulo)
+      putExtra("texto", texto)
+      putExtra("progresso", progresso)
+      putExtra("indeterminado", indeterminado)
+      putExtra("tituloOffline", tituloOffline)
+      putExtra("textoOffline", textoOffline)
+      putExtra("validadeMs", validadeMs)
+      putExtra("recebidoEm", SystemClock.elapsedRealtime())
+    }, promise)
+  }
+
+  private fun iniciarServico(intencao: Intent, promise: Promise?) {
     try {
-      val intencao = Intent(contexto, MonitorService::class.java).apply {
-        putExtra("titulo", titulo)
-        putExtra("texto", texto)
-      }
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         contexto.startForegroundService(intencao)
       } else {

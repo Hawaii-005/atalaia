@@ -19,6 +19,11 @@ export default {
   'notifications.milestoneTitle': '{n}% impressos',
   'notifications.milestoneBody': '{nome} chegou aos {n}%.',
   'notifications.monitorBody': 'A app está a acompanhar a impressão',
+  'notifications.monitorTitle': '{nome} · {estado}',
+  'notifications.monitorActive': 'Impressão em curso',
+  'notifications.monitorProgressUnknown': 'Progresso indisponível',
+  'notifications.monitorLastKnown': 'Último registo: {progresso}',
+  'notifications.monitorEta': 'Faltam {n} min',
   'network.permissionTitle': 'Acesso à rede local necessário',
   'network.permissionBody':
     'Esta app precisa de acesso à rede local para ligar às impressoras. Ative o acesso em Definições para continuar.',

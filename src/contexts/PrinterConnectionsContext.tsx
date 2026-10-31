@@ -37,6 +37,8 @@ import { mensagemDoErro } from '../utils/errors';
 import { lerTimelapse } from '../utils/timelapse';
 import { requestPrinterRecovery } from '../utils/printerDiscoverySafety';
 import { t, useIdioma } from '../i18n';
+import { buildPrintMonitorStatus } from '../utils/printMonitorStatus';
+import { createPrintMonitorService } from '../utils/printMonitorService';
 
 interface PrinterConnectionsContextType {
   printers: Printer[];
@@ -1261,32 +1263,34 @@ export const PrinterConnectionsProvider = ({
   // ---------- Serviço em primeiro plano ----------
   // Enquanto há impressão, o Android pode matar a app e os avisos morrem com
   // ela. Uma notificação fixa do serviço evita isso; para quando acaba.
-  const monitorActivoRef = useRef(false);
-  const monitorIdiomaRef = useRef<string | null>(null);
+  const monitorRef = useRef<ReturnType<typeof createPrintMonitorService> | null>(
+    null
+  );
+  if (!monitorRef.current && NativeModules.MonitorServico) {
+    monitorRef.current = createPrintMonitorService(
+      NativeModules.MonitorServico,
+      (error: unknown) =>
+        console.error('Failed to update print monitor:', error)
+    );
+  }
   useEffect(() => {
-    const emCurso = printers.some(printer => {
-      const info = printer.status?.PrintInfo;
-      if (!info?.Filename) return false;
-      return ![0, 7, 8, 9].includes(info.Status ?? 0);
-    });
-    const servico = NativeModules.MonitorServico;
-    if (!servico) return;
-    if (
-      emCurso &&
-      (!monitorActivoRef.current || monitorIdiomaRef.current !== idioma)
-    ) {
-      monitorActivoRef.current = true;
-      monitorIdiomaRef.current = idioma;
-      servico
-        .iniciar(t('comum.aImprimir'), t('notifications.monitorBody'))
-        .catch((error: unknown) =>
-          console.error('Failed to update print monitor:', error)
-        );
-    } else if (!emCurso && monitorActivoRef.current) {
-      monitorActivoRef.current = false;
-      servico.parar().catch(() => undefined);
-    }
-  }, [printers, idioma]);
+    const refresh = () => {
+      void monitorRef.current?.set(
+        buildPrintMonitorStatus(printers, statusIntervalMs, Date.now(), t)
+      );
+    };
+    if (!monitorRef.current) return;
+    refresh();
+    // Retry bridge failures and reselect live jobs; only printer heartbeats
+    // extend freshness, never this timer or an unrelated provider render.
+    const timer = setInterval(refresh, 5000);
+    return () => clearInterval(timer);
+  }, [printers, idioma, statusIntervalMs]);
+  useEffect(() => {
+    return () => {
+      void monitorRef.current?.set(null);
+    };
+  }, []);
 
   // ---------- Fila de impressão ----------
   useEffect(() => {

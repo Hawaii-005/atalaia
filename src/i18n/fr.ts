@@ -20,6 +20,11 @@ const fr = {
   'notifications.milestoneTitle': '{n}% imprimé',
   'notifications.milestoneBody': '{nome} a atteint {n}%.',
   'notifications.monitorBody': 'L’application surveille votre impression',
+  'notifications.monitorTitle': '{nome} · {estado}',
+  'notifications.monitorActive': 'Impression en cours',
+  'notifications.monitorProgressUnknown': 'Progression indisponible',
+  'notifications.monitorLastKnown': 'Dernier état : {progresso}',
+  'notifications.monitorEta': '{n} min restantes',
   'network.permissionTitle': 'Accès au réseau local nécessaire',
   'network.permissionBody':
     'Cette application a besoin d’accéder au réseau local pour se connecter à vos imprimantes. Activez cet accès dans les réglages pour continuer.',
