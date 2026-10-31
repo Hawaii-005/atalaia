@@ -7,7 +7,13 @@ import {
   Alert,
   Linking,
   Switch,
+  Share,
 } from 'react-native';
+import { gerarRelatorioDiagnostico } from '../utils/diagnostico';
+import {
+  lerTimelapseExperimental,
+  guardarTimelapseExperimental,
+} from '../utils/timelapse';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../components/Header';
 import { Ionicons } from '@expo/vector-icons';
@@ -241,12 +247,31 @@ export const SettingsScreen = () => {
     useState<NotificationPrefs>(DEFAULT_PREFS);
 
   const [modoRemoto, setModoRemoto] = useState(false);
+  const [timelapseExperimental, setTimelapseExperimental] = useState(false);
 
   useEffect(() => {
     AsyncStorage.getItem('modoRemoto')
       .then(valor => setModoRemoto(valor === '1'))
       .catch(() => undefined);
+    lerTimelapseExperimental().then(setTimelapseExperimental);
   }, []);
+
+  const alternarTimelapseExperimental = async (ligado: boolean) => {
+    setTimelapseExperimental(ligado);
+    await guardarTimelapseExperimental(ligado);
+  };
+
+  const exportarDiagnostico = async () => {
+    try {
+      const relatorio = gerarRelatorioDiagnostico(printers);
+      await Share.share({
+        title: 'Ataláia - Diagnóstico',
+        message: relatorio,
+      });
+    } catch {
+      Alert.alert('Diagnóstico', 'Não foi possível exportar o diagnóstico.');
+    }
+  };
 
   const alternarModoRemoto = (ligado: boolean) => {
     setModoRemoto(ligado);
@@ -576,6 +601,19 @@ export const SettingsScreen = () => {
             label={t('settings.importar')}
             description={t('settings.importarDesc')}
             onPress={importar}
+          />
+          <AcaoRow
+            icon="document-text-outline"
+            label="Exportar diagnóstico"
+            description="Gera um relatório anonimizado da app e impressoras para anexar a problemas"
+            onPress={exportarDiagnostico}
+          />
+          <SwitchRow
+            icon="film-outline"
+            label="Time-lapse (Experimental)"
+            description="Ativa suporte experimental a gravações time-lapse (Cmd 323)"
+            value={timelapseExperimental}
+            onChange={alternarTimelapseExperimental}
           />
           <Row
             icon="notifications-outline"

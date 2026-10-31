@@ -1,18 +1,31 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-/**
- * Preferência de timelapse por impressora.
- *
- * O `Tlp_Switch` vai no comando de arranque (Cmd 128): se o ecrã de ficheiros
- * não o enviar, o arranque manda 0 e a máquina grava sem timelapse mesmo que
- * a opção esteja ligada nos detalhes — foi o que aconteceu com a peça a 1/22
- * camadas, com `TimeLapseStatus: 0` na impressora.
- */
-const chave = (printerId: string) => `atalaia.timelapse.${printerId}`;
+const chavePrinter = (printerId: string) => `atalaia.timelapse.${printerId}`;
+const CHAVE_EXPERIMENTAL = 'atalaia.timelapse.experimental';
+
+export const lerTimelapseExperimental = async (): Promise<boolean> => {
+  try {
+    return (await AsyncStorage.getItem(CHAVE_EXPERIMENTAL)) === '1';
+  } catch {
+    return false;
+  }
+};
+
+export const guardarTimelapseExperimental = async (
+  ligado: boolean
+): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(CHAVE_EXPERIMENTAL, ligado ? '1' : '0');
+  } catch {
+    // ignorar
+  }
+};
 
 export const lerTimelapse = async (printerId: string): Promise<boolean> => {
   try {
-    return (await AsyncStorage.getItem(chave(printerId))) === '1';
+    const exp = await lerTimelapseExperimental();
+    if (!exp) return false;
+    return (await AsyncStorage.getItem(chavePrinter(printerId))) === '1';
   } catch {
     return false;
   }
@@ -23,8 +36,8 @@ export const guardarTimelapse = async (
   ligado: boolean
 ): Promise<void> => {
   try {
-    await AsyncStorage.setItem(chave(printerId), ligado ? '1' : '0');
+    await AsyncStorage.setItem(chavePrinter(printerId), ligado ? '1' : '0');
   } catch {
-    // Sem persistência o arranque usa o valor por omissão (desligado).
+    // ignorar
   }
 };
