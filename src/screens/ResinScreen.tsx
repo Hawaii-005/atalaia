@@ -36,7 +36,8 @@ import {
 
 const formatoTamanho = (bytes: number) => {
   if (!bytes) return '—';
-  if (bytes > 1024 * 1024 * 1024) return `${(bytes / 1073741824).toFixed(2)} GB`;
+  if (bytes > 1024 * 1024 * 1024)
+    return `${(bytes / 1073741824).toFixed(2)} GB`;
   if (bytes > 1024 * 1024) return `${(bytes / 1048576).toFixed(1)} MB`;
   return `${Math.max(1, Math.round(bytes / 1024))} kB`;
 };
@@ -45,15 +46,22 @@ const formatoTempo = (segundos: number) => {
   if (!segundos || segundos <= 0) return '—';
   const horas = Math.floor(segundos / 3600);
   const minutos = Math.round((segundos % 3600) / 60);
-  return horas > 0 ? `${horas}h${String(minutos).padStart(2, '0')}` : `${minutos}m`;
+  return horas > 0
+    ? `${horas}h${String(minutos).padStart(2, '0')}`
+    : `${minutos}m`;
 };
 
 /** Ecrã de uma impressora de resina (Saturn 3 Ultra). */
 export const ResinScreen = ({ navigation, route }: any) => {
   const { printerId } = route.params ?? {};
   const { tema } = useTheme();
-  const { printers, request, reconnectAll, carregarParaSaturno, imprimirNoSaturno } =
-    usePrinterConnections();
+  const {
+    printers,
+    request,
+    reconnectAll,
+    carregarParaSaturno,
+    imprimirNoSaturno,
+  } = usePrinterConnections();
 
   const printer = printers.find(p => p.id === printerId);
   const info = printer?.status?.PrintInfo;
@@ -63,7 +71,10 @@ export const ResinScreen = ({ navigation, route }: any) => {
   // A máquina não recusa em silêncio: fica com o ficheiro e o erro no estado.
   const erroMaquina = Number(info?.ErrorNumber ?? 0);
   const progresso = Math.max(0, Math.min(100, info?.Progress ?? 0));
-  const restante = Math.max(0, (info?.TotalTicks ?? 0) - (info?.CurrentTicks ?? 0));
+  const restante = Math.max(
+    0,
+    (info?.TotalTicks ?? 0) - (info?.CurrentTicks ?? 0)
+  );
   const ligada = printer?.connectionStatus === 'connected';
 
   const [ficheiro, setFicheiro] = useState<{
@@ -103,7 +114,9 @@ export const ResinScreen = ({ navigation, route }: any) => {
       }
       let tamanho = escolhido.size ?? 0;
       if (!tamanho) {
-        const dados = await FileSystem.getInfoAsync(escolhido.uri, { size: true });
+        const dados = await FileSystem.getInfoAsync(escolhido.uri, {
+          size: true,
+        });
         tamanho = (dados as { size?: number }).size ?? 0;
       }
       setFicheiro({ uri: escolhido.uri, nome, tamanho });
@@ -122,8 +135,11 @@ export const ResinScreen = ({ navigation, route }: any) => {
     setAEnviar(true);
     setEnviado(0);
     try {
-      await carregarParaSaturno(printer.id, ficheiro.uri, ficheiro.nome, (feito, total) =>
-        setEnviado(total ? feito / total : 0)
+      await carregarParaSaturno(
+        printer.id,
+        ficheiro.uri,
+        ficheiro.nome,
+        (feito, total) => setEnviado(total ? feito / total : 0)
       );
       setNaImpressora(ficheiro.nome);
     } catch (erro) {
@@ -158,11 +174,20 @@ export const ResinScreen = ({ navigation, route }: any) => {
   const controlar = async (acao: 'pausar' | 'retomar' | 'parar') => {
     try {
       if (acao === 'pausar') {
-        await request(printer.id, pausePrintCommand({ id: `resina-${Date.now()}` }));
+        await request(
+          printer.id,
+          pausePrintCommand({ id: `resina-${Date.now()}` })
+        );
       } else if (acao === 'retomar') {
-        await request(printer.id, resumePrintCommand({ id: `resina-${Date.now()}` }));
+        await request(
+          printer.id,
+          resumePrintCommand({ id: `resina-${Date.now()}` })
+        );
       } else {
-        await request(printer.id, stopPrintCommand({ id: `resina-${Date.now()}` }));
+        await request(
+          printer.id,
+          stopPrintCommand({ id: `resina-${Date.now()}` })
+        );
       }
     } catch (erro) {
       Alert.alert(t('resina.comandoRecusado'), mensagemDoErro(erro));
@@ -197,10 +222,16 @@ export const ResinScreen = ({ navigation, route }: any) => {
             className="mb-3 rounded-xl2 border border-line bg-cartao p-4 flex-row items-center"
             onPress={() => reconnectAll()}
           >
-            <Ionicons name="cloud-offline-outline" size={18} color={hexDe(tema.paleta.aviso)} />
+            <Ionicons
+              name="cloud-offline-outline"
+              size={18}
+              color={hexDe(tema.paleta.aviso)}
+            />
             <Text className="ml-2 flex-1 text-[13px] text-ink">
               {printer.reconnectAttempt
-                ? t('comum.aReconectarTentativa', { n: printer.reconnectAttempt })
+                ? t('comum.aReconectarTentativa', {
+                    n: printer.reconnectAttempt,
+                  })
                 : t('resina.naoLigada')}
             </Text>
             <Text className="text-[12px] font-semibold text-brand-texto">
@@ -222,8 +253,13 @@ export const ResinScreen = ({ navigation, route }: any) => {
                   <Text className="text-[18px] text-ink-muted"> %</Text>
                 </Text>
                 <View className="items-end pb-2 flex-1 pl-4">
-                  <Text className="text-[12px] font-semibold text-ink" numberOfLines={1}>
-                    {String(info?.Filename ?? '').split('/').pop()}
+                  <Text
+                    className="text-[12px] font-semibold text-ink"
+                    numberOfLines={1}
+                  >
+                    {String(info?.Filename ?? '')
+                      .split('/')
+                      .pop()}
                   </Text>
                   <Text className="text-[11px] text-ink-muted mt-0.5">
                     {emPausa ? t('comum.emPausa') : t('comum.aImprimir')}
@@ -237,13 +273,19 @@ export const ResinScreen = ({ navigation, route }: any) => {
                 />
               </View>
               <View className="flex-row items-center justify-between mt-2.5">
-                <Text className="text-[11px] text-ink" style={{ fontFamily: 'monospace' }}>
+                <Text
+                  className="text-[11px] text-ink"
+                  style={{ fontFamily: 'monospace' }}
+                >
                   {t('comum.camada', {
                     actual: info?.CurrentLayer ?? 0,
                     total: info?.TotalLayer ?? 0,
                   })}
                 </Text>
-                <Text className="text-[11px] text-ink-soft" style={{ fontFamily: 'monospace' }}>
+                <Text
+                  className="text-[11px] text-ink-soft"
+                  style={{ fontFamily: 'monospace' }}
+                >
                   {t('comum.restantes', { t: formatoTempo(restante) })}
                 </Text>
               </View>
@@ -254,7 +296,9 @@ export const ResinScreen = ({ navigation, route }: any) => {
                 {t('resina.estadoMaquina').toUpperCase()}
               </Text>
               <Text className="text-[22px] font-bold text-ink mt-1">
-                {status === 9 ? t('comum.impressaoConcluida') : t('resina.emRepouso')}
+                {status === 9
+                  ? t('comum.impressaoConcluida')
+                  : t('resina.emRepouso')}
               </Text>
               <Text className="text-[12px] text-ink-muted mt-1">
                 {info?.Filename
@@ -289,8 +333,14 @@ export const ResinScreen = ({ navigation, route }: any) => {
             </TouchableOpacity>
           ) : (
             <View className={`${BT_APAGADA} flex-1 py-3 mr-2`}>
-              <Ionicons name="pause" size={13} color={hexDe(tema.paleta.tintaMuted)} />
-              <Text className={`ml-2 text-[12px] ${TX_NEUTRO}`}>{t('comum.pausar')}</Text>
+              <Ionicons
+                name="pause"
+                size={13}
+                color={hexDe(tema.paleta.tintaMuted)}
+              />
+              <Text className={`ml-2 text-[12px] ${TX_NEUTRO}`}>
+                {t('comum.pausar')}
+              </Text>
             </View>
           )}
 
@@ -302,7 +352,9 @@ export const ResinScreen = ({ navigation, route }: any) => {
             style={{ opacity: aImprimir || emPausa ? 1 : 0.45 }}
           >
             <Ionicons name="stop" size={13} color={hexDe(tema.paleta.perigo)} />
-            <Text className={`ml-2 text-[12px] ${TX_PERIGO}`}>{t('comum.parar')}</Text>
+            <Text className={`ml-2 text-[12px] ${TX_PERIGO}`}>
+              {t('comum.parar')}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -314,7 +366,10 @@ export const ResinScreen = ({ navigation, route }: any) => {
 
           {ficheiro ? (
             <>
-              <Text className="text-[14px] font-semibold text-ink mt-2" numberOfLines={1}>
+              <Text
+                className="text-[14px] font-semibold text-ink mt-2"
+                numberOfLines={1}
+              >
                 {ficheiro.nome}
               </Text>
               <Text className="text-[12px] text-ink-muted mt-0.5">
@@ -327,7 +382,9 @@ export const ResinScreen = ({ navigation, route }: any) => {
                   <View className="h-1.5 rounded-full bg-line overflow-hidden">
                     <View
                       className="h-full bg-brand"
-                      style={{ width: `${Math.max(2, Math.round(enviado * 100))}%` }}
+                      style={{
+                        width: `${Math.max(2, Math.round(enviado * 100))}%`,
+                      }}
                     />
                   </View>
                   <Text className="text-[11px] text-ink-muted mt-1.5">
@@ -354,7 +411,11 @@ export const ResinScreen = ({ navigation, route }: any) => {
                     onPress={imprimir}
                     activeOpacity={0.85}
                   >
-                    <Ionicons name="play" size={13} color={hexDe(tema.paleta.acento)} />
+                    <Ionicons
+                      name="play"
+                      size={13}
+                      color={hexDe(tema.paleta.acento)}
+                    />
                     <Text className={`ml-2 text-[12px] ${TX_ACENTO}`}>
                       {t('resina.imprimir')}
                     </Text>
@@ -367,9 +428,16 @@ export const ResinScreen = ({ navigation, route }: any) => {
                     disabled={aEnviar}
                   >
                     {aEnviar ? (
-                      <ActivityIndicator size="small" color={hexDe(tema.paleta.acento)} />
+                      <ActivityIndicator
+                        size="small"
+                        color={hexDe(tema.paleta.acento)}
+                      />
                     ) : (
-                      <Ionicons name="cloud-upload-outline" size={13} color={hexDe(tema.paleta.acento)} />
+                      <Ionicons
+                        name="cloud-upload-outline"
+                        size={13}
+                        color={hexDe(tema.paleta.acento)}
+                      />
                     )}
                     <Text className={`ml-2 text-[12px] ${TX_ACENTO}`}>
                       {aEnviar ? t('resina.aEnviarCurto') : t('resina.enviar')}
@@ -388,7 +456,11 @@ export const ResinScreen = ({ navigation, route }: any) => {
                 onPress={escolherFicheiro}
                 activeOpacity={0.85}
               >
-                <Ionicons name="folder-open-outline" size={15} color={hexDe(tema.paleta.acento)} />
+                <Ionicons
+                  name="folder-open-outline"
+                  size={15}
+                  color={hexDe(tema.paleta.acento)}
+                />
                 <Text className={`ml-2 text-[13px] ${TX_ACENTO}`}>
                   {t('resina.escolher')}
                 </Text>

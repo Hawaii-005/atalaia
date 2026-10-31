@@ -27,11 +27,11 @@ export function meiaLargura(i: number, n: number, tipo: TipoEstrato): number {
   } else {
     // Figura: base larga, cintura, ombros, cabeça.
     // Combina uma afunilação linear com gaussianas para cintura/ombros/pescoço.
-    const base = 140 * (1 - t);           // 140 → 0
+    const base = 140 * (1 - t); // 140 → 0
     const cintura = -60 * Math.exp(-50 * (t - 0.25) ** 2); // cava em t=0.25
-    const ombros = 50 * Math.exp(-30 * (t - 0.5) ** 2);    // saliência em t=0.5
+    const ombros = 50 * Math.exp(-30 * (t - 0.5) ** 2); // saliência em t=0.5
     const pescoco = -40 * Math.exp(-50 * (t - 0.75) ** 2); // cava em t=0.75
-    const cabeca = 30;                                    // topo constante
+    const cabeca = 30; // topo constante
     largura = base + cintura + ombros + pescoco + cabeca;
   }
 

@@ -87,16 +87,19 @@ export default {
   'files.corImpressa': 'COR DO FICHEIRO → COR IMPRESSA',
   'files.slotVazio': 'vazio',
   'vazio.semImpressoras.titulo': 'Ainda não tens impressoras',
-  'vazio.semImpressoras.descricao': 'Liga-as ao Wi-Fi e analisa a rede para as encontrares.',
+  'vazio.semImpressoras.descricao':
+    'Liga-as ao Wi-Fi e analisa a rede para as encontrares.',
   'vazio.semLigacao.titulo': 'Sem ligação com {nome}',
-  'vazio.semLigacao.descricao': 'Confirma que está ligada e na mesma rede Wi-Fi.',
+  'vazio.semLigacao.descricao':
+    'Confirma que está ligada e na mesma rede Wi-Fi.',
   'vazio.tentarNovamente': 'Tentar novamente',
   'vazio.editarIp': 'Editar IP',
   'vazio.analisarRede': 'Analisar rede',
   'vazio.aLigar.titulo': 'A ligar à {nome}…',
   'vazio.aLigar.descricao': 'A procurar a impressora na rede.',
   'vazio.foraDeCasa.titulo': 'A {nome} só funciona em casa',
-  'vazio.foraDeCasa.descricao': 'Ela liga-se ao telemóvel, por isso precisa da mesma rede Wi-Fi.',
+  'vazio.foraDeCasa.descricao':
+    'Ela liga-se ao telemóvel, por isso precisa da mesma rede Wi-Fi.',
   'vazio.resinaSemResposta.titulo': 'A {nome} não respondeu',
   'vazio.resinaSemResposta.descricao':
     'Confirma que está ligada e na mesma rede. A Saturn só aceita uma ligação de cada vez: fecha a app nos outros dispositivos (tablet ou telemóvel) e tenta novamente.',
@@ -127,7 +130,8 @@ export default {
   'history.ordenarPor': 'Ordenar',
   'files.renomear': 'Renomear',
   'files.renomearTitulo': 'Renomear ficheiro',
-  'files.renomearMsg': 'O ficheiro é copiado para o nome novo e o original é apagado.',
+  'files.renomearMsg':
+    'O ficheiro é copiado para o nome novo e o original é apagado.',
   'files.nomeNovo': 'Nome novo',
   'files.aRenomear': 'A renomear…',
   'files.renomearFalhou': 'Não foi possível renomear.',
@@ -238,7 +242,8 @@ export default {
   'inv.ajustar': 'Ajustar',
   'inv.ajustarMsg': 'Corrigir o que resta neste consumível.',
   'inv.porConfirmar': 'Por confirmar',
-  'inv.pendenteMsg': 'A impressora não trouxe o peso do G-code. Indica os gramas usados.',
+  'inv.pendenteMsg':
+    'A impressora não trouxe o peso do G-code. Indica os gramas usados.',
   'inv.confirmar': 'Confirmar',
   'inv.confirmarMsg': 'Quantos gramas gastou esta peça?',
   'inv.descartar': 'Descartar',
@@ -281,7 +286,8 @@ export default {
   'settings.segundos30': '30 segundos',
   'settings.seccaoBackup': 'Cópia de segurança',
   'settings.exportar': 'Guardar impressoras e definições',
-  'settings.exportarDesc': 'Grava um ficheiro JSON que podes levar para outro telefone.',
+  'settings.exportarDesc':
+    'Grava um ficheiro JSON que podes levar para outro telefone.',
   'settings.importar': 'Restaurar de um ficheiro',
   'settings.importarDesc': 'Lê o JSON e volta a criar as impressoras.',
   'settings.backupTitulo': 'Cópia de segurança',
@@ -290,10 +296,13 @@ export default {
   'settings.backupVazio': 'Esse ficheiro não tem impressoras.',
   'settings.backupFalhou': 'Não consegui ler ou gravar o ficheiro.',
   'settings.modoRemoto': 'Poupar dados fora de casa',
-  'settings.modoRemotoDesc': 'A câmara passa a mostrar uma fotografia a cada 2 segundos, em vez de vídeo contínuo (~1 MB/s).',
+  'settings.modoRemotoDesc':
+    'A câmara passa a mostrar uma fotografia a cada 2 segundos, em vez de vídeo contínuo (~1 MB/s).',
   'settings.filaAuto': 'Arrancar o próximo automaticamente',
-  'settings.filaAutoDesc': 'Quando um trabalho acaba, começa o próximo da fila.',
-  'settings.filaAutoDescN': 'Na fila: {n}. Quando um trabalho acaba, começa o próximo.',
+  'settings.filaAutoDesc':
+    'Quando um trabalho acaba, começa o próximo da fila.',
+  'settings.filaAutoDescN':
+    'Na fila: {n}. Quando um trabalho acaba, começa o próximo.',
   'settings.seccaoNotif': 'NOTIFICAÇÕES',
   'settings.notifConcluida': 'Impressão concluída',
   'settings.notifConcluidaDesc': 'Quando uma impressão termina',
@@ -357,7 +366,8 @@ export default {
   'history.limpar': 'Limpar',
   'history.semImpressoes': 'Ainda sem impressões',
   'history.reimprimirTitulo': 'Reimprimir',
-  'history.ficheiroSumiu': 'Esse ficheiro já não está na impressora. Envia-o de novo a partir de Ficheiros.',
+  'history.ficheiroSumiu':
+    'Esse ficheiro já não está na impressora. Envia-o de novo a partir de Ficheiros.',
   'history.aReimprimir': 'A impressora vai começar.',
   'history.semImpressora': 'Não há impressora ligada.',
   'history.semImpressoesDica': 'As impressões aparecem aqui quando começarem.',
@@ -389,7 +399,8 @@ export default {
   // ——— Discovery
   'fila.curto': 'Fila',
   'fila.titulo': 'Fila de impressão',
-  'fila.vazia': 'A fila está vazia. Acrescenta trabalhos pelo ícone de lista, nos ficheiros.',
+  'fila.vazia':
+    'A fila está vazia. Acrescenta trabalhos pelo ícone de lista, nos ficheiros.',
   'fila.limparTudo': 'Limpar tudo',
   'fila.limpar': 'Limpar',
   'fila.confirmarLimpar': 'Apagar {n} trabalhos da fila?',
@@ -416,7 +427,8 @@ export default {
     'Nada respondeu nesta rede. Verifique se a impressora está ligada e associada à mesma rede Wi-Fi que o telemóvel — e não ao seu próprio ponto de acesso de configuração.',
   'discovery.adicionarManualmente': 'Adicionar manualmente',
   'discovery.atualizadaTitulo': 'Impressora actualizada',
-  'discovery.atualizadaMsg': '{nome} está agora em {ip}. A restabelecer a ligação…',
+  'discovery.atualizadaMsg':
+    '{nome} está agora em {ip}. A restabelecer a ligação…',
   'discovery.adicionadaTitulo': 'Impressora adicionada',
   'discovery.adicionadaMsg': '{nome} ({ip}) foi adicionada.',
 
@@ -429,7 +441,8 @@ export default {
   'addPrinter.ondeEncontrar': 'Onde encontrar?',
   'addPrinter.ipAlternativo': 'Endereço alternativo (opcional)',
   'addPrinter.ipAlternativoPlaceholder': '100.x.x.x ou IP na rede de casa',
-  'addPrinter.ipAlternativoDica': 'Para quando estiveres fora de casa. É tentado se o endereço principal não responder — por exemplo através de Tailscale.',
+  'addPrinter.ipAlternativoDica':
+    'Para quando estiveres fora de casa. É tentado se o endereço principal não responder — por exemplo através de Tailscale.',
   'addPrinter.ipDica': 'Encontra-o no ecrã da impressora: Definições → Rede.',
   'addPrinter.nomeObrigatorio': 'O nome da impressora é obrigatório',
   'addPrinter.nomeMinimo': 'Pelo menos 2 caracteres',
@@ -462,28 +475,34 @@ export default {
   'resina.trocar': 'Trocar',
   'resina.imprimir': 'Imprimir',
   'resina.enviar': 'Enviar para a impressora',
-  'resina.enviarDica': 'Ficheiros .goo ou .ctb fatiados para esta máquina. A impressora vai buscá-los por Wi-Fi.',
+  'resina.enviarDica':
+    'Ficheiros .goo ou .ctb fatiados para esta máquina. A impressora vai buscá-los por Wi-Fi.',
   'resina.escolher': 'Escolher .goo / .ctb',
   'monitor.titulo': 'Monitor',
   'monitor.subtitulo': '{n} máquinas ligadas',
   'monitor.subtitulo1': '1 máquina ligada',
   'monitor.camara': 'Câmara',
   'monitor.trabalho': 'Trabalho',
-  'monitor.trabalhoSub': 'O que a impressora de resina está a fazer, camada a camada.',
+  'monitor.trabalhoSub':
+    'O que a impressora de resina está a fazer, camada a camada.',
   'monitor.abrir': 'Abrir',
   'monitor.ultimoDado': 'Último dado recebido {t}.',
   'resina.semMiniatura': 'Sem miniatura deste ficheiro',
-  'monitor.semImpressoras': 'Sem impressoras ligadas. Adiciona uma em Impressoras.',
+  'monitor.semImpressoras':
+    'Sem impressoras ligadas. Adiciona uma em Impressoras.',
   'monitor.semResina': 'Ainda não há impressoras de resina ligadas.',
   'resina.erroMaquina':
     'A impressora registou um erro ({n}) e não arrancou. Erro 4 = ficheiro inválido ou corrompido.',
-  'resina.limites': 'Esta impressora não expõe câmara, lista de ficheiros nem temperaturas — o protocolo dela só publica o trabalho em curso.',
+  'resina.limites':
+    'Esta impressora não expõe câmara, lista de ficheiros nem temperaturas — o protocolo dela só publica o trabalho em curso.',
   'resina.formatoInvalido': 'Só ficheiros .goo ou .ctb.',
   'resina.falhouEnvio': 'O envio falhou',
   'resina.falhouImprimir': 'Não arrancou',
   'resina.confirmarImprimir': 'Imprimir este ficheiro?',
-  'resina.confirmarImprimirMsg': '{nome} vai começar a imprimir. Confirma que a mesa e o depósito de resina estão prontos.',
-  'resina.confirmarParar': 'A impressão em curso vai ser cancelada. A peça fica perdida.',
+  'resina.confirmarImprimirMsg':
+    '{nome} vai começar a imprimir. Confirma que a mesa e o depósito de resina estão prontos.',
+  'resina.confirmarParar':
+    'A impressão em curso vai ser cancelada. A peça fica perdida.',
   'resina.comandoRecusado': 'Comando recusado',
 
   // ——— Novas chaves para o cartão de trabalho (mockup)
@@ -520,15 +539,18 @@ export default {
   'filamentos.slot': 'Slot',
   'filamentos.emUso': 'em uso',
   'filamentos.semSlots': 'Nenhum slot carregado',
-  'filamentos.semSlotsNota': 'A impressora respondeu, mas não reporta nenhum rolo.',
+  'filamentos.semSlotsNota':
+    'A impressora respondeu, mas não reporta nenhum rolo.',
   'filamentos.atualizar': 'Ler outra vez',
-  'filamentos.notaPeso': 'A impressora envia marca, material, cor e temperaturas. Os gramas por rolo não existem no protocolo — só por registo teu.',
+  'filamentos.notaPeso':
+    'A impressora envia marca, material, cor e temperaturas. Os gramas por rolo não existem no protocolo — só por registo teu.',
   'abas.impressao': 'Impressão',
   'filamentos.carregado': 'carregado',
   'inicio.abrirCamara': 'toque para abrir a câmara',
   'editarIp.titulo': 'Endereço da impressora',
   'editarIp.invalido': 'Escreve um IP válido, por exemplo 192.168.1.4',
-  'editarIp.nota': 'Na rede de casa usa o IP da impressora. Fora de casa podes usar o endereço do encaminhador na tailnet (ex.: 100.91.189.97).',
+  'editarIp.nota':
+    'Na rede de casa usa o IP da impressora. Fora de casa podes usar o endereço do encaminhador na tailnet (ex.: 100.91.189.97).',
   'editarIp.guardar': 'Guardar e ligar',
   'editarIp.semMaquina': 'Impressora não encontrada',
   'inicio.ficheiros': 'Ficheiros',
@@ -542,7 +564,8 @@ export default {
   'controlos.homeZ': 'Home Z',
   'controlos.precisaHome': 'Faz Home antes de mover os eixos.',
   'controlos.confirmarHome': 'Mover até à origem?',
-  'controlos.confirmarHomeMsg': 'A mesa e o bico vão mover-se. Confirma que a área está livre.',
+  'controlos.confirmarHomeMsg':
+    'A mesa e o bico vão mover-se. Confirma que a área está livre.',
   'controlos.aImprimir': 'Não é possível mover durante a impressão.',
   'comum.confirmar': 'Confirmar',
   'controlos.velocidade': 'Velocidade',
@@ -566,7 +589,8 @@ export default {
   'painel.restante': 'restante',
   'painel.ambiente': 'ambiente',
   'painel.xyBloqueados': 'X/Y bloqueados',
-  'painel.babystepMsg': 'Ajuste fino do Z durante a impressão, em passos de 0,02 mm.',
+  'painel.babystepMsg':
+    'Ajuste fino do Z durante a impressão, em passos de 0,02 mm.',
   'comum.editar': 'Editar',
   'secao.estado': 'Estado',
   'secao.ficheiros': 'Ficheiros',

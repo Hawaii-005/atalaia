@@ -32,5 +32,5 @@
             android:exported="false"
             android:foregroundServiceType="dataSync"
             android:stopWithTask="true" />
-    </application>
+  </application>
 </manifest>

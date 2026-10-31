@@ -30,6 +30,8 @@ describe('consumo de filamento', () => {
   it('material do cabeçalho muda a densidade', () => {
     const pla = '; filament_type = PLA\nG1 E10';
     const abs = '; filament_type = ABS\nG1 E10';
-    expect(consumoDoGcode(pla).gramas).toBeGreaterThan(consumoDoGcode(abs).gramas);
+    expect(consumoDoGcode(pla).gramas).toBeGreaterThan(
+      consumoDoGcode(abs).gramas
+    );
   });
 });

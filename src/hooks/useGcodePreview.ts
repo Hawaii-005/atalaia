@@ -62,7 +62,11 @@ export const parseToolpath = (gcode: string): GcodePreview | null => {
   const lines = gcode.split('\n');
   for (const raw of lines) {
     const line = raw.trim();
-    if (!line.startsWith('G1') && !line.startsWith('G2') && !line.startsWith('G3')) {
+    if (
+      !line.startsWith('G1') &&
+      !line.startsWith('G2') &&
+      !line.startsWith('G3')
+    ) {
       continue;
     }
     const map: Record<string, string> = {};
@@ -78,7 +82,8 @@ export const parseToolpath = (gcode: string): GcodePreview | null => {
     const extruding = map.E !== undefined && Number(map.E) > 0;
 
     if (line.startsWith('G1')) {
-      if (extruding && points.length < MAX_RAW_POINTS) points.push({ x: nx, y: ny });
+      if (extruding && points.length < MAX_RAW_POINTS)
+        points.push({ x: nx, y: ny });
     } else if (extruding) {
       pushArc(
         x + num(map, 'I', 0),
@@ -121,7 +126,9 @@ export const parseToolpath = (gcode: string): GcodePreview | null => {
     const px = ((point.x - minX) / width) * 100;
     const py = (1 - (point.y - minY) / height) * 100;
     const jump =
-      lastX === null || lastY === null || Math.hypot(px - lastX, py - lastY) > JUMP;
+      lastX === null ||
+      lastY === null ||
+      Math.hypot(px - lastX, py - lastY) > JUMP;
     path += `${jump ? 'M' : 'L'}${px.toFixed(2)} ${py.toFixed(2)} `;
     lastX = px;
     lastY = py;
@@ -130,14 +137,13 @@ export const parseToolpath = (gcode: string): GcodePreview | null => {
   return { path: path.trim(), points: sampled.length };
 };
 
-
 // O servidor da impressora é pequeno: descarregar 20 ficheiros em paralelo
 // satura-o e a lista deixa de responder. Fila com dois de cada vez.
 const MAX_SIMULTANEOS = 2;
 let ativos = 0;
 const espera: (() => void)[] = [];
 
-const comVez = async <T,>(tarefa: () => Promise<T>): Promise<T> => {
+const comVez = async <T>(tarefa: () => Promise<T>): Promise<T> => {
   if (ativos >= MAX_SIMULTANEOS) {
     await new Promise<void>(resolve => espera.push(resolve));
   }
@@ -185,46 +191,64 @@ export const useGcodePreview = (
     return buildLocalUrl(printerIp, filename);
   }, [printerIp, filename]);
 
-  const load = useCallback(async (cancelado: { atual: boolean }) => {
-    if (!url) return;
-    const guardado = cacheRef.current[url];
-    if (guardado !== undefined) {
-      setPreview(guardado.preview);
-      setFilamentos(guardado.filamentos);
-      setConsumo(guardado.consumo);
-      return;
-    }
-    setLoading(true);
-    try {
-      // O servidor da impressora responde 416 a pedidos Range — sem cabeçalho.
-      const response = await comVez(() => fetch(url));
-      if (cancelado.atual) return;
-      if (!response.ok) {
-        cacheRef.current[url] = { preview: null, filamentos: [], consumo: null };
+  const load = useCallback(
+    async (cancelado: { atual: boolean }) => {
+      if (!url) return;
+      const guardado = cacheRef.current[url];
+      if (guardado !== undefined) {
+        setPreview(guardado.preview);
+        setFilamentos(guardado.filamentos);
+        setConsumo(guardado.consumo);
         return;
       }
-      const text = await response.text();
-      if (cancelado.atual) return;
-      const result = parseToolpath(text);
-      // As cores vêm do mesmo texto: não há segundo download.
-      const cores = filamentosDoCabecalho(text);
-      const gasto = consumoDoGcode(text);
-      cacheRef.current[url] = { preview: result, filamentos: cores, consumo: gasto };
-      if (cancelado.atual) return;
-      setPreview(result);
-      setFilamentos(cores);
-      setConsumo(gasto);
-    } catch (error) {
-      log('preview failed', error instanceof Error ? error.stack : String(error));
-      cacheRef.current[url] = { preview: null, filamentos: [], consumo: null };
-      if (cancelado.atual) return;
-      setPreview(null);
-      setFilamentos([]);
-      setConsumo(null);
-    } finally {
-      if (!cancelado.atual) setLoading(false);
-    }
-  }, [url]);
+      setLoading(true);
+      try {
+        // O servidor da impressora responde 416 a pedidos Range — sem cabeçalho.
+        const response = await comVez(() => fetch(url));
+        if (cancelado.atual) return;
+        if (!response.ok) {
+          cacheRef.current[url] = {
+            preview: null,
+            filamentos: [],
+            consumo: null,
+          };
+          return;
+        }
+        const text = await response.text();
+        if (cancelado.atual) return;
+        const result = parseToolpath(text);
+        // As cores vêm do mesmo texto: não há segundo download.
+        const cores = filamentosDoCabecalho(text);
+        const gasto = consumoDoGcode(text);
+        cacheRef.current[url] = {
+          preview: result,
+          filamentos: cores,
+          consumo: gasto,
+        };
+        if (cancelado.atual) return;
+        setPreview(result);
+        setFilamentos(cores);
+        setConsumo(gasto);
+      } catch (error) {
+        log(
+          'preview failed',
+          error instanceof Error ? error.stack : String(error)
+        );
+        cacheRef.current[url] = {
+          preview: null,
+          filamentos: [],
+          consumo: null,
+        };
+        if (cancelado.atual) return;
+        setPreview(null);
+        setFilamentos([]);
+        setConsumo(null);
+      } finally {
+        if (!cancelado.atual) setLoading(false);
+      }
+    },
+    [url]
+  );
 
   useEffect(() => {
     // Se o ficheiro mudar a meio, o pedido antigo não pode pintar o ecrã.

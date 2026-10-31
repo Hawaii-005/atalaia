@@ -124,7 +124,11 @@ const WelcomeScreen = ({ onComplete }: { onComplete: () => void }) => {
                   className="mt-6 flex-row items-center rounded-xl2 border border-line px-4 py-2.5"
                   activeOpacity={0.7}
                 >
-                  <Ionicons name="logo-github" size={16} color={hexDe(tema.paleta.tinta)} />
+                  <Ionicons
+                    name="logo-github"
+                    size={16}
+                    color={hexDe(tema.paleta.tinta)}
+                  />
                   <Text className="ml-2 text-[13px] font-semibold text-ink">
                     {t('welcome.verGithub')}
                   </Text>

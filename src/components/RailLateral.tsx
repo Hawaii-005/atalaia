@@ -7,7 +7,13 @@ import { larguraRail } from '../theme/layout';
 import PrinterIcon from './icons/PrinterIcon';
 import { t } from '../i18n';
 
-const ICONES: Record<string, { activo: keyof typeof Ionicons.glyphMap; inactivo: keyof typeof Ionicons.glyphMap }> = {
+const ICONES: Record<
+  string,
+  {
+    activo: keyof typeof Ionicons.glyphMap;
+    inactivo: keyof typeof Ionicons.glyphMap;
+  }
+> = {
   Inicio: { activo: 'home', inactivo: 'home-outline' },
   Settings: { activo: 'settings', inactivo: 'settings-outline' },
 };
@@ -56,7 +62,9 @@ export const RailLateral = ({ state, navigation }: any) => {
               width: larguraRail - 16,
               minHeight: 64,
               borderRadius: 18,
-              backgroundColor: activo ? hexDe(paleta.acentoSuave) : 'transparent',
+              backgroundColor: activo
+                ? hexDe(paleta.acentoSuave)
+                : 'transparent',
               alignItems: 'center',
               justifyContent: 'center',
               gap: 4,
@@ -64,13 +72,25 @@ export const RailLateral = ({ state, navigation }: any) => {
             }}
           >
             {rota.name === 'Impressora' ? (
-              <PrinterIcon variant={activo ? 'filled' : 'outline'} size={24} color={cor} />
+              <PrinterIcon
+                variant={activo ? 'filled' : 'outline'}
+                size={24}
+                color={cor}
+              />
             ) : (
-              <Ionicons name={activo ? icone.activo : icone.inactivo} size={24} color={cor} />
+              <Ionicons
+                name={activo ? icone.activo : icone.inactivo}
+                size={24}
+                color={cor}
+              />
             )}
             <Text
               numberOfLines={1}
-              style={{ fontSize: 11, fontWeight: activo ? '700' : '600', color: cor }}
+              style={{
+                fontSize: 11,
+                fontWeight: activo ? '700' : '600',
+                color: cor,
+              }}
             >
               {t(ROTULOS[rota.name] as any)}
             </Text>
@@ -92,8 +112,19 @@ export const RailLateral = ({ state, navigation }: any) => {
           paddingVertical: 8,
         }}
       >
-        <Ionicons name="list-outline" size={24} color={hexDe(paleta.tintaSoft)} />
-        <Text numberOfLines={1} style={{ fontSize: 11, fontWeight: '600', color: hexDe(paleta.tintaSoft) }}>
+        <Ionicons
+          name="list-outline"
+          size={24}
+          color={hexDe(paleta.tintaSoft)}
+        />
+        <Text
+          numberOfLines={1}
+          style={{
+            fontSize: 11,
+            fontWeight: '600',
+            color: hexDe(paleta.tintaSoft),
+          }}
+        >
           {t('fila.curto')}
         </Text>
       </TouchableOpacity>

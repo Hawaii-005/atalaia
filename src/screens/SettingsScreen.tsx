@@ -75,12 +75,20 @@ const Row = ({
     >
       <View
         className="w-8 h-8 rounded-[10px] items-center justify-center"
-        style={{ backgroundColor: destructive ? hexDe(paleta.perigo) + '1F' : (acento ?? hexDe(paleta.acento)) + '1F' }}
+        style={{
+          backgroundColor: destructive
+            ? hexDe(paleta.perigo) + '1F'
+            : (acento ?? hexDe(paleta.acento)) + '1F',
+        }}
       >
         <Ionicons
           name={icon as any}
           size={16}
-          color={destructive ? hexDe(paleta.perigo) : (acento ?? hexDe(paleta.acento))}
+          color={
+            destructive
+              ? hexDe(paleta.perigo)
+              : (acento ?? hexDe(paleta.acento))
+          }
         />
       </View>
       <View className="ml-3 flex-1 pr-2">
@@ -98,10 +106,16 @@ const Row = ({
         )}
       </View>
       {!!value && (
-        <Text className="text-[12px] font-semibold text-ink-soft mr-1">{value}</Text>
+        <Text className="text-[12px] font-semibold text-ink-soft mr-1">
+          {value}
+        </Text>
       )}
       {(onPress || !!value) && (
-        <Ionicons name="chevron-forward" size={15} color={hexDe(paleta.tintaMuted)} />
+        <Ionicons
+          name="chevron-forward"
+          size={15}
+          color={hexDe(paleta.tintaMuted)}
+        />
       )}
     </View>
   );
@@ -132,29 +146,29 @@ const SwitchRow = ({
   const { tema } = useTheme();
   const paleta = tema.paleta;
   return (
-  <View
-    className={`flex-row items-center px-4 py-3 ${
-      last ? '' : 'border-b border-line'
-    }`}
-  >
     <View
-      className="w-8 h-8 rounded-[10px] items-center justify-center"
-      style={{ backgroundColor: hexDe(paleta.acento) + '1F' }}
+      className={`flex-row items-center px-4 py-3 ${
+        last ? '' : 'border-b border-line'
+      }`}
     >
-      <Ionicons name={icon as any} size={16} color={hexDe(paleta.acento)} />
+      <View
+        className="w-8 h-8 rounded-[10px] items-center justify-center"
+        style={{ backgroundColor: hexDe(paleta.acento) + '1F' }}
+      >
+        <Ionicons name={icon as any} size={16} color={hexDe(paleta.acento)} />
+      </View>
+      <View className="ml-3 flex-1 pr-2">
+        <Text className="text-[13px] font-semibold text-ink">{label}</Text>
+        <Text className="text-[10px] text-ink-soft mt-0.5">{description}</Text>
+      </View>
+      <Switch
+        value={value}
+        onValueChange={onChange}
+        trackColor={{ false: hexDe(paleta.linha), true: hexDe(paleta.acento) }}
+        thumbColor="#FFFFFF"
+        ios_backgroundColor={hexDe(paleta.linha)}
+      />
     </View>
-    <View className="ml-3 flex-1 pr-2">
-      <Text className="text-[13px] font-semibold text-ink">{label}</Text>
-      <Text className="text-[10px] text-ink-soft mt-0.5">{description}</Text>
-    </View>
-    <Switch
-      value={value}
-      onValueChange={onChange}
-      trackColor={{ false: hexDe(paleta.linha), true: hexDe(paleta.acento) }}
-      thumbColor="#FFFFFF"
-      ios_backgroundColor={hexDe(paleta.linha)}
-    />
-  </View>
   );
 };
 
@@ -183,13 +197,21 @@ const AcaoRow = ({
         className="w-8 h-8 rounded-[10px] items-center justify-center"
         style={{ backgroundColor: hexDe(tema.paleta.acento) + '1F' }}
       >
-        <Ionicons name={icon as any} size={16} color={hexDe(tema.paleta.acento)} />
+        <Ionicons
+          name={icon as any}
+          size={16}
+          color={hexDe(tema.paleta.acento)}
+        />
       </View>
       <View className="ml-3 flex-1 pr-2">
         <Text className="text-[13px] font-semibold text-ink">{label}</Text>
         <Text className="text-[10px] text-ink-soft mt-0.5">{description}</Text>
       </View>
-      <Ionicons name="chevron-forward" size={15} color={hexDe(tema.paleta.tintaMuted)} />
+      <Ionicons
+        name="chevron-forward"
+        size={15}
+        color={hexDe(tema.paleta.tintaMuted)}
+      />
     </TouchableOpacity>
   );
 };
@@ -228,7 +250,9 @@ export const SettingsScreen = () => {
 
   const alternarModoRemoto = (ligado: boolean) => {
     setModoRemoto(ligado);
-    AsyncStorage.setItem('modoRemoto', ligado ? '1' : '0').catch(() => undefined);
+    AsyncStorage.setItem('modoRemoto', ligado ? '1' : '0').catch(
+      () => undefined
+    );
   };
 
   useEffect(() => {
@@ -269,7 +293,10 @@ export const SettingsScreen = () => {
           onPress: async () => {
             try {
               await AsyncStorage.removeItem('hasLaunched');
-              Alert.alert(t('settings.concluido'), t('settings.boasVindasReiniciado'));
+              Alert.alert(
+                t('settings.concluido'),
+                t('settings.boasVindasReiniciado')
+              );
             } catch {
               Alert.alert(t('comum.erro'), t('settings.erroBoasVindas'));
             }
@@ -300,7 +327,10 @@ export const SettingsScreen = () => {
         'cc-tool-backup',
         'application/json'
       );
-      await FileSystem.writeAsStringAsync(ficheiro, JSON.stringify(dados, null, 2));
+      await FileSystem.writeAsStringAsync(
+        ficheiro,
+        JSON.stringify(dados, null, 2)
+      );
       Alert.alert(t('settings.backupTitulo'), t('settings.backupExportado'));
     } catch (erro) {
       Alert.alert(
@@ -344,7 +374,10 @@ export const SettingsScreen = () => {
         title={t('settings.title')}
         subtitle={
           printers.length > 0
-            ? printers.map(pr => pr.printerName).slice(0, 3).join(' · ')
+            ? printers
+                .map(pr => pr.printerName)
+                .slice(0, 3)
+                .join(' · ')
             : t('settings.subtitulo')
         }
       />
@@ -367,12 +400,17 @@ export const SettingsScreen = () => {
             printers.map((pr, i) => {
               const info = pr.status?.PrintInfo;
               const aCorrer =
-                getPrintStatus(info?.Status ?? 0) === 'printing' && !!info?.Filename;
+                getPrintStatus(info?.Status ?? 0) === 'printing' &&
+                !!info?.Filename;
               return (
                 <Row
                   key={pr.id}
-                  icon={pr.kind === 'resin' ? 'layers-outline' : 'print-outline'}
-                  acento={pr.kind === 'resin' ? hexDe(tema.paleta.ok) : undefined}
+                  icon={
+                    pr.kind === 'resin' ? 'layers-outline' : 'print-outline'
+                  }
+                  acento={
+                    pr.kind === 'resin' ? hexDe(tema.paleta.ok) : undefined
+                  }
                   label={pr.printerName}
                   description={`${pr.ipAddress} · ${
                     pr.connectionStatus === 'connected'
@@ -381,8 +419,12 @@ export const SettingsScreen = () => {
                         : t('camera.pronta')
                       : t('camera.impDesligada')
                   }`}
-                  value={aCorrer ? `${Math.round(info?.Progress ?? 0)}%` : undefined}
-                  onPress={() => navigation.navigate('AddEditPrinter', { printerId: pr.id })}
+                  value={
+                    aCorrer ? `${Math.round(info?.Progress ?? 0)}%` : undefined
+                  }
+                  onPress={() =>
+                    navigation.navigate('AddEditPrinter', { printerId: pr.id })
+                  }
                   last={i === printers.length - 1}
                 />
               );
@@ -426,7 +468,9 @@ export const SettingsScreen = () => {
                       borderRadius: 8,
                       backgroundColor: item.amostra[0],
                       borderWidth: activo ? 2 : 1,
-                      borderColor: activo ? '#FFFFFF' : hexDe(tema.paleta.tintaMuted),
+                      borderColor: activo
+                        ? '#FFFFFF'
+                        : hexDe(tema.paleta.tintaMuted),
                     }}
                   />
                 );
@@ -511,7 +555,6 @@ export const SettingsScreen = () => {
             value={filaAuto}
             onChange={definirFilaAuto}
           />
-
         </Section>
 
         <Section title={t('settings.seccaoBackup')}>
@@ -557,9 +600,7 @@ export const SettingsScreen = () => {
           <Row
             icon="logo-github"
             label="GitHub"
-            onPress={() =>
-              openUrl('https://github.com/Hawaii-005/atalaia')
-            }
+            onPress={() => openUrl('https://github.com/Hawaii-005/atalaia')}
           />
           <Row
             icon="bug-outline"
@@ -568,7 +609,12 @@ export const SettingsScreen = () => {
               openUrl('https://github.com/Hawaii-005/atalaia/issues')
             }
           />
-          <Row icon="document-text-outline" label={t('settings.licenca')} value="MIT" last />
+          <Row
+            icon="document-text-outline"
+            label={t('settings.licenca')}
+            value="MIT"
+            last
+          />
         </Section>
 
         <Section title={t('settings.seccaoManutencao')}>

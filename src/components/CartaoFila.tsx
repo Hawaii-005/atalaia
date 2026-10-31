@@ -21,20 +21,36 @@ type Props = {
  * próximo. Antes só existia o contador nas Definições — não havia forma de
  * apagar o que estava à espera.
  */
-export const CartaoFila = ({ esticar, mostrarAuto = true, mostrarTitulo = true, onAbrir }: Props) => {
+export const CartaoFila = ({
+  esticar,
+  mostrarAuto = true,
+  mostrarTitulo = true,
+  onAbrir,
+}: Props) => {
   const { tema } = useTheme();
   const p = tema.paleta;
-  const { fila, removerDaFila, limparFila, filaAuto, definirFilaAuto, printers } = usePrinterConnections();
+  const {
+    fila,
+    removerDaFila,
+    limparFila,
+    filaAuto,
+    definirFilaAuto,
+    printers,
+  } = usePrinterConnections();
 
   const nomeDaMaquina = (printerId: string) =>
     printers.find(imp => imp.id === printerId)?.printerName ?? printerId;
 
   const limpar = () => {
     if (fila.length === 0) return;
-    Alert.alert(t('fila.limparTudo'), t('fila.confirmarLimpar', { n: fila.length }), [
-      { text: t('comum.cancelar'), style: 'cancel' },
-      { text: t('fila.limpar'), style: 'destructive', onPress: limparFila },
-    ]);
+    Alert.alert(
+      t('fila.limparTudo'),
+      t('fila.confirmarLimpar', { n: fila.length }),
+      [
+        { text: t('comum.cancelar'), style: 'cancel' },
+        { text: t('fila.limpar'), style: 'destructive', onPress: limparFila },
+      ]
+    );
   };
 
   return (
@@ -51,7 +67,14 @@ export const CartaoFila = ({ esticar, mostrarAuto = true, mostrarTitulo = true, 
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         {mostrarTitulo ? (
-          <Text style={{ flex: 1, fontSize: 15, fontWeight: '700', color: hexDe(p.tinta) }}>
+          <Text
+            style={{
+              flex: 1,
+              fontSize: 15,
+              fontWeight: '700',
+              color: hexDe(p.tinta),
+            }}
+          >
             {t('fila.titulo')}
           </Text>
         ) : (
@@ -71,14 +94,26 @@ export const CartaoFila = ({ esticar, mostrarAuto = true, mostrarTitulo = true, 
               paddingVertical: 5,
             }}
           >
-            <Text style={{ fontSize: 11, fontWeight: '700', color: hexDe(p.perigo) }}>
+            <Text
+              style={{
+                fontSize: 11,
+                fontWeight: '700',
+                color: hexDe(p.perigo),
+              }}
+            >
               {t('fila.limparTudo')}
             </Text>
           </TouchableOpacity>
         )}
         {onAbrir && (
           <TouchableOpacity onPress={onAbrir} accessibilityRole="button">
-            <Text style={{ fontSize: 13, fontWeight: '600', color: hexDe(p.acentoTexto) }}>
+            <Text
+              style={{
+                fontSize: 13,
+                fontWeight: '600',
+                color: hexDe(p.acentoTexto),
+              }}
+            >
               {t('inicio.verTudo')}
             </Text>
           </TouchableOpacity>
@@ -86,7 +121,13 @@ export const CartaoFila = ({ esticar, mostrarAuto = true, mostrarTitulo = true, 
       </View>
 
       {fila.length === 0 ? (
-        <Text style={{ fontSize: 12, color: hexDe(p.tintaSoft), paddingVertical: 12 }}>
+        <Text
+          style={{
+            fontSize: 12,
+            color: hexDe(p.tintaSoft),
+            paddingVertical: 12,
+          }}
+        >
           {t('fila.vazia')}
         </Text>
       ) : (
@@ -112,13 +153,35 @@ export const CartaoFila = ({ esticar, mostrarAuto = true, mostrarTitulo = true, 
                 justifyContent: 'center',
               }}
             >
-              <Text style={{ fontSize: 11, fontWeight: '700', color: hexDe(p.tintaSoft) }}>{indice + 1}</Text>
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: '700',
+                  color: hexDe(p.tintaSoft),
+                }}
+              >
+                {indice + 1}
+              </Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: '600', color: hexDe(p.tinta) }}>
+              <Text
+                numberOfLines={1}
+                style={{
+                  fontSize: 13,
+                  fontWeight: '600',
+                  color: hexDe(p.tinta),
+                }}
+              >
                 {item.label || item.name}
               </Text>
-              <Text numberOfLines={1} style={{ fontSize: 11, color: hexDe(p.tintaSoft), marginTop: 2 }}>
+              <Text
+                numberOfLines={1}
+                style={{
+                  fontSize: 11,
+                  color: hexDe(p.tintaSoft),
+                  marginTop: 2,
+                }}
+              >
                 {nomeDaMaquina(item.printerId)}
               </Text>
             </View>
@@ -156,10 +219,14 @@ export const CartaoFila = ({ esticar, mostrarAuto = true, mostrarTitulo = true, 
           }}
         >
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 13, fontWeight: '600', color: hexDe(p.tinta) }}>
+            <Text
+              style={{ fontSize: 13, fontWeight: '600', color: hexDe(p.tinta) }}
+            >
               {t('settings.filaAuto')}
             </Text>
-            <Text style={{ fontSize: 11, color: hexDe(p.tintaSoft), marginTop: 2 }}>
+            <Text
+              style={{ fontSize: 11, color: hexDe(p.tintaSoft), marginTop: 2 }}
+            >
               {t('settings.filaAutoDesc')}
             </Text>
           </View>

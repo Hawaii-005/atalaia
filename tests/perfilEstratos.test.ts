@@ -1,10 +1,14 @@
-import { meiaLargura, camadasPostas, CAMADAS_DESENHADAS } from '../src/utils/perfilEstratos';
+import {
+  meiaLargura,
+  camadasPostas,
+  CAMADAS_DESENHADAS,
+} from '../src/utils/perfilEstratos';
 
 describe('camadasPostas', () => {
   it('total válido usa actual/total', () => {
     expect(camadasPostas(50, 100, 0, 72)).toBe(36);
   });
-  
+
   it('total 0 usa progresso/100', () => {
     expect(camadasPostas(0, 0, 50, 72)).toBe(36);
   });

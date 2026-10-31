@@ -140,16 +140,19 @@ export const DiscoveryScreen = ({ navigation }: any) => {
         <View className="rounded-xl2 border border-line bg-cartao p-4">
           <View className="flex-row items-start">
             {scanning ? (
-              <ActivityIndicator size="small" color={hexDe(tema.paleta.acento)} />
+              <ActivityIndicator
+                size="small"
+                color={hexDe(tema.paleta.acento)}
+              />
             ) : (
               <Ionicons
-                name={
-                  scanState === 'error'
-                    ? 'alert-circle-outline'
-                    : 'wifi'
-                }
+                name={scanState === 'error' ? 'alert-circle-outline' : 'wifi'}
                 size={16}
-                color={scanState === 'error' ? hexDe(tema.paleta.perigo) : hexDe(tema.paleta.acento)}
+                color={
+                  scanState === 'error'
+                    ? hexDe(tema.paleta.perigo)
+                    : hexDe(tema.paleta.acento)
+                }
               />
             )}
             <Text
@@ -189,7 +192,9 @@ export const DiscoveryScreen = ({ navigation }: any) => {
                 scanning ? 'text-ink-muted' : 'text-white'
               }`}
             >
-              {scanning ? t('discovery.aAnalisarBotao') : t('discovery.analisarDeNovo')}
+              {scanning
+                ? t('discovery.aAnalisarBotao')
+                : t('discovery.analisarDeNovo')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -275,7 +280,15 @@ export const DiscoveryScreen = ({ navigation }: any) => {
             alignItems: 'center',
           }}
         >
-          <Text style={{ fontSize: 11, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase', color: hexDe(tema.paleta.tinta) }}>
+          <Text
+            style={{
+              fontSize: 11,
+              fontWeight: '700',
+              letterSpacing: 1.2,
+              textTransform: 'uppercase',
+              color: hexDe(tema.paleta.tinta),
+            }}
+          >
             {t('discovery.voltarInicio')}
           </Text>
         </TouchableOpacity>

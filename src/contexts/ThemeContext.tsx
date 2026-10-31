@@ -33,7 +33,9 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         const bruto = await AsyncStorage.getItem(CHAVE);
         // 'conceito' era o tema roxo antes de passar a chamar-se 'ametista'.
-        const guardado = (bruto === 'conceito' ? 'ametista' : bruto) as TemaId | null;
+        const guardado = (
+          bruto === 'conceito' ? 'ametista' : bruto
+        ) as TemaId | null;
         if (guardado && TEMAS[guardado]) {
           _setTemaId(guardado);
         } else if (guardado) {

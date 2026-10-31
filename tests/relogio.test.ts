@@ -84,13 +84,15 @@ describe('arcoSvg', () => {
 
   it('path tem formato M x y A r r 0 flag 1 x y', () => {
     const path = arcoSvg(0, 3, 50, 100, 100);
-    expect(path).toMatch(/^M \d+\.\d{3} \d+\.\d{3} A \d+\.\d{3} \d+\.\d{3} 0 [01] 1 \d+\.\d{3} \d+\.\d{3}$/);
+    expect(path).toMatch(
+      /^M \d+\.\d{3} \d+\.\d{3} A \d+\.\d{3} \d+\.\d{3} 0 [01] 1 \d+\.\d{3} \d+\.\d{3}$/
+    );
   });
 
   it('coordenadas têm 3 casas decimais', () => {
     const path = arcoSvg(0, 6, 100, 100, 100);
     const numeros = path.match(/\d+\.\d+/g) || [];
-    numeros.forEach((n) => {
+    numeros.forEach(n => {
       const decimais = n.split('.')[1];
       expect(decimais?.length).toBe(3);
     });

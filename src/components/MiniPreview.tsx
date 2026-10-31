@@ -95,90 +95,96 @@ export const MiniPreview: React.FC<Props> = ({
       style={styles.casca}
       onLayout={e => setLarguraCaixa(e.nativeEvent.layout.width)}
     >
-    <View
-      style={[
-        styles.frame,
-        {
-          height: altura,
-          width: largura ?? '100%',
-          backgroundColor: hexDe(tema.paleta.fundoBaixo),
-        },
-      ]}
-      accessibilityRole="progressbar"
-      accessibilityValue={{ min: 0, max: 100, now: Math.round(p) }}
-      accessibilityLabel={rotulo}
-    >
-      {revelar ? (
-        <>
-          {/* 1. fantasma — o que falta imprimir */}
-          <Image
-            source={{ uri }}
-            style={[styles.img, { height: altura, opacity: 0.22 }]}
-            resizeMode="contain"
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-          />
-
-          {/* 2. já impresso — recorte ancorado em baixo */}
-          <Animated.View style={[styles.clip, { height: alturaVisivel }]}>
+      <View
+        style={[
+          styles.frame,
+          {
+            height: altura,
+            width: largura ?? '100%',
+            backgroundColor: hexDe(tema.paleta.fundoBaixo),
+          },
+        ]}
+        accessibilityRole="progressbar"
+        accessibilityValue={{ min: 0, max: 100, now: Math.round(p) }}
+        accessibilityLabel={rotulo}
+      >
+        {revelar ? (
+          <>
+            {/* 1. fantasma — o que falta imprimir */}
             <Image
               source={{ uri }}
-              style={[styles.img, { height: altura }]}
+              style={[styles.img, { height: altura, opacity: 0.22 }]}
               resizeMode="contain"
               accessibilityElementsHidden
               importantForAccessibility="no-hide-descendants"
             />
-          </Animated.View>
 
-          {/* 3. frente de impressão: linha de 2 dp + halo */}
-          {comLinha ? (
-            <Animated.View
-              style={[styles.front, { top: topoFrenteAnim }]}
-              pointerEvents="none"
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
-            >
-              {emPausa ? (
-                <View style={styles.tracejado}>
-                  {Array.from({ length: SEGMENTOS }).map((_, i) => (
-                    <View
-                      key={i}
-                      style={[styles.segmento, { backgroundColor: corMuted }]}
-                    />
-                  ))}
-                </View>
-              ) : (
-                <View
-                  style={[
-                    styles.linha,
-                    {
-                      backgroundColor: comFrente ? corFrente : corMuted,
-                      opacity: comFrente ? 1 : 0.55,
-                    },
-                  ]}
-                />
-              )}
-              {comFrente ? (
-                <View
-                  style={[
-                    styles.halo,
-                    { backgroundColor: corFrente, opacity: emPausa ? 0.12 : 0.14 },
-                  ]}
-                />
-              ) : null}
+            {/* 2. já impresso — recorte ancorado em baixo */}
+            <Animated.View style={[styles.clip, { height: alturaVisivel }]}>
+              <Image
+                source={{ uri }}
+                style={[styles.img, { height: altura }]}
+                resizeMode="contain"
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+              />
             </Animated.View>
-          ) : null}
-        </>
-      ) : (
-        <Image
-          source={{ uri }}
-          style={[styles.img, { height: altura, opacity: semLigacao ? 0.45 : 1 }]}
-          resizeMode="contain"
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-        />
-      )}
-    </View>
+
+            {/* 3. frente de impressão: linha de 2 dp + halo */}
+            {comLinha ? (
+              <Animated.View
+                style={[styles.front, { top: topoFrenteAnim }]}
+                pointerEvents="none"
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+              >
+                {emPausa ? (
+                  <View style={styles.tracejado}>
+                    {Array.from({ length: SEGMENTOS }).map((_, i) => (
+                      <View
+                        key={i}
+                        style={[styles.segmento, { backgroundColor: corMuted }]}
+                      />
+                    ))}
+                  </View>
+                ) : (
+                  <View
+                    style={[
+                      styles.linha,
+                      {
+                        backgroundColor: comFrente ? corFrente : corMuted,
+                        opacity: comFrente ? 1 : 0.55,
+                      },
+                    ]}
+                  />
+                )}
+                {comFrente ? (
+                  <View
+                    style={[
+                      styles.halo,
+                      {
+                        backgroundColor: corFrente,
+                        opacity: emPausa ? 0.12 : 0.14,
+                      },
+                    ]}
+                  />
+                ) : null}
+              </Animated.View>
+            ) : null}
+          </>
+        ) : (
+          <Image
+            source={{ uri }}
+            style={[
+              styles.img,
+              { height: altura, opacity: semLigacao ? 0.45 : 1 },
+            ]}
+            resizeMode="contain"
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          />
+        )}
+      </View>
     </View>
   );
 };

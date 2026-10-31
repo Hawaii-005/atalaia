@@ -1,4 +1,11 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { usePrinterConnections } from './PrinterConnectionsContext';
 import { Printer } from '../types';
@@ -31,7 +38,11 @@ interface Contexto {
 
 const SelectedPrinterContext = createContext<Contexto | undefined>(undefined);
 
-export const SelectedPrinterProvider = ({ children }: { children: React.ReactNode }) => {
+export const SelectedPrinterProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const { printers } = usePrinterConnections();
   const [maquinaId, setMaquinaId] = useState<string | null>(null);
   const [secao, setSecao] = useState<Secao>('painel');
@@ -63,7 +74,9 @@ export const SelectedPrinterProvider = ({ children }: { children: React.ReactNod
       AsyncStorage.setItem(CHAVE, id).catch(() => undefined);
       const destino = printers.find(p => p.id === id);
       const permitidas = secoesDaMaquina(destino);
-      setSecao(actual => (permitidas.includes(actual) ? actual : permitidas[0]));
+      setSecao(actual =>
+        permitidas.includes(actual) ? actual : permitidas[0]
+      );
     },
     [printers]
   );
@@ -76,13 +89,16 @@ export const SelectedPrinterProvider = ({ children }: { children: React.ReactNod
   );
 
   return (
-    <SelectedPrinterContext.Provider value={valor}>{children}</SelectedPrinterContext.Provider>
+    <SelectedPrinterContext.Provider value={valor}>
+      {children}
+    </SelectedPrinterContext.Provider>
   );
 };
 
 export const useSelectedPrinter = (): Contexto => {
   const ctx = useContext(SelectedPrinterContext);
-  if (!ctx) throw new Error('useSelectedPrinter fora do SelectedPrinterProvider');
+  if (!ctx)
+    throw new Error('useSelectedPrinter fora do SelectedPrinterProvider');
   return ctx;
 };
 

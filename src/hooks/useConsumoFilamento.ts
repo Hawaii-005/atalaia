@@ -9,7 +9,9 @@ import { registarConsumo } from '../utils/inventario';
  */
 export const useConsumoFilamento = () => {
   const { printers } = usePrinterConnections();
-  const anteriores = useRef<Record<string, { fase: string; nome?: string }>>({});
+  const anteriores = useRef<Record<string, { fase: string; nome?: string }>>(
+    {}
+  );
 
   useEffect(() => {
     printers.forEach(pr => {

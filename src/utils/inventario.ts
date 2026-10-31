@@ -68,7 +68,8 @@ export const carregarInventario = async (): Promise<Inventario> => {
   }
 };
 
-const guardar = (dados: Inventario) => AsyncStorage.setItem(CHAVE, JSON.stringify(dados));
+const guardar = (dados: Inventario) =>
+  AsyncStorage.setItem(CHAVE, JSON.stringify(dados));
 
 /** Rolo mais recente dessa impressora — é o que está carregado. */
 export const roloActivo = (rolos: Rolo[], printerId: string) =>
@@ -84,7 +85,8 @@ export const garrafaActiva = (garrafas: Garrafa[], printerId: string) =>
 export const custoPorGrama = (rolo: Rolo) =>
   rolo.pesoInicial > 0 ? rolo.preco / rolo.pesoInicial : 0;
 
-export const valorRestante = (rolo: Rolo) => custoPorGrama(rolo) * rolo.restante;
+export const valorRestante = (rolo: Rolo) =>
+  custoPorGrama(rolo) * rolo.restante;
 
 export const custoPorMl = (garrafa: Garrafa) =>
   garrafa.volumeInicial > 0 ? garrafa.preco / garrafa.volumeInicial : 0;
@@ -112,24 +114,39 @@ export const reporRolo = async (
   await guardar({
     ...inventario,
     rolos: inventario.rolos.map(r =>
-      r.id === id ? { ...r, ...valores, restante: valores.pesoInicial, criadoEm: Date.now() } : r
+      r.id === id
+        ? {
+            ...r,
+            ...valores,
+            restante: valores.pesoInicial,
+            criadoEm: Date.now(),
+          }
+        : r
     ),
   });
 };
 
-export const ajustarRestante = async (id: string, gramas: number): Promise<void> => {
+export const ajustarRestante = async (
+  id: string,
+  gramas: number
+): Promise<void> => {
   const inventario = await carregarInventario();
   await guardar({
     ...inventario,
     rolos: inventario.rolos.map(r =>
-      r.id === id ? { ...r, restante: Math.max(0, Math.min(r.pesoInicial, gramas)) } : r
+      r.id === id
+        ? { ...r, restante: Math.max(0, Math.min(r.pesoInicial, gramas)) }
+        : r
     ),
   });
 };
 
 export const removerRolo = async (id: string): Promise<void> => {
   const inventario = await carregarInventario();
-  await guardar({ ...inventario, rolos: inventario.rolos.filter(r => r.id !== id) });
+  await guardar({
+    ...inventario,
+    rolos: inventario.rolos.filter(r => r.id !== id),
+  });
 };
 
 export const adicionarGarrafa = async (
@@ -146,12 +163,17 @@ export const adicionarGarrafa = async (
   return garrafa;
 };
 
-export const ajustarRestanteMl = async (id: string, ml: number): Promise<void> => {
+export const ajustarRestanteMl = async (
+  id: string,
+  ml: number
+): Promise<void> => {
   const inventario = await carregarInventario();
   await guardar({
     ...inventario,
     garrafas: inventario.garrafas.map(g =>
-      g.id === id ? { ...g, restante: Math.max(0, Math.min(g.volumeInicial, ml)) } : g
+      g.id === id
+        ? { ...g, restante: Math.max(0, Math.min(g.volumeInicial, ml)) }
+        : g
     ),
   });
 };
@@ -230,13 +252,21 @@ export const registarConsumo = async (
   await guardar({
     ...inventario,
     rolos: inventario.rolos.map(r =>
-      r.id === rolo.id ? { ...r, restante: Math.max(0, Math.round((r.restante - gramas) * 10) / 10) } : r
+      r.id === rolo.id
+        ? {
+            ...r,
+            restante: Math.max(0, Math.round((r.restante - gramas) * 10) / 10),
+          }
+        : r
     ),
   });
 };
 
 /** Fecha um consumo pendente com os gramas que o utilizador indicar. */
-export const confirmarConsumo = async (pendenteId: string, gramas: number): Promise<void> => {
+export const confirmarConsumo = async (
+  pendenteId: string,
+  gramas: number
+): Promise<void> => {
   const inventario = await carregarInventario();
   const pendente = inventario.pendentes.find(p => p.id === pendenteId);
   if (!pendente) return;
@@ -244,7 +274,10 @@ export const confirmarConsumo = async (pendenteId: string, gramas: number): Prom
   await guardar({
     rolos: inventario.rolos.map(r =>
       rolo && r.id === rolo.id
-        ? { ...r, restante: Math.max(0, Math.round((r.restante - gramas) * 10) / 10) }
+        ? {
+            ...r,
+            restante: Math.max(0, Math.round((r.restante - gramas) * 10) / 10),
+          }
         : r
     ),
     garrafas: inventario.garrafas,

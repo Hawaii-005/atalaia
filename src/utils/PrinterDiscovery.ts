@@ -84,7 +84,6 @@ const probePrinter = (ip: string): Promise<DiscoveredPrinter | null> =>
     }
   });
 
-
 const UDP_PORT = 3000;
 const UDP_TIMEOUT = 2500;
 
@@ -116,7 +115,9 @@ const udpDiscovery = (subnet: string | null): Promise<DiscoveredPrinter[]> =>
       socket.on('error', finish);
       socket.on('message', (data: any) => {
         try {
-          const text = Buffer.isBuffer(data) ? data.toString('utf8') : String(data);
+          const text = Buffer.isBuffer(data)
+            ? data.toString('utf8')
+            : String(data);
           const payload = JSON.parse(text);
           const info = payload?.Data ?? payload;
           // A Saturn 3 Ultra aninha tudo em Data.Attributes; a Centauri manda

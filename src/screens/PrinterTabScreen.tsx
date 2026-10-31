@@ -2,12 +2,20 @@ import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
-import { useSelectedPrinter, secoesDaMaquina, Secao } from '../contexts/SelectedPrinterContext';
+import {
+  useSelectedPrinter,
+  secoesDaMaquina,
+  Secao,
+} from '../contexts/SelectedPrinterContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { EstadoVazio } from '../ui/EstadoVazio';
 import { hexDe } from '../theme/temas';
-import { espaco, raio as raioToken, texto as textoToken } from '../theme/tokensV6';
+import {
+  espaco,
+  raio as raioToken,
+  texto as textoToken,
+} from '../theme/tokensV6';
 import { t } from '../i18n';
 import { EstadoSection } from '../sections/EstadoSection';
 import { PainelSection } from '../sections/PainelSection';
@@ -58,28 +66,41 @@ export const PrinterTabScreen = ({ navigation }: any) => {
 
     switch (secao) {
       case 'ficheiros':
-        return <FilesScreen printerId={maquina.id} embutido navigation={navigation} />;
+        return (
+          <FilesScreen
+            printerId={maquina.id}
+            embutido
+            navigation={navigation}
+          />
+        );
       case 'filamentos':
         return <FilamentosScreen printerId={maquina.id} embutido />;
       case 'estado':
         return (
           <EstadoSection
             printer={maquina}
-            onAbrirCamara={() => navigation.navigate('Camera', { printerId: maquina.id })}
+            onAbrirCamara={() =>
+              navigation.navigate('Camera', { printerId: maquina.id })
+            }
           />
         );
       default:
         return (
           <PainelSection
             printer={maquina}
-            onAbrirCamara={() => navigation.navigate('Camera', { printerId: maquina.id })}
+            onAbrirCamara={() =>
+              navigation.navigate('Camera', { printerId: maquina.id })
+            }
           />
         );
     }
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: hexDe(paleta.fundo) }} edges={['top']}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: hexDe(paleta.fundo) }}
+      edges={['top']}
+    >
       <View
         style={{
           flexDirection: 'row',
@@ -118,7 +139,11 @@ export const PrinterTabScreen = ({ navigation }: any) => {
                 justifyContent: 'center',
               }}
             >
-              <Ionicons name="pencil" size={16} color={hexDe(paleta.tintaSoft)} />
+              <Ionicons
+                name="pencil"
+                size={16}
+                color={hexDe(paleta.tintaSoft)}
+              />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() =>
@@ -147,7 +172,11 @@ export const PrinterTabScreen = ({ navigation }: any) => {
                 justifyContent: 'center',
               }}
             >
-              <Ionicons name="trash-outline" size={16} color={hexDe(paleta.perigo)} />
+              <Ionicons
+                name="trash-outline"
+                size={16}
+                color={hexDe(paleta.perigo)}
+              />
             </TouchableOpacity>
           </>
         ) : null}
@@ -157,11 +186,18 @@ export const PrinterTabScreen = ({ navigation }: any) => {
         horizontal
         style={{ flexGrow: 0 }}
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: espaco.lg, paddingVertical: espaco.md, gap: espaco.sm }}
+        contentContainerStyle={{
+          paddingHorizontal: espaco.lg,
+          paddingVertical: espaco.md,
+          gap: espaco.sm,
+        }}
       >
         {printers.map(p => {
           const activa = p.id === maquina?.id;
-          const ponto = p.connectionStatus === 'connected' ? hexDe(paleta.ok) : hexDe(paleta.perigo);
+          const ponto =
+            p.connectionStatus === 'connected'
+              ? hexDe(paleta.ok)
+              : hexDe(paleta.perigo);
           return (
             <TouchableOpacity
               key={p.id}
@@ -185,13 +221,28 @@ export const PrinterTabScreen = ({ navigation }: any) => {
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: espaco.sm,
-                backgroundColor: activa ? hexDe(paleta.acentoSuave) : hexDe(paleta.cartao),
+                backgroundColor: activa
+                  ? hexDe(paleta.acentoSuave)
+                  : hexDe(paleta.cartao),
                 borderWidth: activa ? 1.5 : 0,
                 borderColor: hexDe(paleta.acento),
               }}
             >
-              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: ponto }} />
-              <Text style={{ fontSize: 14, fontWeight: '700', color: hexDe(paleta.tinta) }}>
+              <View
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: 5,
+                  backgroundColor: ponto,
+                }}
+              />
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontWeight: '700',
+                  color: hexDe(paleta.tinta),
+                }}
+              >
                 {p.printerName}
               </Text>
             </TouchableOpacity>
@@ -224,7 +275,9 @@ export const PrinterTabScreen = ({ navigation }: any) => {
                   borderRadius: raioToken.chip,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: activa ? hexDe(paleta.acento) : 'transparent',
+                  backgroundColor: activa
+                    ? hexDe(paleta.acento)
+                    : 'transparent',
                 }}
               >
                 <Text
@@ -243,7 +296,9 @@ export const PrinterTabScreen = ({ navigation }: any) => {
         </View>
       )}
 
-      <View style={{ flex: 1, marginTop: secoes.length > 1 ? espaco.md : 0 }}>{corpo()}</View>
+      <View style={{ flex: 1, marginTop: secoes.length > 1 ? espaco.md : 0 }}>
+        {corpo()}
+      </View>
     </SafeAreaView>
   );
 };

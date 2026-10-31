@@ -1,12 +1,13 @@
 import { classificarEstado, isPausable, isResumable } from '../src/types';
 
-const impressao = (status: number, filename = '/local//x.gcode') => ({
-  Filename: filename,
-  Status: status,
-  CurrentLayer: 1,
-  TotalLayer: 50,
-  Progress: 10,
-} as any);
+const impressao = (status: number, filename = '/local//x.gcode') =>
+  ({
+    Filename: filename,
+    Status: status,
+    CurrentLayer: 1,
+    TotalLayer: 50,
+    Progress: 10,
+  }) as any;
 
 describe('classificarEstado', () => {
   it('sem ficheiro e parada é idle', () => {

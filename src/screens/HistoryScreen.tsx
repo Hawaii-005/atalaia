@@ -87,7 +87,9 @@ const HistoryRow = ({
   );
   const [precoKg, setPrecoKg] = useState(0);
   useEffect(() => {
-    getPrecoKg().then(setPrecoKg).catch(() => undefined);
+    getPrecoKg()
+      .then(setPrecoKg)
+      .catch(() => undefined);
   }, []);
   const doCabecalho = filamentos.reduce((soma, f) => soma + f.gramas, 0);
   const gramas = doCabecalho > 0 ? doCabecalho : (consumo?.gramas ?? 0);
@@ -100,10 +102,19 @@ const HistoryRow = ({
       <View className="w-14 h-14 rounded-lg bg-cartao border border-line items-center justify-center overflow-hidden">
         {preview ? (
           <Svg viewBox="0 0 100 100" width={52} height={52}>
-            <Path d={preview.path} stroke={hexDe(tema.paleta.tinta)} strokeWidth={0.6} fill="none" />
+            <Path
+              d={preview.path}
+              stroke={hexDe(tema.paleta.tinta)}
+              strokeWidth={0.6}
+              fill="none"
+            />
           </Svg>
         ) : (
-          <Ionicons name="cube-outline" size={18} color={hexDe(tema.paleta.tintaMuted)} />
+          <Ionicons
+            name="cube-outline"
+            size={18}
+            color={hexDe(tema.paleta.tintaMuted)}
+          />
         )}
       </View>
       <View className="flex-1 ml-3">
@@ -124,7 +135,11 @@ const HistoryRow = ({
         accessibilityLabel={t('history.reimprimirTitulo')}
         activeOpacity={0.7}
       >
-        <Ionicons name="refresh" size={15} color={hexDe(tema.paleta.tintaSoft)} />
+        <Ionicons
+          name="refresh"
+          size={15}
+          color={hexDe(tema.paleta.tintaSoft)}
+        />
       </TouchableOpacity>
       <View
         className={`px-2 py-1 rounded-md ${
@@ -161,10 +176,16 @@ export const HistoryScreen = ({ navigation }: any) => {
   const visiveis = useMemo(() => {
     const termo = procura.trim().toLowerCase();
     const lista = records.filter(
-      r => !termo || (r.filename.split('/').pop() ?? r.filename).toLowerCase().includes(termo)
+      r =>
+        !termo ||
+        (r.filename.split('/').pop() ?? r.filename)
+          .toLowerCase()
+          .includes(termo)
     );
-    if (ordem === 'duracao') return [...lista].sort((a, b) => segundosDe(b) - segundosDe(a));
-    if (ordem === 'nome') return [...lista].sort((a, b) => a.filename.localeCompare(b.filename));
+    if (ordem === 'duracao')
+      return [...lista].sort((a, b) => segundosDe(b) - segundosDe(a));
+    if (ordem === 'nome')
+      return [...lista].sort((a, b) => a.filename.localeCompare(b.filename));
     return [...lista].sort((a, b) => b.startedAt - a.startedAt);
   }, [records, procura, ordem]);
 
@@ -175,7 +196,8 @@ export const HistoryScreen = ({ navigation }: any) => {
     for (const r of visiveis) {
       const rotulo = rotuloDoDia(r.startedAt);
       const ultimo = lista[lista.length - 1];
-      if (!ultimo || ultimo.rotulo !== rotulo) lista.push({ rotulo, itens: [r] });
+      if (!ultimo || ultimo.rotulo !== rotulo)
+        lista.push({ rotulo, itens: [r] });
       else ultimo.itens.push(r);
     }
     return lista;
@@ -200,7 +222,10 @@ export const HistoryScreen = ({ navigation }: any) => {
         const lista: { name: string }[] = dados?.FileList ?? [];
         const alvo = lista.find(f => f.name.endsWith(`/${base}`));
         if (!alvo) {
-          Alert.alert(t('history.reimprimirTitulo'), t('history.ficheiroSumiu'));
+          Alert.alert(
+            t('history.reimprimirTitulo'),
+            t('history.ficheiroSumiu')
+          );
           return;
         }
         const resposta = await request(
@@ -233,21 +258,17 @@ export const HistoryScreen = ({ navigation }: any) => {
   );
 
   const handleClear = () => {
-    Alert.alert(
-      t('history.limparTitulo'),
-      t('history.limparMsg'),
-      [
-        { text: t('comum.cancelar'), style: 'cancel' },
-        {
-          text: t('history.limpar'),
-          style: 'destructive',
-          onPress: async () => {
-            await clearHistory();
-            setRecords([]);
-          },
+    Alert.alert(t('history.limparTitulo'), t('history.limparMsg'), [
+      { text: t('comum.cancelar'), style: 'cancel' },
+      {
+        text: t('history.limpar'),
+        style: 'destructive',
+        onPress: async () => {
+          await clearHistory();
+          setRecords([]);
         },
-      ]
-    );
+      },
+    ]);
   };
 
   return (
@@ -282,7 +303,11 @@ export const HistoryScreen = ({ navigation }: any) => {
         ) : (
           <>
             <View className="flex-row items-center rounded-lg border border-line bg-cartao px-2.5 h-10">
-              <Ionicons name="search" size={15} color={hexDe(tema.paleta.tintaMuted)} />
+              <Ionicons
+                name="search"
+                size={15}
+                color={hexDe(tema.paleta.tintaMuted)}
+              />
               <TextInput
                 value={procura}
                 onChangeText={setProcura}
@@ -293,8 +318,15 @@ export const HistoryScreen = ({ navigation }: any) => {
                 returnKeyType="search"
               />
               {procura.length > 0 && (
-                <TouchableOpacity onPress={() => setProcura('')} activeOpacity={0.7}>
-                  <Ionicons name="close-circle" size={16} color={hexDe(tema.paleta.tintaMuted)} />
+                <TouchableOpacity
+                  onPress={() => setProcura('')}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons
+                    name="close-circle"
+                    size={16}
+                    color={hexDe(tema.paleta.tintaMuted)}
+                  />
                 </TouchableOpacity>
               )}
             </View>
@@ -318,8 +350,8 @@ export const HistoryScreen = ({ navigation }: any) => {
                       criterio === 'data'
                         ? 'files.ordemData'
                         : criterio === 'duracao'
-                        ? 'files.ordemDuracao'
-                        : 'files.ordemNome'
+                          ? 'files.ordemDuracao'
+                          : 'files.ordemNome'
                     )}
                   </Text>
                 </TouchableOpacity>
@@ -328,7 +360,11 @@ export const HistoryScreen = ({ navigation }: any) => {
 
             {visiveis.length === 0 ? (
               <View className="px-4 py-8 items-center">
-                <Ionicons name="search" size={20} color={hexDe(tema.paleta.tintaMuted)} />
+                <Ionicons
+                  name="search"
+                  size={20}
+                  color={hexDe(tema.paleta.tintaMuted)}
+                />
                 <Text className="text-[13px] text-ink-muted mt-2 text-center">
                   {t('history.semResultados', { q: procura.trim() })}
                 </Text>
@@ -341,7 +377,9 @@ export const HistoryScreen = ({ navigation }: any) => {
                       {grupo.rotulo}
                     </Text>
                     <View className="flex-1 h-px bg-line mx-2" />
-                    <Text className="text-[10px] text-ink-muted">{grupo.itens.length}</Text>
+                    <Text className="text-[10px] text-ink-muted">
+                      {grupo.itens.length}
+                    </Text>
                   </View>
                   <View className="bg-canvas-sunken rounded-xl overflow-hidden">
                     {grupo.itens.map(record => (

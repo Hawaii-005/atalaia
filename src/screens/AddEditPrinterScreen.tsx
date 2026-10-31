@@ -102,7 +102,8 @@ export const AddEditPrinterScreen = () => {
           : 'border-line'
     }`;
 
-  const canSave = formData.printerName.length >= 2 && formData.ipAddress.length > 0;
+  const canSave =
+    formData.printerName.length >= 2 && formData.ipAddress.length > 0;
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
@@ -219,7 +220,11 @@ export const AddEditPrinterScreen = () => {
           activeOpacity={0.7}
           className="mt-3 py-3 flex-row items-center justify-center"
         >
-          <Ionicons name="wifi" size={16} color={hexDe(tema.paleta.tintaSoft)} />
+          <Ionicons
+            name="wifi"
+            size={16}
+            color={hexDe(tema.paleta.tintaSoft)}
+          />
           <Text className="ml-2 text-[13px] font-semibold text-ink-soft">
             {t('addPrinter.analisarRede')}
           </Text>

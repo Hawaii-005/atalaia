@@ -21,7 +21,12 @@ type Props = {
  * existe em `/video`, MJPEG, que o <Image> não lê). Fica como porta de entrada
  * para o ecrã da câmara, com o nome da máquina.
  */
-export const CartaoCamara = ({ printerName, onAbrir, altura = 180, esticar }: Props) => {
+export const CartaoCamara = ({
+  printerName,
+  onAbrir,
+  altura = 180,
+  esticar,
+}: Props) => {
   const { tema } = useTheme();
   const p = tema.paleta;
 
@@ -38,11 +43,24 @@ export const CartaoCamara = ({ printerName, onAbrir, altura = 180, esticar }: Pr
       }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Text style={{ flex: 1, fontSize: 15, fontWeight: '700', color: hexDe(p.tinta) }}>
+        <Text
+          style={{
+            flex: 1,
+            fontSize: 15,
+            fontWeight: '700',
+            color: hexDe(p.tinta),
+          }}
+        >
           {t('inicio.camara')}
         </Text>
         <TouchableOpacity onPress={onAbrir} accessibilityRole="button">
-          <Text style={{ fontSize: 13, fontWeight: '600', color: hexDe(p.acentoTexto) }}>
+          <Text
+            style={{
+              fontSize: 13,
+              fontWeight: '600',
+              color: hexDe(p.acentoTexto),
+            }}
+          >
             {t('inicio.verAoVivo')}
           </Text>
         </TouchableOpacity>
@@ -65,11 +83,24 @@ export const CartaoCamara = ({ printerName, onAbrir, altura = 180, esticar }: Pr
           padding: 12,
         }}
       >
-        <Ionicons name="videocam-outline" size={34} color={hexDe(p.acentoTexto)} />
-        <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: '600', color: hexDe(p.tinta) }}>
+        <Ionicons
+          name="videocam-outline"
+          size={34}
+          color={hexDe(p.acentoTexto)}
+        />
+        <Text
+          numberOfLines={1}
+          style={{ fontSize: 13, fontWeight: '600', color: hexDe(p.tinta) }}
+        >
           {printerName}
         </Text>
-        <Text style={{ fontSize: 11, color: hexDe(p.tintaSoft), textAlign: 'center' }}>
+        <Text
+          style={{
+            fontSize: 11,
+            color: hexDe(p.tintaSoft),
+            textAlign: 'center',
+          }}
+        >
           {t('inicio.camaraAjuda')}
         </Text>
       </TouchableOpacity>

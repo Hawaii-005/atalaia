@@ -89,7 +89,10 @@ export const extrairMiniaturaEmbutida = async (
       guardarCache(chave, null);
       return null;
     }
-    const bloco = texto.slice(texto.indexOf('\n', inicio) + 1, fim > inicio ? fim : undefined);
+    const bloco = texto.slice(
+      texto.indexOf('\n', inicio) + 1,
+      fim > inicio ? fim : undefined
+    );
     // Só base64: tira os '; ' de cada linha e tudo o que não pertença ao alfabeto.
     const base64 = bloco.replace(/[^A-Za-z0-9+/=]/g, '');
     if (base64.length < 100) {
@@ -101,7 +104,10 @@ export const extrairMiniaturaEmbutida = async (
     log('[miniatura] embutida ok', baseDoNome(nome));
     return uri;
   } catch (erro) {
-    log('miniatura embutida falhou', erro instanceof Error ? erro.stack : String(erro));
+    log(
+      'miniatura embutida falhou',
+      erro instanceof Error ? erro.stack : String(erro)
+    );
     cacheEmbutidas.set(chave, null);
     return null;
   }

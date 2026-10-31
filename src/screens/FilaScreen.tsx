@@ -13,7 +13,10 @@ export const FilaScreen = ({ navigation }: any) => {
   const p = tema.paleta;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: hexDe(p.fundo) }} edges={['top']}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: hexDe(p.fundo) }}
+      edges={['top']}
+    >
       <View
         style={{
           flexDirection: 'row',
@@ -40,7 +43,11 @@ export const FilaScreen = ({ navigation }: any) => {
         >
           <Ionicons name="arrow-back" size={20} color={hexDe(p.tinta)} />
         </TouchableOpacity>
-        <Text style={{ fontSize: 22, fontWeight: '700', color: hexDe(p.tinta) }}>{t('fila.titulo')}</Text>
+        <Text
+          style={{ fontSize: 22, fontWeight: '700', color: hexDe(p.tinta) }}
+        >
+          {t('fila.titulo')}
+        </Text>
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16, flexGrow: 1 }}>

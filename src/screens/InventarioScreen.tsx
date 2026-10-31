@@ -38,17 +38,35 @@ import {
 
 const MATERIAIS = ['PLA', 'PETG', 'ABS', 'TPU', 'ASA'];
 const PESOS = [250, 500, 750, 1000];
-const CORES = ['#F5F5F5', '#1B1B1B', '#8B7CF6', '#38BDF8', '#34D399', '#F97316', '#EAB308', '#F87171'];
+const CORES = [
+  '#F5F5F5',
+  '#1B1B1B',
+  '#8B7CF6',
+  '#38BDF8',
+  '#34D399',
+  '#F97316',
+  '#EAB308',
+  '#F87171',
+];
 
-const formatarEuros = (valor: number) => `${valor.toFixed(2).replace('.', ',')} €`;
+const formatarEuros = (valor: number) =>
+  `${valor.toFixed(2).replace('.', ',')} €`;
 
-const Barra: React.FC<{ valor: number; total: number; cor: string; trilho: string }> = ({
-  valor,
-  total,
-  cor,
-  trilho,
-}) => (
-  <View style={{ height: 5, borderRadius: 3, backgroundColor: trilho, overflow: 'hidden', marginTop: 7 }}>
+const Barra: React.FC<{
+  valor: number;
+  total: number;
+  cor: string;
+  trilho: string;
+}> = ({ valor, total, cor, trilho }) => (
+  <View
+    style={{
+      height: 5,
+      borderRadius: 3,
+      backgroundColor: trilho,
+      overflow: 'hidden',
+      marginTop: 7,
+    }}
+  >
     <View
       style={{
         width: `${Math.max(0, Math.min(100, total > 0 ? (valor / total) * 100 : 0))}%`,
@@ -65,9 +83,16 @@ export const InventarioScreen = () => {
   const p = tema.paleta;
   const { printers } = usePrinterConnections();
 
-  const [inventario, setInventario] = useState<Inventario>({ rolos: [], garrafas: [], pendentes: [] });
+  const [inventario, setInventario] = useState<Inventario>({
+    rolos: [],
+    garrafas: [],
+    pendentes: [],
+  });
   const [aCarregar, setACarregar] = useState(true);
-  const [formRolo, setFormRolo] = useState<{ printerId: string; repor?: Rolo } | null>(null);
+  const [formRolo, setFormRolo] = useState<{
+    printerId: string;
+    repor?: Rolo;
+  } | null>(null);
   const [formGarrafa, setFormGarrafa] = useState<string | null>(null);
   const [aGravar, setAGravar] = useState(false);
 
@@ -94,7 +119,10 @@ export const InventarioScreen = () => {
     setAGravar(true);
     try {
       if (formRolo.repor) {
-        await reporRolo(formRolo.repor.id, { pesoInicial: dados.pesoInicial, preco: dados.preco });
+        await reporRolo(formRolo.repor.id, {
+          pesoInicial: dados.pesoInicial,
+          preco: dados.preco,
+        });
       } else {
         await adicionarRolo({ ...dados, printerId: formRolo.printerId });
       }
@@ -105,7 +133,12 @@ export const InventarioScreen = () => {
     }
   };
 
-  const guardarGarrafa = async (dados: { nome: string; cor: string; volumeInicial: number; preco: number }) => {
+  const guardarGarrafa = async (dados: {
+    nome: string;
+    cor: string;
+    volumeInicial: number;
+    preco: number;
+  }) => {
     if (!formGarrafa) return;
     setAGravar(true);
     try {
@@ -147,19 +180,40 @@ export const InventarioScreen = () => {
   );
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: hexDe(p.fundo) }}>
+    <SafeAreaView
+      edges={['top']}
+      style={{ flex: 1, backgroundColor: hexDe(p.fundo) }}
+    >
       <Header title={t('inv.titulo')} subtitle={t('inv.subtitulo')} />
-      <ScrollView contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 48 }}>
+      <ScrollView
+        contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 48 }}
+      >
         {aCarregar ? (
-          <ActivityIndicator color={hexDe(p.acento)} style={{ marginTop: 40 }} />
+          <ActivityIndicator
+            color={hexDe(p.acento)}
+            style={{ marginTop: 40 }}
+          />
         ) : (
           <>
             {fdm.map(printer => {
               const rolo = roloActivo(inventario.rolos, printer.id);
               return (
                 <Cartao key={printer.id}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                    <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: hexDe(p.tinta) }}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      marginBottom: 10,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        flex: 1,
+                        fontSize: 13,
+                        fontWeight: '700',
+                        color: hexDe(p.tinta),
+                      }}
+                    >
                       {printer.printerName}
                     </Text>
                     <TouchableOpacity
@@ -175,18 +229,36 @@ export const InventarioScreen = () => {
                       }}
                       activeOpacity={0.8}
                     >
-                      <Ionicons name="add" size={14} color={hexDe(p.acentoTexto)} />
-                      <Text style={{ fontSize: 11, fontWeight: '700', color: hexDe(p.acentoTexto) }}>
+                      <Ionicons
+                        name="add"
+                        size={14}
+                        color={hexDe(p.acentoTexto)}
+                      />
+                      <Text
+                        style={{
+                          fontSize: 11,
+                          fontWeight: '700',
+                          color: hexDe(p.acentoTexto),
+                        }}
+                      >
                         {t('inv.novoRolo')}
                       </Text>
                     </TouchableOpacity>
                   </View>
 
                   {!rolo ? (
-                    <Text style={{ fontSize: 12, color: hexDe(p.tintaSoft) }}>{t('inv.semRolo')}</Text>
+                    <Text style={{ fontSize: 12, color: hexDe(p.tintaSoft) }}>
+                      {t('inv.semRolo')}
+                    </Text>
                   ) : (
                     <>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 10,
+                        }}
+                      >
                         <View
                           style={{
                             width: 26,
@@ -198,14 +270,34 @@ export const InventarioScreen = () => {
                           }}
                         />
                         <View style={{ flex: 1 }}>
-                          <Text style={{ fontSize: 13, fontWeight: '700', color: hexDe(p.tinta) }} numberOfLines={1}>
+                          <Text
+                            style={{
+                              fontSize: 13,
+                              fontWeight: '700',
+                              color: hexDe(p.tinta),
+                            }}
+                            numberOfLines={1}
+                          >
                             {rolo.nome}
                           </Text>
-                          <Text style={{ fontSize: 10, color: hexDe(p.tintaSoft), marginTop: 1 }}>
+                          <Text
+                            style={{
+                              fontSize: 10,
+                              color: hexDe(p.tintaSoft),
+                              marginTop: 1,
+                            }}
+                          >
                             {`${rolo.material} · ${formatarEuros(custoPorGrama(rolo) * 1000)}/kg`}
                           </Text>
                         </View>
-                        <Text style={{ fontSize: 14, fontWeight: '700', color: hexDe(p.tinta), fontFamily: fonteNumeros }}>
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            fontWeight: '700',
+                            color: hexDe(p.tinta),
+                            fontFamily: fonteNumeros,
+                          }}
+                        >
                           {`${Math.round(rolo.restante)} g`}
                         </Text>
                       </View>
@@ -213,18 +305,33 @@ export const InventarioScreen = () => {
                       <Barra
                         valor={rolo.restante}
                         total={rolo.pesoInicial}
-                        cor={rolo.restante < 100 ? hexDe(p.aviso) : hexDe(p.acento)}
+                        cor={
+                          rolo.restante < 100 ? hexDe(p.aviso) : hexDe(p.acento)
+                        }
                         trilho={hexDe(p.linha)}
                       />
-                      <Text style={{ fontSize: 10, color: hexDe(p.tintaSoft), marginTop: 5 }}>
-                        {`${Math.round(rolo.restante)} / ${rolo.pesoInicial} g · ${t('inv.restanteValor', {
-                          valor: formatarEuros(valorRestante(rolo)),
-                        })}`}
+                      <Text
+                        style={{
+                          fontSize: 10,
+                          color: hexDe(p.tintaSoft),
+                          marginTop: 5,
+                        }}
+                      >
+                        {`${Math.round(rolo.restante)} / ${rolo.pesoInicial} g · ${t(
+                          'inv.restanteValor',
+                          {
+                            valor: formatarEuros(valorRestante(rolo)),
+                          }
+                        )}`}
                       </Text>
 
-                      <View style={{ flexDirection: 'row', gap: 8, marginTop: 11 }}>
+                      <View
+                        style={{ flexDirection: 'row', gap: 8, marginTop: 11 }}
+                      >
                         <TouchableOpacity
-                          onPress={() => setFormRolo({ printerId: printer.id, repor: rolo })}
+                          onPress={() =>
+                            setFormRolo({ printerId: printer.id, repor: rolo })
+                          }
                           style={{
                             flex: 1,
                             height: 34,
@@ -236,7 +343,13 @@ export const InventarioScreen = () => {
                           }}
                           activeOpacity={0.8}
                         >
-                          <Text style={{ fontSize: 11, fontWeight: '700', color: hexDe(p.tinta) }}>
+                          <Text
+                            style={{
+                              fontSize: 11,
+                              fontWeight: '700',
+                              color: hexDe(p.tinta),
+                            }}
+                          >
                             {t('inv.repor')}
                           </Text>
                         </TouchableOpacity>
@@ -244,8 +357,22 @@ export const InventarioScreen = () => {
                           onPress={() =>
                             Alert.alert(t('inv.ajustar'), t('inv.ajustarMsg'), [
                               { text: t('comum.cancelar'), style: 'cancel' },
-                              { text: '+100 g', onPress: () => ajustarRestante(rolo.id, rolo.restante + 100).then(recarregar) },
-                              { text: '−100 g', onPress: () => ajustarRestante(rolo.id, rolo.restante - 100).then(recarregar) },
+                              {
+                                text: '+100 g',
+                                onPress: () =>
+                                  ajustarRestante(
+                                    rolo.id,
+                                    rolo.restante + 100
+                                  ).then(recarregar),
+                              },
+                              {
+                                text: '−100 g',
+                                onPress: () =>
+                                  ajustarRestante(
+                                    rolo.id,
+                                    rolo.restante - 100
+                                  ).then(recarregar),
+                              },
                             ])
                           }
                           style={{
@@ -259,7 +386,13 @@ export const InventarioScreen = () => {
                           }}
                           activeOpacity={0.8}
                         >
-                          <Text style={{ fontSize: 11, fontWeight: '700', color: hexDe(p.tinta) }}>
+                          <Text
+                            style={{
+                              fontSize: 11,
+                              fontWeight: '700',
+                              color: hexDe(p.tinta),
+                            }}
+                          >
                             {t('inv.ajustar')}
                           </Text>
                         </TouchableOpacity>
@@ -274,8 +407,21 @@ export const InventarioScreen = () => {
               const garrafa = garrafaActiva(inventario.garrafas, printer.id);
               return (
                 <Cartao key={printer.id}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                    <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: hexDe(p.tinta) }}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      marginBottom: 10,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        flex: 1,
+                        fontSize: 13,
+                        fontWeight: '700',
+                        color: hexDe(p.tinta),
+                      }}
+                    >
                       {printer.printerName}
                     </Text>
                     <TouchableOpacity
@@ -291,38 +437,104 @@ export const InventarioScreen = () => {
                       }}
                       activeOpacity={0.8}
                     >
-                      <Ionicons name="add" size={14} color={hexDe(p.acentoTexto)} />
-                      <Text style={{ fontSize: 11, fontWeight: '700', color: hexDe(p.acentoTexto) }}>
+                      <Ionicons
+                        name="add"
+                        size={14}
+                        color={hexDe(p.acentoTexto)}
+                      />
+                      <Text
+                        style={{
+                          fontSize: 11,
+                          fontWeight: '700',
+                          color: hexDe(p.acentoTexto),
+                        }}
+                      >
                         {t('inv.novaGarrafa')}
                       </Text>
                     </TouchableOpacity>
                   </View>
 
                   {!garrafa ? (
-                    <Text style={{ fontSize: 12, color: hexDe(p.tintaSoft) }}>{t('inv.semGarrafa')}</Text>
+                    <Text style={{ fontSize: 12, color: hexDe(p.tintaSoft) }}>
+                      {t('inv.semGarrafa')}
+                    </Text>
                   ) : (
                     <>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                        <View style={{ width: 26, height: 26, borderRadius: 9, backgroundColor: garrafa.cor, borderWidth: 1, borderColor: hexDe(p.linha) }} />
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 10,
+                        }}
+                      >
+                        <View
+                          style={{
+                            width: 26,
+                            height: 26,
+                            borderRadius: 9,
+                            backgroundColor: garrafa.cor,
+                            borderWidth: 1,
+                            borderColor: hexDe(p.linha),
+                          }}
+                        />
                         <View style={{ flex: 1 }}>
-                          <Text style={{ fontSize: 13, fontWeight: '700', color: hexDe(p.tinta) }} numberOfLines={1}>
+                          <Text
+                            style={{
+                              fontSize: 13,
+                              fontWeight: '700',
+                              color: hexDe(p.tinta),
+                            }}
+                            numberOfLines={1}
+                          >
                             {garrafa.nome}
                           </Text>
-                          <Text style={{ fontSize: 10, color: hexDe(p.tintaSoft), marginTop: 1 }}>
+                          <Text
+                            style={{
+                              fontSize: 10,
+                              color: hexDe(p.tintaSoft),
+                              marginTop: 1,
+                            }}
+                          >
                             {`${formatarEuros(custoPorMl(garrafa) * 1000)}/L`}
                           </Text>
                         </View>
-                        <Text style={{ fontSize: 14, fontWeight: '700', color: hexDe(p.tinta), fontFamily: fonteNumeros }}>
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            fontWeight: '700',
+                            color: hexDe(p.tinta),
+                            fontFamily: fonteNumeros,
+                          }}
+                        >
                           {`${Math.round(garrafa.restante)} ml`}
                         </Text>
                       </View>
-                      <Barra valor={garrafa.restante} total={garrafa.volumeInicial} cor={hexDe(p.acento)} trilho={hexDe(p.linha)} />
+                      <Barra
+                        valor={garrafa.restante}
+                        total={garrafa.volumeInicial}
+                        cor={hexDe(p.acento)}
+                        trilho={hexDe(p.linha)}
+                      />
                       <TouchableOpacity
                         onPress={() =>
                           Alert.alert(t('inv.ajustar'), t('inv.ajustarMsg'), [
                             { text: t('comum.cancelar'), style: 'cancel' },
-                            { text: '+100 ml', onPress: () => ajustarRestanteMl(garrafa.id, garrafa.restante + 100).then(recarregar) },
-                            { text: '−100 ml', onPress: () => ajustarRestanteMl(garrafa.id, garrafa.restante - 100).then(recarregar) },
+                            {
+                              text: '+100 ml',
+                              onPress: () =>
+                                ajustarRestanteMl(
+                                  garrafa.id,
+                                  garrafa.restante + 100
+                                ).then(recarregar),
+                            },
+                            {
+                              text: '−100 ml',
+                              onPress: () =>
+                                ajustarRestanteMl(
+                                  garrafa.id,
+                                  garrafa.restante - 100
+                                ).then(recarregar),
+                            },
                           ])
                         }
                         style={{
@@ -336,7 +548,15 @@ export const InventarioScreen = () => {
                         }}
                         activeOpacity={0.8}
                       >
-                        <Text style={{ fontSize: 11, fontWeight: '700', color: hexDe(p.tinta) }}>{t('inv.ajustar')}</Text>
+                        <Text
+                          style={{
+                            fontSize: 11,
+                            fontWeight: '700',
+                            color: hexDe(p.tinta),
+                          }}
+                        >
+                          {t('inv.ajustar')}
+                        </Text>
                       </TouchableOpacity>
                     </>
                   )}
@@ -348,34 +568,107 @@ export const InventarioScreen = () => {
               <Cartao>
                 <Rotulo>{t('inv.porConfirmar')}</Rotulo>
                 {inventario.pendentes.map(pend => (
-                  <View key={pend.id} style={{ paddingVertical: 8, borderTopWidth: 1, borderTopColor: hexDe(p.linha) + '77' }}>
-                    <Text style={{ fontSize: 12, fontWeight: '600', color: hexDe(p.tinta) }} numberOfLines={1}>
+                  <View
+                    key={pend.id}
+                    style={{
+                      paddingVertical: 8,
+                      borderTopWidth: 1,
+                      borderTopColor: hexDe(p.linha) + '77',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        fontWeight: '600',
+                        color: hexDe(p.tinta),
+                      }}
+                      numberOfLines={1}
+                    >
                       {pend.filename}
                     </Text>
-                    <Text style={{ fontSize: 10, color: hexDe(p.tintaSoft), marginTop: 2 }}>
+                    <Text
+                      style={{
+                        fontSize: 10,
+                        color: hexDe(p.tintaSoft),
+                        marginTop: 2,
+                      }}
+                    >
                       {t('inv.pendenteMsg')}
                     </Text>
-                    <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+                    <View
+                      style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}
+                    >
                       <TouchableOpacity
                         onPress={() =>
-                          Alert.alert(t('inv.confirmar'), t('inv.confirmarMsg'), [
-                            { text: t('comum.cancelar'), style: 'cancel' },
-                            { text: '50 g', onPress: () => confirmarConsumo(pend.id, 50).then(recarregar) },
-                            { text: '100 g', onPress: () => confirmarConsumo(pend.id, 100).then(recarregar) },
-                            { text: '200 g', onPress: () => confirmarConsumo(pend.id, 200).then(recarregar) },
-                          ])
+                          Alert.alert(
+                            t('inv.confirmar'),
+                            t('inv.confirmarMsg'),
+                            [
+                              { text: t('comum.cancelar'), style: 'cancel' },
+                              {
+                                text: '50 g',
+                                onPress: () =>
+                                  confirmarConsumo(pend.id, 50).then(
+                                    recarregar
+                                  ),
+                              },
+                              {
+                                text: '100 g',
+                                onPress: () =>
+                                  confirmarConsumo(pend.id, 100).then(
+                                    recarregar
+                                  ),
+                              },
+                              {
+                                text: '200 g',
+                                onPress: () =>
+                                  confirmarConsumo(pend.id, 200).then(
+                                    recarregar
+                                  ),
+                              },
+                            ]
+                          )
                         }
-                        style={{ flex: 1, height: 32, borderRadius: 9, backgroundColor: hexDe(p.acento) + '22', alignItems: 'center', justifyContent: 'center' }}
+                        style={{
+                          flex: 1,
+                          height: 32,
+                          borderRadius: 9,
+                          backgroundColor: hexDe(p.acento) + '22',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
                       >
-                        <Text style={{ fontSize: 11, fontWeight: '700', color: hexDe(p.acentoTexto) }}>
+                        <Text
+                          style={{
+                            fontSize: 11,
+                            fontWeight: '700',
+                            color: hexDe(p.acentoTexto),
+                          }}
+                        >
                           {t('inv.confirmar')}
                         </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
-                        onPress={() => descartarConsumo(pend.id).then(recarregar)}
-                        style={{ width: 90, height: 32, borderRadius: 9, borderWidth: 1, borderColor: hexDe(p.linha), alignItems: 'center', justifyContent: 'center' }}
+                        onPress={() =>
+                          descartarConsumo(pend.id).then(recarregar)
+                        }
+                        style={{
+                          width: 90,
+                          height: 32,
+                          borderRadius: 9,
+                          borderWidth: 1,
+                          borderColor: hexDe(p.linha),
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
                       >
-                        <Text style={{ fontSize: 11, fontWeight: '700', color: hexDe(p.tintaSoft) }}>
+                        <Text
+                          style={{
+                            fontSize: 11,
+                            fontWeight: '700',
+                            color: hexDe(p.tintaSoft),
+                          }}
+                        >
                           {t('inv.descartar')}
                         </Text>
                       </TouchableOpacity>
@@ -385,7 +678,14 @@ export const InventarioScreen = () => {
               </Cartao>
             )}
 
-            <Text style={{ fontSize: 10, color: hexDe(p.tintaSoft), lineHeight: 15, paddingHorizontal: 4 }}>
+            <Text
+              style={{
+                fontSize: 10,
+                color: hexDe(p.tintaSoft),
+                lineHeight: 15,
+                paddingHorizontal: 4,
+              }}
+            >
               {t('inv.aviso')}
             </Text>
           </>
@@ -421,7 +721,14 @@ const Campo: React.FC<{
   const p = tema.paleta;
   return (
     <View style={{ marginBottom: 12 }}>
-      <Text style={{ fontSize: 10, fontWeight: '700', color: hexDe(p.tintaSoft), marginBottom: 5 }}>
+      <Text
+        style={{
+          fontSize: 10,
+          fontWeight: '700',
+          color: hexDe(p.tintaSoft),
+          marginBottom: 5,
+        }}
+      >
         {etiqueta}
       </Text>
       <TextInput
@@ -444,7 +751,11 @@ const Campo: React.FC<{
   );
 };
 
-const Chip: React.FC<{ activo: boolean; texto: string; onPress: () => void }> = ({ activo, texto, onPress }) => {
+const Chip: React.FC<{
+  activo: boolean;
+  texto: string;
+  onPress: () => void;
+}> = ({ activo, texto, onPress }) => {
   const { tema } = useTheme();
   const p = tema.paleta;
   return (
@@ -462,22 +773,41 @@ const Chip: React.FC<{ activo: boolean; texto: string; onPress: () => void }> = 
         marginBottom: 6,
       }}
     >
-      <Text style={{ fontSize: 11, fontWeight: '700', color: activo ? '#fff' : hexDe(p.tintaSoft) }}>{texto}</Text>
+      <Text
+        style={{
+          fontSize: 11,
+          fontWeight: '700',
+          color: activo ? '#fff' : hexDe(p.tintaSoft),
+        }}
+      >
+        {texto}
+      </Text>
     </TouchableOpacity>
   );
 };
 
-const Moldura: React.FC<{ aberto: boolean; titulo: string; onFechar: () => void; children: React.ReactNode }> = ({
-  aberto,
-  titulo,
-  onFechar,
-  children,
-}) => {
+const Moldura: React.FC<{
+  aberto: boolean;
+  titulo: string;
+  onFechar: () => void;
+  children: React.ReactNode;
+}> = ({ aberto, titulo, onFechar, children }) => {
   const { tema } = useTheme();
   const p = tema.paleta;
   return (
-    <Modal visible={aberto} transparent animationType="slide" onRequestClose={onFechar}>
-      <View style={{ flex: 1, backgroundColor: 'rgba(3,6,12,0.72)', justifyContent: 'flex-end' }}>
+    <Modal
+      visible={aberto}
+      transparent
+      animationType="slide"
+      onRequestClose={onFechar}
+    >
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: 'rgba(3,6,12,0.72)',
+          justifyContent: 'flex-end',
+        }}
+      >
         <View
           style={{
             backgroundColor: hexDe(p.fundo),
@@ -487,9 +817,27 @@ const Moldura: React.FC<{ aberto: boolean; titulo: string; onFechar: () => void;
             paddingBottom: 28,
           }}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
-            <Text style={{ flex: 1, fontSize: 15, fontWeight: '700', color: hexDe(p.tinta) }}>{titulo}</Text>
-            <TouchableOpacity onPress={onFechar} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginBottom: 14,
+            }}
+          >
+            <Text
+              style={{
+                flex: 1,
+                fontSize: 15,
+                fontWeight: '700',
+                color: hexDe(p.tinta),
+              }}
+            >
+              {titulo}
+            </Text>
+            <TouchableOpacity
+              onPress={onFechar}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
               <Ionicons name="close" size={20} color={hexDe(p.tintaSoft)} />
             </TouchableOpacity>
           </View>
@@ -511,7 +859,13 @@ const FormularioRolo = ({
   inicial?: Rolo;
   aGravar: boolean;
   onFechar: () => void;
-  onGuardar: (dados: { nome: string; material: string; cor: string; pesoInicial: number; preco: number }) => void;
+  onGuardar: (dados: {
+    nome: string;
+    material: string;
+    cor: string;
+    pesoInicial: number;
+    preco: number;
+  }) => void;
 }) => {
   const { tema } = useTheme();
   const p = tema.paleta;
@@ -540,19 +894,56 @@ const FormularioRolo = ({
     });
 
   return (
-    <Moldura aberto={aberto} titulo={inicial ? t('inv.reporTitulo') : t('inv.novoRoloTitulo')} onFechar={onFechar}>
-      <ScrollView style={{ maxHeight: 430 }} keyboardShouldPersistTaps="handled">
-        <Campo etiqueta={t('inv.nome')} valor={nome} onChange={setNome} placeholder="Elegoo PLA" />
-        <Text style={{ fontSize: 10, fontWeight: '700', color: hexDe(p.tintaSoft), marginBottom: 5 }}>
+    <Moldura
+      aberto={aberto}
+      titulo={inicial ? t('inv.reporTitulo') : t('inv.novoRoloTitulo')}
+      onFechar={onFechar}
+    >
+      <ScrollView
+        style={{ maxHeight: 430 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Campo
+          etiqueta={t('inv.nome')}
+          valor={nome}
+          onChange={setNome}
+          placeholder="Elegoo PLA"
+        />
+        <Text
+          style={{
+            fontSize: 10,
+            fontWeight: '700',
+            color: hexDe(p.tintaSoft),
+            marginBottom: 5,
+          }}
+        >
           {t('inv.material')}
         </Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 }}>
+        <View
+          style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 }}
+        >
           {MATERIAIS.map(m => (
-            <Chip key={m} texto={m} activo={material === m} onPress={() => setMaterial(m)} />
+            <Chip
+              key={m}
+              texto={m}
+              activo={material === m}
+              onPress={() => setMaterial(m)}
+            />
           ))}
         </View>
-        <Text style={{ fontSize: 10, fontWeight: '700', color: hexDe(p.tintaSoft), marginBottom: 5 }}>{t('inv.cor')}</Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 12 }}>
+        <Text
+          style={{
+            fontSize: 10,
+            fontWeight: '700',
+            color: hexDe(p.tintaSoft),
+            marginBottom: 5,
+          }}
+        >
+          {t('inv.cor')}
+        </Text>
+        <View
+          style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 12 }}
+        >
           {CORES.map(c => (
             <TouchableOpacity
               key={c}
@@ -570,15 +961,35 @@ const FormularioRolo = ({
             />
           ))}
         </View>
-        <Text style={{ fontSize: 10, fontWeight: '700', color: hexDe(p.tintaSoft), marginBottom: 5 }}>
+        <Text
+          style={{
+            fontSize: 10,
+            fontWeight: '700',
+            color: hexDe(p.tintaSoft),
+            marginBottom: 5,
+          }}
+        >
           {t('inv.peso')}
         </Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 }}>
+        <View
+          style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 }}
+        >
           {PESOS.map(g => (
-            <Chip key={g} texto={`${g} g`} activo={peso === g} onPress={() => setPeso(g)} />
+            <Chip
+              key={g}
+              texto={`${g} g`}
+              activo={peso === g}
+              onPress={() => setPeso(g)}
+            />
           ))}
         </View>
-        <Campo etiqueta={t('inv.preco')} valor={preco} onChange={setPreco} numerico placeholder="19,90" />
+        <Campo
+          etiqueta={t('inv.preco')}
+          valor={preco}
+          onChange={setPreco}
+          numerico
+          placeholder="19,90"
+        />
       </ScrollView>
       <TouchableOpacity
         onPress={guardar}
@@ -611,7 +1022,12 @@ const FormularioGarrafa = ({
   aberto: boolean;
   aGravar: boolean;
   onFechar: () => void;
-  onGuardar: (dados: { nome: string; cor: string; volumeInicial: number; preco: number }) => void;
+  onGuardar: (dados: {
+    nome: string;
+    cor: string;
+    volumeInicial: number;
+    preco: number;
+  }) => void;
 }) => {
   const { tema } = useTheme();
   const p = tema.paleta;
@@ -629,10 +1045,30 @@ const FormularioGarrafa = ({
   }, [aberto]);
 
   return (
-    <Moldura aberto={aberto} titulo={t('inv.novaGarrafaTitulo')} onFechar={onFechar}>
-      <Campo etiqueta={t('inv.nome')} valor={nome} onChange={setNome} placeholder="Elegoo Water Washable" />
-      <Text style={{ fontSize: 10, fontWeight: '700', color: hexDe(p.tintaSoft), marginBottom: 5 }}>{t('inv.cor')}</Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 12 }}>
+    <Moldura
+      aberto={aberto}
+      titulo={t('inv.novaGarrafaTitulo')}
+      onFechar={onFechar}
+    >
+      <Campo
+        etiqueta={t('inv.nome')}
+        valor={nome}
+        onChange={setNome}
+        placeholder="Elegoo Water Washable"
+      />
+      <Text
+        style={{
+          fontSize: 10,
+          fontWeight: '700',
+          color: hexDe(p.tintaSoft),
+          marginBottom: 5,
+        }}
+      >
+        {t('inv.cor')}
+      </Text>
+      <View
+        style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 12 }}
+      >
         {CORES.map(c => (
           <TouchableOpacity
             key={c}
@@ -650,8 +1086,20 @@ const FormularioGarrafa = ({
           />
         ))}
       </View>
-      <Campo etiqueta={t('inv.volume')} valor={volume} onChange={setVolume} numerico placeholder="1000" />
-      <Campo etiqueta={t('inv.preco')} valor={preco} onChange={setPreco} numerico placeholder="34,90" />
+      <Campo
+        etiqueta={t('inv.volume')}
+        valor={volume}
+        onChange={setVolume}
+        numerico
+        placeholder="1000"
+      />
+      <Campo
+        etiqueta={t('inv.preco')}
+        valor={preco}
+        onChange={setPreco}
+        numerico
+        placeholder="34,90"
+      />
       <TouchableOpacity
         onPress={() =>
           onGuardar({

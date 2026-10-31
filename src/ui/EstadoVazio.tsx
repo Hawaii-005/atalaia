@@ -105,7 +105,13 @@ export const EstadoVazio = ({
             justifyContent: 'center',
           }}
         >
-          <Text style={{ fontSize: 15, fontWeight: '600', color: hexDe(paleta.tinta) }}>
+          <Text
+            style={{
+              fontSize: 15,
+              fontWeight: '600',
+              color: hexDe(paleta.tinta),
+            }}
+          >
             {acaoSecundaria.rotulo}
           </Text>
         </TouchableOpacity>

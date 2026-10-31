@@ -40,7 +40,14 @@ import type { ConnectionStatus } from '../types';
 import { classificarEstado } from '../types';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
-import { BT_ACENTO, BT_APAGADA, BT_NEUTRA, BT_PERIGO, TX_ACENTO, TX_PERIGO } from '../theme/botoes';
+import {
+  BT_ACENTO,
+  BT_APAGADA,
+  BT_NEUTRA,
+  BT_PERIGO,
+  TX_ACENTO,
+  TX_PERIGO,
+} from '../theme/botoes';
 import { lerTimelapse, guardarTimelapse } from '../utils/timelapse';
 
 // Etiquetas visíveis para o estado de ligação da impressora (chaves i18n).
@@ -154,27 +161,23 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
 
   const handleStopPrint = () => {
     if (!printer) return;
-    Alert.alert(
-      t('comum.cancelarImpressao'),
-      t('comum.interrompeImpressao'),
-      [
-        { text: t('comum.continuarImpressao'), style: 'cancel' },
-        {
-          text: t('comum.pararImpressao'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await request(
-                printer.id,
-                stopPrintCommand({ id: `cancel-${Date.now()}` })
-              );
-            } catch (erro) {
-              Alert.alert('Comando recusado', mensagemDoErro(erro));
-            }
-          },
+    Alert.alert(t('comum.cancelarImpressao'), t('comum.interrompeImpressao'), [
+      { text: t('comum.continuarImpressao'), style: 'cancel' },
+      {
+        text: t('comum.pararImpressao'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await request(
+              printer.id,
+              stopPrintCommand({ id: `cancel-${Date.now()}` })
+            );
+          } catch (erro) {
+            Alert.alert('Comando recusado', mensagemDoErro(erro));
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const onRefresh = useCallback(() => {
@@ -260,7 +263,10 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
     // alerta de erro. A preferência fica guardada e é ela que segue no
     // Tlp_Switch do próximo arranque; o comando é um extra quando aceite.
     Promise.resolve(
-      sendCommand(printer.id, timelapseCommand(enabled, { id: `timelapse-${Date.now()}` }))
+      sendCommand(
+        printer.id,
+        timelapseCommand(enabled, { id: `timelapse-${Date.now()}` })
+      )
     ).catch(() => undefined);
   };
 
@@ -308,12 +314,19 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
         setEmPausa(false);
         return;
       }
-      if (emCurso && valor > 0 && Date.now() - ultimosTicks.current.desde > 6000) {
+      if (
+        emCurso &&
+        valor > 0 &&
+        Date.now() - ultimosTicks.current.desde > 6000
+      ) {
         setEmPausa(true);
       }
     }, 2000);
     return () => clearInterval(id);
-  }, [printer?.status?.PrintInfo?.CurrentTicks, printer?.status?.PrintInfo?.Status]);
+  }, [
+    printer?.status?.PrintInfo?.CurrentTicks,
+    printer?.status?.PrintInfo?.Status,
+  ]);
 
   if (!printer) {
     return (
@@ -342,8 +355,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
   // 8 parada. Por isso o critério é ter trabalho e não estar parada/acabada.
   // 9 = terminada (o firmware mantém ficheiro e progresso).
   const codigosParado = [0, 7, 8, 9];
-  const isPrinting =
-    !!info?.Filename && !codigosParado.includes(printStatus);
+  const isPrinting = !!info?.Filename && !codigosParado.includes(printStatus);
   const estado = classificarEstado(info, emPausa);
 
   const restanteSegundos = Math.max(
@@ -403,9 +415,27 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
 
   // Presets por material: velocidade, ventoinhas e luz de uma vez.
   const PRESETS = [
-    { id: 'pla', label: 'PLA', pct: 100, fans: { model: 100, side: 0, chamber: 0 }, luz: false },
-    { id: 'abs', label: 'ABS', pct: 130, fans: { model: 60, side: 0, chamber: 80 }, luz: true },
-    { id: 'silencioso', label: t('details.silencioso'), pct: 50, fans: { model: 50, side: 0, chamber: 0 }, luz: false },
+    {
+      id: 'pla',
+      label: 'PLA',
+      pct: 100,
+      fans: { model: 100, side: 0, chamber: 0 },
+      luz: false,
+    },
+    {
+      id: 'abs',
+      label: 'ABS',
+      pct: 130,
+      fans: { model: 60, side: 0, chamber: 80 },
+      luz: true,
+    },
+    {
+      id: 'silencioso',
+      label: t('details.silencioso'),
+      pct: 50,
+      fans: { model: 50, side: 0, chamber: 0 },
+      luz: false,
+    },
   ];
 
   const SPEED_PROFILES = [
@@ -429,20 +459,28 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
         onBack={() => navigation.goBack()}
         rightAction={{
           icon: 'pencil',
-          onPress: () => navigation.navigate('EditarIp', { printerId: printer.id }),
+          onPress: () =>
+            navigation.navigate('EditarIp', { printerId: printer.id }),
         }}
       />
 
       {!isConnected && printer.status && (
         <View className="mx-4 mb-1 rounded-xl2 border border-line bg-canvas-sunken px-3 py-2 flex-row items-center">
-          <Ionicons name="cloud-offline-outline" size={13} color={hexDe(tema.paleta.tintaSoft)} />
+          <Ionicons
+            name="cloud-offline-outline"
+            size={13}
+            color={hexDe(tema.paleta.tintaSoft)}
+          />
           <Text className="ml-2 text-[11px] text-ink-soft">
             {printer.lastUpdate
               ? t('details.ultimoEstado', {
-                  hora: new Date(printer.lastUpdate).toLocaleTimeString('pt-PT', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  }),
+                  hora: new Date(printer.lastUpdate).toLocaleTimeString(
+                    'pt-PT',
+                    {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    }
+                  ),
                 })
               : t('details.semLigacao')}
           </Text>
@@ -484,7 +522,9 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                 fill="none"
                 strokeLinecap="round"
                 strokeDasharray={`${ANEL_CIRC} ${ANEL_CIRC}`}
-                strokeDashoffset={ANEL_CIRC * (1 - Math.max(0, Math.min(100, progress)) / 100)}
+                strokeDashoffset={
+                  ANEL_CIRC * (1 - Math.max(0, Math.min(100, progress)) / 100)
+                }
                 transform={`rotate(-90 ${ANEL_TAM / 2} ${ANEL_TAM / 2})`}
               />
             </Svg>
@@ -508,32 +548,40 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                     backgroundColor: '#000',
                   }}
                 >
-                <WebView
-                  key={webViewKey}
-                  source={{
-                    html: `<html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;padding:0;background:#000;height:100%;overflow:hidden}img{width:100%;height:100%;object-fit:cover;display:block}</style></head><body><img src="http://${enderecoDe(printer)}:3031/video" /></body></html>`,
-                    baseUrl: `http://${enderecoDe(printer)}`,
-                  }}
-                  style={{
-                    width: ANEL_TAM - 2 * (ANEL_TRACO + 7),
-                    height: ANEL_TAM - 2 * (ANEL_TRACO + 7),
-                    backgroundColor: '#000',
-                  }}
-                  javaScriptEnabled
-                  domStorageEnabled={false}
-                  allowsInlineMediaPlayback
-                  mediaPlaybackRequiresUserAction={false}
-                  mixedContentMode="always"
-                  originWhitelist={['*']}
-                  scrollEnabled={false}
-                  bounces={false}
-                  onHttpError={e => log('DETAIL_HTTP_ERR', JSON.stringify(e.nativeEvent))}
-                  onError={e => log('DETAIL_WV_ERR', JSON.stringify(e.nativeEvent))}
-                  onLoadEnd={() => log('DETAIL_WV_LOADED')}
-                />
+                  <WebView
+                    key={webViewKey}
+                    source={{
+                      html: `<html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;padding:0;background:#000;height:100%;overflow:hidden}img{width:100%;height:100%;object-fit:cover;display:block}</style></head><body><img src="http://${enderecoDe(printer)}:3031/video" /></body></html>`,
+                      baseUrl: `http://${enderecoDe(printer)}`,
+                    }}
+                    style={{
+                      width: ANEL_TAM - 2 * (ANEL_TRACO + 7),
+                      height: ANEL_TAM - 2 * (ANEL_TRACO + 7),
+                      backgroundColor: '#000',
+                    }}
+                    javaScriptEnabled
+                    domStorageEnabled={false}
+                    allowsInlineMediaPlayback
+                    mediaPlaybackRequiresUserAction={false}
+                    mixedContentMode="always"
+                    originWhitelist={['*']}
+                    scrollEnabled={false}
+                    bounces={false}
+                    onHttpError={e =>
+                      log('DETAIL_HTTP_ERR', JSON.stringify(e.nativeEvent))
+                    }
+                    onError={e =>
+                      log('DETAIL_WV_ERR', JSON.stringify(e.nativeEvent))
+                    }
+                    onLoadEnd={() => log('DETAIL_WV_LOADED')}
+                  />
                 </View>
               ) : (
-                <Ionicons name="videocam-off" size={26} color="rgba(255,255,255,0.45)" />
+                <Ionicons
+                  name="videocam-off"
+                  size={26}
+                  color="rgba(255,255,255,0.45)"
+                />
               )}
 
               <View
@@ -543,7 +591,11 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                 <View className="px-2.5 py-1 rounded-lg bg-black/35">
                   <Text
                     className="text-white font-bold"
-                    style={{ fontFamily: 'monospace', fontSize: 32, lineHeight: 36 }}
+                    style={{
+                      fontFamily: 'monospace',
+                      fontSize: 32,
+                      lineHeight: 36,
+                    }}
                   >
                     {progress}
                     <Text style={{ fontSize: 13 }}> %</Text>
@@ -591,7 +643,10 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
             <Text className="text-[9px] tracking-[1.2px] font-semibold text-ink-soft">
               {t('comum.bico').toUpperCase()}
             </Text>
-            <Text className="mt-0.5 text-[17px] font-bold text-ink" style={{ fontFamily: 'monospace' }}>
+            <Text
+              className="mt-0.5 text-[17px] font-bold text-ink"
+              style={{ fontFamily: 'monospace' }}
+            >
               {(printer.status?.TempOfNozzle ?? 0).toFixed(0)}°
             </Text>
           </View>
@@ -599,7 +654,10 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
             <Text className="text-[9px] tracking-[1.2px] font-semibold text-ink-soft">
               {t('comum.mesa').toUpperCase()}
             </Text>
-            <Text className="mt-0.5 text-[17px] font-bold text-ink" style={{ fontFamily: 'monospace' }}>
+            <Text
+              className="mt-0.5 text-[17px] font-bold text-ink"
+              style={{ fontFamily: 'monospace' }}
+            >
               {(printer.status?.TempOfHotbed ?? 0).toFixed(0)}°
             </Text>
           </View>
@@ -607,7 +665,10 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
             <Text className="text-[9px] tracking-[1.2px] font-semibold text-ink-soft">
               {t('comum.camadaTitulo').toUpperCase()}
             </Text>
-            <Text className="mt-0.5 text-[17px] font-bold text-ink" style={{ fontFamily: 'monospace' }}>
+            <Text
+              className="mt-0.5 text-[17px] font-bold text-ink"
+              style={{ fontFamily: 'monospace' }}
+            >
               {isPrinting && (info?.TotalLayer ?? 0) > 0
                 ? `${info?.CurrentLayer ?? 0}/${info?.TotalLayer ?? 0}`
                 : '—'}
@@ -618,13 +679,17 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
         {/* Acções de impressão */}
         {isConnected && isPrinting && (
           <View className="flex-row mt-3" style={{ gap: 10 }}>
-            {(isConnected && isPrinting) && (
+            {isConnected && isPrinting && (
               <TouchableOpacity
                 onPress={handlePrintControl}
                 className="flex-1 h-11 rounded-xl bg-brand items-center justify-center flex-row"
                 activeOpacity={0.8}
               >
-                <Ionicons name={emPausa ? 'play' : 'pause'} size={15} color="#FFFFFF" />
+                <Ionicons
+                  name={emPausa ? 'play' : 'pause'}
+                  size={15}
+                  color="#FFFFFF"
+                />
                 <Text className="ml-1.5 text-[13px] font-semibold text-white">
                   {emPausa ? t('comum.retomar') : t('comum.pausar')}
                 </Text>
@@ -635,7 +700,11 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
               className="flex-1 h-11 rounded-xl border border-state-danger items-center justify-center flex-row"
               activeOpacity={0.8}
             >
-              <Ionicons name="stop" size={15} color={hexDe(tema.paleta.perigo)} />
+              <Ionicons
+                name="stop"
+                size={15}
+                color={hexDe(tema.paleta.perigo)}
+              />
               <Text className="ml-1.5 text-[13px] font-semibold text-state-danger">
                 {t('comum.parar')}
               </Text>
@@ -656,7 +725,11 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                 <Ionicons
                   name={isLightOn ? 'bulb' : 'bulb-outline'}
                   size={16}
-                  color={isLightOn ? hexDe(tema.paleta.acento) : hexDe(tema.paleta.tintaSoft)}
+                  color={
+                    isLightOn
+                      ? hexDe(tema.paleta.acento)
+                      : hexDe(tema.paleta.tintaSoft)
+                  }
                 />
               </View>
               <Text className="ml-3 text-[14px] font-medium text-ink">
@@ -667,7 +740,10 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
               value={isLightOn}
               onValueChange={handleLightToggle}
               disabled={!isConnected}
-              trackColor={{ false: hexDe(tema.paleta.linha), true: hexDe(tema.paleta.acento) }}
+              trackColor={{
+                false: hexDe(tema.paleta.linha),
+                true: hexDe(tema.paleta.acento),
+              }}
               thumbColor="#FFFFFF"
               ios_backgroundColor={hexDe(tema.paleta.linha)}
             />
@@ -682,7 +758,11 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                     <Ionicons
                       name={row.icon as any}
                       size={16}
-                      color={row.speed > 0 ? hexDe(tema.paleta.acento) : hexDe(tema.paleta.tintaSoft)}
+                      color={
+                        row.speed > 0
+                          ? hexDe(tema.paleta.acento)
+                          : hexDe(tema.paleta.tintaSoft)
+                      }
                     />
                   </View>
                   <Text className="ml-3 text-[14px] font-medium text-ink">
@@ -751,7 +831,10 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                   activeOpacity={0.7}
                   className="flex-1 mr-1.5 py-2 rounded-lg items-center bg-canvas-sunken border border-line"
                 >
-                  <Text className="text-[10px] font-semibold text-ink-soft" numberOfLines={1}>
+                  <Text
+                    className="text-[10px] font-semibold text-ink-soft"
+                    numberOfLines={1}
+                  >
                     {preset.label}
                   </Text>
                 </TouchableOpacity>
@@ -793,7 +876,11 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
                 <Ionicons
                   name="film-outline"
                   size={16}
-                  color={timelapse ? hexDe(tema.paleta.acento) : hexDe(tema.paleta.tintaSoft)}
+                  color={
+                    timelapse
+                      ? hexDe(tema.paleta.acento)
+                      : hexDe(tema.paleta.tintaSoft)
+                  }
                 />
               </View>
               <View className="ml-3">
@@ -809,12 +896,14 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
               value={timelapse}
               onValueChange={handleTimelapse}
               disabled={!isConnected}
-              trackColor={{ false: hexDe(tema.paleta.linha), true: hexDe(tema.paleta.acento) }}
+              trackColor={{
+                false: hexDe(tema.paleta.linha),
+                true: hexDe(tema.paleta.acento),
+              }}
               thumbColor="#FFFFFF"
               ios_backgroundColor={hexDe(tema.paleta.linha)}
             />
           </View>
-
         </View>
 
         {/* Printer */}
@@ -824,7 +913,9 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
           </Text>
           <View className="flex-row items-center justify-between px-4 py-3 border-t border-line">
             <View>
-              <Text className="text-[13px] font-medium text-ink">{t('details.ligacao')}</Text>
+              <Text className="text-[13px] font-medium text-ink">
+                {t('details.ligacao')}
+              </Text>
               <Text className="text-[11px] text-ink-muted">
                 {t('details.diretaLan')}
               </Text>
@@ -838,7 +929,11 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
             className="flex-row items-center px-4 py-3 border-t border-line"
             activeOpacity={0.7}
           >
-            <Ionicons name="trash-outline" size={16} color={hexDe(tema.paleta.perigo)} />
+            <Ionicons
+              name="trash-outline"
+              size={16}
+              color={hexDe(tema.paleta.perigo)}
+            />
             <Text className="ml-2 text-[13px] font-semibold text-state-danger">
               {t('details.desassociar')}
             </Text>

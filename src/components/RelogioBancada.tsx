@@ -3,11 +3,7 @@ import { View } from 'react-native';
 import Svg, { Circle, Path, Line, Text, G } from 'react-native-svg';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
-import {
-  TrabalhoRelogio,
-  pontoHora,
-  arcoSvg,
-} from '../utils/relogio';
+import { TrabalhoRelogio, pontoHora, arcoSvg } from '../utils/relogio';
 
 export interface RelogioBancadaProps {
   agora: Date;
@@ -60,7 +56,7 @@ export function RelogioBancada({
   });
 
   // renderizar rótulos de 3 em 3 horas
-  const rotulos = [0, 3, 6, 9, 12, 15, 18, 21].map((h) => {
+  const rotulos = [0, 3, 6, 9, 12, 15, 18, 21].map(h => {
     const [x, y] = pontoHora(h, raioRotulos, centro, centro);
     const texto = h.toString().padStart(2, '0');
     const cor = hexDe(paleta.tintaMuted);
@@ -106,7 +102,9 @@ export function RelogioBancada({
     // rótulo junto ao fim, encostado para dentro do mostrador
     const corTexto = hexDe(paleta.tintaSoft);
     const nomeCurto =
-      trabalho.nome.length > 13 ? `${trabalho.nome.slice(0, 12)}…` : trabalho.nome;
+      trabalho.nome.length > 13
+        ? `${trabalho.nome.slice(0, 12)}…`
+        : trabalho.nome;
     const xEtiqueta = Math.min(Math.max(xFim, 30), tamanho - 30);
     const yEtiqueta = Math.max(14, yFim - 12);
 

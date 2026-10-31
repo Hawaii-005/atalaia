@@ -40,7 +40,11 @@ export interface ServidorSaturno {
 export interface RedeSaturno {
   criarServidor(aoLigar: (socket: SocketSaturno) => void): ServidorSaturno;
   enviarUdp(mensagem: string, porta: number, ip: string): void;
-  lerFicheiro(uri: string, posicao: number, tamanho: number): Promise<Uint8Array>;
+  lerFicheiro(
+    uri: string,
+    posicao: number,
+    tamanho: number
+  ): Promise<Uint8Array>;
   tamanhoFicheiro(uri: string): Promise<number>;
   md5Ficheiro(uri: string): Promise<string>;
 }
@@ -141,10 +145,16 @@ export class LigacaoSaturno {
   private portaHttp = 0;
   private cliente: SocketSaturno | null = null;
   private bufferMqtt: Uint8Array = new Uint8Array(0);
-  private pedidos = new Map<string, { resolver: (v: any) => void; rejeitar: (e: any) => void; relogio: any }>();
+  private pedidos = new Map<
+    string,
+    { resolver: (v: any) => void; rejeitar: (e: any) => void; relogio: any }
+  >();
   private atributos: AtributosResina = {};
   private rotas = new Map<string, { uri: string; tamanho: number }>();
-  private transferencia: { resolver: () => void; rejeitar: (e: any) => void } | null = null;
+  private transferencia: {
+    resolver: () => void;
+    rejeitar: (e: any) => void;
+  } | null = null;
   private aoProgresso: ((enviado: number, total: number) => void) | null = null;
   private ligado = false;
   private ligando: Promise<AtributosResina> | null = null;
@@ -172,7 +182,11 @@ export class LigacaoSaturno {
    * Duas chamadas ao mesmo tempo partilham a mesma promessa: sem isto a
    * segunda destruía os servidores da primeira.
    */
-  ligar(ip: string, ident: string, mainboardId: string): Promise<AtributosResina> {
+  ligar(
+    ip: string,
+    ident: string,
+    mainboardId: string
+  ): Promise<AtributosResina> {
     if (this.ligando) return this.ligando;
     this.ligando = this.ligarInterno(ip, ident, mainboardId).finally(() => {
       this.ligando = null;
@@ -219,7 +233,8 @@ export class LigacaoSaturno {
     this.rede.enviarUdp(`M66666 ${this.portaMqtt}`, PORTA_UDP, ip);
     // O firmware às vezes perde o primeiro datagrama quando acabou de acordar.
     setTimeout(() => {
-      if (!this.ligado) this.rede.enviarUdp(`M66666 ${this.portaMqtt}`, PORTA_UDP, this.ip);
+      if (!this.ligado)
+        this.rede.enviarUdp(`M66666 ${this.portaMqtt}`, PORTA_UDP, this.ip);
     }, 800);
 
     try {
@@ -233,7 +248,9 @@ export class LigacaoSaturno {
 
     await this.pedido(0, null, TEMPO_PEDIDO_MS).catch(() => undefined);
     await this.pedido(1, null, TEMPO_PEDIDO_MS).catch(() => undefined);
-    await this.pedido(512, { TimePeriod: 5000 }, TEMPO_PEDIDO_MS).catch(() => undefined);
+    await this.pedido(512, { TimePeriod: 5000 }, TEMPO_PEDIDO_MS).catch(
+      () => undefined
+    );
 
     // Se o 512 se perder, a impressora não publica estado nenhum e a UI fica
     // "ligada" e morta. Repete-se o pedido até chegar o primeiro estado.
@@ -244,7 +261,9 @@ export class LigacaoSaturno {
         clearInterval(relogioEstado);
         return;
       }
-      this.pedido(512, { TimePeriod: 5000 }, TEMPO_PEDIDO_MS).catch(() => undefined);
+      this.pedido(512, { TimePeriod: 5000 }, TEMPO_PEDIDO_MS).catch(
+        () => undefined
+      );
       this.pedido(0, null, TEMPO_PEDIDO_MS).catch(() => undefined);
     }, 4000);
 
@@ -278,7 +297,8 @@ export class LigacaoSaturno {
     this.bufferMqtt = new Uint8Array(0);
 
     socket.on('data', dados => {
-      const bytes = dados instanceof Uint8Array ? dados : new Uint8Array(dados ?? []);
+      const bytes =
+        dados instanceof Uint8Array ? dados : new Uint8Array(dados ?? []);
       const juntos = new Uint8Array(this.bufferMqtt.length + bytes.length);
       juntos.set(this.bufferMqtt, 0);
       juntos.set(bytes, this.bufferMqtt.length);
@@ -305,7 +325,10 @@ export class LigacaoSaturno {
     });
   }
 
-  private tratarMensagem(socket: SocketSaturno, mensagem: { tipo: number; flags: number; payload: Uint8Array }) {
+  private tratarMensagem(
+    socket: SocketSaturno,
+    mensagem: { tipo: number; flags: number; payload: Uint8Array }
+  ) {
     switch (mensagem.tipo) {
       case 1: {
         // CONNECT
@@ -373,7 +396,9 @@ export class LigacaoSaturno {
       clearTimeout(pedido.relogio);
       const resposta = dados.Data ?? {};
       if (typeof resposta.Ack === 'number' && resposta.Ack !== 0) {
-        pedido.rejeitar(new Error(`A impressora recusou (Ack ${resposta.Ack}).`));
+        pedido.rejeitar(
+          new Error(`A impressora recusou (Ack ${resposta.Ack}).`)
+        );
       } else {
         pedido.resolver(resposta);
       }
@@ -428,7 +453,11 @@ export class LigacaoSaturno {
   }
 
   /** Envia um comando SDCP e resolve com a resposta da impressora. */
-  pedido(cmd: number, dados: any = null, tempoLimiteMs = TEMPO_PEDIDO_MS): Promise<any> {
+  pedido(
+    cmd: number,
+    dados: any = null,
+    tempoLimiteMs = TEMPO_PEDIDO_MS
+  ): Promise<any> {
     return new Promise((resolver, rejeitar) => {
       const cliente = this.cliente;
       if (!cliente) {
@@ -472,7 +501,9 @@ export class LigacaoSaturno {
       const caminho = linha.split(' ')[1] ?? '/';
       const rota = this.rotas.get(caminho);
       if (!rota) {
-        socket.write(bytesUtf8('HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n'));
+        socket.write(
+          bytesUtf8('HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n')
+        );
         socket.end();
         return;
       }
@@ -492,7 +523,11 @@ export class LigacaoSaturno {
     });
   }
 
-  private async enviarFicheiro(socket: SocketSaturno, uri: string, tamanho: number) {
+  private async enviarFicheiro(
+    socket: SocketSaturno,
+    uri: string,
+    tamanho: number
+  ) {
     for (let posicao = 0; posicao < tamanho; posicao += LIMITE_BLOCO) {
       const bloco = await this.rede.lerFicheiro(
         uri,
@@ -568,7 +603,11 @@ export class LigacaoSaturno {
 
   /** Começa a imprimir um ficheiro que já esteja na impressora. */
   imprimir(nome: string, camadaInicial = 0) {
-    return this.pedido(128, { Filename: nome, StartLayer: camadaInicial }, 15000);
+    return this.pedido(
+      128,
+      { Filename: nome, StartLayer: camadaInicial },
+      15000
+    );
   }
 
   pausar() {

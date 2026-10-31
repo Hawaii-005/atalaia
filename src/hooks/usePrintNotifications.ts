@@ -30,7 +30,9 @@ export const usePrintNotifications = (printers: Printer[]) => {
   // Só se conclui pausa com duas leituras seguidas iguais e mais de 45 s
   // parados, e só com a app à frente — em segundo plano o socket adormece e
   // os ticks ficam «parados» sem a máquina ter pausado nada.
-  const ticksRef = useRef<Record<string, { valor: number; desde: number; iguais: number }>>({});
+  const ticksRef = useRef<
+    Record<string, { valor: number; desde: number; iguais: number }>
+  >({});
 
   useEffect(() => {
     loadNotificationPrefs().then(setPrefs);
@@ -53,14 +55,20 @@ export const usePrintNotifications = (printers: Printer[]) => {
       const previous = snapshotRef.current[printer.id];
 
       const statusBase =
-        rawStatus === undefined ? previous?.status ?? 'idle' : getPrintStatus(rawStatus);
+        rawStatus === undefined
+          ? (previous?.status ?? 'idle')
+          : getPrintStatus(rawStatus);
 
       const emPrimeiroPlano = AppState.currentState === 'active';
       const ticksAtuais = info?.CurrentTicks ?? 0;
       const agora = Date.now();
       const anterior = ticksRef.current[printer.id];
       if (!anterior || anterior.valor !== ticksAtuais) {
-        ticksRef.current[printer.id] = { valor: ticksAtuais, desde: agora, iguais: 0 };
+        ticksRef.current[printer.id] = {
+          valor: ticksAtuais,
+          desde: agora,
+          iguais: 0,
+        };
       } else if (emPrimeiroPlano) {
         anterior.iguais += 1;
       }
@@ -100,7 +108,12 @@ export const usePrintNotifications = (printers: Printer[]) => {
         } else if (status === 'stopped') {
           finishRecord(printer.printerName, 'stopped', info?.CurrentLayer);
         } else {
-          finishRecord(printer.printerName, 'unknown', info?.CurrentLayer, !wasPrinting);
+          finishRecord(
+            printer.printerName,
+            'unknown',
+            info?.CurrentLayer,
+            !wasPrinting
+          );
         }
       }
 

@@ -118,15 +118,19 @@ export const StatsScreen = ({ navigation }: any) => {
         historyVideoCommand(url, { id: printer.id })
       );
       // A placa tanto devolve uma lista como um objecto com Url.
-      const corpo: any = (resposta as any)?.Data?.Data ?? (resposta as any)?.Data ?? resposta;
+      const corpo: any =
+        (resposta as any)?.Data?.Data ?? (resposta as any)?.Data ?? resposta;
       const lista = Array.isArray(corpo) ? corpo : [];
       let alvo: string | null =
         typeof corpo === 'string'
           ? corpo
           : typeof corpo?.Url === 'string'
-          ? corpo.Url
-          : (lista.find((x: any) => typeof x === 'string') as string | undefined) ??
-            (lista.find((x: any) => typeof x?.Url === 'string')?.Url ?? null);
+            ? corpo.Url
+            : ((lista.find((x: any) => typeof x === 'string') as
+                | string
+                | undefined) ??
+              lista.find((x: any) => typeof x?.Url === 'string')?.Url ??
+              null);
 
       if (!alvo) {
         Alert.alert(t('stats.video'), t('stats.videoIndisponivel'));
@@ -143,8 +147,6 @@ export const StatsScreen = ({ navigation }: any) => {
       setVideoAberto(null);
     }
   };
-;
-
   useFocusEffect(
     useCallback(() => {
       load();
@@ -269,7 +271,11 @@ export const StatsScreen = ({ navigation }: any) => {
                 />
               ) : (
                 <View className="w-10 h-10 rounded-lg bg-canvas-sunken items-center justify-center">
-                  <Ionicons name="cube-outline" size={16} color={hexDe(tema.paleta.tintaMuted)} />
+                  <Ionicons
+                    name="cube-outline"
+                    size={16}
+                    color={hexDe(tema.paleta.tintaMuted)}
+                  />
                 </View>
               )}
               <View className="flex-1 ml-3">
@@ -280,10 +286,7 @@ export const StatsScreen = ({ navigation }: any) => {
                   {(task.TaskName ?? '').split('/').pop()}
                 </Text>
                 <Text className="text-[11px] text-ink-muted">
-                  {t(
-                    STATUS_LABEL[task.TaskStatus] ?? 'stats.statusOutro'
-                  )}{' '}
-                  ·{' '}
+                  {t(STATUS_LABEL[task.TaskStatus] ?? 'stats.statusOutro')} ·{' '}
                   {hours(
                     task.SliceInformation?.print_time ??
                       Math.max(0, (task.EndTime ?? 0) - (task.BeginTime ?? 0))
@@ -297,7 +300,10 @@ export const StatsScreen = ({ navigation }: any) => {
                   disabled={videoAberto !== null}
                 >
                   {videoAberto === task.TimeLapseVideoUrl ? (
-                    <ActivityIndicator size="small" color={hexDe(tema.paleta.acento)} />
+                    <ActivityIndicator
+                      size="small"
+                      color={hexDe(tema.paleta.acento)}
+                    />
                   ) : (
                     <Ionicons
                       name="play-circle-outline"

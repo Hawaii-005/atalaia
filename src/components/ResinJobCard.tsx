@@ -53,23 +53,26 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
   // acabado de concluir.
   const emCurso = aImprimir || emPausa || concluida;
   const progresso = limitarProgresso(info?.Progress);
-  const restante = Math.max(0, (info?.TotalTicks ?? 0) - (info?.CurrentTicks ?? 0));
+  const restante = Math.max(
+    0,
+    (info?.TotalTicks ?? 0) - (info?.CurrentTicks ?? 0)
+  );
   const decorrido = Math.max(0, info?.CurrentTicks ?? 0);
   const ligada = printer.connectionStatus === 'connected';
   const ficheiro = info?.Filename
-    ? String(info.Filename).split('/').pop() ?? ''
+    ? (String(info.Filename).split('/').pop() ?? '')
     : '';
 
   // Extensão do ficheiro para etiqueta
   const extensao = ficheiro
-    ? ficheiro.split('.').pop()?.toUpperCase() ?? ''
+    ? (ficheiro.split('.').pop()?.toUpperCase() ?? '')
     : '';
 
   // A miniatura vem do último envio deste ficheiro a partir da app.
   const [miniatura, setMiniatura] = useState<string | null>(null);
   useEffect(() => {
     let vivo = true;
-    miniaturaDe(ficheiro).then((uri) => {
+    miniaturaDe(ficheiro).then(uri => {
       if (vivo) setMiniatura(uri);
     });
     return () => {
@@ -106,24 +109,24 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
   const estadoTexto = !ligada
     ? t('resina.naoLigada')
     : concluida
-    ? t('comum.impressaoConcluida')
-    : parada
-    ? t('comum.parada')
-    : emPausa
-    ? t('comum.emPausa')
-    : aImprimir
-    ? t('comum.aImprimir')
-    : t('resina.emRepouso');
+      ? t('comum.impressaoConcluida')
+      : parada
+        ? t('comum.parada')
+        : emPausa
+          ? t('comum.emPausa')
+          : aImprimir
+            ? t('comum.aImprimir')
+            : t('resina.emRepouso');
 
   const corEstado = !ligada
     ? tema.paleta.tintaMuted
     : erro
-    ? tema.paleta.perigo
-    : aImprimir
-    ? tema.paleta.acento
-    : emPausa
-    ? tema.paleta.aviso ?? tema.paleta.tinta
-    : tema.paleta.tintaMuted;
+      ? tema.paleta.perigo
+      : aImprimir
+        ? tema.paleta.acento
+        : emPausa
+          ? (tema.paleta.aviso ?? tema.paleta.tinta)
+          : tema.paleta.tintaMuted;
 
   // Estado da pré-visualização (para o MiniPreview)
   const estadoPrevia = estadoDaPrevia(status, ligada);
@@ -132,7 +135,10 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
     <View className="rounded-xl2 border border-line bg-cartao p-4 mb-3">
       {/* Linha de topo: nome da impressora à esquerda, estado à direita */}
       <View className="flex-row items-center justify-between mb-3">
-        <Text className="text-[14.5px] font-semibold text-ink" style={{ letterSpacing: -0.008 * 14.5 }}>
+        <Text
+          className="text-[14.5px] font-semibold text-ink"
+          style={{ letterSpacing: -0.008 * 14.5 }}
+        >
           {printer.printerName}
         </Text>
         <View className="flex-row items-center gap-1.5">
@@ -163,9 +169,16 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
       ) : (
         <View
           className="rounded-lg mb-3 items-center justify-center border border-line"
-          style={{ height: 200, backgroundColor: hexDe(tema.paleta.fundoBaixo) }}
+          style={{
+            height: 200,
+            backgroundColor: hexDe(tema.paleta.fundoBaixo),
+          }}
         >
-          <Ionicons name="layers-outline" size={22} color={hexDe(tema.paleta.tintaSoft)} />
+          <Ionicons
+            name="layers-outline"
+            size={22}
+            color={hexDe(tema.paleta.tintaSoft)}
+          />
           <Text className="text-[11px] text-ink-soft mt-1.5">
             {t('resina.semMiniatura')}
           </Text>
@@ -176,16 +189,28 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
       <View className="flex-row items-end justify-between mb-2">
         <Text
           className="text-[40px] font-semibold text-ink"
-          style={{ fontVariant: ['tabular-nums'], lineHeight: 40, letterSpacing: -0.035 * 40 }}
+          style={{
+            fontVariant: ['tabular-nums'],
+            lineHeight: 40,
+            letterSpacing: -0.035 * 40,
+          }}
         >
           {emCurso ? `${Math.round(progresso)}` : '—'}
-          <Text className="text-[17px] font-semibold text-ink-muted" style={{ marginLeft: 1, fontVariant: ['tabular-nums'] }}>
+          <Text
+            className="text-[17px] font-semibold text-ink-muted"
+            style={{ marginLeft: 1, fontVariant: ['tabular-nums'] }}
+          >
             %
           </Text>
         </Text>
         <Text
           className="text-[11px] text-ink-muted"
-          style={{ fontFamily: 'monospace', fontWeight: '500', letterSpacing: 0.02 * 11, paddingBottom: 5 }}
+          style={{
+            fontFamily: 'monospace',
+            fontWeight: '500',
+            letterSpacing: 0.02 * 11,
+            paddingBottom: 5,
+          }}
         >
           {emCurso && (info?.TotalLayer ?? 0) > 0
             ? `${t('resina.camada', { x: info?.CurrentLayer ?? 0, y: info?.TotalLayer ?? 0 })}`
@@ -223,38 +248,45 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
 
       {/* Tempos: duas colunas (só quando há impressão para ler) */}
       {(aImprimir || emPausa || concluida || (parada && !!ficheiro)) && (
-      <View className="flex-row justify-between mt-3">
-        <View>
-          <Text
-            className="text-[9.5px] font-semibold text-ink-muted uppercase"
-            style={{ letterSpacing: 0.9, lineHeight: 12 }}
-          >
-            {t('resina.decorrido')}
-          </Text>
-          <Text
-            className="text-[12.5px] font-medium text-ink mt-1"
-            style={{ fontFamily: 'monospace', fontVariant: ['tabular-nums'], lineHeight: 16 }}
-          >
-            {formatTicksToReadableTime(decorrido)}
-          </Text>
+        <View className="flex-row justify-between mt-3">
+          <View>
+            <Text
+              className="text-[9.5px] font-semibold text-ink-muted uppercase"
+              style={{ letterSpacing: 0.9, lineHeight: 12 }}
+            >
+              {t('resina.decorrido')}
+            </Text>
+            <Text
+              className="text-[12.5px] font-medium text-ink mt-1"
+              style={{
+                fontFamily: 'monospace',
+                fontVariant: ['tabular-nums'],
+                lineHeight: 16,
+              }}
+            >
+              {formatTicksToReadableTime(decorrido)}
+            </Text>
+          </View>
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text
+              className="text-[9.5px] font-semibold text-ink-muted uppercase"
+              style={{ letterSpacing: 0.9, lineHeight: 12 }}
+            >
+              {t('resina.restante')}
+            </Text>
+            <Text
+              className="text-[12.5px] font-medium text-ink mt-1"
+              style={{
+                fontFamily: 'monospace',
+                fontVariant: ['tabular-nums'],
+                lineHeight: 16,
+                textAlign: 'right',
+              }}
+            >
+              {aImprimir || emPausa ? formatTicksToReadableTime(restante) : '—'}
+            </Text>
+          </View>
         </View>
-        <View style={{ alignItems: 'flex-end' }}>
-          <Text
-            className="text-[9.5px] font-semibold text-ink-muted uppercase"
-            style={{ letterSpacing: 0.9, lineHeight: 12 }}
-          >
-            {t('resina.restante')}
-          </Text>
-          <Text
-            className="text-[12.5px] font-medium text-ink mt-1"
-            style={{ fontFamily: 'monospace', fontVariant: ['tabular-nums'], lineHeight: 16, textAlign: 'right' }}
-          >
-            {aImprimir || emPausa
-              ? formatTicksToReadableTime(restante)
-              : '—'}
-          </Text>
-        </View>
-      </View>
       )}
 
       {/* Separador + linha do ficheiro */}
@@ -271,7 +303,11 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
         {extensao && (
           <Text
             className="text-[9.5px] font-semibold text-ink-muted uppercase"
-            style={{ fontFamily: 'monospace', fontWeight: '600', letterSpacing: 0.08 * 9.5 }}
+            style={{
+              fontFamily: 'monospace',
+              fontWeight: '600',
+              letterSpacing: 0.08 * 9.5,
+            }}
           >
             {extensao}
           </Text>
@@ -313,8 +349,14 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
           </TouchableOpacity>
         ) : (
           <View className={`${BT_APAGADA} flex-1 py-2.5 mr-2`}>
-            <Ionicons name="pause" size={13} color={hexDe(tema.paleta.tintaSoft)} />
-            <Text className={`ml-2 text-[12px] ${TX_NEUTRO}`}>{t('comum.pausar')}</Text>
+            <Ionicons
+              name="pause"
+              size={13}
+              color={hexDe(tema.paleta.tintaSoft)}
+            />
+            <Text className={`ml-2 text-[12px] ${TX_NEUTRO}`}>
+              {t('comum.pausar')}
+            </Text>
           </View>
         )}
 
@@ -326,13 +368,25 @@ export const ResinJobCard: React.FC<Props> = ({ printer, onAbrir }) => {
           activeOpacity={0.8}
         >
           <Ionicons name="stop" size={13} color={hexDe(tema.paleta.perigo)} />
-          <Text className={`ml-2 text-[12px] ${TX_PERIGO}`}>{t('comum.parar')}</Text>
+          <Text className={`ml-2 text-[12px] ${TX_PERIGO}`}>
+            {t('comum.parar')}
+          </Text>
         </TouchableOpacity>
 
         {onAbrir ? (
-          <TouchableOpacity className={`${BT_APAGADA} py-2.5 px-4`} onPress={onAbrir} activeOpacity={0.8}>
-            <Ionicons name="open-outline" size={13} color={hexDe(tema.paleta.tinta)} />
-            <Text className={`ml-2 text-[12px] ${TX_NEUTRO}`}>{t('monitor.abrir')}</Text>
+          <TouchableOpacity
+            className={`${BT_APAGADA} py-2.5 px-4`}
+            onPress={onAbrir}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="open-outline"
+              size={13}
+              color={hexDe(tema.paleta.tinta)}
+            />
+            <Text className={`ml-2 text-[12px] ${TX_NEUTRO}`}>
+              {t('monitor.abrir')}
+            </Text>
           </TouchableOpacity>
         ) : null}
       </View>

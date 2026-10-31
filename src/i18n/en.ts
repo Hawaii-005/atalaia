@@ -89,16 +89,19 @@ const en = {
   'files.corImpressa': 'FILE COLOUR → PRINTED COLOUR',
   'files.slotVazio': 'empty',
   'vazio.semImpressoras.titulo': 'No printers yet',
-  'vazio.semImpressoras.descricao': 'Connect them to Wi-Fi and scan the network to find them.',
+  'vazio.semImpressoras.descricao':
+    'Connect them to Wi-Fi and scan the network to find them.',
   'vazio.semLigacao.titulo': 'No connection to {nome}',
-  'vazio.semLigacao.descricao': 'Check that it is on and on the same Wi-Fi network.',
+  'vazio.semLigacao.descricao':
+    'Check that it is on and on the same Wi-Fi network.',
   'vazio.tentarNovamente': 'Try again',
   'vazio.editarIp': 'Edit IP',
   'vazio.analisarRede': 'Scan network',
   'vazio.aLigar.titulo': 'Connecting to {nome}…',
   'vazio.aLigar.descricao': 'Looking for the printer on the network.',
   'vazio.foraDeCasa.titulo': '{nome} only works at home',
-  'vazio.foraDeCasa.descricao': 'It connects to your phone, so it needs the same Wi-Fi network.',
+  'vazio.foraDeCasa.descricao':
+    'It connects to your phone, so it needs the same Wi-Fi network.',
   'vazio.resinaSemResposta.titulo': '{nome} did not answer',
   'vazio.resinaSemResposta.descricao':
     'Check that it is on and on the same network. The Saturn accepts one connection at a time: close the app on the other devices (tablet or phone) and try again.',
@@ -129,7 +132,8 @@ const en = {
   'history.ordenarPor': 'Sort',
   'files.renomear': 'Rename',
   'files.renomearTitulo': 'Rename file',
-  'files.renomearMsg': 'The file is copied to the new name and the original is deleted.',
+  'files.renomearMsg':
+    'The file is copied to the new name and the original is deleted.',
   'files.nomeNovo': 'New name',
   'files.aRenomear': 'Renaming…',
   'files.renomearFalhou': 'Could not rename the file.',
@@ -239,7 +243,8 @@ const en = {
   'inv.ajustar': 'Adjust',
   'inv.ajustarMsg': 'Correct what is left in this consumable.',
   'inv.porConfirmar': 'To confirm',
-  'inv.pendenteMsg': 'The printer did not provide the G-code weight. Enter the grams used.',
+  'inv.pendenteMsg':
+    'The printer did not provide the G-code weight. Enter the grams used.',
   'inv.confirmar': 'Confirm',
   'inv.confirmarMsg': 'How many grams did this job use?',
   'inv.descartar': 'Discard',
@@ -291,10 +296,12 @@ const en = {
   'settings.backupVazio': 'That file has no printers.',
   'settings.backupFalhou': 'Could not read or write the file.',
   'settings.modoRemoto': 'Save data away from home',
-  'settings.modoRemotoDesc': 'The camera shows a photo every 2 seconds instead of continuous video (~1 MB/s).',
+  'settings.modoRemotoDesc':
+    'The camera shows a photo every 2 seconds instead of continuous video (~1 MB/s).',
   'settings.filaAuto': 'Start the next job automatically',
   'settings.filaAutoDesc': 'When a job finishes, the next in the queue starts.',
-  'settings.filaAutoDescN': 'In the queue: {n}. When a job finishes, the next starts.',
+  'settings.filaAutoDescN':
+    'In the queue: {n}. When a job finishes, the next starts.',
   'settings.seccaoNotif': 'NOTIFICATIONS',
   'settings.notifConcluida': 'Print completed',
   'settings.notifConcluidaDesc': 'When a print finishes',
@@ -305,7 +312,8 @@ const en = {
   'settings.notifDesligada': 'Printer offline',
   'settings.notifDesligadaDesc': 'If it disconnects during a print',
   'settings.notificacaoTeste': 'Send a test notification',
-  'settings.notificacaoTesteCorpo': 'Centauri Carbon has finished the test print.',
+  'settings.notificacaoTesteCorpo':
+    'Centauri Carbon has finished the test print.',
   'settings.notifBloqueadas': 'Notifications blocked',
   'settings.notifBloqueadasMsg':
     'Allow notifications from Atalaia in the Android settings.',
@@ -355,7 +363,8 @@ const en = {
   'history.limpar': 'Clear',
   'history.semImpressoes': 'No prints yet',
   'history.reimprimirTitulo': 'Reprint',
-  'history.ficheiroSumiu': 'That file is no longer on the printer. Upload it again from Files.',
+  'history.ficheiroSumiu':
+    'That file is no longer on the printer. Upload it again from Files.',
   'history.aReimprimir': 'The printer is starting.',
   'history.semImpressora': 'No printer connected.',
   'history.semImpressoesDica': 'Prints appear here once they start.',
@@ -427,7 +436,8 @@ const en = {
   'addPrinter.ondeEncontrar': 'Where to find it?',
   'addPrinter.ipAlternativo': 'Alternate address (optional)',
   'addPrinter.ipAlternativoPlaceholder': '100.x.x.x or home network IP',
-  'addPrinter.ipAlternativoDica': 'For when you are away. Tried when the main address does not answer — for example over Tailscale.',
+  'addPrinter.ipAlternativoDica':
+    'For when you are away. Tried when the main address does not answer — for example over Tailscale.',
   'addPrinter.ipDica': "Find it on the printer's screen: Settings → Network.",
   'addPrinter.nomeObrigatorio': 'The printer name is required',
   'addPrinter.nomeMinimo': 'At least 2 characters',
@@ -460,7 +470,8 @@ const en = {
   'resina.trocar': 'Change',
   'resina.imprimir': 'Print',
   'resina.enviar': 'Send to printer',
-  'resina.enviarDica': 'Sliced .goo or .ctb files for this machine. The printer fetches them over Wi-Fi.',
+  'resina.enviarDica':
+    'Sliced .goo or .ctb files for this machine. The printer fetches them over Wi-Fi.',
   'resina.escolher': 'Choose .goo / .ctb',
   'monitor.titulo': 'Monitor',
   'monitor.subtitulo': '{n} printers online',
@@ -475,13 +486,16 @@ const en = {
   'monitor.semResina': 'No resin printers connected yet.',
   'resina.erroMaquina':
     'The printer recorded an error ({n}) and did not start. Error 4 = invalid or corrupt file.',
-  'resina.limites': 'This printer exposes no camera, file list or temperatures — its protocol only publishes the current job.',
+  'resina.limites':
+    'This printer exposes no camera, file list or temperatures — its protocol only publishes the current job.',
   'resina.formatoInvalido': 'Only .goo or .ctb files.',
   'resina.falhouEnvio': 'Upload failed',
   'resina.falhouImprimir': 'Did not start',
   'resina.confirmarImprimir': 'Print this file?',
-  'resina.confirmarImprimirMsg': '{nome} will start printing. Check that the plate and the resin vat are ready.',
-  'resina.confirmarParar': 'The running print will be cancelled. The part is lost.',
+  'resina.confirmarImprimirMsg':
+    '{nome} will start printing. Check that the plate and the resin vat are ready.',
+  'resina.confirmarParar':
+    'The running print will be cancelled. The part is lost.',
   'resina.comandoRecusado': 'Command refused',
 
   // ——— New keys for the job card (mockup)
@@ -520,13 +534,15 @@ const en = {
   'filamentos.semSlots': 'No slot loaded',
   'filamentos.semSlotsNota': 'The printer answered, but reports no spool.',
   'filamentos.atualizar': 'Read again',
-  'filamentos.notaPeso': 'The printer sends brand, material, colour and temperatures. Grams per spool do not exist in the protocol — only your own records.',
+  'filamentos.notaPeso':
+    'The printer sends brand, material, colour and temperatures. Grams per spool do not exist in the protocol — only your own records.',
   'abas.impressao': 'Print',
   'filamentos.carregado': 'loaded',
   'inicio.abrirCamara': 'tap to open the camera',
   'editarIp.titulo': 'Printer address',
   'editarIp.invalido': 'Enter a valid IP, for example 192.168.1.4',
-  'editarIp.nota': 'At home use the printer IP. Away from home you can use the relay address on the tailnet (e.g. 100.91.189.97).',
+  'editarIp.nota':
+    'At home use the printer IP. Away from home you can use the relay address on the tailnet (e.g. 100.91.189.97).',
   'editarIp.guardar': 'Save and connect',
   'editarIp.semMaquina': 'Printer not found',
   'inicio.ficheiros': 'Files',
@@ -540,7 +556,8 @@ const en = {
   'controlos.homeZ': 'Home Z',
   'controlos.precisaHome': 'Home the axes before moving.',
   'controlos.confirmarHome': 'Move to origin?',
-  'controlos.confirmarHomeMsg': 'The bed and the nozzle will move. Make sure the area is clear.',
+  'controlos.confirmarHomeMsg':
+    'The bed and the nozzle will move. Make sure the area is clear.',
   'controlos.aImprimir': 'Cannot move while printing.',
   'comum.confirmar': 'Confirm',
   'controlos.velocidade': 'Speed',

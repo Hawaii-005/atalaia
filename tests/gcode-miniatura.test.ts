@@ -1,6 +1,7 @@
 import { extrairMiniaturaEmbutida } from '../src/utils/miniatura';
 
-const base64Falso = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+const base64Falso =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
 
 const resposta = (texto: string, estado = 206, tamanho = '1000') =>
   ({
@@ -32,12 +33,16 @@ describe('extrairMiniaturaEmbutida', () => {
   it('devolve null quando não há bloco de miniatura', async () => {
     global.fetch = jest.fn(async () => resposta('; só gcode\nG1 X0 Y0'));
 
-    expect(await extrairMiniaturaEmbutida('192.168.1.4', 'peca-2.gcode')).toBeNull();
+    expect(
+      await extrairMiniaturaEmbutida('192.168.1.4', 'peca-2.gcode')
+    ).toBeNull();
   });
 
   it('devolve null quando o servidor recusa o intervalo', async () => {
     global.fetch = jest.fn(async () => resposta('', 416));
 
-    expect(await extrairMiniaturaEmbutida('192.168.1.4', 'peca-3.gcode')).toBeNull();
+    expect(
+      await extrairMiniaturaEmbutida('192.168.1.4', 'peca-3.gcode')
+    ).toBeNull();
   });
 });

@@ -1,5 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  RefreshControl,
+  ActivityIndicator,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -85,10 +92,18 @@ export const FilamentosScreen = ({
       // resolve o primeiro pedido perdido sem o utilizador tocar em nada.
       let resposta: any;
       try {
-        resposta = await request(printer.id, canvasSlotsCommand({ id: printer.id }), 10000);
+        resposta = await request(
+          printer.id,
+          canvasSlotsCommand({ id: printer.id }),
+          10000
+        );
       } catch (primeiro) {
         await new Promise(r => setTimeout(r, 1200));
-        resposta = await request(printer.id, canvasSlotsCommand({ id: printer.id }), 10000);
+        resposta = await request(
+          printer.id,
+          canvasSlotsCommand({ id: printer.id }),
+          10000
+        );
       }
       const dados = resposta?.Data ?? resposta;
       const lista = dados?.canvas_list?.[0]?.tray_list;
@@ -97,7 +112,9 @@ export const FilamentosScreen = ({
         setSlots([]);
       } else {
         setSlots(lista);
-        setAtivo(typeof dados?.active_tray_id === 'number' ? dados.active_tray_id : -1);
+        setAtivo(
+          typeof dados?.active_tray_id === 'number' ? dados.active_tray_id : -1
+        );
       }
     } catch (e) {
       setErro(e instanceof Error ? e.message : String(e));
@@ -120,35 +137,79 @@ export const FilamentosScreen = ({
   return (
     <View style={{ flex: 1, backgroundColor: hexDe(paleta.fundo) }}>
       {!embutido && (
-      <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12 }}>
-        <Text style={{ fontSize: 26, fontWeight: '700', color: hexDe(paleta.tinta) }}>
-          {t('filamentos.titulo')}
-        </Text>
-        <Text style={{ fontSize: 13, color: hexDe(paleta.tintaSoft), marginTop: 6 }}>
-          {fdm ? `${fdm.printerName} · ${fdm.ipAddress}` : t('filamentos.semMaquina')}
-        </Text>
-      </View>
+        <View
+          style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12 }}
+        >
+          <Text
+            style={{
+              fontSize: 26,
+              fontWeight: '700',
+              color: hexDe(paleta.tinta),
+            }}
+          >
+            {t('filamentos.titulo')}
+          </Text>
+          <Text
+            style={{
+              fontSize: 13,
+              color: hexDe(paleta.tintaSoft),
+              marginTop: 6,
+            }}
+          >
+            {fdm
+              ? `${fdm.printerName} · ${fdm.ipAddress}`
+              : t('filamentos.semMaquina')}
+          </Text>
+        </View>
       )}
 
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 28, gap: 12 }}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingBottom: 28,
+          gap: 12,
+        }}
         refreshControl={
-          <RefreshControl refreshing={aCarregar} onRefresh={ler} tintColor={hexDe(paleta.acento)} />
+          <RefreshControl
+            refreshing={aCarregar}
+            onRefresh={ler}
+            tintColor={hexDe(paleta.acento)}
+          />
         }
       >
         {erro && (
           <View style={[cartao, { gap: 6 }]}>
-            <Text style={{ fontSize: 14, fontWeight: '600', color: hexDe(paleta.tinta) }}>
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: '600',
+                color: hexDe(paleta.tinta),
+              }}
+            >
               {t('filamentos.indisponivel')}
             </Text>
-            <Text style={{ fontSize: 12, color: hexDe(paleta.tintaSoft), lineHeight: 18 }}>{erro}</Text>
+            <Text
+              style={{
+                fontSize: 12,
+                color: hexDe(paleta.tintaSoft),
+                lineHeight: 18,
+              }}
+            >
+              {erro}
+            </Text>
           </View>
         )}
 
         {!erro && slots === null && (
           <View style={[cartao, { alignItems: 'center', paddingVertical: 28 }]}>
             <ActivityIndicator color={hexDe(paleta.acento)} />
-            <Text style={{ fontSize: 12, color: hexDe(paleta.tintaSoft), marginTop: 10 }}>
+            <Text
+              style={{
+                fontSize: 12,
+                color: hexDe(paleta.tintaSoft),
+                marginTop: 10,
+              }}
+            >
               {t('filamentos.aLer')}
             </Text>
           </View>
@@ -169,7 +230,9 @@ export const FilamentosScreen = ({
                     paddingVertical: 10,
                     paddingHorizontal: 12,
                     borderRadius: 14,
-                    backgroundColor: emUso ? hexDe(paleta.acento) + '22' : 'transparent',
+                    backgroundColor: emUso
+                      ? hexDe(paleta.acento) + '22'
+                      : 'transparent',
                     borderWidth: emUso ? 1.5 : 0,
                     borderColor: hexDe(paleta.acento),
                   }}
@@ -179,24 +242,50 @@ export const FilamentosScreen = ({
                       width: 22,
                       height: 22,
                       borderRadius: 11,
-                      backgroundColor: slot.filament_color || hexDe(paleta.linha),
+                      backgroundColor:
+                        slot.filament_color || hexDe(paleta.linha),
                       borderWidth: 1,
                       borderColor: hexDe(paleta.linha),
                     }}
                   />
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '700', color: hexDe(paleta.tinta) }}>
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: '700',
+                        color: hexDe(paleta.tinta),
+                      }}
+                    >
                       T{slot.tray_id} · {slot.filament_type}
                       {emUso ? `  ·  ${t('filamentos.emUso')}` : ''}
                     </Text>
-                    <Text style={{ fontSize: 11, color: hexDe(paleta.tintaSoft), marginTop: 2 }}>
-                      {slot.brand} · {nomeDaCor(slot.filament_color)} · {slot.min_nozzle_temp}–{slot.max_nozzle_temp} °C
+                    <Text
+                      style={{
+                        fontSize: 11,
+                        color: hexDe(paleta.tintaSoft),
+                        marginTop: 2,
+                      }}
+                    >
+                      {slot.brand} · {nomeDaCor(slot.filament_color)} ·{' '}
+                      {slot.min_nozzle_temp}–{slot.max_nozzle_temp} °C
                     </Text>
                   </View>
                   {slot.status === 1 && (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                      <Ionicons name="checkmark-circle" size={16} color={hexDe(paleta.ok)} />
-                      <Text style={{ fontSize: 10, color: hexDe(paleta.tintaSoft) }}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 4,
+                      }}
+                    >
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={16}
+                        color={hexDe(paleta.ok)}
+                      />
+                      <Text
+                        style={{ fontSize: 10, color: hexDe(paleta.tintaSoft) }}
+                      >
                         {t('filamentos.carregado')}
                       </Text>
                     </View>
@@ -235,7 +324,13 @@ export const FilamentosScreen = ({
           </Text>
         </TouchableOpacity>
 
-        <Text style={{ fontSize: 11, color: hexDe(paleta.tintaMuted), lineHeight: 16 }}>
+        <Text
+          style={{
+            fontSize: 11,
+            color: hexDe(paleta.tintaMuted),
+            lineHeight: 16,
+          }}
+        >
           {t('filamentos.notaPeso')}
         </Text>
       </ScrollView>

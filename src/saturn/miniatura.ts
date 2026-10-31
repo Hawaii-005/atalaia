@@ -28,9 +28,7 @@ const ALFABETO =
 // ---------------------------------------------------------------- base64
 
 export const deBase64 = (texto: string): Uint8Array => {
-  const limpo = texto
-    .replace(/=+$/, '')
-    .replace(/[^A-Za-z0-9+/]/g, '');
+  const limpo = texto.replace(/=+$/, '').replace(/[^A-Za-z0-9+/]/g, '');
   const tamanho = Math.floor((limpo.length * 3) / 4);
   const saida = new Uint8Array(tamanho);
   let i = 0;
@@ -89,7 +87,8 @@ const TABELA_CRC = (() => {
 
 const crc32 = (dados: Uint8Array, inicio: number, fim: number): number => {
   let c = 0xffffffff;
-  for (let i = inicio; i < fim; i++) c = TABELA_CRC[(c ^ dados[i]) & 0xff] ^ (c >>> 8);
+  for (let i = inicio; i < fim; i++)
+    c = TABELA_CRC[(c ^ dados[i]) & 0xff] ^ (c >>> 8);
   return (c ^ 0xffffffff) >>> 0;
 };
 
@@ -195,7 +194,10 @@ const fimDoPng = (dados: Uint8Array, inicio: number): number => {
   let p = inicio + 8;
   while (p + 8 <= dados.length) {
     const comprimento =
-      (dados[p] << 24) | (dados[p + 1] << 16) | (dados[p + 2] << 8) | dados[p + 3];
+      (dados[p] << 24) |
+      (dados[p + 1] << 16) |
+      (dados[p + 2] << 8) |
+      dados[p + 3];
     const tipo = String.fromCharCode(
       dados[p + 4],
       dados[p + 5],
@@ -237,7 +239,8 @@ export const encontrarPrevisao = (
     const altura = u32(cabecalho, o + 4);
     const offset = u32(cabecalho, o + 8);
     const tamanho = u32(cabecalho, o + 12);
-    if (largura < 64 || largura > 2048 || altura < 64 || altura > 2048) continue;
+    if (largura < 64 || largura > 2048 || altura < 64 || altura > 2048)
+      continue;
     if (offset < 48 || tamanho < 16 || tamanho > MAX_IMAGEM) continue;
     if (offset + tamanho > tamanhoFicheiro) continue;
     return { largura, altura, offset, tamanho };
@@ -297,7 +300,10 @@ export const miniaturaDe = async (nome: string): Promise<string | null> => {
   return info.exists ? uri : null;
 };
 
-const guardar = async (nome: string, png: Uint8Array): Promise<string | null> => {
+const guardar = async (
+  nome: string,
+  png: Uint8Array
+): Promise<string | null> => {
   if (!FileSystem.cacheDirectory) return null;
   const pasta = `${FileSystem.cacheDirectory}${PASTA}`;
   const destino = `${pasta}${nomeSeguro(nome)}.png`;
@@ -337,7 +343,8 @@ export const extrairMiniatura = async (
     const inicioPng = procurarPng(cabecalho);
     if (inicioPng >= 0) {
       const fim = fimDoPng(cabecalho, inicioPng);
-      if (fim > inicioPng) return await guardar(nome, cabecalho.slice(inicioPng, fim));
+      if (fim > inicioPng)
+        return await guardar(nome, cabecalho.slice(inicioPng, fim));
     }
 
     // CTB v5 cifrado: estrutura de 32 bytes + imagem RGB15 com RLE.
@@ -352,7 +359,10 @@ export const extrairMiniatura = async (
     );
     const rgb = descodificarRgb15(dados, previsao.largura, previsao.altura);
     if (!rgb) return null;
-    return await guardar(nome, codificarPng(rgb, previsao.largura, previsao.altura));
+    return await guardar(
+      nome,
+      codificarPng(rgb, previsao.largura, previsao.altura)
+    );
   } catch {
     return null;
   }

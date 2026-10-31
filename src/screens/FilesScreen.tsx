@@ -1,5 +1,11 @@
 import { enderecoDe } from '../utils/rede';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   View,
   Text,
@@ -35,14 +41,27 @@ import * as DocumentPicker from 'expo-document-picker';
 import { uploadGcode } from '../utils/gcodeUpload';
 import { custoDe, euros, getPrecoKg, setPrecoKg } from '../utils/precos';
 import { slotValido } from '../utils/slots';
-import { extrairMiniaturaEmbutida, extrairMiniaturaEmbutidaFila, ferramentasUsadas, limparCacheMiniaturas, urlMiniatura } from '../utils/miniatura';
+import {
+  extrairMiniaturaEmbutida,
+  extrairMiniaturaEmbutidaFila,
+  ferramentasUsadas,
+  limparCacheMiniaturas,
+  urlMiniatura,
+} from '../utils/miniatura';
 import { duracaoDoNome, formatDuracao } from '../utils/duracao';
 import { descarregarGcode, partilharFicheiro } from '../utils/transferir';
 import { lerTimelapse } from '../utils/timelapse';
 import { t } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
-import { BT_ACENTO, BT_APAGADA, BT_NEUTRA, BT_PERIGO, TX_ACENTO, TX_PERIGO } from '../theme/botoes';
+import {
+  BT_ACENTO,
+  BT_APAGADA,
+  BT_NEUTRA,
+  BT_PERIGO,
+  TX_ACENTO,
+  TX_PERIGO,
+} from '../theme/botoes';
 import { EstadoVazio } from '../ui/EstadoVazio';
 
 interface PrinterFile {
@@ -147,11 +166,18 @@ const FileRow = ({
               onError={falhouMiniaturaLista}
             />
           ) : (
-            <Ionicons name="cube-outline" size={22} color={hexDe(tema.paleta.tintaMuted)} />
+            <Ionicons
+              name="cube-outline"
+              size={22}
+              color={hexDe(tema.paleta.tintaMuted)}
+            />
           )}
         </View>
         <View className="p-2">
-          <Text className="text-[11px] font-semibold text-ink" numberOfLines={2}>
+          <Text
+            className="text-[11px] font-semibold text-ink"
+            numberOfLines={2}
+          >
             {label}
           </Text>
           <Text className="text-[10px] text-ink-muted mt-1">{legenda}</Text>
@@ -175,7 +201,11 @@ const FileRow = ({
             onError={falhouMiniaturaLista}
           />
         ) : (
-          <Ionicons name="cube-outline" size={18} color={hexDe(tema.paleta.tintaMuted)} />
+          <Ionicons
+            name="cube-outline"
+            size={18}
+            color={hexDe(tema.paleta.tintaMuted)}
+          />
         )}
       </View>
       <View className="flex-1 ml-3">
@@ -184,7 +214,11 @@ const FileRow = ({
         </Text>
         <Text className="text-[11px] text-ink-muted mt-1">{legenda}</Text>
       </View>
-      <Ionicons name="chevron-forward" size={18} color={hexDe(tema.paleta.tintaMuted)} />
+      <Ionicons
+        name="chevron-forward"
+        size={18}
+        color={hexDe(tema.paleta.tintaMuted)}
+      />
     </TouchableOpacity>
   );
 };
@@ -247,7 +281,9 @@ const FileDetails = ({
   const guardar = async () => {
     setAGuardar(0);
     try {
-      const { uri } = await descarregarGcode(printerIp, file.name, p => setAGuardar(p));
+      const { uri } = await descarregarGcode(printerIp, file.name, p =>
+        setAGuardar(p)
+      );
       setAGuardar(null);
       await partilharFicheiro(uri, file.name.split('/').pop() ?? file.name);
     } catch (e) {
@@ -350,7 +386,11 @@ const FileDetails = ({
     }
     (async () => {
       try {
-        const dados = await request(printerId, fileDetailCommand(file.name), 10000);
+        const dados = await request(
+          printerId,
+          fileDetailCommand(file.name),
+          10000
+        );
         const info = dados?.FileInfo;
         if (!vivo || !info) return;
         cacheDetalhe.set(chave, info);
@@ -383,20 +423,21 @@ const FileDetails = ({
     Number.isFinite(gramasDetalhe) && gramasDetalhe > 0
       ? gramasDetalhe
       : gramasDoCabecalho > 0
-      ? gramasDoCabecalho
-      : consumo?.gramas ?? 0;
+        ? gramasDoCabecalho
+        : (consumo?.gramas ?? 0);
   // O valor escrito conta logo: não se espera que o campo perca o foco.
   const precoEscrito = Number.parseFloat(
     precoTexto.replace(',', '.').replace(/[^0-9.]/g, '')
   );
-  const precoEfectivo = Number.isFinite(precoEscrito)
-    ? precoEscrito
-    : precoKg;
+  const precoEfectivo = Number.isFinite(precoEscrito) ? precoEscrito : precoKg;
   const custo = custoDe(totalGramas, precoEfectivo);
 
   return (
     <Modal transparent animationType="slide" visible onRequestClose={onClose}>
-      <View className="flex-1 justify-end" style={{ backgroundColor: 'rgba(0,0,0,0.55)' }}>
+      <View
+        className="flex-1 justify-end"
+        style={{ backgroundColor: 'rgba(0,0,0,0.55)' }}
+      >
         <View className="bg-canvas rounded-t-2xl" style={{ maxHeight: '92%' }}>
           <View className="items-center pt-2.5 pb-1">
             <View className="w-10 h-1 rounded-full bg-line" />
@@ -410,12 +451,17 @@ const FileDetails = ({
             {/* Cabeçalho */}
             <View className="flex-row items-start">
               <View className="flex-1 pr-3">
-                <Text className="text-[15px] font-bold text-ink" numberOfLines={2}>
+                <Text
+                  className="text-[15px] font-bold text-ink"
+                  numberOfLines={2}
+                >
                   {label}
                 </Text>
                 <Text className="text-[12px] text-ink-muted mt-1">
                   {formatSize(size)}
-                  {detalhe?.EstTime ? ` · ${formatTempo(Number(detalhe.EstTime))}` : ''}
+                  {detalhe?.EstTime
+                    ? ` · ${formatTempo(Number(detalhe.EstTime))}`
+                    : ''}
                   {filamentos.length > 1
                     ? ` · ${t('files.coresTotal', { n: filamentos.length })}`
                     : ''}
@@ -426,14 +472,21 @@ const FileDetails = ({
                 className="w-9 h-9 items-center justify-center rounded-lg border border-line"
                 activeOpacity={0.7}
               >
-                <Ionicons name="close" size={18} color={hexDe(tema.paleta.tinta)} />
+                <Ionicons
+                  name="close"
+                  size={18}
+                  color={hexDe(tema.paleta.tinta)}
+                />
               </TouchableOpacity>
             </View>
 
             {/* Pré-visualização */}
             <View className="mt-3">
               {mini ? (
-                <View className="items-center justify-center" style={{ height: 200 }}>
+                <View
+                  className="items-center justify-center"
+                  style={{ height: 200 }}
+                >
                   <Image
                     source={{ uri: mini }}
                     style={{ width: 200, height: 200 }}
@@ -442,18 +495,36 @@ const FileDetails = ({
                   />
                 </View>
               ) : loading ? (
-                <View className="items-center justify-center" style={{ height: 200 }}>
+                <View
+                  className="items-center justify-center"
+                  style={{ height: 200 }}
+                >
                   <ActivityIndicator color={hexDe(tema.paleta.acento)} />
                 </View>
               ) : preview ? (
-                <View className="items-center justify-center" style={{ height: 200 }}>
+                <View
+                  className="items-center justify-center"
+                  style={{ height: 200 }}
+                >
                   <Svg viewBox="0 0 100 100" width={200} height={200}>
-                    <Path d={preview.path} stroke={hexDe(tema.paleta.tinta)} strokeWidth={0.45} fill="none" />
+                    <Path
+                      d={preview.path}
+                      stroke={hexDe(tema.paleta.tinta)}
+                      strokeWidth={0.45}
+                      fill="none"
+                    />
                   </Svg>
                 </View>
               ) : (
-                <View className="items-center justify-center" style={{ height: 200 }}>
-                  <Ionicons name="cube-outline" size={40} color={hexDe(tema.paleta.tintaMuted)} />
+                <View
+                  className="items-center justify-center"
+                  style={{ height: 200 }}
+                >
+                  <Ionicons
+                    name="cube-outline"
+                    size={40}
+                    color={hexDe(tema.paleta.tintaMuted)}
+                  />
                 </View>
               )}
             </View>
@@ -468,7 +539,10 @@ const FileDetails = ({
                       ? `${totalGramas.toFixed(1).replace('.', ',')} g`
                       : '—',
                 },
-                { rotulo: t('files.custo'), valor: custo > 0 ? `≈ ${euros(custo)}` : '—' },
+                {
+                  rotulo: t('files.custo'),
+                  valor: custo > 0 ? `≈ ${euros(custo)}` : '—',
+                },
                 {
                   rotulo: t('files.filamentos'),
                   valor: String(coresVisiveis.length || filamentos.length || 0),
@@ -481,7 +555,10 @@ const FileDetails = ({
                   <Text className="text-[9px] tracking-[1.2px] font-semibold text-ink-soft">
                     {celula.rotulo.toUpperCase()}
                   </Text>
-                  <Text className="text-[15px] font-bold text-ink mt-0.5" numberOfLines={1}>
+                  <Text
+                    className="text-[15px] font-bold text-ink mt-0.5"
+                    numberOfLines={1}
+                  >
                     {celula.valor}
                   </Text>
                 </View>
@@ -497,38 +574,47 @@ const FileDetails = ({
                 {t('files.corImpressa')}
               </Text>
             ) : null}
-            {coresVisiveis.length > 0
-              ? coresVisiveis.map(({ cor, indice: i }) => {
-                  const escolhido = slotValido(slots[i], i);
-                  const impressa = trays.length > 0 ? corDoSlot(escolhido) : null;
-                  return (
-                    <View key={`cor-${i}`} className="mt-3">
-                      <View className="flex-row items-center">
-                        <View
-                          className="w-4 h-4 rounded-full border border-line mr-2"
-                          style={{ backgroundColor: cor?.color ?? hexDe(tema.paleta.linha) }}
-                        />
-                        <Text className="text-[12px] font-semibold text-ink">T{i}</Text>
-                        <Text className="text-[12px] text-ink-muted ml-2">
-                          {cor?.color ?? ''}
-                        </Text>
-                        {trays.length > 0 ? (
-                          <>
-                            <Text className="text-[12px] text-ink-soft mx-1.5">→</Text>
-                            <View
-                              className="w-4 h-4 rounded-full border border-line mr-1.5"
-                              style={{ backgroundColor: impressa ?? 'transparent' }}
-                            />
-                            <Text className="text-[12px] font-semibold text-ink">
-                              A{escolhido + 1}
-                            </Text>
-                            <Text className="text-[12px] text-ink-muted ml-1">
-                              {impressa ?? t('files.slotVazio')}
-                            </Text>
-                          </>
-                        ) : null}
-                      </View>
+            {coresVisiveis.length > 0 ? (
+              coresVisiveis.map(({ cor, indice: i }) => {
+                const escolhido = slotValido(slots[i], i);
+                const impressa = trays.length > 0 ? corDoSlot(escolhido) : null;
+                return (
+                  <View key={`cor-${i}`} className="mt-3">
+                    <View className="flex-row items-center">
+                      <View
+                        className="w-4 h-4 rounded-full border border-line mr-2"
+                        style={{
+                          backgroundColor:
+                            cor?.color ?? hexDe(tema.paleta.linha),
+                        }}
+                      />
+                      <Text className="text-[12px] font-semibold text-ink">
+                        T{i}
+                      </Text>
+                      <Text className="text-[12px] text-ink-muted ml-2">
+                        {cor?.color ?? ''}
+                      </Text>
                       {trays.length > 0 ? (
+                        <>
+                          <Text className="text-[12px] text-ink-soft mx-1.5">
+                            →
+                          </Text>
+                          <View
+                            className="w-4 h-4 rounded-full border border-line mr-1.5"
+                            style={{
+                              backgroundColor: impressa ?? 'transparent',
+                            }}
+                          />
+                          <Text className="text-[12px] font-semibold text-ink">
+                            A{escolhido + 1}
+                          </Text>
+                          <Text className="text-[12px] text-ink-muted ml-1">
+                            {impressa ?? t('files.slotVazio')}
+                          </Text>
+                        </>
+                      ) : null}
+                    </View>
+                    {trays.length > 0 ? (
                       <View className="flex-row mt-1.5" style={{ gap: 6 }}>
                         {[0, 1, 2, 3].map(tray => (
                           <TouchableOpacity
@@ -538,16 +624,22 @@ const FileDetails = ({
                             }
                             activeOpacity={0.7}
                             className={`h-7 px-2 flex-row items-center rounded-md border ${
-                              escolhido === tray ? 'border-brand bg-brand/10' : 'border-line'
+                              escolhido === tray
+                                ? 'border-brand bg-brand/10'
+                                : 'border-line'
                             }`}
                           >
                             <View
                               className="w-2 h-2 rounded-full mr-1"
-                              style={{ backgroundColor: corDoSlot(tray) ?? '#555' }}
+                              style={{
+                                backgroundColor: corDoSlot(tray) ?? '#555',
+                              }}
                             />
                             <Text
                               className={`text-[10px] font-semibold ${
-                                escolhido === tray ? 'text-ink' : 'text-ink-soft'
+                                escolhido === tray
+                                  ? 'text-ink'
+                                  : 'text-ink-soft'
                               }`}
                             >
                               A{tray + 1}
@@ -556,45 +648,50 @@ const FileDetails = ({
                           </TouchableOpacity>
                         ))}
                       </View>
-                      ) : null}
-                    </View>
-                  );
-                })
-              : !detalhe && loading
-              ? (
-                  <View className="flex-row items-center mt-2">
-                    <ActivityIndicator size="small" color={hexDe(tema.paleta.acento)} />
-                    <Text className="text-[12px] text-ink-muted ml-2">
-                      {t('files.aLer')}
-                    </Text>
+                    ) : null}
                   </View>
-                )
-              : filamentos.length === 0
-              ? (
-                  <Text className="text-[12px] text-ink-muted mt-1.5">
-                    {t('files.coresNenhuma')}
+                );
+              })
+            ) : !detalhe && loading ? (
+              <View className="flex-row items-center mt-2">
+                <ActivityIndicator
+                  size="small"
+                  color={hexDe(tema.paleta.acento)}
+                />
+                <Text className="text-[12px] text-ink-muted ml-2">
+                  {t('files.aLer')}
+                </Text>
+              </View>
+            ) : filamentos.length === 0 ? (
+              <Text className="text-[12px] text-ink-muted mt-1.5">
+                {t('files.coresNenhuma')}
+              </Text>
+            ) : (
+              filamentos.map(filamento => (
+                <View
+                  key={filamento.tool}
+                  className="flex-row items-center mt-2.5"
+                >
+                  <View
+                    className="w-4 h-4 rounded-full border border-line mr-2"
+                    style={{
+                      backgroundColor:
+                        filamento.cor ?? hexDe(tema.paleta.linha),
+                    }}
+                  />
+                  <Text className="text-[12px] font-semibold text-ink">
+                    T{filamento.tool}
                   </Text>
-                )
-              : (
-                  filamentos.map(filamento => (
-                    <View key={filamento.tool} className="flex-row items-center mt-2.5">
-                      <View
-                        className="w-4 h-4 rounded-full border border-line mr-2"
-                        style={{ backgroundColor: filamento.cor ?? hexDe(tema.paleta.linha) }}
-                      />
-                      <Text className="text-[12px] font-semibold text-ink">
-                        T{filamento.tool}
-                      </Text>
-                      <Text className="text-[12px] text-ink-muted ml-2 flex-1">
-                        {filamento.gramas.toFixed(2)} g
-                        {filamento.tipo ? ` · ${filamento.tipo}` : ''}
-                      </Text>
-                      <Text className="text-[11px] text-ink-soft">
-                        {t('files.slotSugerido', { slot: filamento.tool + 1 })}
-                      </Text>
-                    </View>
-                  ))
-                )}
+                  <Text className="text-[12px] text-ink-muted ml-2 flex-1">
+                    {filamento.gramas.toFixed(2)} g
+                    {filamento.tipo ? ` · ${filamento.tipo}` : ''}
+                  </Text>
+                  <Text className="text-[11px] text-ink-soft">
+                    {t('files.slotSugerido', { slot: filamento.tool + 1 })}
+                  </Text>
+                </View>
+              ))
+            )}
 
             {/* Preço por quilo */}
             <View className="flex-row items-center justify-between mt-3 pt-3 border-t border-line">
@@ -641,7 +738,9 @@ const FileDetails = ({
                       onPress={() => onChangePlateSide(side)}
                       activeOpacity={0.7}
                       className={`w-9 h-8 items-center justify-center rounded-md mr-1.5 border ${
-                        plateSide === side ? 'bg-brand border-brand' : 'border-line'
+                        plateSide === side
+                          ? 'bg-brand border-brand'
+                          : 'border-line'
                       }`}
                     >
                       <Text
@@ -668,7 +767,10 @@ const FileDetails = ({
                 <Switch
                   value={bedLevel}
                   onValueChange={onChangeBedLevel}
-                  trackColor={{ false: hexDe(tema.paleta.linha), true: hexDe(tema.paleta.acento) }}
+                  trackColor={{
+                    false: hexDe(tema.paleta.linha),
+                    true: hexDe(tema.paleta.acento),
+                  }}
                   thumbColor={hexDe(tema.paleta.tinta)}
                   ios_backgroundColor={hexDe(tema.paleta.linha)}
                 />
@@ -679,7 +781,9 @@ const FileDetails = ({
           {/* Acções fixas */}
           {aGuardar !== null && (
             <Text className="text-[11px] text-ink-muted px-4 pt-2">
-              {t('files.aDescarregar', { pct: String(Math.round(aGuardar * 100)) })}
+              {t('files.aDescarregar', {
+                pct: String(Math.round(aGuardar * 100)),
+              })}
             </Text>
           )}
           <View
@@ -691,7 +795,11 @@ const FileDetails = ({
               className="h-12 w-12 items-center justify-center rounded-md border-[1.5px] border-line bg-canvas-sunken"
               activeOpacity={0.7}
             >
-              <Ionicons name="pencil-outline" size={18} color={hexDe(tema.paleta.tinta)} />
+              <Ionicons
+                name="pencil-outline"
+                size={18}
+                color={hexDe(tema.paleta.tinta)}
+              />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={guardar}
@@ -702,9 +810,16 @@ const FileDetails = ({
               style={{ opacity: aGuardar !== null ? 0.6 : 1 }}
             >
               {aGuardar !== null ? (
-                <ActivityIndicator size="small" color={hexDe(tema.paleta.tinta)} />
+                <ActivityIndicator
+                  size="small"
+                  color={hexDe(tema.paleta.tinta)}
+                />
               ) : (
-                <Ionicons name="download-outline" size={18} color={hexDe(tema.paleta.tinta)} />
+                <Ionicons
+                  name="download-outline"
+                  size={18}
+                  color={hexDe(tema.paleta.tinta)}
+                />
               )}
             </TouchableOpacity>
             <TouchableOpacity
@@ -712,7 +827,11 @@ const FileDetails = ({
               className="h-12 w-12 items-center justify-center rounded-md border-[1.5px] border-line bg-canvas-sunken"
               activeOpacity={0.7}
             >
-              <Ionicons name="trash-outline" size={18} color={hexDe(tema.paleta.perigo)} />
+              <Ionicons
+                name="trash-outline"
+                size={18}
+                color={hexDe(tema.paleta.perigo)}
+              />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={onAddToQueue}
@@ -721,7 +840,11 @@ const FileDetails = ({
               className="h-12 w-12 items-center justify-center rounded-md border-[1.5px] border-line bg-canvas-sunken"
               activeOpacity={0.7}
             >
-              <Ionicons name="list-outline" size={18} color={hexDe(tema.paleta.tinta)} />
+              <Ionicons
+                name="list-outline"
+                size={18}
+                color={hexDe(tema.paleta.tinta)}
+              />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() =>
@@ -736,7 +859,12 @@ const FileDetails = ({
               className={`flex-1 h-12 ${BT_ACENTO}`}
               activeOpacity={0.8}
             >
-              <Ionicons name="print-outline" size={16} color={hexDe(tema.paleta.acentoTexto)} style={{ marginRight: 8 }} />
+              <Ionicons
+                name="print-outline"
+                size={16}
+                color={hexDe(tema.paleta.acentoTexto)}
+                style={{ marginRight: 8 }}
+              />
               <Text className={`text-[12px] ${TX_ACENTO}`}>
                 {t('files.imprimirTitulo')}
               </Text>
@@ -748,7 +876,12 @@ const FileDetails = ({
   );
 };
 
-export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embutido }: any) => {
+export const FilesScreen = ({
+  route,
+  navigation,
+  printerId: printerIdProp,
+  embutido,
+}: any) => {
   const { tema } = useTheme();
   const printerId = printerIdProp ?? route?.params?.printerId;
   const { printers, request, adicionarAFila } = usePrinterConnections();
@@ -764,7 +897,9 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
   const [selecionado, setSelecionado] = useState<PrinterFile | null>(null);
   const [recarga, setRecarga] = useState(0);
   const [aRecarregar, setARecarregar] = useState(false);
-  const [ordem, setOrdem] = useState<'nome' | 'data' | 'tamanho' | 'duracao'>('nome');
+  const [ordem, setOrdem] = useState<'nome' | 'data' | 'tamanho' | 'duracao'>(
+    'nome'
+  );
   const [crescente, setCrescente] = useState(true);
   const [procura, setProcura] = useState('');
   const [vista, setVista] = useState<'lista' | 'grelha'>('lista');
@@ -777,7 +912,11 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
         if (!bruto) return;
         const g = JSON.parse(bruto);
         if (g.vista === 'lista' || g.vista === 'grelha') setVista(g.vista);
-        if (g.tamanhoMini === 'p' || g.tamanhoMini === 'm' || g.tamanhoMini === 'g') {
+        if (
+          g.tamanhoMini === 'p' ||
+          g.tamanhoMini === 'm' ||
+          g.tamanhoMini === 'g'
+        ) {
           setTamanhoMini(g.tamanhoMini);
         }
       })
@@ -833,7 +972,9 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
     setError(null);
     try {
       const list = await listarTodosOsFicheiros();
-      setFiles(list.filter(item => item.name?.toLowerCase().endsWith('.gcode')));
+      setFiles(
+        list.filter(item => item.name?.toLowerCase().endsWith('.gcode'))
+      );
     } catch (e) {
       setError(mensagemDeErro(e));
     } finally {
@@ -850,7 +991,9 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
   const visiveis = useMemo(() => {
     const termo = procura.trim().toLowerCase();
     const lista = files.filter(
-      f => !termo || (f.name.split('/').pop() ?? f.name).toLowerCase().includes(termo)
+      f =>
+        !termo ||
+        (f.name.split('/').pop() ?? f.name).toLowerCase().includes(termo)
     );
     if (ordem === 'duracao') {
       // Sem duração conhecida fica sempre no fim, cresça ou decresça.
@@ -908,32 +1051,39 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
 
   const handlePrint = (file: PrinterFile, slotMap: any[] = []) => {
     const label = file.name.split('/').pop() ?? file.name;
-    Alert.alert(t('files.imprimirTitulo'), t('files.imprimirMsg', { nome: label }), [
-      { text: t('comum.cancelar'), style: 'cancel' },
-      {
-        text: t('files.imprimirTitulo'),
-        onPress: async () => {
-          try {
-            const comando = startPrintCommand(file.name, {
-              nivelar: bedLevel,
-              lado: plateSide,
-              slotMap,
-              timelapse: (await lerTimelapse(printer.id)) ? 1 : 0,
-            });
-            const response = await request(printer.id, comando, 15000);
-            const ack = ackDaResposta(response) ?? 0;
-            if (ack !== 0) {
-              Alert.alert(t('files.naoArrancou'), descreverAck(ack));
-              return;
+    Alert.alert(
+      t('files.imprimirTitulo'),
+      t('files.imprimirMsg', { nome: label }),
+      [
+        { text: t('comum.cancelar'), style: 'cancel' },
+        {
+          text: t('files.imprimirTitulo'),
+          onPress: async () => {
+            try {
+              const comando = startPrintCommand(file.name, {
+                nivelar: bedLevel,
+                lado: plateSide,
+                slotMap,
+                timelapse: (await lerTimelapse(printer.id)) ? 1 : 0,
+              });
+              const response = await request(printer.id, comando, 15000);
+              const ack = ackDaResposta(response) ?? 0;
+              if (ack !== 0) {
+                Alert.alert(t('files.naoArrancou'), descreverAck(ack));
+                return;
+              }
+              Alert.alert(
+                t('files.aArrancar'),
+                t('files.aArrancarMsg', { nome: label })
+              );
+              navigation.navigate('Impressora');
+            } catch (e) {
+              Alert.alert(t('files.naoArrancou'), mensagemDeErro(e));
             }
-            Alert.alert(t('files.aArrancar'), t('files.aArrancarMsg', { nome: label }));
-            navigation.navigate('Impressora');
-          } catch (e) {
-            Alert.alert(t('files.naoArrancou'), mensagemDeErro(e));
-          }
+          },
         },
-      },
-    ]);
+      ]
+    );
   };
 
   /** Envia um G-code do telemóvel e oferece imprimir logo a seguir. */
@@ -947,42 +1097,56 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
     const asset = picked.assets[0];
     try {
       setOcupado(`${t('files.aEnviar')} 0%`);
-      await uploadGcode(enderecoDe(printer), asset.uri, asset.name, (enviado, total) => {
-        setOcupado(`${t('files.aEnviar')} ${Math.round((enviado / total) * 100)}%`);
-      });
+      await uploadGcode(
+        enderecoDe(printer),
+        asset.uri,
+        asset.name,
+        (enviado, total) => {
+          setOcupado(
+            `${t('files.aEnviar')} ${Math.round((enviado / total) * 100)}%`
+          );
+        }
+      );
       await load();
-      Alert.alert(t('files.enviado'), t('files.enviadoMsg', { nome: asset.name }), [
-        { text: t('comum.nao'), style: 'cancel' },
-        {
-          text: t('files.imprimirAgora'),
-          onPress: async () => {
-            try {
-              // O nome tem de ser o que a máquina devolve no Cmd 258.
-              const lista = await listarTodosOsFicheiros();
-              const alvo = lista.find(f => f.name.endsWith(`/${asset.name}`));
-              if (!alvo) {
-                Alert.alert(t('files.naoArrancou'), t('files.naoEncontrado'));
-                return;
+      Alert.alert(
+        t('files.enviado'),
+        t('files.enviadoMsg', { nome: asset.name }),
+        [
+          { text: t('comum.nao'), style: 'cancel' },
+          {
+            text: t('files.imprimirAgora'),
+            onPress: async () => {
+              try {
+                // O nome tem de ser o que a máquina devolve no Cmd 258.
+                const lista = await listarTodosOsFicheiros();
+                const alvo = lista.find(f => f.name.endsWith(`/${asset.name}`));
+                if (!alvo) {
+                  Alert.alert(t('files.naoArrancou'), t('files.naoEncontrado'));
+                  return;
+                }
+                const comando = startPrintCommand(alvo.name, {
+                  nivelar: bedLevel,
+                  lado: plateSide,
+                  timelapse: (await lerTimelapse(printer.id)) ? 1 : 0,
+                });
+                const resposta = await request(printer.id, comando, 15000);
+                const ack = ackDaResposta(resposta) ?? 0;
+                if (ack !== 0) {
+                  Alert.alert(t('files.naoArrancou'), descreverAck(ack));
+                  return;
+                }
+                Alert.alert(
+                  t('files.aArrancar'),
+                  t('files.aArrancarMsg', { nome: asset.name })
+                );
+                navigation.navigate('Impressora');
+              } catch (e) {
+                Alert.alert(t('files.naoArrancou'), mensagemDeErro(e));
               }
-              const comando = startPrintCommand(alvo.name, {
-                nivelar: bedLevel,
-                lado: plateSide,
-                timelapse: (await lerTimelapse(printer.id)) ? 1 : 0,
-              });
-              const resposta = await request(printer.id, comando, 15000);
-              const ack = ackDaResposta(resposta) ?? 0;
-              if (ack !== 0) {
-                Alert.alert(t('files.naoArrancou'), descreverAck(ack));
-                return;
-              }
-              Alert.alert(t('files.aArrancar'), t('files.aArrancarMsg', { nome: asset.name }));
-              navigation.navigate('Impressora');
-            } catch (e) {
-              Alert.alert(t('files.naoArrancou'), mensagemDeErro(e));
-            }
+            },
           },
-        },
-      ]);
+        ]
+      );
     } catch (e) {
       Alert.alert(t('files.falhouEnvio'), mensagemDeErro(e));
     } finally {
@@ -992,31 +1156,35 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
 
   const handleDelete = (file: PrinterFile) => {
     const label = file.name.split('/').pop() ?? file.name;
-    Alert.alert(t('files.apagarTitulo'), t('files.apagarMsg', { nome: label }), [
-      { text: t('comum.cancelar'), style: 'cancel' },
-      {
-        text: t('files.confirmarApagar'),
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            const response = await request(
-              printer.id,
-              deleteFilesCommand([file.name])
-            );
-            const ack = ackDaResposta(response) ?? 0;
-            if (ack !== 0) {
-              Alert.alert(t('files.naoApagou'), descreverAck(ack));
-              // Recarrega: o estado real da lista pode ter mudado.
-              load();
-              return;
+    Alert.alert(
+      t('files.apagarTitulo'),
+      t('files.apagarMsg', { nome: label }),
+      [
+        { text: t('comum.cancelar'), style: 'cancel' },
+        {
+          text: t('files.confirmarApagar'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const response = await request(
+                printer.id,
+                deleteFilesCommand([file.name])
+              );
+              const ack = ackDaResposta(response) ?? 0;
+              if (ack !== 0) {
+                Alert.alert(t('files.naoApagou'), descreverAck(ack));
+                // Recarrega: o estado real da lista pode ter mudado.
+                load();
+                return;
+              }
+              setFiles(prev => prev.filter(item => item.name !== file.name));
+            } catch (e) {
+              Alert.alert(t('files.naoApagou'), mensagemDeErro(e));
             }
-            setFiles(prev => prev.filter(item => item.name !== file.name));
-          } catch (e) {
-            Alert.alert(t('files.naoApagou'), mensagemDeErro(e));
-          }
+          },
         },
-      },
-    ]);
+      ]
+    );
   };
 
   return (
@@ -1036,7 +1204,11 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
         </View>
       ) : error ? (
         <View className="flex-1 items-center justify-center px-8">
-          <Ionicons name="alert-circle-outline" size={36} color={hexDe(tema.paleta.perigo)} />
+          <Ionicons
+            name="alert-circle-outline"
+            size={36}
+            color={hexDe(tema.paleta.perigo)}
+          />
           <Text className="text-[13px] text-ink-muted mt-3 text-center">
             {error}
           </Text>
@@ -1097,7 +1269,10 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
             <Switch
               value={bedLevel}
               onValueChange={setBedLevel}
-              trackColor={{ false: hexDe(tema.paleta.linha), true: hexDe(tema.paleta.acento) }}
+              trackColor={{
+                false: hexDe(tema.paleta.linha),
+                true: hexDe(tema.paleta.acento),
+              }}
               thumbColor={hexDe(tema.paleta.tinta)}
               ios_backgroundColor={hexDe(tema.paleta.linha)}
             />
@@ -1105,7 +1280,11 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
 
           <View className="px-4 pt-2 pb-2 border-b border-line">
             <View className="flex-row items-center rounded-lg border border-line bg-cartao px-2.5 h-10">
-              <Ionicons name="search" size={15} color={hexDe(tema.paleta.tintaMuted)} />
+              <Ionicons
+                name="search"
+                size={15}
+                color={hexDe(tema.paleta.tintaMuted)}
+              />
               <TextInput
                 value={procura}
                 onChangeText={setProcura}
@@ -1116,42 +1295,59 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
                 returnKeyType="search"
               />
               {procura.length > 0 && (
-                <TouchableOpacity onPress={() => setProcura('')} activeOpacity={0.7}>
-                  <Ionicons name="close-circle" size={16} color={hexDe(tema.paleta.tintaMuted)} />
+                <TouchableOpacity
+                  onPress={() => setProcura('')}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons
+                    name="close-circle"
+                    size={16}
+                    color={hexDe(tema.paleta.tintaMuted)}
+                  />
                 </TouchableOpacity>
               )}
             </View>
           </View>
 
           <View className="flex-row items-center px-4 py-2 border-b border-line">
-            <Text className="text-[12px] text-ink-muted mr-2">{t('files.ordenar')}</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-1">
-              {(['nome', 'data', 'tamanho', 'duracao'] as const).map(criterio => (
-                <TouchableOpacity
-                  key={criterio}
-                  onPress={() => setOrdem(criterio)}
-                  activeOpacity={0.7}
-                  className={`px-3 h-8 items-center justify-center rounded-lg mr-1.5 border ${
-                    ordem === criterio ? 'bg-brand border-brand' : 'border-line'
-                  }`}
-                >
-                  <Text
-                    className={`text-[12px] font-semibold ${
-                      ordem === criterio ? 'text-white' : 'text-ink-soft'
+            <Text className="text-[12px] text-ink-muted mr-2">
+              {t('files.ordenar')}
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              className="flex-1"
+            >
+              {(['nome', 'data', 'tamanho', 'duracao'] as const).map(
+                criterio => (
+                  <TouchableOpacity
+                    key={criterio}
+                    onPress={() => setOrdem(criterio)}
+                    activeOpacity={0.7}
+                    className={`px-3 h-8 items-center justify-center rounded-lg mr-1.5 border ${
+                      ordem === criterio
+                        ? 'bg-brand border-brand'
+                        : 'border-line'
                     }`}
                   >
-                    {t(
-                      criterio === 'nome'
-                        ? 'files.ordemNome'
-                        : criterio === 'data'
-                        ? 'files.ordemData'
-                        : criterio === 'tamanho'
-                        ? 'files.ordemTamanho'
-                        : 'files.ordemDuracao'
-                    )}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <Text
+                      className={`text-[12px] font-semibold ${
+                        ordem === criterio ? 'text-white' : 'text-ink-soft'
+                      }`}
+                    >
+                      {t(
+                        criterio === 'nome'
+                          ? 'files.ordemNome'
+                          : criterio === 'data'
+                            ? 'files.ordemData'
+                            : criterio === 'tamanho'
+                              ? 'files.ordemTamanho'
+                              : 'files.ordemDuracao'
+                      )}
+                    </Text>
+                  </TouchableOpacity>
+                )
+              )}
             </ScrollView>
             <TouchableOpacity
               onPress={() => setCrescente(v => !v)}
@@ -1180,14 +1376,20 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
                   <Ionicons
                     name={modo === 'lista' ? 'list' : 'grid'}
                     size={14}
-                    color={vista === modo ? '#FFFFFF' : hexDe(tema.paleta.tintaSoft)}
+                    color={
+                      vista === modo ? '#FFFFFF' : hexDe(tema.paleta.tintaSoft)
+                    }
                   />
                   <Text
                     className={`text-[12px] font-semibold ml-1.5 ${
                       vista === modo ? 'text-white' : 'text-ink-soft'
                     }`}
                   >
-                    {t(modo === 'lista' ? 'files.vistaLista' : 'files.vistaGrelha')}
+                    {t(
+                      modo === 'lista'
+                        ? 'files.vistaLista'
+                        : 'files.vistaGrelha'
+                    )}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -1226,7 +1428,9 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
                     onPress={() => escolherTamanho(tam)}
                     activeOpacity={0.7}
                     className={`w-8 h-8 items-center justify-center rounded-lg mr-1 border ${
-                      tamanhoMini === tam ? 'bg-brand border-brand' : 'border-line'
+                      tamanhoMini === tam
+                        ? 'bg-brand border-brand'
+                        : 'border-line'
                     }`}
                   >
                     <Text
@@ -1248,12 +1452,19 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
                 pose="ocioso"
                 titulo={t('files.semFicheiros')}
                 descricao={t('files.semFicheirosDica')}
-                acaoPrimaria={{ rotulo: t('files.enviar'), aoTocar: handleUpload }}
+                acaoPrimaria={{
+                  rotulo: t('files.enviar'),
+                  aoTocar: handleUpload,
+                }}
               />
             </View>
           ) : visiveis.length === 0 ? (
             <View className="px-6 py-10 items-center">
-              <Ionicons name="search" size={20} color={hexDe(tema.paleta.tintaMuted)} />
+              <Ionicons
+                name="search"
+                size={20}
+                color={hexDe(tema.paleta.tintaMuted)}
+              />
               <Text className="text-[13px] text-ink-muted mt-2 text-center">
                 {t('files.semResultados', { q: procura.trim() })}
               </Text>
@@ -1318,7 +1529,9 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
             const alvo = selecionado;
             setSelecionado(null);
             if (!alvo) return;
-            setNovoNome((alvo.name.split('/').pop() ?? '').replace(/\.gcode$/i, ''));
+            setNovoNome(
+              (alvo.name.split('/').pop() ?? '').replace(/\.gcode$/i, '')
+            );
             setARenomear(alvo);
           }}
           onDelete={() => {
@@ -1329,8 +1542,16 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
         />
       )}
       {aRenomear && (
-        <Modal transparent animationType="fade" visible onRequestClose={() => setARenomear(null)}>
-          <View className="flex-1 items-center justify-center px-6" style={{ backgroundColor: 'rgba(23,26,32,0.45)' }}>
+        <Modal
+          transparent
+          animationType="fade"
+          visible
+          onRequestClose={() => setARenomear(null)}
+        >
+          <View
+            className="flex-1 items-center justify-center px-6"
+            style={{ backgroundColor: 'rgba(23,26,32,0.45)' }}
+          >
             <View className="w-full bg-canvas rounded-2xl p-4">
               <Text className="text-[15px] font-bold text-ink">
                 {t('files.renomearTitulo')}
@@ -1380,7 +1601,11 @@ export const FilesScreen = ({ route, navigation, printerId: printerIdProp, embut
           activeOpacity={0.85}
           className={`absolute right-5 bottom-7 ${BT_ACENTO} px-4 py-3 rounded-full flex-row items-center`}
         >
-          <Ionicons name="cloud-upload-outline" size={16} color={hexDe(tema.paleta.acento)} />
+          <Ionicons
+            name="cloud-upload-outline"
+            size={16}
+            color={hexDe(tema.paleta.acento)}
+          />
           <Text className={`ml-2 text-[12px] font-semibold ${TX_ACENTO}`}>
             {ocupado ?? t('files.enviar')}
           </Text>

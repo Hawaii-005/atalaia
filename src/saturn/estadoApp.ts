@@ -12,7 +12,7 @@ import { EstadoResina } from './ligacao';
  * camadas) e fica no PrintInfo depois de parar — por isso, em repouso, quem
  * manda é o `CurrentStatus`.
  */
-export const codigoParaApp = (status: number, currentStatus = 0): number => {
+export const codigoParaApp = (status: number, currentStatus = 1): number => {
   // Máquina em repouso (cs 0): manda o CurrentStatus. O PrintInfo fica com o
   // último trabalho e sem isto a app mostrava «A imprimir» ou «Parada» numa
   // Saturn pronta a imprimir.
@@ -35,7 +35,8 @@ const progresso = (camada: number, total: number, status: number): number => {
 };
 
 /** Os ticks da Saturn vêm em milissegundos; a app trabalha em segundos. */
-const segundos = (ticks: number): number => Math.max(0, Math.round(ticks / 1000));
+const segundos = (ticks: number): number =>
+  Math.max(0, Math.round(ticks / 1000));
 
 export const estadoParaApp = (estado: EstadoResina): PrinterStatus => {
   const info = estado.PrintInfo;

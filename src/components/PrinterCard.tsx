@@ -19,7 +19,14 @@ import { t } from '../i18n';
 import Svg, { Circle } from 'react-native-svg';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
-import { BT_ACENTO, BT_APAGADA, BT_NEUTRA, BT_PERIGO, TX_ACENTO, TX_PERIGO } from '../theme/botoes';
+import {
+  BT_ACENTO,
+  BT_APAGADA,
+  BT_NEUTRA,
+  BT_PERIGO,
+  TX_ACENTO,
+  TX_PERIGO,
+} from '../theme/botoes';
 
 interface PrinterCardProps {
   printer: Printer;
@@ -106,25 +113,28 @@ export const PrinterCard = ({
   const isConnected = printer.connectionStatus === 'connected';
 
   // A reconectar tem prioridade: mostra quantas tentativas já falharam.
-  const statusText = !isConnected && (printer.reconnectAttempt ?? 0) >= 2
-    ? t('comum.aReconectarTentativa', { n: printer.reconnectAttempt ?? 0 })
-    : readablePrintStatus === 'idle'
-      ? t(STATUS_LABEL[printer.connectionStatus])
-      : readablePrintStatus === 'completed'
-        ? t('comum.impressaoConcluida')
-        : readablePrintStatus === 'preparing'
-          ? // O código 20 é pausa (a máquina mantém-se pronta a retomar).
-            canResume
-            ? t('comum.emPausa')
-            : t('comum.aPreparar')
-          : readablePrintStatus === 'paused'
-            ? t('comum.emPausa')
-            : readablePrintStatus === 'stopped'
-              ? t('comum.parada')
-              : t('comum.aImprimir');
+  const statusText =
+    !isConnected && (printer.reconnectAttempt ?? 0) >= 2
+      ? t('comum.aReconectarTentativa', { n: printer.reconnectAttempt ?? 0 })
+      : readablePrintStatus === 'idle'
+        ? t(STATUS_LABEL[printer.connectionStatus])
+        : readablePrintStatus === 'completed'
+          ? t('comum.impressaoConcluida')
+          : readablePrintStatus === 'preparing'
+            ? // O código 20 é pausa (a máquina mantém-se pronta a retomar).
+              canResume
+              ? t('comum.emPausa')
+              : t('comum.aPreparar')
+            : readablePrintStatus === 'paused'
+              ? t('comum.emPausa')
+              : readablePrintStatus === 'stopped'
+                ? t('comum.parada')
+                : t('comum.aImprimir');
 
   const percentual =
-    readablePrintStatus === 'completed' ? 100 : Math.max(0, Math.min(100, progress));
+    readablePrintStatus === 'completed'
+      ? 100
+      : Math.max(0, Math.min(100, progress));
 
   return (
     <TouchableOpacity
@@ -153,11 +163,16 @@ export const PrinterCard = ({
               fill="none"
               strokeDasharray={`${2 * Math.PI * (MEDALHA / 2 - 3)} ${2 * Math.PI * (MEDALHA / 2 - 3)}`}
               strokeDashoffset={
-                2 * Math.PI * (MEDALHA / 2 - 3) * (1 - Math.min(100, Math.max(0, percentual)) / 100)
+                2 *
+                Math.PI *
+                (MEDALHA / 2 - 3) *
+                (1 - Math.min(100, Math.max(0, percentual)) / 100)
               }
               strokeLinecap="round"
               transform={`rotate(-90 ${MEDALHA / 2} ${MEDALHA / 2})`}
-              opacity={isPrinting || readablePrintStatus === 'completed' ? 1 : 0.35}
+              opacity={
+                isPrinting || readablePrintStatus === 'completed' ? 1 : 0.35
+              }
             />
           </Svg>
           <View className="absolute inset-0 items-center justify-center">
@@ -176,7 +191,10 @@ export const PrinterCard = ({
         </View>
 
         <View className="flex-1 pr-3">
-          <Text className="text-[17px] font-semibold text-ink" numberOfLines={1}>
+          <Text
+            className="text-[17px] font-semibold text-ink"
+            numberOfLines={1}
+          >
             {formatTextMaxEllipsis(printer.printerName, 22)}
           </Text>
           <Text className="text-xs text-ink-muted mt-1">
@@ -194,7 +212,10 @@ export const PrinterCard = ({
                 width: 6,
                 height: 6,
                 borderRadius: 3,
-                backgroundColor: corDoEstado(printer.connectionStatus, tema.paleta),
+                backgroundColor: corDoEstado(
+                  printer.connectionStatus,
+                  tema.paleta
+                ),
               }}
             />
             <Text className="text-[11px] font-semibold text-ink-soft ml-1.5">
@@ -216,7 +237,11 @@ export const PrinterCard = ({
       {isConnected && showTemps && (
         <View className="flex-row mt-4">
           {[
-            { label: t('comum.bico'), value: nozzleTemp, target: targetNozzleTemp },
+            {
+              label: t('comum.bico'),
+              value: nozzleTemp,
+              target: targetNozzleTemp,
+            },
             { label: t('comum.mesa'), value: bedTemp, target: targetBedTemp },
             { label: t('comum.camara'), value: boxTemp, target: targetBoxTemp },
           ].map((tile, index) => (
@@ -241,7 +266,10 @@ export const PrinterCard = ({
       {/* Print job */}
       {isConnected && readablePrintStatus !== 'idle' && (
         <View className="mt-4 pt-4 border-t border-line">
-          <Text className="text-[13px] font-semibold text-ink" numberOfLines={1}>
+          <Text
+            className="text-[13px] font-semibold text-ink"
+            numberOfLines={1}
+          >
             {isPrinting
               ? formatTextMaxEllipsis(filename, 34) || t('comum.aImprimir')
               : statusText}
@@ -263,7 +291,6 @@ export const PrinterCard = ({
           )}
 
           <View className="flex-row items-center justify-between mt-3">
-
             {showPrintControls && (
               <View className="flex-row">
                 {canStop && onStopPrint && (
@@ -272,8 +299,14 @@ export const PrinterCard = ({
                     className={`${BT_PERIGO} px-3 py-1.5 mr-2`}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="stop" size={12} color={hexDe(tema.paleta.perigo)} />
-                    <Text className={`ml-1.5 text-[11px] ${TX_PERIGO}`}>{t('comum.parar')}</Text>
+                    <Ionicons
+                      name="stop"
+                      size={12}
+                      color={hexDe(tema.paleta.perigo)}
+                    />
+                    <Text className={`ml-1.5 text-[11px] ${TX_PERIGO}`}>
+                      {t('comum.parar')}
+                    </Text>
                   </TouchableOpacity>
                 )}
                 {(canPause || canResume) && onPrintControl && (
@@ -301,14 +334,18 @@ export const PrinterCard = ({
                   <TouchableOpacity
                     onPress={onToggleLight}
                     accessibilityRole="button"
-                    accessibilityLabel={luzLigada ? 'Desligar luz' : 'Ligar luz'}
+                    accessibilityLabel={
+                      luzLigada ? 'Desligar luz' : 'Ligar luz'
+                    }
                     className={`${luzLigada ? BT_ACENTO : BT_NEUTRA} px-2.5 py-1.5 mr-2`}
                     activeOpacity={0.7}
                   >
                     <Ionicons
                       name={luzLigada ? 'bulb' : 'bulb-outline'}
                       size={13}
-                      color={hexDe(luzLigada ? tema.paleta.acento : tema.paleta.tintaSoft)}
+                      color={hexDe(
+                        luzLigada ? tema.paleta.acento : tema.paleta.tintaSoft
+                      )}
                     />
                   </TouchableOpacity>
                 )}
@@ -320,7 +357,11 @@ export const PrinterCard = ({
                     className={`${BT_NEUTRA} px-2.5 py-1.5`}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="videocam-outline" size={13} color={hexDe(tema.paleta.tintaSoft)} />
+                    <Ionicons
+                      name="videocam-outline"
+                      size={13}
+                      color={hexDe(tema.paleta.tintaSoft)}
+                    />
                   </TouchableOpacity>
                 )}
               </View>

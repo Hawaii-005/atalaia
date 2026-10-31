@@ -1,8 +1,18 @@
 import { enderecoDe } from '../utils/rede';
 import { log } from '../utils/log';
 import { mensagemDoErro } from '../utils/errors';
-import { pausePrintCommand, resumePrintCommand, stopPrintCommand } from '../utils/commands';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  pausePrintCommand,
+  resumePrintCommand,
+  stopPrintCommand,
+} from '../utils/commands';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -34,7 +44,14 @@ import type { ConnectionStatus } from '../types';
 import { t } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
-import { BT_ACENTO, BT_APAGADA, BT_NEUTRA, BT_PERIGO, TX_ACENTO, TX_PERIGO } from '../theme/botoes';
+import {
+  BT_ACENTO,
+  BT_APAGADA,
+  BT_NEUTRA,
+  BT_PERIGO,
+  TX_ACENTO,
+  TX_PERIGO,
+} from '../theme/botoes';
 
 const LIGHT_COMMAND = 403;
 const CAIXA_ANEL = 44;
@@ -139,10 +156,20 @@ export const CameraScreen = ({ navigation, route }: any) => {
     lock();
   }, [fullscreen]);
 
-  useEffect(() => () => { ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.DEFAULT).catch(() => {}); }, []);
+  useEffect(
+    () => () => {
+      ScreenOrientation.lockAsync(
+        ScreenOrientation.OrientationLock.DEFAULT
+      ).catch(() => {});
+    },
+    []
+  );
 
   // A resina não tem câmara: a aba só olha para as impressoras que têm vídeo.
-  const comCamera = useMemo(() => printers.filter(p => p.kind !== 'resin'), [printers]);
+  const comCamera = useMemo(
+    () => printers.filter(p => p.kind !== 'resin'),
+    [printers]
+  );
 
   const printer = useMemo(() => {
     const bySelection = comCamera.find(p => p.id === selectedId);
@@ -235,27 +262,23 @@ export const CameraScreen = ({ navigation, route }: any) => {
 
   const handleStopPrint = useCallback(() => {
     if (!printer) return;
-    Alert.alert(
-      t('comum.cancelarImpressao'),
-      t('comum.interrompeImpressao'),
-      [
-        { text: t('comum.continuarImpressao'), style: 'cancel' },
-        {
-          text: t('comum.pararImpressao'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await request(
-                printer.id,
-                stopPrintCommand({ id: `cancel-${Date.now()}` })
-              );
-            } catch (erro) {
-              Alert.alert('Comando recusado', mensagemDoErro(erro));
-            }
-          },
+    Alert.alert(t('comum.cancelarImpressao'), t('comum.interrompeImpressao'), [
+      { text: t('comum.continuarImpressao'), style: 'cancel' },
+      {
+        text: t('comum.pararImpressao'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await request(
+              printer.id,
+              stopPrintCommand({ id: `cancel-${Date.now()}` })
+            );
+          } catch (erro) {
+            Alert.alert('Comando recusado', mensagemDoErro(erro));
+          }
         },
-      ]
-    );
+      },
+    ]);
   }, [printer, request]);
 
   const handleSnapshot = useCallback(async () => {
@@ -265,10 +288,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
     try {
       const permission = await MediaLibrary.requestPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert(
-          t('camera.acessoGaleria'),
-          t('camera.acessoGaleriaMsg')
-        );
+        Alert.alert(t('camera.acessoGaleria'), t('camera.acessoGaleriaMsg'));
         return;
       }
 
@@ -317,7 +337,10 @@ export const CameraScreen = ({ navigation, route }: any) => {
           setUploadPercent(Math.round((enviado / total) * 100));
         }
       );
-      Alert.alert(t('camera.enviado'), t('camera.enviadoMsg', { nome: asset.name }));
+      Alert.alert(
+        t('camera.enviado'),
+        t('camera.enviadoMsg', { nome: asset.name })
+      );
     } catch (error) {
       Alert.alert(t('camera.falhouEnvio'), String(error));
     } finally {
@@ -376,14 +399,17 @@ export const CameraScreen = ({ navigation, route }: any) => {
         }
       : null;
 
-
   if (!printer) {
     return (
       <SafeAreaView
         edges={['top']}
         className="flex-1 bg-canvas items-center justify-center p-6"
       >
-        <Ionicons name="videocam-off" size={48} color={hexDe(tema.paleta.tintaMuted)} />
+        <Ionicons
+          name="videocam-off"
+          size={48}
+          color={hexDe(tema.paleta.tintaMuted)}
+        />
         <Text className="mt-3 text-ink text-center">
           {t('camera.semImpressoras')}
         </Text>
@@ -391,17 +417,16 @@ export const CameraScreen = ({ navigation, route }: any) => {
           className="mt-4 bg-brand rounded-xl px-6 py-3"
           onPress={() => navigation?.navigate('AddEditPrinter')}
         >
-          <Text className="text-white font-bold">{t('camera.irParaImpressoras')}</Text>
+          <Text className="text-white font-bold">
+            {t('camera.irParaImpressoras')}
+          </Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView
-      edges={['top']}
-      className="flex-1 bg-canvas"
-    >
+    <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
       {/* Cabeçalho: voltar · CÂMARA · estado · recarregar */}
       <View className="flex-row items-center px-4 pt-1 pb-3">
         <TouchableOpacity
@@ -410,7 +435,11 @@ export const CameraScreen = ({ navigation, route }: any) => {
           activeOpacity={0.7}
           accessibilityLabel={t('details.voltar')}
         >
-          <Ionicons name="chevron-back" size={20} color={hexDe(tema.paleta.tinta)} />
+          <Ionicons
+            name="chevron-back"
+            size={20}
+            color={hexDe(tema.paleta.tinta)}
+          />
         </TouchableOpacity>
         <Text className="text-[10px] tracking-[2.4px] font-semibold text-ink-soft">
           {t('camera.title').toUpperCase()}
@@ -429,7 +458,11 @@ export const CameraScreen = ({ navigation, route }: any) => {
           className="w-8 h-8 items-center justify-center rounded-md border border-line"
           activeOpacity={0.7}
         >
-          <Ionicons name="refresh" size={15} color={hexDe(tema.paleta.tintaSoft)} />
+          <Ionicons
+            name="refresh"
+            size={15}
+            color={hexDe(tema.paleta.tintaSoft)}
+          />
         </TouchableOpacity>
       </View>
 
@@ -445,7 +478,9 @@ export const CameraScreen = ({ navigation, route }: any) => {
                 key={p.id}
                 onPress={() => setSelectedId(p.id)}
                 className={`rounded-md border px-3 py-1.5 mr-2 ${
-                  p.id === printer.id ? 'border-brand bg-brand/10' : 'border-line'
+                  p.id === printer.id
+                    ? 'border-brand bg-brand/10'
+                    : 'border-line'
                 }`}
               >
                 <Text
@@ -469,22 +504,26 @@ export const CameraScreen = ({ navigation, route }: any) => {
           {isConnected && streamHtml && !fullscreen ? (
             <View ref={videoRef} collapsable={false} style={{ flex: 1 }}>
               {pouparDados && !snapshotFalhou ? (
-                <SnapshotAoVivo host={videoHost ?? ''} activo={emFoco} onFalhar={() => setSnapshotFalhou(true)} />
+                <SnapshotAoVivo
+                  host={videoHost ?? ''}
+                  activo={emFoco}
+                  onFalhar={() => setSnapshotFalhou(true)}
+                />
               ) : (
-              <WebView
-                key={`${printer.id}-${reloadKey}`}
-                ref={webViewRef}
-                source={{ html: streamHtml, baseUrl: `http://${videoHost}` }}
-                style={{ flex: 1, backgroundColor: '#000' }}
-                javaScriptEnabled
-                domStorageEnabled={false}
-                allowsInlineMediaPlayback
-                mediaPlaybackRequiresUserAction={false}
-                mixedContentMode="always"
-                originWhitelist={['*']}
-                scrollEnabled={false}
-                bounces={false}
-              />
+                <WebView
+                  key={`${printer.id}-${reloadKey}`}
+                  ref={webViewRef}
+                  source={{ html: streamHtml, baseUrl: `http://${videoHost}` }}
+                  style={{ flex: 1, backgroundColor: '#000' }}
+                  javaScriptEnabled
+                  domStorageEnabled={false}
+                  allowsInlineMediaPlayback
+                  mediaPlaybackRequiresUserAction={false}
+                  mixedContentMode="always"
+                  originWhitelist={['*']}
+                  scrollEnabled={false}
+                  bounces={false}
+                />
               )}
             </View>
           ) : (
@@ -492,11 +531,17 @@ export const CameraScreen = ({ navigation, route }: any) => {
               {printer.connectionStatus === 'connecting' ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Ionicons name="videocam-off" size={36} color="rgba(255,255,255,0.5)" />
+                <Ionicons
+                  name="videocam-off"
+                  size={36}
+                  color="rgba(255,255,255,0.5)"
+                />
               )}
               <Text className="text-white/60 mt-2 text-[11px] text-center px-4">
                 {(printer.reconnectAttempt ?? 0) >= 2
-                  ? t('camera.aReconectarTentativa', { n: printer.reconnectAttempt ?? 0 })
+                  ? t('camera.aReconectarTentativa', {
+                      n: printer.reconnectAttempt ?? 0,
+                    })
                   : printer.connectionStatus === 'connecting'
                     ? t('camera.aLigarImpressora')
                     : t(CONNECTION_LABEL[printer.connectionStatus])}
@@ -556,13 +601,22 @@ export const CameraScreen = ({ navigation, route }: any) => {
                     ? t('camera.aImprimir')
                     : t('camera.pronta')}
               </Text>
-              <Text className="text-[10px] text-ink-soft mt-0.5" numberOfLines={1}>
+              <Text
+                className="text-[10px] text-ink-soft mt-0.5"
+                numberOfLines={1}
+              >
                 {job
-                  ? (job.filename.split('/').pop() ?? '').replace(/\.gcode$/i, '')
+                  ? (job.filename.split('/').pop() ?? '').replace(
+                      /\.gcode$/i,
+                      ''
+                    )
                   : t('camera.mesaLivre')}
               </Text>
               {job && (
-                <Text className="text-[10px] text-ink-soft mt-0.5" numberOfLines={1}>
+                <Text
+                  className="text-[10px] text-ink-soft mt-0.5"
+                  numberOfLines={1}
+                >
                   {`${t('comum.camada', {
                     actual: job.layer,
                     total: job.totalLayers,
@@ -573,9 +627,18 @@ export const CameraScreen = ({ navigation, route }: any) => {
 
             {job && (
               <View
-                style={{ width: CAIXA_ANEL, height: CAIXA_ANEL, alignItems: 'center', justifyContent: 'center' }}
+                style={{
+                  width: CAIXA_ANEL,
+                  height: CAIXA_ANEL,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
               >
-                <Svg width={CAIXA_ANEL} height={CAIXA_ANEL} style={{ position: 'absolute' }}>
+                <Svg
+                  width={CAIXA_ANEL}
+                  height={CAIXA_ANEL}
+                  style={{ position: 'absolute' }}
+                >
                   <Circle
                     cx={CAIXA_ANEL / 2}
                     cy={CAIXA_ANEL / 2}
@@ -593,11 +656,19 @@ export const CameraScreen = ({ navigation, route }: any) => {
                     fill="none"
                     strokeLinecap="round"
                     strokeDasharray={2 * Math.PI * RAIO_ANEL}
-                    strokeDashoffset={2 * Math.PI * RAIO_ANEL * (1 - Math.min(100, Math.max(0, progress)) / 100)}
+                    strokeDashoffset={
+                      2 *
+                      Math.PI *
+                      RAIO_ANEL *
+                      (1 - Math.min(100, Math.max(0, progress)) / 100)
+                    }
                     transform={`rotate(-90 ${CAIXA_ANEL / 2} ${CAIXA_ANEL / 2})`}
                   />
                 </Svg>
-                <Text className="text-[10px] font-bold text-ink" style={{ fontFamily: 'monospace' }}>
+                <Text
+                  className="text-[10px] font-bold text-ink"
+                  style={{ fontFamily: 'monospace' }}
+                >
                   {Math.round(progress)}%
                 </Text>
               </View>
@@ -614,7 +685,11 @@ export const CameraScreen = ({ navigation, route }: any) => {
                   disabled={!isConnected}
                 >
                   <Ionicons
-                    name={isResumable(printer?.status?.PrintInfo?.Status ?? 0) ? 'play' : 'pause'}
+                    name={
+                      isResumable(printer?.status?.PrintInfo?.Status ?? 0)
+                        ? 'play'
+                        : 'pause'
+                    }
                     size={13}
                     color="#FFFFFF"
                   />
@@ -630,7 +705,11 @@ export const CameraScreen = ({ navigation, route }: any) => {
                   activeOpacity={0.8}
                   disabled={!isConnected}
                 >
-                  <Ionicons name="stop" size={13} color={hexDe(tema.paleta.perigo)} />
+                  <Ionicons
+                    name="stop"
+                    size={13}
+                    color={hexDe(tema.paleta.perigo)}
+                  />
                   <Text className="ml-1.5 text-[12px] font-semibold text-state-danger">
                     {t('comum.parar')}
                   </Text>
@@ -638,7 +717,9 @@ export const CameraScreen = ({ navigation, route }: any) => {
               </>
             ) : (
               <TouchableOpacity
-                onPress={() => navigation.navigate('Files', { printerId: printer.id })}
+                onPress={() =>
+                  navigation.navigate('Files', { printerId: printer.id })
+                }
                 disabled={!isConnected}
                 className={`flex-1 h-11 rounded-xl items-center justify-center flex-row bg-brand ${!isConnected ? 'opacity-40' : ''}`}
                 activeOpacity={0.85}
@@ -655,8 +736,18 @@ export const CameraScreen = ({ navigation, route }: any) => {
         {/* Térmica */}
         <View className="flex-row mx-4 mt-3" style={{ gap: 8 }}>
           {[
-            { rotulo: t('comum.bico'), valor: `${nozzle}°`, alvo: printer.status?.TempTargetNozzle ?? 0, cor: hexDe(tema.paleta.aviso) },
-            { rotulo: t('comum.mesa'), valor: `${bed}°`, alvo: printer.status?.TempTargetHotbed ?? 0, cor: hexDe(tema.paleta.acento) },
+            {
+              rotulo: t('comum.bico'),
+              valor: `${nozzle}°`,
+              alvo: printer.status?.TempTargetNozzle ?? 0,
+              cor: hexDe(tema.paleta.aviso),
+            },
+            {
+              rotulo: t('comum.mesa'),
+              valor: `${bed}°`,
+              alvo: printer.status?.TempTargetHotbed ?? 0,
+              cor: hexDe(tema.paleta.acento),
+            },
             {
               rotulo: t('comum.camara'),
               valor: `${printer.status?.TempOfBox?.toFixed(0) ?? '--'}°`,
@@ -672,11 +763,19 @@ export const CameraScreen = ({ navigation, route }: any) => {
                 {item.rotulo.toUpperCase()}
               </Text>
               <View className="flex-row items-baseline mt-0.5">
-                <Text className="text-[15px] font-bold" style={{ color: item.cor, fontFamily: 'monospace' }}>
+                <Text
+                  className="text-[15px] font-bold"
+                  style={{ color: item.cor, fontFamily: 'monospace' }}
+                >
                   {item.valor}
                 </Text>
-                <Text className="text-[10px] text-ink-soft ml-1" style={{ fontFamily: 'monospace' }}>
-                  {item.alvo > 0 ? `/ ${Math.round(item.alvo)}°` : t('painel.ambiente')}
+                <Text
+                  className="text-[10px] text-ink-soft ml-1"
+                  style={{ fontFamily: 'monospace' }}
+                >
+                  {item.alvo > 0
+                    ? `/ ${Math.round(item.alvo)}°`
+                    : t('painel.ambiente')}
                 </Text>
               </View>
             </View>
@@ -689,14 +788,20 @@ export const CameraScreen = ({ navigation, route }: any) => {
             onPress={toggleLight}
             disabled={!isConnected}
             className={`flex-1 h-14 rounded-xl border items-center justify-center ${
-              lightOn ? 'border-state-light bg-state-light/15' : 'border-line bg-cartao'
+              lightOn
+                ? 'border-state-light bg-state-light/15'
+                : 'border-line bg-cartao'
             } ${!isConnected ? 'opacity-40' : ''}`}
             activeOpacity={0.75}
           >
             <Ionicons
               name={lightOn ? 'bulb' : 'bulb-outline'}
               size={17}
-              color={lightOn ? hexDe(tema.paleta.aviso) : hexDe(tema.paleta.tintaSoft)}
+              color={
+                lightOn
+                  ? hexDe(tema.paleta.aviso)
+                  : hexDe(tema.paleta.tintaSoft)
+              }
             />
             <Text
               className={`text-[9px] font-semibold mt-1 ${lightOn ? 'text-state-light' : 'text-ink-soft'}`}
@@ -711,8 +816,14 @@ export const CameraScreen = ({ navigation, route }: any) => {
             className={`flex-1 h-14 rounded-xl border border-line bg-cartao items-center justify-center ${!isConnected ? 'opacity-40' : ''}`}
             activeOpacity={0.75}
           >
-            <Ionicons name="expand" size={17} color={hexDe(tema.paleta.tintaSoft)} />
-            <Text className="text-[9px] font-semibold mt-1 text-ink-soft">{t('camera.ecraCheio')}</Text>
+            <Ionicons
+              name="expand"
+              size={17}
+              color={hexDe(tema.paleta.tintaSoft)}
+            />
+            <Text className="text-[9px] font-semibold mt-1 text-ink-soft">
+              {t('camera.ecraCheio')}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -721,8 +832,14 @@ export const CameraScreen = ({ navigation, route }: any) => {
             className={`flex-1 h-14 rounded-xl border border-line bg-cartao items-center justify-center ${!isConnected ? 'opacity-40' : ''}`}
             activeOpacity={0.75}
           >
-            <Ionicons name="camera-outline" size={17} color={hexDe(tema.paleta.tintaSoft)} />
-            <Text className="text-[9px] font-semibold mt-1 text-ink-soft">{t('camera.guardarFoto')}</Text>
+            <Ionicons
+              name="camera-outline"
+              size={17}
+              color={hexDe(tema.paleta.tintaSoft)}
+            />
+            <Text className="text-[9px] font-semibold mt-1 text-ink-soft">
+              {t('camera.guardarFoto')}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -742,9 +859,16 @@ export const CameraScreen = ({ navigation, route }: any) => {
             className={`h-11 rounded-xl border border-line items-center justify-center flex-row ${uploading || !isConnected ? 'opacity-50' : ''}`}
             activeOpacity={0.75}
           >
-            <Ionicons name="cloud-upload-outline" size={15} color={hexDe(tema.paleta.tintaSoft)} />
+            <Ionicons
+              name="cloud-upload-outline"
+              size={15}
+              color={hexDe(tema.paleta.tintaSoft)}
+            />
             <Text className="ml-2 text-[10px] font-semibold tracking-[1.2px] text-ink-soft">
-              {(uploading ? t('camera.aEnviar', { p: uploadPercent }) : t('camera.enviarGcode')).toUpperCase()}
+              {(uploading
+                ? t('camera.aEnviar', { p: uploadPercent })
+                : t('camera.enviarGcode')
+              ).toUpperCase()}
             </Text>
           </TouchableOpacity>
         </View>
@@ -758,20 +882,24 @@ export const CameraScreen = ({ navigation, route }: any) => {
       >
         <View className="flex-1 bg-black">
           {pouparDados && !snapshotFalhou ? (
-            <SnapshotAoVivo host={videoHost ?? ''} activo={emFoco} onFalhar={() => setSnapshotFalhou(true)} />
+            <SnapshotAoVivo
+              host={videoHost ?? ''}
+              activo={emFoco}
+              onFalhar={() => setSnapshotFalhou(true)}
+            />
           ) : (
-          <WebView
-            source={{ html: fullscreenHtml, baseUrl: `http://${videoHost}` }}
-            style={{ flex: 1, backgroundColor: '#000' }}
-            javaScriptEnabled
-            domStorageEnabled={false}
-            allowsInlineMediaPlayback
-            mediaPlaybackRequiresUserAction={false}
-            mixedContentMode="always"
-            originWhitelist={['*']}
-            scrollEnabled={false}
-            bounces={false}
-          />
+            <WebView
+              source={{ html: fullscreenHtml, baseUrl: `http://${videoHost}` }}
+              style={{ flex: 1, backgroundColor: '#000' }}
+              javaScriptEnabled
+              domStorageEnabled={false}
+              allowsInlineMediaPlayback
+              mediaPlaybackRequiresUserAction={false}
+              mixedContentMode="always"
+              originWhitelist={['*']}
+              scrollEnabled={false}
+              bounces={false}
+            />
           )}
 
           <View className="absolute top-4 left-4 flex-row items-center bg-black/55 rounded-full px-3 py-1.5">

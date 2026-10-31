@@ -58,7 +58,9 @@ describe('RGB15 com RLE', () => {
       new Uint8Array(ficheiro.subarray(0, 262144)),
       ficheiro.length
     )!;
-    const dados = new Uint8Array(ficheiro.subarray(p.offset, p.offset + p.tamanho));
+    const dados = new Uint8Array(
+      ficheiro.subarray(p.offset, p.offset + p.tamanho)
+    );
     const rgb = descodificarRgb15(dados, p.largura, p.altura);
     expect(rgb).not.toBeNull();
     expect(rgb!.length).toBe(320 * 500 * 3);
@@ -92,7 +94,9 @@ describe('PNG', () => {
       new Uint8Array(ficheiro.subarray(0, 262144)),
       ficheiro.length
     )!;
-    const dados = new Uint8Array(ficheiro.subarray(p.offset, p.offset + p.tamanho));
+    const dados = new Uint8Array(
+      ficheiro.subarray(p.offset, p.offset + p.tamanho)
+    );
     const rgb = descodificarRgb15(dados, p.largura, p.altura)!;
     const png = codificarPng(rgb, p.largura, p.altura);
     fs.writeFileSync('/tmp/thumb_node.png', png);

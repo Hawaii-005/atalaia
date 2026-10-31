@@ -34,7 +34,10 @@ const textoUtf8 = (bytes: Uint8Array): string => {
         ((bytes[i++] & 0x3f) << 6) |
         (bytes[i++] & 0x3f);
       const ajustado = ponto - 0x10000;
-      saida += String.fromCharCode(0xd800 + (ajustado >> 10), 0xdc00 + (ajustado & 0x3ff));
+      saida += String.fromCharCode(
+        0xd800 + (ajustado >> 10),
+        0xdc00 + (ajustado & 0x3ff)
+      );
     }
   }
   return saida;
@@ -57,7 +60,11 @@ export const bytesUtf8 = (texto: string): Uint8Array => {
     } else if (ponto < 0x800) {
       bytes.push(0xc0 | (ponto >> 6), 0x80 | (ponto & 0x3f));
     } else if (ponto < 0x10000) {
-      bytes.push(0xe0 | (ponto >> 12), 0x80 | ((ponto >> 6) & 0x3f), 0x80 | (ponto & 0x3f));
+      bytes.push(
+        0xe0 | (ponto >> 12),
+        0x80 | ((ponto >> 6) & 0x3f),
+        0x80 | (ponto & 0x3f)
+      );
     } else {
       bytes.push(
         0xf0 | (ponto >> 18),
@@ -84,7 +91,11 @@ const comprimento = (valor: number): number[] => {
 
 export const codificarTexto = (texto: string): Uint8Array => {
   const bytes = bytesUtf8(texto);
-  return Uint8Array.from([bytes.length >> 8, bytes.length & 0xff, ...Array.from(bytes)]);
+  return Uint8Array.from([
+    bytes.length >> 8,
+    bytes.length & 0xff,
+    ...Array.from(bytes),
+  ]);
 };
 
 /** Bytes UTF-8, para cabeçalhos HTTP e nomes com acentos. */
@@ -107,7 +118,11 @@ export const pingresp = (): Uint8Array => Uint8Array.from([0xd0, 0x00]);
  * (2 bytes) antes da mensagem. O Chitubox manda-o assim e a impressora
  * descarta publicações sem esses dois bytes — sem erro nenhum do lado dela.
  */
-export const publicar = (topico: string, texto: string, idPacote = 1): Uint8Array => {
+export const publicar = (
+  topico: string,
+  texto: string,
+  idPacote = 1
+): Uint8Array => {
   const t = codificarTexto(topico);
   const corpo = [
     ...Array.from(t),
@@ -153,7 +168,10 @@ export const lerMensagens = (dados: Uint8Array): ResultadoLeitura => {
 const lerCampoTexto = (payload: Uint8Array, posicao: number) => {
   const tamanho = (payload[posicao] << 8) | payload[posicao + 1];
   const inicio = posicao + 2;
-  return { texto: textoUtf8(payload.slice(inicio, inicio + tamanho)), proximo: inicio + tamanho };
+  return {
+    texto: textoUtf8(payload.slice(inicio, inicio + tamanho)),
+    proximo: inicio + tamanho,
+  };
 };
 
 export const lerConnect = (payload: Uint8Array): string => {
@@ -177,7 +195,12 @@ export const lerPublicacao = (payload: Uint8Array, flags: number) => {
     idPacote = (payload[topico.proximo] << 8) | payload[topico.proximo + 1];
   }
   const inicio = topico.proximo + (qos > 0 ? 2 : 0);
-  return { topico: topico.texto, texto: textoUtf8(payload.slice(inicio)), qos, idPacote };
+  return {
+    topico: topico.texto,
+    texto: textoUtf8(payload.slice(inicio)),
+    qos,
+    idPacote,
+  };
 };
 
 /** PUBACK: a impressora publica o estado com QoS 1 e espera confirmação. */

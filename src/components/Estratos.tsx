@@ -10,11 +10,11 @@ import {
 } from '../utils/perfilEstratos';
 
 export interface EstratosProps {
-  actual: number;      // camada actual (0 sem trabalho)
-  total: number;       // total de camadas (0 se desconhecido)
-  progresso: number;   // 0..100
+  actual: number; // camada actual (0 sem trabalho)
+  total: number; // total de camadas (0 se desconhecido)
+  progresso: number; // 0..100
   tipo: TipoEstrato;
-  altura?: number;     // dp, por omissão 360
+  altura?: number; // dp, por omissão 360
   /** descrição para leitores de ecrã */
   rotulo?: string;
 }
@@ -111,7 +111,8 @@ export function Estratos(props: EstratosProps): React.JSX.Element {
       accessible
       accessibilityRole="image"
       accessibilityLabel={
-        rotulo ?? `Camadas: ${Math.round(Math.max(0, Math.min(100, progresso)))}% impresso`
+        rotulo ??
+        `Camadas: ${Math.round(Math.max(0, Math.min(100, progresso)))}% impresso`
       }
     >
       <Line

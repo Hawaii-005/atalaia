@@ -122,7 +122,11 @@ export const isResumable = (status: number): boolean => status === 20;
 
 /** Qualquer trabalho em curso pode ser parado. */
 export const isStoppable = (status: number): boolean =>
-  status === 1 || status === 6 || status === 13 || status === 16 || status === 20;
+  status === 1 ||
+  status === 6 ||
+  status === 13 ||
+  status === 16 ||
+  status === 20;
 
 export interface PrinterStatus {
   CurrentStatus: number[];

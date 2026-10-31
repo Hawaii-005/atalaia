@@ -138,7 +138,9 @@ export const notify = async (
 ) => {
   try {
     const fotograma =
-      categoria && Platform.OS === 'ios' ? await obterFotograma(ipDaImpressora) : null;
+      categoria && Platform.OS === 'ios'
+        ? await obterFotograma(ipDaImpressora)
+        : null;
     await Notifications.scheduleNotificationAsync({
       content: {
         title,

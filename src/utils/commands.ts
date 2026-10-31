@@ -150,7 +150,12 @@ export const fileDetailCommand = (
   url: string,
   opts: Emissao = {}
 ): SdcpCommand<FileDetailPayload> =>
-  construir(260, { Url: caminhoValido(url, 'Url') }, opts, `detail-${Date.now()}`);
+  construir(
+    260,
+    { Url: caminhoValido(url, 'Url') },
+    opts,
+    `detail-${Date.now()}`
+  );
 
 export interface StartPrintOptions {
   /** Nivelar a mesa antes de imprimir (Calibration_switch). */
@@ -463,11 +468,22 @@ export const temperatureCommand = (
   for (const [campo, minimo, maximo] of limites) {
     const valor = alvos[campo];
     if (valor === undefined) continue;
-    if (typeof valor !== 'number' || Number.isNaN(valor) || valor < minimo || valor > maximo) {
-      throw new CommandValidationError(`${campo} tem de estar entre ${minimo} e ${maximo} °C.`);
+    if (
+      typeof valor !== 'number' ||
+      Number.isNaN(valor) ||
+      valor < minimo ||
+      valor > maximo
+    ) {
+      throw new CommandValidationError(
+        `${campo} tem de estar entre ${minimo} e ${maximo} °C.`
+      );
     }
     dados[
-      campo === 'nozzle' ? 'TempTargetNozzle' : campo === 'bed' ? 'TempTargetHotbed' : 'TempTargetBox'
+      campo === 'nozzle'
+        ? 'TempTargetNozzle'
+        : campo === 'bed'
+          ? 'TempTargetHotbed'
+          : 'TempTargetBox'
     ] = valor;
   }
   if (Object.keys(dados).length === 0) {
@@ -520,7 +536,12 @@ export const jogCommand = (
   passo: number,
   opts: Emissao = {}
 ): SdcpCommand<{}> =>
-  construir(401, { Axis: eixo, Step: passo }, opts, `jog-${eixo}-${Date.now()}`);
+  construir(
+    401,
+    { Axis: eixo, Step: passo },
+    opts,
+    `jog-${eixo}-${Date.now()}`
+  );
 
 /** Levar os eixos à origem (Cmd 402): 'XYZ' ou 'Z'. */
 export const homeCommand = (

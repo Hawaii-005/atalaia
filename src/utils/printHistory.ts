@@ -32,16 +32,22 @@ export const loadHistory = async (): Promise<PrintRecord[]> => {
 
 const saveHistory = async (records: PrintRecord[]) => {
   try {
-    await AsyncStorage.setItem(KEY, JSON.stringify(records.slice(0, MAX_RECORDS)));
+    await AsyncStorage.setItem(
+      KEY,
+      JSON.stringify(records.slice(0, MAX_RECORDS))
+    );
   } catch (error) {
     log('could not save print history', error);
   }
 };
 
-export const startRecord = async (record: Omit<PrintRecord, 'id' | 'startedAt'>) => {
+export const startRecord = async (
+  record: Omit<PrintRecord, 'id' | 'startedAt'>
+) => {
   const records = await loadHistory();
   const open = records.find(
-    item => item.outcome === 'printing' && item.printerName === record.printerName
+    item =>
+      item.outcome === 'printing' && item.printerName === record.printerName
   );
   if (open && open.filename === record.filename) {
     return;

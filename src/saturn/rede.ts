@@ -7,11 +7,7 @@ import dgram from 'react-native-udp';
 import SparkMD5 from 'spark-md5';
 import { Buffer } from 'buffer';
 import { decodeBase64 } from '../utils/gcodeUpload';
-import {
-  RedeSaturno,
-  ServidorSaturno,
-  SocketSaturno,
-} from './ligacao';
+import { RedeSaturno, ServidorSaturno, SocketSaturno } from './ligacao';
 
 const BLOCO_MD5 = 1024 * 1024;
 
@@ -63,7 +59,8 @@ const adaptarSocket = (socket: any): SocketSaturno => ({
 
 const adaptarServidor = (servidor: any): ServidorSaturno => ({
   on: (evento, cb) => servidor.on(evento, (erro: any) => cb(erro)),
-  listen: (opcoes, cb) => servidor.listen({ port: opcoes.port, host: opcoes.host }, cb),
+  listen: (opcoes, cb) =>
+    servidor.listen({ port: opcoes.port, host: opcoes.host }, cb),
   address: () => servidor.address(),
   close: cb => servidor.close(() => cb?.()),
 });

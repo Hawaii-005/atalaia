@@ -22,14 +22,15 @@ export const descarregarGcode = async (
   // Pasta própria para o nome que o menu de partilha mostra ser só o do ficheiro.
   const pasta = `${FileSystem.cacheDirectory}gcode/`;
   const infoPasta = await FileSystem.getInfoAsync(pasta);
-  if (!infoPasta.exists) await FileSystem.makeDirectoryAsync(pasta, { intermediates: true });
+  if (!infoPasta.exists)
+    await FileSystem.makeDirectoryAsync(pasta, { intermediates: true });
   const destino = `${pasta}${limpo}`;
 
   const tarefa = FileSystem.createDownloadResumable(
     urlGcode(ip, limpo),
     destino,
     {},
-    (progresso) => {
+    progresso => {
       const total = progresso.totalBytesExpectedToWrite;
       if (total > 0) aoProgresso?.(progresso.totalBytesWritten / total);
     }

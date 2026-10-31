@@ -83,7 +83,7 @@ export function proximoAFim(
   t: TrabalhoRelogio[],
   agora: number
 ): TrabalhoRelogio | null {
-  const naoAcabados = t.filter((trabalho) => agora < trabalho.fim);
+  const naoAcabados = t.filter(trabalho => agora < trabalho.fim);
   if (naoAcabados.length === 0) return null;
 
   return naoAcabados.reduce((proximo, trabalho) =>

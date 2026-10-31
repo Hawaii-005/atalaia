@@ -8,7 +8,13 @@ import { Platform } from 'react-native';
 
 // ───────────────────────── Paleta ─────────────────────────
 
-export type NomeTema = 'ametista' | 'esmeralda' | 'cobre' | 'citrino' | 'quartzo' | 'azulejo';
+export type NomeTema =
+  | 'ametista'
+  | 'esmeralda'
+  | 'cobre'
+  | 'citrino'
+  | 'quartzo'
+  | 'azulejo';
 
 export interface Paleta {
   modo: 'escuro' | 'claro';
@@ -221,7 +227,14 @@ const azulejo: Paleta = {
   cameraBase: '#A2B0C2',
 };
 
-export const temas: Record<NomeTema, Paleta> = { ametista: meiaNoite, esmeralda, cobre, citrino, quartzo, azulejo };
+export const temas: Record<NomeTema, Paleta> = {
+  ametista: meiaNoite,
+  esmeralda,
+  cobre,
+  citrino,
+  quartzo,
+  azulejo,
+};
 export const temaPredefinido: NomeTema = 'ametista';
 
 export const nomesDosTemas: Record<NomeTema, string> = {
@@ -239,7 +252,14 @@ export const obterPaleta = (nome: NomeTema | undefined): Paleta =>
 // ───────────────────────── Forma e espaço ─────────────────────────
 
 /** Grade de 8 dp (4 só para ajustes finos). */
-export const espaco = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
+export const espaco = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 24,
+  xxl: 32,
+} as const;
 
 /** Margem lateral de todos os ecrãs. */
 export const margemEcra = 16;
@@ -332,7 +352,10 @@ export const anel = {
 
 export const circunferencia = (raioAnel: number) => 2 * Math.PI * raioAnel;
 /** Valor para `strokeDasharray` de um anel: [parte preenchida, resto]. */
-export const tracoDoAnel = (raioAnel: number, percentagem: number): [number, number] => {
+export const tracoDoAnel = (
+  raioAnel: number,
+  percentagem: number
+): [number, number] => {
   const c = circunferencia(raioAnel);
   const p = Math.max(0, Math.min(100, percentagem));
   return [(c * p) / 100, c];
@@ -350,7 +373,12 @@ export const opacidade = { desactivado: 0.4, pressionado: 0.85 } as const;
 
 // ───────────────────────── Estados de uma impressora ─────────────────────────
 
-export type EstadoImpressora = 'imprimindo' | 'pausada' | 'pronta' | 'semLigacao' | 'foraDeCasa';
+export type EstadoImpressora =
+  | 'imprimindo'
+  | 'pausada'
+  | 'pronta'
+  | 'semLigacao'
+  | 'foraDeCasa';
 
 export const corDoEstado = (p: Paleta, e: EstadoImpressora) =>
   ({
@@ -358,12 +386,20 @@ export const corDoEstado = (p: Paleta, e: EstadoImpressora) =>
     pausada: { ponto: p.aviso, fundo: p.avisoFundo, texto: p.aviso },
     pronta: { ponto: p.sucesso, fundo: p.cartaoAlt, texto: p.textoSecundario },
     semLigacao: { ponto: p.perigo, fundo: p.perigoFundo, texto: p.perigo },
-    foraDeCasa: { ponto: p.textoSecundario, fundo: p.avisoFundo, texto: p.aviso },
+    foraDeCasa: {
+      ponto: p.textoSecundario,
+      fundo: p.avisoFundo,
+      texto: p.aviso,
+    },
   })[e];
 
 /** Cor de um material a partir do hex que a máquina envia (Canvas, cmd 324). */
 export const corDoSlot = (hex: string | undefined, p: Paleta) =>
-  hex && /^#?[0-9a-fA-F]{6}$/.test(hex) ? (hex.startsWith('#') ? hex : `#${hex}`) : p.trilha;
+  hex && /^#?[0-9a-fA-F]{6}$/.test(hex)
+    ? hex.startsWith('#')
+      ? hex
+      : `#${hex}`
+    : p.trilha;
 
 /** Acrescenta transparência a um hex #RRGGBB (0–1). */
 export const comAlfa = (hex: string, alfa: number) => {

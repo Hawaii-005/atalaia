@@ -1,6 +1,13 @@
 import { fonteNumeros } from '~/theme/tokensV6';
 import React, { useMemo } from 'react';
-import { View, Text, TouchableOpacity, Alert, ScrollView, Image } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Alert,
+  ScrollView,
+  Image,
+} from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useIsFocused } from '@react-navigation/native';
 import { htmlDoVideo } from '../utils/cameraStream';
@@ -45,9 +52,23 @@ const Anel: React.FC<{
   imagem?: React.ReactNode;
   children: React.ReactNode;
 }> = ({ progresso, cor, trilho, imagem, children }) => (
-  <View style={{ width: CAIXA, height: CAIXA, alignItems: 'center', justifyContent: 'center' }}>
+  <View
+    style={{
+      width: CAIXA,
+      height: CAIXA,
+      alignItems: 'center',
+      justifyContent: 'center',
+    }}
+  >
     <Svg width={CAIXA} height={CAIXA} style={{ position: 'absolute' }}>
-      <Circle cx={CAIXA / 2} cy={CAIXA / 2} r={RAIO} stroke={trilho} strokeWidth={TRACO} fill="none" />
+      <Circle
+        cx={CAIXA / 2}
+        cy={CAIXA / 2}
+        r={RAIO}
+        stroke={trilho}
+        strokeWidth={TRACO}
+        fill="none"
+      />
       <Circle
         cx={CAIXA / 2}
         cy={CAIXA / 2}
@@ -57,7 +78,9 @@ const Anel: React.FC<{
         fill="none"
         strokeLinecap="round"
         strokeDasharray={PERIMETRO}
-        strokeDashoffset={PERIMETRO * (1 - Math.max(0, Math.min(100, progresso)) / 100)}
+        strokeDashoffset={
+          PERIMETRO * (1 - Math.max(0, Math.min(100, progresso)) / 100)
+        }
         transform={`rotate(-90 ${CAIXA / 2} ${CAIXA / 2})`}
       />
     </Svg>
@@ -89,7 +112,13 @@ const Anel: React.FC<{
   </View>
 );
 
-export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; onAbrirCamara?: () => void }) => {
+export const EstadoSection = ({
+  printer,
+  onAbrirCamara,
+}: {
+  printer?: Printer;
+  onAbrirCamara?: () => void;
+}) => {
   const { tema } = useTheme();
   const paleta = tema.paleta;
   const { request, sendCommand, reconnectAll } = usePrinterConnections();
@@ -106,23 +135,33 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
   const resina = (printer?.kind ?? 'fdm') === 'resin';
 
   const estado = useMemo(() => {
-    if (!ligada) return { texto: t('inicio.semLigacao'), cor: hexDe(paleta.perigo) };
-    if (!info?.Filename) return { texto: t('inicio.pronta'), cor: hexDe(paleta.ok) };
+    if (!ligada)
+      return { texto: t('inicio.semLigacao'), cor: hexDe(paleta.perigo) };
+    if (!info?.Filename)
+      return { texto: t('inicio.pronta'), cor: hexDe(paleta.ok) };
     const s = getPrintStatus(info.Status ?? 0);
-    if (s === 'printing') return { texto: t('estado.imprimindo'), cor: hexDe(paleta.ok) };
-    if (s === 'paused') return { texto: t('estado.emPausa'), cor: hexDe(paleta.aviso) };
-    if (s === 'preparing') return { texto: t('estado.aPreparar'), cor: hexDe(paleta.aviso) };
-    if (s === 'completed') return { texto: t('estado.terminada'), cor: hexDe(paleta.tintaSoft) };
-    if (s === 'stopped') return { texto: t('estado.parada'), cor: hexDe(paleta.perigo) };
+    if (s === 'printing')
+      return { texto: t('estado.imprimindo'), cor: hexDe(paleta.ok) };
+    if (s === 'paused')
+      return { texto: t('estado.emPausa'), cor: hexDe(paleta.aviso) };
+    if (s === 'preparing')
+      return { texto: t('estado.aPreparar'), cor: hexDe(paleta.aviso) };
+    if (s === 'completed')
+      return { texto: t('estado.terminada'), cor: hexDe(paleta.tintaSoft) };
+    if (s === 'stopped')
+      return { texto: t('estado.parada'), cor: hexDe(paleta.perigo) };
     return { texto: t('inicio.pronta'), cor: hexDe(paleta.ok) };
   }, [info, ligada, paleta]);
 
-  const segundosRestantes = restante((info?.TotalTicks ?? 0) - (info?.CurrentTicks ?? 0));
+  const segundosRestantes = restante(
+    (info?.TotalTicks ?? 0) - (info?.CurrentTicks ?? 0)
+  );
 
   // Cartão de fim de impressão: fecha-se, volta a aparecer na impressão seguinte.
   const chaveFim = `${info?.Filename ?? ''}|${info?.TotalTicks ?? 0}`;
   const [fimFechado, setFimFechado] = React.useState<string | null>(null);
-  const concluido = getPrintStatus(info?.Status ?? 0) === 'completed' && !!info?.Filename;
+  const concluido =
+    getPrintStatus(info?.Status ?? 0) === 'completed' && !!info?.Filename;
   const duracao = restante(info?.TotalTicks ?? 0);
 
   // Resina: quando não responde pode ser rede, estar desligada — ou, o mais
@@ -165,7 +204,10 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
     tentouEmbutida.current = ficheiroEmCurso;
     // O servidor só tem /thumbnail para ficheiros que ele próprio fatiou; nos
     // outros vale a PNG que vem no cabeçalho do .gcode.
-    const embutida = await extrairMiniaturaEmbutida(enderecoDe(printer), ficheiroEmCurso);
+    const embutida = await extrairMiniaturaEmbutida(
+      enderecoDe(printer),
+      ficheiroEmCurso
+    );
     setMiniatura(embutida);
   };
 
@@ -192,15 +234,32 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
   const temperaturas = resina
     ? []
     : [
-        { rotulo: t('comum.bico'), valor: printer?.status?.TempOfNozzle ?? 0, alvo: printer?.status?.TempTargetNozzle ?? 0, cor: hexDe(paleta.aviso) },
-        { rotulo: t('comum.mesa'), valor: printer?.status?.TempOfHotbed ?? 0, alvo: printer?.status?.TempTargetHotbed ?? 0, cor: hexDe(paleta.acento) },
-        { rotulo: t('comum.camara'), valor: printer?.status?.TempOfBox ?? 0, alvo: printer?.status?.TempTargetBox ?? 0, cor: hexDe(paleta.ok) },
+        {
+          rotulo: t('comum.bico'),
+          valor: printer?.status?.TempOfNozzle ?? 0,
+          alvo: printer?.status?.TempTargetNozzle ?? 0,
+          cor: hexDe(paleta.aviso),
+        },
+        {
+          rotulo: t('comum.mesa'),
+          valor: printer?.status?.TempOfHotbed ?? 0,
+          alvo: printer?.status?.TempTargetHotbed ?? 0,
+          cor: hexDe(paleta.acento),
+        },
+        {
+          rotulo: t('comum.camara'),
+          valor: printer?.status?.TempOfBox ?? 0,
+          alvo: printer?.status?.TempTargetBox ?? 0,
+          cor: hexDe(paleta.ok),
+        },
       ];
 
   if (!printer) {
     return (
       <View style={{ padding: espaco.lg }}>
-        <Text style={{ color: hexDe(paleta.tintaSoft), fontSize: 13 }}>{t('filamentos.semMaquina')}</Text>
+        <Text style={{ color: hexDe(paleta.tintaSoft), fontSize: 13 }}>
+          {t('filamentos.semMaquina')}
+        </Text>
       </View>
     );
   }
@@ -210,12 +269,18 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
     return (
       <EstadoVazio
         pose="foraDeCasa"
-        titulo={t('vazio.resinaSemResposta.titulo', { nome: printer.printerName })}
+        titulo={t('vazio.resinaSemResposta.titulo', {
+          nome: printer.printerName,
+        })}
         descricao={t('vazio.resinaSemResposta.descricao')}
-        acaoPrimaria={{ rotulo: t('vazio.tentarNovamente'), aoTocar: reconnectAll }}
+        acaoPrimaria={{
+          rotulo: t('vazio.tentarNovamente'),
+          aoTocar: reconnectAll,
+        }}
         acaoSecundaria={{
           rotulo: t('vazio.editarIp'),
-          aoTocar: () => navigation.navigate('EditarIp', { printerId: printer.id }),
+          aoTocar: () =>
+            navigation.navigate('EditarIp', { printerId: printer.id }),
         }}
       />
     );
@@ -239,22 +304,37 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
         pose="semLigacao"
         titulo={t('vazio.semLigacao.titulo', { nome: printer.printerName })}
         descricao={t('vazio.semLigacao.descricao')}
-        acaoPrimaria={{ rotulo: t('vazio.tentarNovamente'), aoTocar: reconnectAll }}
+        acaoPrimaria={{
+          rotulo: t('vazio.tentarNovamente'),
+          aoTocar: reconnectAll,
+        }}
         acaoSecundaria={{
           rotulo: t('vazio.editarIp'),
-          aoTocar: () => navigation.navigate('EditarIp', { printerId: printer.id }),
+          aoTocar: () =>
+            navigation.navigate('EditarIp', { printerId: printer.id }),
         }}
       />
     );
   }
 
   return (
-    <ScrollView contentContainerStyle={{ padding: espaco.lg, gap: espaco.md, paddingBottom: 32 }}>
+    <ScrollView
+      contentContainerStyle={{
+        padding: espaco.lg,
+        gap: espaco.md,
+        paddingBottom: 32,
+      }}
+    >
       {emFoco && ligada && !resina && (
         <TouchableOpacity
           activeOpacity={0.9}
           onPress={onAbrirCamara}
-          style={{ borderRadius: raioToken.cartao, overflow: 'hidden', aspectRatio: 16 / 9, backgroundColor: '#000' }}
+          style={{
+            borderRadius: raioToken.cartao,
+            overflow: 'hidden',
+            aspectRatio: 16 / 9,
+            backgroundColor: '#000',
+          }}
         >
           <WebView
             key={`cam-${printer.id}`}
@@ -290,12 +370,22 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
         >
           <Mascote pose="concluido" tamanho={56} />
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 14, fontWeight: '700', color: hexDe(paleta.tinta) }}>
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: '700',
+                color: hexDe(paleta.tinta),
+              }}
+            >
               {t('vazio.concluido.titulo')}
             </Text>
             <Text
               numberOfLines={1}
-              style={{ fontSize: 11, color: hexDe(paleta.tintaSoft), marginTop: 2 }}
+              style={{
+                fontSize: 11,
+                color: hexDe(paleta.tintaSoft),
+                marginTop: 2,
+              }}
             >
               {info?.Filename}
               {duracao ? ` · ${duracao}` : ''}
@@ -323,7 +413,16 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
         </View>
       )}
 
-      <View style={{ backgroundColor: hexDe(paleta.cartao), borderRadius: raioToken.cartao, padding: espaco.lg, flexDirection: 'row', gap: espaco.lg, alignItems: 'center' }}>
+      <View
+        style={{
+          backgroundColor: hexDe(paleta.cartao),
+          borderRadius: raioToken.cartao,
+          padding: espaco.lg,
+          flexDirection: 'row',
+          gap: espaco.lg,
+          alignItems: 'center',
+        }}
+      >
         <Anel
           progresso={progresso}
           cor={hexDe(paleta.acento)}
@@ -343,19 +442,57 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
             ) : undefined
           }
         >
-          <Text style={{ fontSize: 28, fontWeight: '700', color: hexDe(paleta.tinta) }}>{Math.round(progresso)}%</Text>
+          <Text
+            style={{
+              fontSize: 28,
+              fontWeight: '700',
+              color: hexDe(paleta.tinta),
+            }}
+          >
+            {Math.round(progresso)}%
+          </Text>
           {segundosRestantes && (
-            <Text style={{ fontSize: 11, color: hexDe(paleta.tintaSoft), marginTop: 2 }}>{segundosRestantes}</Text>
+            <Text
+              style={{
+                fontSize: 11,
+                color: hexDe(paleta.tintaSoft),
+                marginTop: 2,
+              }}
+            >
+              {segundosRestantes}
+            </Text>
           )}
         </Anel>
 
         <View style={{ flex: 1 }}>
-          <Text numberOfLines={2} style={{ fontSize: 15, fontWeight: '700', color: hexDe(paleta.tinta) }}>
+          <Text
+            numberOfLines={2}
+            style={{
+              fontSize: 15,
+              fontWeight: '700',
+              color: hexDe(paleta.tinta),
+            }}
+          >
             {info?.Filename || printer.printerName}
           </Text>
-          <Text style={{ fontSize: 12, color: estado.cor, marginTop: 6, fontWeight: '600' }}>{estado.texto}</Text>
+          <Text
+            style={{
+              fontSize: 12,
+              color: estado.cor,
+              marginTop: 6,
+              fontWeight: '600',
+            }}
+          >
+            {estado.texto}
+          </Text>
           {!!info?.Filename && (
-            <Text style={{ fontSize: 12, color: hexDe(paleta.tintaSoft), marginTop: 4 }}>
+            <Text
+              style={{
+                fontSize: 12,
+                color: hexDe(paleta.tintaSoft),
+                marginTop: 4,
+              }}
+            >
               {`${t('detalhes.camada')} ${info.CurrentLayer ?? 0} / ${info.TotalLayer ?? 0}`}
             </Text>
           )}
@@ -365,8 +502,18 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
       {temperaturas.length > 0 && (
         <View style={{ flexDirection: 'row', gap: espaco.sm }}>
           {temperaturas.map(item => (
-            <View key={item.rotulo} style={{ flex: 1, backgroundColor: hexDe(paleta.cartao), borderRadius: raioToken.interno, padding: espaco.md }}>
-              <Text style={{ fontSize: 12, color: hexDe(paleta.tintaSoft) }}>{item.rotulo}</Text>
+            <View
+              key={item.rotulo}
+              style={{
+                flex: 1,
+                backgroundColor: hexDe(paleta.cartao),
+                borderRadius: raioToken.interno,
+                padding: espaco.md,
+              }}
+            >
+              <Text style={{ fontSize: 12, color: hexDe(paleta.tintaSoft) }}>
+                {item.rotulo}
+              </Text>
               <Text
                 style={{
                   fontSize: 21,
@@ -379,7 +526,13 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
                 {Math.round(item.valor)}°
               </Text>
               {item.alvo > 0 && (
-                <Text style={{ fontSize: 11, fontFamily: fonteNumeros, color: hexDe(paleta.tintaSoft) }}>{`/ ${Math.round(item.alvo)}°`}</Text>
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontFamily: fonteNumeros,
+                    color: hexDe(paleta.tintaSoft),
+                  }}
+                >{`/ ${Math.round(item.alvo)}°`}</Text>
               )}
             </View>
           ))}
@@ -406,8 +559,16 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
             opacity: info?.Filename ? 1 : 0.4,
           }}
         >
-          <Text style={{ fontSize: 15, fontWeight: '700', color: hexDe(paleta.tinta) }}>
-            {getPrintStatus(info?.Status ?? 0) === 'paused' ? t('comum.retomar') : t('comum.pausar')}
+          <Text
+            style={{
+              fontSize: 15,
+              fontWeight: '700',
+              color: hexDe(paleta.tinta),
+            }}
+          >
+            {getPrintStatus(info?.Status ?? 0) === 'paused'
+              ? t('comum.retomar')
+              : t('comum.pausar')}
           </Text>
         </TouchableOpacity>
 
@@ -425,10 +586,17 @@ export const EstadoSection = ({ printer, onAbrirCamara }: { printer?: Printer; o
             opacity: info?.Filename ? 1 : 0.4,
           }}
         >
-          <Text style={{ fontSize: 15, fontWeight: '700', color: hexDe(paleta.perigo) }}>{t('comum.parar')}</Text>
+          <Text
+            style={{
+              fontSize: 15,
+              fontWeight: '700',
+              color: hexDe(paleta.perigo),
+            }}
+          >
+            {t('comum.parar')}
+          </Text>
         </TouchableOpacity>
       </View>
-
     </ScrollView>
   );
 };

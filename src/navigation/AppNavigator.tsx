@@ -3,7 +3,12 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
-import { SettingsScreen, HistoryScreen, FilesScreen, StatsScreen } from '../screens';
+import {
+  SettingsScreen,
+  HistoryScreen,
+  FilesScreen,
+  StatsScreen,
+} from '../screens';
 import { PrinterDetailsScreen } from '../screens/PrinterDetailsScreen';
 import { AddEditPrinterScreen } from '../screens/AddEditPrinterScreen';
 import { DiscoveryScreen } from '../screens/DiscoveryScreen';
@@ -46,12 +51,30 @@ const Abas = () => {
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           if (route.name === 'Inicio') {
-            return <Ionicons name={focused ? 'home' : 'home-outline'} size={size} color={color} />;
+            return (
+              <Ionicons
+                name={focused ? 'home' : 'home-outline'}
+                size={size}
+                color={color}
+              />
+            );
           }
           if (route.name === 'Impressora') {
-            return <PrinterIcon variant={focused ? 'filled' : 'outline'} size={size} color={color} />;
+            return (
+              <PrinterIcon
+                variant={focused ? 'filled' : 'outline'}
+                size={size}
+                color={color}
+              />
+            );
           }
-          return <Ionicons name={focused ? 'settings' : 'settings-outline'} size={size} color={color} />;
+          return (
+            <Ionicons
+              name={focused ? 'settings' : 'settings-outline'}
+              size={size}
+              color={color}
+            />
+          );
         },
         tabBarActiveTintColor: hexDe(tema.paleta.acentoTexto),
         tabBarInactiveTintColor: hexDe(tema.paleta.tintaSoft),
@@ -73,13 +96,21 @@ const Abas = () => {
         },
       })}
     >
-      <Tab.Screen name="Inicio" component={InicioScreen} options={{ title: t('inicio.titulo') }} />
+      <Tab.Screen
+        name="Inicio"
+        component={InicioScreen}
+        options={{ title: t('inicio.titulo') }}
+      />
       <Tab.Screen
         name="Impressora"
         component={PrinterTabScreen}
         options={{ title: t('aba.impressora') }}
       />
-      <Tab.Screen name="Settings" component={SettingsScreen} options={{ title: t('settings.title') }} />
+      <Tab.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{ title: t('settings.title') }}
+      />
     </Tab.Navigator>
   );
 };

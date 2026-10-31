@@ -3,7 +3,7 @@
  * `console.log` de diagnóstico não devem correr, nem gastar, em produção.
  */
 export const log = (...args: unknown[]): void => {
-  if (__DEV__) {
+  if (typeof __DEV__ !== 'undefined' && __DEV__) {
     console.log(...args);
   }
 };

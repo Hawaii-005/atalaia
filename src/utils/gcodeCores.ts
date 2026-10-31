@@ -51,9 +51,7 @@ export const normalizarCor = (valor?: string): string | undefined => {
  * Só devolve as ferramentas com consumo maior que zero — as outras são slots
  * vazios que o fatiador declarou por omissão.
  */
-export const filamentosDoCabecalho = (
-  gcode: string
-): FilamentoDoFicheiro[] => {
+export const filamentosDoCabecalho = (gcode: string): FilamentoDoFicheiro[] => {
   // O bloco de configuração do Orca não está no início do ficheiro: vem depois
   // da miniatura embutida, pelo que é preciso varrer o texto todo. Fica-se com
   // a última ocorrência de cada chave.

@@ -49,7 +49,9 @@ export const inquirirSaturno = (ip: string): Promise<RespostaSaturno> =>
       });
       socket.on('message', (dados: any) => {
         try {
-          const texto = Buffer.isBuffer(dados) ? dados.toString('utf8') : String(dados);
+          const texto = Buffer.isBuffer(dados)
+            ? dados.toString('utf8')
+            : String(dados);
           const corpo = JSON.parse(texto);
           const atributos = corpo?.Data?.Attributes;
           if (!atributos?.MainboardID) return;

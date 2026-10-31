@@ -108,7 +108,14 @@ export const TEMAS: Record<TemaId, Tema> = {
   azulejo: construir('azulejo'),
 };
 
-export const ORDEM_TEMAS: TemaId[] = ['ametista', 'esmeralda', 'cobre', 'citrino', 'quartzo', 'azulejo'];
+export const ORDEM_TEMAS: TemaId[] = [
+  'ametista',
+  'esmeralda',
+  'cobre',
+  'citrino',
+  'quartzo',
+  'azulejo',
+];
 export const TEMA_PREDEFINIDO: TemaId = temaPredefinido;
 
 /** "18 16 34" → "#121022" (para sítios que não aceitam variáveis) */

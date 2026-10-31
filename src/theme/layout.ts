@@ -17,10 +17,15 @@ export const limites = { media: 600, expandida: 840 } as const;
 export const larguraMaximaConteudo = 840;
 
 export const classeDaLargura = (l: number): ClasseJanela =>
-  l < limites.media ? 'compacta' : l < limites.expandida ? 'media' : 'expandida';
+  l < limites.media
+    ? 'compacta'
+    : l < limites.expandida
+      ? 'media'
+      : 'expandida';
 
 /** Margem lateral por classe (16 nos telemóveis, 24 nos tablets). */
-export const margemDe = (classe: ClasseJanela): number => (classe === 'compacta' ? 16 : 24);
+export const margemDe = (classe: ClasseJanela): number =>
+  classe === 'compacta' ? 16 : 24;
 
 /** Quantas colunas usar numa grelha de cartões. */
 export const colunasDe = (classe: ClasseJanela): number =>

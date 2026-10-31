@@ -11,7 +11,7 @@ export type Idioma = 'pt' | 'en';
 // 2) locale resolvido pela API Intl;
 // 3) inglês como último recurso.
 const resolverIdioma = (): Idioma => {
-  const nativo = (NativeModules.I18nManager)?.localeIdentifier as
+  const nativo = NativeModules.I18nManager?.localeIdentifier as
     | string
     | undefined;
   const intl = (() => {

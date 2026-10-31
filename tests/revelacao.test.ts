@@ -148,8 +148,8 @@ describe('invariante: alturaRevelada + topoFrente === altura', () => {
   const alturas = [100, 260, 300, 150, 80];
   const progressos = [0, 10, 25, 33.3, 50, 66.7, 75, 90, 100];
 
-  it.each(alturas)('para altura %d, a soma é invariante', (altura) => {
-    progressos.forEach((p) => {
+  it.each(alturas)('para altura %d, a soma é invariante', altura => {
+    progressos.forEach(p => {
       const revelada = alturaRevelada(p, altura);
       const topo = topoFrente(p, altura);
       expect(revelada + topo).toBeCloseTo(altura, 1);
@@ -158,7 +158,13 @@ describe('invariante: alturaRevelada + topoFrente === altura', () => {
 
   it('também funciona com progressos fora de limites (são limitados internamente)', () => {
     const altura = 200;
-    expect(alturaRevelada(-10, altura) + topoFrente(-10, altura)).toBeCloseTo(altura, 1);
-    expect(alturaRevelada(150, altura) + topoFrente(150, altura)).toBeCloseTo(altura, 1);
+    expect(alturaRevelada(-10, altura) + topoFrente(-10, altura)).toBeCloseTo(
+      altura,
+      1
+    );
+    expect(alturaRevelada(150, altura) + topoFrente(150, altura)).toBeCloseTo(
+      altura,
+      1
+    );
   });
 });

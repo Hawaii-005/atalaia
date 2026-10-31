@@ -1,5 +1,11 @@
 import { fonteNumeros } from '~/theme/tokensV6';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   Alert,
   Image,
@@ -54,16 +60,30 @@ const restante = (segundos: number) => {
 };
 
 /** Anel de progresso com o mesmo desenho do resto da app. */
-const Anel: React.FC<{ progresso: number; cor: string; trilho: string; children: React.ReactNode; imagem?: React.ReactNode }> = ({
-  progresso,
-  cor,
-  trilho,
-  children,
-  imagem,
-}) => (
-  <View style={{ width: CAIXA, height: CAIXA, alignItems: 'center', justifyContent: 'center' }}>
+const Anel: React.FC<{
+  progresso: number;
+  cor: string;
+  trilho: string;
+  children: React.ReactNode;
+  imagem?: React.ReactNode;
+}> = ({ progresso, cor, trilho, children, imagem }) => (
+  <View
+    style={{
+      width: CAIXA,
+      height: CAIXA,
+      alignItems: 'center',
+      justifyContent: 'center',
+    }}
+  >
     <Svg width={CAIXA} height={CAIXA} style={{ position: 'absolute' }}>
-      <Circle cx={CAIXA / 2} cy={CAIXA / 2} r={RAIO} stroke={trilho} strokeWidth={TRACO} fill="none" />
+      <Circle
+        cx={CAIXA / 2}
+        cy={CAIXA / 2}
+        r={RAIO}
+        stroke={trilho}
+        strokeWidth={TRACO}
+        fill="none"
+      />
       <Circle
         cx={CAIXA / 2}
         cy={CAIXA / 2}
@@ -73,7 +93,9 @@ const Anel: React.FC<{ progresso: number; cor: string; trilho: string; children:
         fill="none"
         strokeLinecap="round"
         strokeDasharray={PERIMETRO}
-        strokeDashoffset={PERIMETRO * (1 - Math.max(0, Math.min(100, progresso)) / 100)}
+        strokeDashoffset={
+          PERIMETRO * (1 - Math.max(0, Math.min(100, progresso)) / 100)
+        }
         transform={`rotate(-90 ${CAIXA / 2} ${CAIXA / 2})`}
       />
     </Svg>
@@ -82,7 +104,10 @@ const Anel: React.FC<{ progresso: number; cor: string; trilho: string; children:
   </View>
 );
 
-const Cartao: React.FC<{ children: React.ReactNode; style?: object }> = ({ children, style }) => {
+const Cartao: React.FC<{ children: React.ReactNode; style?: object }> = ({
+  children,
+  style,
+}) => {
   const { tema } = useTheme();
   const p = tema.paleta;
   return (
@@ -103,7 +128,10 @@ const Cartao: React.FC<{ children: React.ReactNode; style?: object }> = ({ child
   );
 };
 
-const Rotulo: React.FC<{ children: React.ReactNode; style?: object }> = ({ children, style }) => {
+const Rotulo: React.FC<{ children: React.ReactNode; style?: object }> = ({
+  children,
+  style,
+}) => {
   const { tema } = useTheme();
   return (
     <Text
@@ -147,15 +175,24 @@ export const PainelSection = ({
   const info = printer?.status?.PrintInfo;
   const statusBase = getPrintStatus(info?.Status ?? 0);
   const temFicheiro = !!info?.Filename;
-  const aImprimir = ligada && temFicheiro && (statusBase === 'printing' || statusBase === 'preparing');
+  const aImprimir =
+    ligada &&
+    temFicheiro &&
+    (statusBase === 'printing' || statusBase === 'preparing');
   const resina = (printer?.kind ?? 'fdm') === 'resin';
 
   const luz = !!printer?.status?.LightStatus?.SecondLight;
   const velocidade = printer?.status?.PrintInfo?.PrintSpeedPct ?? 100;
-  const ventoinhas = printer?.status?.CurrentFanSpeed ?? { ModelFan: 0, AuxiliaryFan: 0, BoxFan: 0 };
+  const ventoinhas = printer?.status?.CurrentFanSpeed ?? {
+    ModelFan: 0,
+    AuxiliaryFan: 0,
+    BoxFan: 0,
+  };
 
   const progresso = info?.Progress ?? 0;
-  const segundosRestantes = restante((info?.TotalTicks ?? 0) - (info?.CurrentTicks ?? 0));
+  const segundosRestantes = restante(
+    (info?.TotalTicks ?? 0) - (info?.CurrentTicks ?? 0)
+  );
 
   // A pausa não muda o código de estado: o sinal é o CurrentTicks parar. Só se
   // mostra «Retomar» depois de duas leituras iguais e 45 s parados.
@@ -170,7 +207,11 @@ export const PainelSection = ({
       return;
     }
     ticksRef.current.iguais += 1;
-    if (aImprimir && ticksRef.current.iguais >= 2 && agora - ticksRef.current.desde > 45000) {
+    if (
+      aImprimir &&
+      ticksRef.current.iguais >= 2 &&
+      agora - ticksRef.current.desde > 45000
+    ) {
       setEmPausa(true);
     }
   }, [info?.CurrentTicks, aImprimir]);
@@ -184,7 +225,11 @@ export const PainelSection = ({
       try {
         await request(printer.id, cmd, 8000);
       } catch (e) {
-        if (avisar) Alert.alert(t('comum.erro'), e instanceof Error ? e.message : String(e));
+        if (avisar)
+          Alert.alert(
+            t('comum.erro'),
+            e instanceof Error ? e.message : String(e)
+          );
       }
     },
     [printer, request]
@@ -235,7 +280,9 @@ export const PainelSection = ({
   const alternarPausa = () => {
     if (!printer) return;
     enviar(
-      emPausa ? resumePrintCommand({ id: printer.id }) : pausePrintCommand({ id: printer.id })
+      emPausa
+        ? resumePrintCommand({ id: printer.id })
+        : pausePrintCommand({ id: printer.id })
     );
   };
 
@@ -250,7 +297,10 @@ export const PainelSection = ({
     ]);
   };
 
-  const alterarVentoinha = (campo: 'model' | 'side' | 'chamber', delta: number) => {
+  const alterarVentoinha = (
+    campo: 'model' | 'side' | 'chamber',
+    delta: number
+  ) => {
     const actual = {
       model: ventoinhas.ModelFan ?? 0,
       side: ventoinhas.AuxiliaryFan ?? 0,
@@ -260,9 +310,9 @@ export const PainelSection = ({
     enviar(
       fanCommand(
         {
-          model: campo === 'model' ? valor : ventoinhas.ModelFan ?? 0,
-          side: campo === 'side' ? valor : ventoinhas.AuxiliaryFan ?? 0,
-          chamber: campo === 'chamber' ? valor : ventoinhas.BoxFan ?? 0,
+          model: campo === 'model' ? valor : (ventoinhas.ModelFan ?? 0),
+          side: campo === 'side' ? valor : (ventoinhas.AuxiliaryFan ?? 0),
+          chamber: campo === 'chamber' ? valor : (ventoinhas.BoxFan ?? 0),
         },
         { id: printer?.id }
       )
@@ -278,7 +328,12 @@ export const PainelSection = ({
         {
           text: t('comum.confirmar'),
           onPress: () =>
-            enviar(temperatureCommand({ nozzle: bico, bed: mesa }, { id: printer?.id })),
+            enviar(
+              temperatureCommand(
+                { nozzle: bico, bed: mesa },
+                { id: printer?.id }
+              )
+            ),
         },
       ]
     );
@@ -287,20 +342,41 @@ export const PainelSection = ({
   if (!printer) {
     return (
       <View style={{ padding: espaco.lg }}>
-        <Text style={{ color: hexDe(paleta.tintaSoft), fontSize: 13 }}>{t('filamentos.semMaquina')}</Text>
+        <Text style={{ color: hexDe(paleta.tintaSoft), fontSize: 13 }}>
+          {t('filamentos.semMaquina')}
+        </Text>
       </View>
     );
   }
 
   if (resina) {
     return (
-      <ScrollView contentContainerStyle={{ padding: espaco.lg, gap: espaco.md, paddingBottom: 32 }}>
+      <ScrollView
+        contentContainerStyle={{
+          padding: espaco.lg,
+          gap: espaco.md,
+          paddingBottom: 32,
+        }}
+      >
         <Cartao>
           <Rotulo>{t('secao.estado')}</Rotulo>
-          <Text style={{ fontSize: 18, fontWeight: '700', color: hexDe(paleta.tinta), marginTop: 6 }}>
+          <Text
+            style={{
+              fontSize: 18,
+              fontWeight: '700',
+              color: hexDe(paleta.tinta),
+              marginTop: 6,
+            }}
+          >
             {info?.Filename || printer.printerName}
           </Text>
-          <Text style={{ fontSize: 12, color: hexDe(paleta.tintaSoft), marginTop: 4 }}>
+          <Text
+            style={{
+              fontSize: 12,
+              color: hexDe(paleta.tintaSoft),
+              marginTop: 4,
+            }}
+          >
             {ligada ? t('inicio.pronta') : t('inicio.semLigacao')}
           </Text>
           <TouchableOpacity
@@ -317,7 +393,13 @@ export const PainelSection = ({
               opacity: temFicheiro ? 1 : 0.4,
             }}
           >
-            <Text style={{ fontSize: 14, fontWeight: '700', color: hexDe(paleta.perigo) }}>
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: '700',
+                color: hexDe(paleta.perigo),
+              }}
+            >
               {t('comum.parar')}
             </Text>
           </TouchableOpacity>
@@ -329,12 +411,16 @@ export const PainelSection = ({
   const corEstado = !ligada
     ? hexDe(paleta.perigo)
     : aImprimir
-    ? hexDe(paleta.ok)
-    : hexDe(paleta.acento);
+      ? hexDe(paleta.ok)
+      : hexDe(paleta.acento);
 
   return (
     <ScrollView
-      contentContainerStyle={{ padding: espaco.lg, gap: espaco.md, paddingBottom: 40 }}
+      contentContainerStyle={{
+        padding: espaco.lg,
+        gap: espaco.md,
+        paddingBottom: 40,
+      }}
       showsVerticalScrollIndicator={false}
     >
       {/* câmara */}
@@ -386,10 +472,19 @@ export const PainelSection = ({
                 width: 6,
                 height: 6,
                 borderRadius: 3,
-                backgroundColor: aImprimir ? hexDe(paleta.perigo) : hexDe(paleta.tintaSoft),
+                backgroundColor: aImprimir
+                  ? hexDe(paleta.perigo)
+                  : hexDe(paleta.tintaSoft),
               }}
             />
-            <Text style={{ fontSize: 10, fontWeight: '700', color: '#E7EDF9', letterSpacing: 0.4 }}>
+            <Text
+              style={{
+                fontSize: 10,
+                fontWeight: '700',
+                color: '#E7EDF9',
+                letterSpacing: 0.4,
+              }}
+            >
               {t('painel.emDireto')}
             </Text>
           </View>
@@ -405,9 +500,13 @@ export const PainelSection = ({
               borderRadius: 13,
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: luz ? 'rgba(251,191,36,0.24)' : 'rgba(5,8,15,0.66)',
+              backgroundColor: luz
+                ? 'rgba(251,191,36,0.24)'
+                : 'rgba(5,8,15,0.66)',
               borderWidth: 1,
-              borderColor: luz ? 'rgba(251,191,36,0.6)' : 'rgba(255,255,255,0.16)',
+              borderColor: luz
+                ? 'rgba(251,191,36,0.6)'
+                : 'rgba(255,255,255,0.16)',
             }}
             accessibilityLabel={t('controlos.luz')}
           >
@@ -441,43 +540,118 @@ export const PainelSection = ({
       {/* trabalho ou espera */}
       {aImprimir ? (
         <Cartao>
-          <View style={{ flexDirection: 'row', gap: espaco.lg, alignItems: 'center' }}>
-            <Anel progresso={progresso} cor={hexDe(paleta.acento)} trilho={hexDe(paleta.linha)}>
-              <Text style={{ fontSize: 26, fontWeight: '700', color: hexDe(paleta.tinta), fontFamily: fonteNumeros }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              gap: espaco.lg,
+              alignItems: 'center',
+            }}
+          >
+            <Anel
+              progresso={progresso}
+              cor={hexDe(paleta.acento)}
+              trilho={hexDe(paleta.linha)}
+            >
+              <Text
+                style={{
+                  fontSize: 26,
+                  fontWeight: '700',
+                  color: hexDe(paleta.tinta),
+                  fontFamily: fonteNumeros,
+                }}
+              >
                 {Math.round(progresso)}%
               </Text>
             </Anel>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: corEstado, letterSpacing: 0.6 }}>
-                {emPausa ? t('estado.emPausa').toUpperCase() : t('estado.imprimindo').toUpperCase()}
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: '700',
+                  color: corEstado,
+                  letterSpacing: 0.6,
+                }}
+              >
+                {emPausa
+                  ? t('estado.emPausa').toUpperCase()
+                  : t('estado.imprimindo').toUpperCase()}
               </Text>
-              <Text numberOfLines={2} style={{ fontSize: 14, fontWeight: '700', color: hexDe(paleta.tinta), marginTop: 4 }}>
+              <Text
+                numberOfLines={2}
+                style={{
+                  fontSize: 14,
+                  fontWeight: '700',
+                  color: hexDe(paleta.tinta),
+                  marginTop: 4,
+                }}
+              >
                 {info?.Filename}
               </Text>
-              <View style={{ flexDirection: 'row', gap: espaco.md, marginTop: 8 }}>
+              <View
+                style={{ flexDirection: 'row', gap: espaco.md, marginTop: 8 }}
+              >
                 <View>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: hexDe(paleta.tinta), fontFamily: fonteNumeros }}>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: '700',
+                      color: hexDe(paleta.tinta),
+                      fontFamily: fonteNumeros,
+                    }}
+                  >
                     {`${info?.CurrentLayer ?? 0}/${info?.TotalLayer ?? 0}`}
                   </Text>
-                  <Text style={{ fontSize: 10, color: hexDe(paleta.tintaSoft) }}>{t('detalhes.camada')}</Text>
+                  <Text
+                    style={{ fontSize: 10, color: hexDe(paleta.tintaSoft) }}
+                  >
+                    {t('detalhes.camada')}
+                  </Text>
                 </View>
                 <View>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: hexDe(paleta.tinta), fontFamily: fonteNumeros }}>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: '700',
+                      color: hexDe(paleta.tinta),
+                      fontFamily: fonteNumeros,
+                    }}
+                  >
                     {segundosRestantes ?? '—'}
                   </Text>
-                  <Text style={{ fontSize: 10, color: hexDe(paleta.tintaSoft) }}>{t('painel.restante')}</Text>
+                  <Text
+                    style={{ fontSize: 10, color: hexDe(paleta.tintaSoft) }}
+                  >
+                    {t('painel.restante')}
+                  </Text>
                 </View>
                 <View>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: hexDe(paleta.tinta), fontFamily: fonteNumeros }}>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: '700',
+                      color: hexDe(paleta.tinta),
+                      fontFamily: fonteNumeros,
+                    }}
+                  >
                     {`${Math.round(velocidade)}%`}
                   </Text>
-                  <Text style={{ fontSize: 10, color: hexDe(paleta.tintaSoft) }}>{t('controlos.velocidade')}</Text>
+                  <Text
+                    style={{ fontSize: 10, color: hexDe(paleta.tintaSoft) }}
+                  >
+                    {t('controlos.velocidade')}
+                  </Text>
                 </View>
               </View>
             </View>
           </View>
 
-          <View style={{ flexDirection: 'row', gap: espaco.sm, marginTop: espaco.md }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              gap: espaco.sm,
+              marginTop: espaco.md,
+            }}
+          >
             <TouchableOpacity
               onPress={alternarPausa}
               style={{
@@ -491,8 +665,18 @@ export const PainelSection = ({
                 gap: 7,
               }}
             >
-              <Ionicons name={emPausa ? 'play' : 'pause'} size={15} color={hexDe(paleta.tinta)} />
-              <Text style={{ fontSize: 14, fontWeight: '700', color: hexDe(paleta.tinta) }}>
+              <Ionicons
+                name={emPausa ? 'play' : 'pause'}
+                size={15}
+                color={hexDe(paleta.tinta)}
+              />
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontWeight: '700',
+                  color: hexDe(paleta.tinta),
+                }}
+              >
                 {emPausa ? t('comum.retomar') : t('comum.pausar')}
               </Text>
             </TouchableOpacity>
@@ -511,7 +695,13 @@ export const PainelSection = ({
               }}
             >
               <Ionicons name="stop" size={15} color={hexDe(paleta.perigo)} />
-              <Text style={{ fontSize: 14, fontWeight: '700', color: hexDe(paleta.perigo) }}>
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontWeight: '700',
+                  color: hexDe(paleta.perigo),
+                }}
+              >
                 {t('comum.parar')}
               </Text>
             </TouchableOpacity>
@@ -519,26 +709,60 @@ export const PainelSection = ({
         </Cartao>
       ) : (
         <Cartao>
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: espaco.sm }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'flex-start',
+              gap: espaco.sm,
+            }}
+          >
             <View style={{ flex: 1 }}>
               <Rotulo>{t('painel.emEspera')}</Rotulo>
-              <Text style={{ fontSize: 17, fontWeight: '700', color: hexDe(paleta.tinta), marginTop: 5 }}>
+              <Text
+                style={{
+                  fontSize: 17,
+                  fontWeight: '700',
+                  color: hexDe(paleta.tinta),
+                  marginTop: 5,
+                }}
+              >
                 {ligada ? t('inicio.pronta') : t('inicio.semLigacao')}
               </Text>
-              <Text style={{ fontSize: 11, color: hexDe(paleta.tintaSoft), marginTop: 3 }}>
+              <Text
+                style={{
+                  fontSize: 11,
+                  color: hexDe(paleta.tintaSoft),
+                  marginTop: 3,
+                }}
+              >
                 {ligada ? t('painel.prontaMsg') : t('painel.semLigacaoMsg')}
               </Text>
             </View>
             <TouchableOpacity
-              onPress={() => navigation.navigate('AddEditPrinter', { printerId: printer.id })}
-              style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: hexDe(paleta.fundoBaixo), alignItems: 'center', justifyContent: 'center' }}
+              onPress={() =>
+                navigation.navigate('AddEditPrinter', { printerId: printer.id })
+              }
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 12,
+                backgroundColor: hexDe(paleta.fundoBaixo),
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
               accessibilityLabel={t('comum.editar')}
             >
-              <Ionicons name="create-outline" size={17} color={hexDe(paleta.tintaSoft)} />
+              <Ionicons
+                name="create-outline"
+                size={17}
+                color={hexDe(paleta.tintaSoft)}
+              />
             </TouchableOpacity>
           </View>
 
-          <Rotulo style={{ marginTop: espaco.md, marginBottom: espaco.sm }}>{t('painel.preAquecer')}</Rotulo>
+          <Rotulo style={{ marginTop: espaco.md, marginBottom: espaco.sm }}>
+            {t('painel.preAquecer')}
+          </Rotulo>
           <View style={{ flexDirection: 'row', gap: espaco.sm }}>
             {PRESETS.map(p => (
               <TouchableOpacity
@@ -556,8 +780,22 @@ export const PainelSection = ({
                   opacity: ligada ? 1 : 0.4,
                 }}
               >
-                <Text style={{ fontSize: 12, fontWeight: '700', color: hexDe(paleta.tinta) }}>{p.nome}</Text>
-                <Text style={{ fontSize: 10, color: hexDe(paleta.tintaSoft), marginTop: 2 }}>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontWeight: '700',
+                    color: hexDe(paleta.tinta),
+                  }}
+                >
+                  {p.nome}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 10,
+                    color: hexDe(paleta.tintaSoft),
+                    marginTop: 2,
+                  }}
+                >
                   {`${p.bico}° · ${p.mesa}°`}
                 </Text>
               </TouchableOpacity>
@@ -568,12 +806,29 @@ export const PainelSection = ({
 
       {/* térmica */}
       <Cartao>
-        <Rotulo style={{ marginBottom: espaco.sm }}>{t('painel.temperaturas')}</Rotulo>
+        <Rotulo style={{ marginBottom: espaco.sm }}>
+          {t('painel.temperaturas')}
+        </Rotulo>
         <View style={{ flexDirection: 'row', gap: espaco.sm }}>
           {[
-            { rotulo: t('comum.bico'), valor: printer.status?.TempOfNozzle ?? 0, alvo: printer.status?.TempTargetNozzle ?? 0, cor: hexDe(paleta.aviso) },
-            { rotulo: t('comum.mesa'), valor: printer.status?.TempOfHotbed ?? 0, alvo: printer.status?.TempTargetHotbed ?? 0, cor: hexDe(paleta.acento) },
-            { rotulo: t('comum.camara'), valor: printer.status?.TempOfBox ?? 0, alvo: printer.status?.TempTargetBox ?? 0, cor: hexDe(paleta.ok) },
+            {
+              rotulo: t('comum.bico'),
+              valor: printer.status?.TempOfNozzle ?? 0,
+              alvo: printer.status?.TempTargetNozzle ?? 0,
+              cor: hexDe(paleta.aviso),
+            },
+            {
+              rotulo: t('comum.mesa'),
+              valor: printer.status?.TempOfHotbed ?? 0,
+              alvo: printer.status?.TempTargetHotbed ?? 0,
+              cor: hexDe(paleta.acento),
+            },
+            {
+              rotulo: t('comum.camara'),
+              valor: printer.status?.TempOfBox ?? 0,
+              alvo: printer.status?.TempTargetBox ?? 0,
+              cor: hexDe(paleta.ok),
+            },
           ].map(item => (
             <View
               key={item.rotulo}
@@ -585,14 +840,37 @@ export const PainelSection = ({
                 alignItems: 'center',
               }}
             >
-              <Text style={{ fontSize: 10, color: hexDe(paleta.tintaSoft), textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              <Text
+                style={{
+                  fontSize: 10,
+                  color: hexDe(paleta.tintaSoft),
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                }}
+              >
                 {item.rotulo}
               </Text>
-              <Text style={{ fontSize: 20, fontWeight: '700', color: item.cor, fontFamily: fonteNumeros, marginTop: 3 }}>
+              <Text
+                style={{
+                  fontSize: 20,
+                  fontWeight: '700',
+                  color: item.cor,
+                  fontFamily: fonteNumeros,
+                  marginTop: 3,
+                }}
+              >
                 {`${Math.round(item.valor)}°`}
               </Text>
-              <Text style={{ fontSize: 10, color: hexDe(paleta.tintaSoft), fontFamily: fonteNumeros }}>
-                {item.alvo > 0 ? `/ ${Math.round(item.alvo)}°` : t('painel.ambiente')}
+              <Text
+                style={{
+                  fontSize: 10,
+                  color: hexDe(paleta.tintaSoft),
+                  fontFamily: fonteNumeros,
+                }}
+              >
+                {item.alvo > 0
+                  ? `/ ${Math.round(item.alvo)}°`
+                  : t('painel.ambiente')}
               </Text>
             </View>
           ))}
@@ -602,14 +880,18 @@ export const PainelSection = ({
       {/* velocidade e ventoinhas só com trabalho a correr */}
       {aImprimir && (
         <Cartao>
-          <Rotulo style={{ marginBottom: espaco.sm }}>{t('controlos.velocidade')}</Rotulo>
+          <Rotulo style={{ marginBottom: espaco.sm }}>
+            {t('controlos.velocidade')}
+          </Rotulo>
           <View style={{ flexDirection: 'row', gap: 6 }}>
             {[50, 100, 150, 200].map(pct => {
               const activo = Math.round(velocidade) === pct;
               return (
                 <TouchableOpacity
                   key={pct}
-                  onPress={() => enviar(printSpeedCommand(pct, { id: printer.id }))}
+                  onPress={() =>
+                    enviar(printSpeedCommand(pct, { id: printer.id }))
+                  }
                   disabled={!ligada}
                   style={{
                     flex: 1,
@@ -617,10 +899,18 @@ export const PainelSection = ({
                     borderRadius: raioToken.chip,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: activo ? hexDe(paleta.acento) : hexDe(paleta.fundoBaixo),
+                    backgroundColor: activo
+                      ? hexDe(paleta.acento)
+                      : hexDe(paleta.fundoBaixo),
                   }}
                 >
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: activo ? '#fff' : hexDe(paleta.tinta) }}>
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontWeight: '700',
+                      color: activo ? '#fff' : hexDe(paleta.tinta),
+                    }}
+                  >
                     {`${pct}%`}
                   </Text>
                 </TouchableOpacity>
@@ -628,29 +918,92 @@ export const PainelSection = ({
             })}
           </View>
 
-          <Rotulo style={{ marginTop: espaco.md, marginBottom: espaco.sm }}>{t('controlos.ventoinhas')}</Rotulo>
+          <Rotulo style={{ marginTop: espaco.md, marginBottom: espaco.sm }}>
+            {t('controlos.ventoinhas')}
+          </Rotulo>
           {[
-            { rotulo: t('controlos.ventoinhaBico'), valor: ventoinhas.ModelFan ?? 0, campo: 'model' as const },
-            { rotulo: t('controlos.ventoinhaAuxiliar'), valor: ventoinhas.AuxiliaryFan ?? 0, campo: 'side' as const },
-            { rotulo: t('controlos.ventoinhaCaixa'), valor: ventoinhas.BoxFan ?? 0, campo: 'chamber' as const },
+            {
+              rotulo: t('controlos.ventoinhaBico'),
+              valor: ventoinhas.ModelFan ?? 0,
+              campo: 'model' as const,
+            },
+            {
+              rotulo: t('controlos.ventoinhaAuxiliar'),
+              valor: ventoinhas.AuxiliaryFan ?? 0,
+              campo: 'side' as const,
+            },
+            {
+              rotulo: t('controlos.ventoinhaCaixa'),
+              valor: ventoinhas.BoxFan ?? 0,
+              campo: 'chamber' as const,
+            },
           ].map(v => (
-            <View key={v.campo} style={{ flexDirection: 'row', alignItems: 'center', gap: espaco.sm, marginBottom: 6 }}>
-              <Text style={{ flex: 1, fontSize: 13, color: hexDe(paleta.tinta) }}>{v.rotulo}</Text>
-              <View style={{ width: 90, height: 5, borderRadius: 3, backgroundColor: hexDe(paleta.linha), overflow: 'hidden' }}>
-                <View style={{ width: `${Math.max(0, Math.min(100, v.valor))}%`, height: 5, backgroundColor: hexDe(paleta.acento) }} />
+            <View
+              key={v.campo}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: espaco.sm,
+                marginBottom: 6,
+              }}
+            >
+              <Text
+                style={{ flex: 1, fontSize: 13, color: hexDe(paleta.tinta) }}
+              >
+                {v.rotulo}
+              </Text>
+              <View
+                style={{
+                  width: 90,
+                  height: 5,
+                  borderRadius: 3,
+                  backgroundColor: hexDe(paleta.linha),
+                  overflow: 'hidden',
+                }}
+              >
+                <View
+                  style={{
+                    width: `${Math.max(0, Math.min(100, v.valor))}%`,
+                    height: 5,
+                    backgroundColor: hexDe(paleta.acento),
+                  }}
+                />
               </View>
-              <Text style={{ width: 40, textAlign: 'right', fontSize: 13, fontWeight: '700', color: hexDe(paleta.tinta), fontFamily: fonteNumeros }}>
+              <Text
+                style={{
+                  width: 40,
+                  textAlign: 'right',
+                  fontSize: 13,
+                  fontWeight: '700',
+                  color: hexDe(paleta.tinta),
+                  fontFamily: fonteNumeros,
+                }}
+              >
                 {`${Math.round(v.valor)}%`}
               </Text>
               <TouchableOpacity
                 onPress={() => alterarVentoinha(v.campo, -10)}
-                style={{ width: 30, height: 30, borderRadius: 9, backgroundColor: hexDe(paleta.fundoBaixo), alignItems: 'center', justifyContent: 'center' }}
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: 9,
+                  backgroundColor: hexDe(paleta.fundoBaixo),
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
               >
                 <Ionicons name="remove" size={15} color={hexDe(paleta.tinta)} />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => alterarVentoinha(v.campo, 10)}
-                style={{ width: 30, height: 30, borderRadius: 9, backgroundColor: hexDe(paleta.fundoBaixo), alignItems: 'center', justifyContent: 'center' }}
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: 9,
+                  backgroundColor: hexDe(paleta.fundoBaixo),
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
               >
                 <Ionicons name="add" size={15} color={hexDe(paleta.tinta)} />
               </TouchableOpacity>
@@ -664,8 +1017,21 @@ export const PainelSection = ({
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Rotulo style={{ flex: 1 }}>{t('controlos.movimento')}</Rotulo>
           {aImprimir && (
-            <View style={{ backgroundColor: hexDe(paleta.aviso) + '22', borderRadius: 7, paddingHorizontal: 7, paddingVertical: 3 }}>
-              <Text style={{ fontSize: 10, fontWeight: '700', color: hexDe(paleta.aviso) }}>
+            <View
+              style={{
+                backgroundColor: hexDe(paleta.aviso) + '22',
+                borderRadius: 7,
+                paddingHorizontal: 7,
+                paddingVertical: 3,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 10,
+                  fontWeight: '700',
+                  color: hexDe(paleta.aviso),
+                }}
+              >
                 {t('painel.xyBloqueados')}
               </Text>
             </View>
@@ -674,10 +1040,22 @@ export const PainelSection = ({
 
         {aImprimir ? (
           <>
-            <Text style={{ fontSize: 11, color: hexDe(paleta.tintaSoft), marginTop: 6 }}>
+            <Text
+              style={{
+                fontSize: 11,
+                color: hexDe(paleta.tintaSoft),
+                marginTop: 6,
+              }}
+            >
               {t('painel.babystepMsg')}
             </Text>
-            <View style={{ flexDirection: 'row', gap: espaco.sm, marginTop: espaco.md }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                gap: espaco.sm,
+                marginTop: espaco.md,
+              }}
+            >
               {[-0.02, 0, 0.02].map((mm, i) => {
                 const centro = i === 1;
                 return (
@@ -691,9 +1069,13 @@ export const PainelSection = ({
                       borderRadius: raioToken.interno,
                       alignItems: 'center',
                       justifyContent: 'center',
-                      backgroundColor: centro ? hexDe(paleta.acento) + '22' : hexDe(paleta.fundoBaixo),
+                      backgroundColor: centro
+                        ? hexDe(paleta.acento) + '22'
+                        : hexDe(paleta.fundoBaixo),
                       borderWidth: 1,
-                      borderColor: centro ? hexDe(paleta.acento) + '77' : hexDe(paleta.linha),
+                      borderColor: centro
+                        ? hexDe(paleta.acento) + '77'
+                        : hexDe(paleta.linha),
                     }}
                   >
                     <Text
@@ -701,10 +1083,14 @@ export const PainelSection = ({
                         fontSize: 13,
                         fontWeight: '700',
                         fontFamily: fonteNumeros,
-                        color: centro ? hexDe(paleta.acentoTexto) : hexDe(paleta.tinta),
+                        color: centro
+                          ? hexDe(paleta.acentoTexto)
+                          : hexDe(paleta.tinta),
                       }}
                     >
-                      {centro ? `${(printer.status?.ZOffset ?? 0).toFixed(2)} mm` : `${mm > 0 ? '+' : ''}${mm.toFixed(2)}`}
+                      {centro
+                        ? `${(printer.status?.ZOffset ?? 0).toFixed(2)} mm`
+                        : `${mm > 0 ? '+' : ''}${mm.toFixed(2)}`}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -713,13 +1099,35 @@ export const PainelSection = ({
           </>
         ) : (
           <>
-            <View style={{ flexDirection: 'row', gap: espaco.md, alignItems: 'center', marginTop: espaco.sm }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                gap: espaco.md,
+                alignItems: 'center',
+                marginTop: espaco.sm,
+              }}
+            >
               {(['X', 'Y', 'Z'] as const).map((eixo, i) => {
-                const numeros = (printer.status?.CurrenCoord ?? '').match(/-?\d+(?:\.\d+)?/g) ?? [];
+                const numeros =
+                  (printer.status?.CurrenCoord ?? '').match(
+                    /-?\d+(?:\.\d+)?/g
+                  ) ?? [];
                 return (
                   <View key={eixo} style={{ flexDirection: 'row' }}>
-                    <Text style={{ fontSize: 12, fontWeight: '700', color: hexDe(paleta.acento) }}>{`${eixo}: `}</Text>
-                    <Text style={{ fontSize: 12, color: hexDe(paleta.tinta), fontFamily: fonteNumeros }}>
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        fontWeight: '700',
+                        color: hexDe(paleta.acento),
+                      }}
+                    >{`${eixo}: `}</Text>
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: hexDe(paleta.tinta),
+                        fontFamily: fonteNumeros,
+                      }}
+                    >
                       {numeros[i] ?? '0.00'}
                     </Text>
                   </View>
@@ -727,7 +1135,9 @@ export const PainelSection = ({
               })}
             </View>
 
-            <View style={{ flexDirection: 'row', gap: 6, marginTop: espaco.sm }}>
+            <View
+              style={{ flexDirection: 'row', gap: 6, marginTop: espaco.sm }}
+            >
               {PASSOS.map(mm => (
                 <TouchableOpacity
                   key={mm}
@@ -738,20 +1148,41 @@ export const PainelSection = ({
                     borderRadius: 16,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: passo === mm ? hexDe(paleta.acento) : hexDe(paleta.fundoBaixo),
+                    backgroundColor:
+                      passo === mm
+                        ? hexDe(paleta.acento)
+                        : hexDe(paleta.fundoBaixo),
                   }}
                 >
-                  <Text style={{ fontSize: 11, fontWeight: '700', color: passo === mm ? '#fff' : hexDe(paleta.tintaSoft) }}>
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      fontWeight: '700',
+                      color: passo === mm ? '#fff' : hexDe(paleta.tintaSoft),
+                    }}
+                  >
                     {mm === 0.1 ? '0.1 mm' : `${mm} mm`}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <View style={{ alignItems: 'center', marginTop: espaco.md, gap: 6 }}>
-              <Tecla etiqueta="▲" onPress={() => mover('Y', 1)} desactivado={ocupada || !ligada} />
-              <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
-                <Tecla etiqueta="◀" onPress={() => mover('X', -1)} desactivado={ocupada || !ligada} />
+            <View
+              style={{ alignItems: 'center', marginTop: espaco.md, gap: 6 }}
+            >
+              <Tecla
+                etiqueta="▲"
+                onPress={() => mover('Y', 1)}
+                desactivado={ocupada || !ligada}
+              />
+              <View
+                style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}
+              >
+                <Tecla
+                  etiqueta="◀"
+                  onPress={() => mover('X', -1)}
+                  desactivado={ocupada || !ligada}
+                />
                 <TouchableOpacity
                   onPress={() => fazerHome('XYZ')}
                   disabled={ocupada || !ligada}
@@ -769,18 +1200,48 @@ export const PainelSection = ({
                 >
                   <Ionicons name="home" size={18} color={hexDe(paleta.tinta)} />
                 </TouchableOpacity>
-                <Tecla etiqueta="▶" onPress={() => mover('X', 1)} desactivado={ocupada || !ligada} />
+                <Tecla
+                  etiqueta="▶"
+                  onPress={() => mover('X', 1)}
+                  desactivado={ocupada || !ligada}
+                />
               </View>
-              <Tecla etiqueta="▼" onPress={() => mover('Y', -1)} desactivado={ocupada || !ligada} />
+              <Tecla
+                etiqueta="▼"
+                onPress={() => mover('Y', -1)}
+                desactivado={ocupada || !ligada}
+              />
             </View>
 
-            <View style={{ flexDirection: 'row', gap: 6, marginTop: espaco.sm }}>
-              <Tecla etiqueta="Z ▲" onPress={() => mover('Z', 1)} desactivado={ocupada || !ligada} largo />
-              <Tecla etiqueta="Z ▼" onPress={() => mover('Z', -1)} desactivado={ocupada || !ligada} largo />
+            <View
+              style={{ flexDirection: 'row', gap: 6, marginTop: espaco.sm }}
+            >
+              <Tecla
+                etiqueta="Z ▲"
+                onPress={() => mover('Z', 1)}
+                desactivado={ocupada || !ligada}
+                largo
+              />
+              <Tecla
+                etiqueta="Z ▼"
+                onPress={() => mover('Z', -1)}
+                desactivado={ocupada || !ligada}
+                largo
+              />
             </View>
             <View style={{ flexDirection: 'row', gap: 6, marginTop: 6 }}>
-              <Tecla etiqueta="Home XY" onPress={fazerHomeXY} desactivado={ocupada || !ligada} largo />
-              <Tecla etiqueta="Home Z" onPress={() => fazerHome('Z')} desactivado={ocupada || !ligada} largo />
+              <Tecla
+                etiqueta="Home XY"
+                onPress={fazerHomeXY}
+                desactivado={ocupada || !ligada}
+                largo
+              />
+              <Tecla
+                etiqueta="Home Z"
+                onPress={() => fazerHome('Z')}
+                desactivado={ocupada || !ligada}
+                largo
+              />
             </View>
           </>
         )}
@@ -790,12 +1251,12 @@ export const PainelSection = ({
 };
 
 /** Tecla do D-Pad. */
-const Tecla: React.FC<{ etiqueta: string; onPress: () => void; desactivado?: boolean; largo?: boolean }> = ({
-  etiqueta,
-  onPress,
-  desactivado,
-  largo,
-}) => {
+const Tecla: React.FC<{
+  etiqueta: string;
+  onPress: () => void;
+  desactivado?: boolean;
+  largo?: boolean;
+}> = ({ etiqueta, onPress, desactivado, largo }) => {
   const { tema } = useTheme();
   const p = tema.paleta;
   return (
@@ -817,7 +1278,9 @@ const Tecla: React.FC<{ etiqueta: string; onPress: () => void; desactivado?: boo
         opacity: desactivado ? 0.4 : 1,
       }}
     >
-      <Text style={{ fontSize: 12, fontWeight: '700', color: hexDe(p.tinta) }}>{etiqueta}</Text>
+      <Text style={{ fontSize: 12, fontWeight: '700', color: hexDe(p.tinta) }}>
+        {etiqueta}
+      </Text>
     </TouchableOpacity>
   );
 };
