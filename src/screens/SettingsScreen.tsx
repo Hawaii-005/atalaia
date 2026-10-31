@@ -43,6 +43,11 @@ import {
 } from '../i18n';
 import { getPrintStatus } from '../types';
 import { useNavigation } from '@react-navigation/native';
+import { importarFilamentos, lerBackup, montarBackup } from '../utils/backup';
+import {
+  carregarEstado,
+  guardarEstado,
+} from '../utils/filamentos/armazenamento';
 
 const Section = ({
   title,
@@ -362,9 +367,8 @@ export const SettingsScreen = () => {
 
   const executarExportar = async () => {
     try {
-      const dados = {
-        versao: 1,
-        criadoEm: new Date().toISOString(),
+      const filamentos = await carregarEstado();
+      const dados = montarBackup({
         impressoras: printers.map(p => ({
           printerName: p.printerName,
           ipAddress: p.ipAddress,
@@ -372,7 +376,8 @@ export const SettingsScreen = () => {
           mainboardId: p.mainboardId,
         })),
         preferencias: { statusIntervalMs, filaAuto },
-      };
+        filamentos,
+      });
       const permissao =
         await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
       if (!permissao.granted) return;
@@ -402,20 +407,24 @@ export const SettingsScreen = () => {
       });
       if (escolha.canceled) return;
       const texto = await FileSystem.readAsStringAsync(escolha.assets[0].uri);
-      const dados = JSON.parse(texto);
-      const lista = Array.isArray(dados?.impressoras) ? dados.impressoras : [];
-      if (lista.length === 0) {
+      const dados = lerBackup(texto);
+      if (dados.impressoras.length === 0) {
         Alert.alert(t('settings.backupTitulo'), t('settings.backupVazio'));
         return;
       }
-      lista.forEach((p: any) => {
-        if (p?.printerName && p?.ipAddress) {
-          addPrinter(p.printerName, p.ipAddress, p.mainboardId, p.alternateIp);
-        }
+      dados.impressoras.forEach(p => {
+        addPrinter(p.printerName, p.ipAddress, p.mainboardId, p.alternateIp);
       });
+      // Inventário: só existe a partir da versão 2 do backup. Um backup
+      // antigo (versão 1) entra normalmente e não mexe no que está guardado.
+      if (dados.filamentos) {
+        const estado = await carregarEstado();
+        const { estado: fundido } = importarFilamentos(estado, dados);
+        await guardarEstado(fundido);
+      }
       Alert.alert(
         t('settings.backupTitulo'),
-        t('settings.backupImportado', { n: lista.length })
+        t('settings.backupImportado', { n: dados.impressoras.length })
       );
     } catch {
       Alert.alert(t('settings.backupTitulo'), t('settings.backupFalhou'));
