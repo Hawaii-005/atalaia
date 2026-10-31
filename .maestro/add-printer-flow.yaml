@@ -1,0 +1,11 @@
+appId: io.github.hawaii005.atalaia
+---
+- launchApp
+- tapOn: "Adicionar impressora"
+- inputText: "Centauri Oficina"
+- tapOn: "Endereço IP"
+- inputText: "127.0.0.1"
+- tapOn: "Guardar"
+- assertVisible: "Centauri Oficina"
+- tapOn: "Centauri Oficina"
+- assertVisible: "Estado"
