@@ -14,6 +14,7 @@ export type CategoriaAviso =
   | 'em-curso'
   | 'em-pausa'
   | 'fila-arranque'
+  | 'fila-arranque-mesa-limpa'
   | undefined;
 
 const CHANNEL_ID = 'print-status';

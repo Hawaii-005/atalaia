@@ -152,7 +152,7 @@ export const EstadoSection = ({
     if (s === 'stopped')
       return { texto: t('estado.parada'), cor: hexDe(paleta.perigo) };
     return { texto: t('inicio.pronta'), cor: hexDe(paleta.ok) };
-  })();
+  }, [ligada, info?.Filename, info?.Status, paleta]);
 
   const segundosRestantes = restante(
     (info?.TotalTicks ?? 0) - (info?.CurrentTicks ?? 0)
