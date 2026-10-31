@@ -307,6 +307,13 @@ export const SettingsScreen = () => {
   };
 
   const exportar = async () => {
+    Alert.alert(t('settings.backupTitulo'), t('settings.backupAvisoRede'), [
+      { text: t('comum.cancelar'), style: 'cancel' },
+      { text: t('settings.exportar'), onPress: executarExportar },
+    ]);
+  };
+
+  const executarExportar = async () => {
     try {
       const dados = {
         versao: 1,

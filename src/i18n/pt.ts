@@ -287,7 +287,9 @@ export default {
   'settings.seccaoBackup': 'Cópia de segurança',
   'settings.exportar': 'Guardar impressoras e definições',
   'settings.exportarDesc':
-    'Grava um ficheiro JSON que podes levar para outro telefone.',
+    'Grava um ficheiro JSON com as tuas impressoras e IPs de rede local.',
+  'settings.backupAvisoRede':
+    'O ficheiro de cópia de segurança contém os endereços IP e nomes das tuas impressoras na rede local. Partilha apenas com quem confias.',
   'settings.importar': 'Restaurar de um ficheiro',
   'settings.importarDesc': 'Lê o JSON e volta a criar as impressoras.',
   'settings.backupTitulo': 'Cópia de segurança',

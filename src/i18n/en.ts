@@ -287,7 +287,10 @@ const en = {
   'settings.segundos30': '30 seconds',
   'settings.seccaoBackup': 'Backup',
   'settings.exportar': 'Save printers and settings',
-  'settings.exportarDesc': 'Writes a JSON file you can take to another phone.',
+  'settings.exportarDesc':
+    'Saves a JSON file with your printers and local network IP addresses.',
+  'settings.backupAvisoRede':
+    'The backup JSON file contains local IP addresses and printer names. Only share with trusted recipients.',
   'settings.importar': 'Restore from a file',
   'settings.importarDesc': 'Reads the JSON and recreates the printers.',
   'settings.backupTitulo': 'Backup',
