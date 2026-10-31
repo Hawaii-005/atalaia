@@ -7,8 +7,13 @@ import * as FileSystem from 'expo-file-system';
 /** Categorias dos avisos com botões, para parar/pausar sem abrir a app. */
 export const CATEGORIA_EM_CURSO = 'impressao-em-curso';
 export const CATEGORIA_EM_PAUSA = 'impressao-em-pausa';
+export const CATEGORIA_FILA_ARRANQUE = 'fila-arranque-mesa-limpa';
 
-export type CategoriaAviso = 'em-curso' | 'em-pausa' | undefined;
+export type CategoriaAviso =
+  | 'em-curso'
+  | 'em-pausa'
+  | 'fila-arranque'
+  | undefined;
 
 const CHANNEL_ID = 'print-status';
 const PREFS_KEY = 'notificationPrefs';
@@ -76,6 +81,18 @@ export const prepareNotifications = async () => {
       {
         identifier: 'PARAR',
         buttonTitle: 'Parar',
+        options: { opensAppToForeground: false, isDestructive: true },
+      },
+    ]);
+    await Notifications.setNotificationCategoryAsync(CATEGORIA_FILA_ARRANQUE, [
+      {
+        identifier: 'ARRANCAR_AGORA',
+        buttonTitle: 'Mesa limpa: Arrancar agora',
+        options: { opensAppToForeground: false },
+      },
+      {
+        identifier: 'CANCELAR_ARRANQUE',
+        buttonTitle: 'Cancelar',
         options: { opensAppToForeground: false, isDestructive: true },
       },
     ]);
@@ -152,7 +169,9 @@ export const notify = async (
             ? CATEGORIA_EM_CURSO
             : categoria === 'em-pausa'
               ? CATEGORIA_EM_PAUSA
-              : undefined,
+              : categoria === 'fila-arranque'
+                ? CATEGORIA_FILA_ARRANQUE
+                : undefined,
         attachments: fotograma
           ? [{ identifier: 'fotograma', url: fotograma, type: 'jpg' }]
           : undefined,

@@ -35,6 +35,9 @@ export const CartaoFila = ({
     limparFila,
     filaAuto,
     definirFilaAuto,
+    pendentesMesaLimpa,
+    confirmarMesaLimpa,
+    cancelarMesaLimpa,
     printers,
   } = usePrinterConnections();
 
@@ -119,6 +122,76 @@ export const CartaoFila = ({
           </TouchableOpacity>
         )}
       </View>
+
+      {Object.entries(pendentesMesaLimpa).map(([printerId, item]) => (
+        <View
+          key={`mesa-${printerId}`}
+          style={{
+            backgroundColor: hexDe(p.aviso) + '22',
+            borderColor: hexDe(p.aviso),
+            borderWidth: 1.5,
+            borderRadius: 12,
+            padding: 10,
+            marginVertical: 8,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 13,
+              fontWeight: '700',
+              color: hexDe(p.tinta),
+              marginBottom: 4,
+            }}
+          >
+            Mesa limpa confirmada?
+          </Text>
+          <Text
+            style={{
+              fontSize: 12,
+              color: hexDe(p.tintaSoft),
+              marginBottom: 8,
+            }}
+          >
+            {nomeDaMaquina(printerId)} — pronto para arrancar{' '}
+            {item.label || item.name}
+          </Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <TouchableOpacity
+              onPress={() => confirmarMesaLimpa(printerId)}
+              style={{
+                backgroundColor: hexDe(p.ok),
+                borderRadius: 8,
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+              }}
+            >
+              <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 12 }}>
+                Arrancar agora
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => cancelarMesaLimpa(printerId)}
+              style={{
+                borderWidth: 1,
+                borderColor: hexDe(p.linha),
+                borderRadius: 8,
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+              }}
+            >
+              <Text
+                style={{
+                  color: hexDe(p.tintaSoft),
+                  fontWeight: '600',
+                  fontSize: 12,
+                }}
+              >
+                Cancelar
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ))}
 
       {fila.length === 0 ? (
         <Text

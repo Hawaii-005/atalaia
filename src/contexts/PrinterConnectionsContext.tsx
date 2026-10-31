@@ -57,10 +57,13 @@ interface PrinterConnectionsContextType {
   statusIntervalMs: number;
   fila: ItemFila[];
   filaAuto: boolean;
+  pendentesMesaLimpa: Record<string, ItemFila>;
   adicionarAFila: (item: ItemFila) => void;
   removerDaFila: (id: string) => void;
   limparFila: () => void;
   definirFilaAuto: (ligada: boolean) => void;
+  confirmarMesaLimpa: (printerId: string) => Promise<boolean>;
+  cancelarMesaLimpa: (printerId: string) => void;
   setStatusInterval: (ms: number) => Promise<void>;
   /** Envia um .goo/.ctb para uma impressora de resina (comando 256). */
   carregarParaSaturno: (
@@ -112,6 +115,17 @@ export const PrinterConnectionsProvider = ({
   const [fila, setFila] = useState<ItemFila[]>([]);
   const [hidratado, setHidratado] = useState(false);
   const [filaAuto, setFilaAuto] = useState(false);
+  const [pendentesMesaLimpa, setPendentesMesaLimpa] = useState<
+    Record<string, ItemFila>
+  >({});
+
+  const cancelarMesaLimpa = useCallback((printerId: string) => {
+    setPendentesMesaLimpa(prev => {
+      const nov = { ...prev };
+      delete nov[printerId];
+      return nov;
+    });
+  }, []);
   const filaRef = useRef<ItemFila[]>([]);
   const estadoAnteriorRef = useRef<Record<string, number | undefined>>({});
   const webSocketsRef = useRef<{ [key: string]: WebSocket }>({});
@@ -1171,6 +1185,10 @@ export const PrinterConnectionsProvider = ({
               printerId,
               stopPrintCommand({ id: `aviso-parar-${Date.now()}` })
             );
+          } else if (acao === 'ARRANCAR_AGORA') {
+            await confirmarMesaLimpa(printerId);
+          } else if (acao === 'CANCELAR_ARRANQUE') {
+            cancelarMesaLimpa(printerId);
           }
         } catch (erro) {
           const texto =
@@ -1244,27 +1262,16 @@ export const PrinterConnectionsProvider = ({
     AsyncStorage.setItem('filaAuto', ligada ? '1' : '0').catch(() => undefined);
   }, []);
 
-  // Só arranca com a fila ligada e na transição para "terminada" (9). Sem a
-  // transição disparava em cada actualização de estado com 9.
+  // Só arranca com a fila ligada e na transição para "terminada" (9).
   const aArrancarRef = useRef<Record<string, boolean>>({});
   const imprimiuRef = useRef<Record<string, boolean>>({});
-  // Depois de arrancar um trabalho a máquina demora a sair do estado 9; sem
-  // esta pausa o mesmo fim de trabalho podia arrancar dois itens da fila.
   const ultimoArranqueRef = useRef<Record<string, number>>({});
 
-  // Arranca o primeiro item da fila desta impressora. Só sai da fila quando a
-  // máquina aceita (Ack 0); fora disso repete, porque o Cmd 128 leva Ack != 0
-  // nos segundos seguintes ao fim do trabalho anterior.
-  const arrancarProximo = useCallback(
-    async (printer: Printer | undefined): Promise<boolean> => {
-      if (!printer || !filaAuto) return false;
+  const executarArranque = useCallback(
+    async (printer: Printer, proximo: ItemFila): Promise<boolean> => {
       if (aArrancarRef.current[printer.id]) return false;
       if (Date.now() - (ultimoArranqueRef.current[printer.id] ?? 0) < 120_000)
         return false;
-      const proximo = filaRef.current.find(
-        item => item.printerId === printer.id
-      );
-      if (!proximo) return false;
 
       aArrancarRef.current[printer.id] = true;
       try {
@@ -1281,6 +1288,7 @@ export const PrinterConnectionsProvider = ({
             if (ack === 0) {
               ultimoArranqueRef.current[printer.id] = Date.now();
               removerDaFila(proximo.id);
+              cancelarMesaLimpa(printer.id);
               notify(
                 'A arrancar o próximo',
                 `${printer.printerName} começou ${proximo.label}.`,
@@ -1301,7 +1309,6 @@ export const PrinterConnectionsProvider = ({
             await new Promise(resolver => setTimeout(resolver, 6000));
           }
         }
-        // Sem sucesso fica na fila: o aviso diz porquê e o Bruno pode arrancar à mão.
         notify(
           'Não arrancou',
           `${proximo.label}: a máquina não aceitou. O trabalho fica na fila.`,
@@ -1312,7 +1319,37 @@ export const PrinterConnectionsProvider = ({
         aArrancarRef.current[printer.id] = false;
       }
     },
-    [filaAuto, request, removerDaFila]
+    [request, removerDaFila, cancelarMesaLimpa]
+  );
+
+  const confirmarMesaLimpa = useCallback(
+    async (printerId: string): Promise<boolean> => {
+      const printer = printersRef.current.find(p => p.id === printerId);
+      const proximo = pendentesMesaLimpa[printerId];
+      if (!printer || !proximo) return false;
+      return executarArranque(printer, proximo);
+    },
+    [pendentesMesaLimpa, executarArranque]
+  );
+
+  const arrancarProximo = useCallback(
+    async (printer: Printer | undefined): Promise<boolean> => {
+      if (!printer || !filaAuto) return false;
+      const proximo = filaRef.current.find(
+        item => item.printerId === printer.id
+      );
+      if (!proximo) return false;
+
+      setPendentesMesaLimpa(prev => ({ ...prev, [printer.id]: proximo }));
+      notify(
+        'Mesa limpa?',
+        `${printer.printerName}: confirma que a mesa está limpa para arrancar ${proximo.label}.`,
+        { printerId: printer.id },
+        'fila-arranque'
+      );
+      return false;
+    },
+    [filaAuto]
   );
 
   // Dispara na transição para "terminada" (9). Sem exigir a transição, corria
@@ -1488,10 +1525,13 @@ export const PrinterConnectionsProvider = ({
         imprimirNoSaturno,
         fila,
         filaAuto,
+        pendentesMesaLimpa,
         adicionarAFila,
         removerDaFila,
         limparFila,
         definirFilaAuto,
+        confirmarMesaLimpa,
+        cancelarMesaLimpa,
       }}
     >
       {children}
