@@ -6,7 +6,12 @@ describe('Testes de Integração com Servidor SDCP Falso', () => {
   const PORT = 3039;
 
   beforeAll(async () => {
-    server = new FakeSdcpServer({ wsPort: PORT, tcpPort: 3009, ackMode: 'ok', statusCode: 0 });
+    server = new FakeSdcpServer({
+      wsPort: PORT,
+      tcpPort: 3009,
+      ackMode: 'ok',
+      statusCode: 0,
+    });
     await server.start();
   });
 
@@ -15,7 +20,11 @@ describe('Testes de Integração com Servidor SDCP Falso', () => {
   });
 
   it('liga ao servidor e recebe atualizações de estado', async () => {
-    const driver = new CentauriDriver({ id: 'f1', name: 'Centauri Teste', ipAddress: `127.0.0.1:${PORT}/websocket` });
+    const driver = new CentauriDriver({
+      id: 'f1',
+      name: 'Centauri Teste',
+      ipAddress: `127.0.0.1:${PORT}/websocket`,
+    });
 
     await driver.connect();
     expect(driver.getStatus().connected).toBe(true);
@@ -26,7 +35,11 @@ describe('Testes de Integração com Servidor SDCP Falso', () => {
 
   it('suporta recusa de Ack pelo servidor', async () => {
     server.setAckMode('refuse');
-    const driver = new CentauriDriver({ id: 'f1', name: 'Centauri Teste', ipAddress: `127.0.0.1:${PORT}/websocket` });
+    const driver = new CentauriDriver({
+      id: 'f1',
+      name: 'Centauri Teste',
+      ipAddress: `127.0.0.1:${PORT}/websocket`,
+    });
 
     await driver.connect();
     const res = await driver.sendCommand({
@@ -40,7 +53,11 @@ describe('Testes de Integração com Servidor SDCP Falso', () => {
 
   it('tolera mensagens malformadas do servidor sem crashar', async () => {
     server.setAckMode('malformed');
-    const driver = new CentauriDriver({ id: 'f1', name: 'Centauri Teste', ipAddress: `127.0.0.1:${PORT}/websocket` });
+    const driver = new CentauriDriver({
+      id: 'f1',
+      name: 'Centauri Teste',
+      ipAddress: `127.0.0.1:${PORT}/websocket`,
+    });
 
     await driver.connect();
     expect(driver.getStatus().connected).toBe(true);
