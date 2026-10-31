@@ -3,6 +3,7 @@ import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
+import { t } from '../i18n';
 
 /** Categorias dos avisos com botões, para parar/pausar sem abrir a app. */
 export const CATEGORIA_EM_CURSO = 'impressao-em-curso';
@@ -46,7 +47,7 @@ export const prepareNotifications = async () => {
   try {
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
-        name: 'Print status',
+        name: t('notifications.channel'),
         importance: Notifications.AndroidImportance.HIGH,
         vibrationPattern: [0, 250, 200, 250],
         lightColor: '#3E6AE1',
@@ -58,29 +59,29 @@ export const prepareNotifications = async () => {
     await Notifications.setNotificationCategoryAsync(CATEGORIA_EM_CURSO, [
       {
         identifier: 'PAUSAR',
-        buttonTitle: 'Pausar',
+        buttonTitle: t('comum.pausar'),
         options: { opensAppToForeground: false },
       },
       {
         identifier: 'PARAR',
-        buttonTitle: 'Parar',
+        buttonTitle: t('comum.parar'),
         options: { opensAppToForeground: false, isDestructive: true },
       },
       {
         identifier: 'VER',
-        buttonTitle: 'Ver câmara',
+        buttonTitle: t('notifications.viewCamera'),
         options: { opensAppToForeground: true },
       },
     ]);
     await Notifications.setNotificationCategoryAsync(CATEGORIA_EM_PAUSA, [
       {
         identifier: 'RETOMAR',
-        buttonTitle: 'Retomar',
+        buttonTitle: t('comum.retomar'),
         options: { opensAppToForeground: false },
       },
       {
         identifier: 'PARAR',
-        buttonTitle: 'Parar',
+        buttonTitle: t('comum.parar'),
         options: { opensAppToForeground: false, isDestructive: true },
       },
     ]);

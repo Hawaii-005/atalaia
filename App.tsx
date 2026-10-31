@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler';
 import React, { useEffect, useState } from 'react';
-import { Platform, View } from 'react-native';
+import { Alert, AppState, Platform, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { vars } from 'nativewind';
 import { AppNavigator } from './src/navigation/AppNavigator';
@@ -22,10 +22,17 @@ import {
   DefaultTheme,
 } from '@react-navigation/native';
 import * as NavigationBar from 'expo-navigation-bar';
+import {
+  inicializarIdioma,
+  atualizarIdiomaDoSistema,
+  t,
+  useIdioma,
+} from './src/i18n';
 
 import './global.css';
 
 function AppContent() {
+  const { idioma } = useIdioma();
   const { escuro, tema } = useTheme();
   const { printers } = usePrinterConnections();
   usePrintNotifications(printers);
@@ -33,7 +40,7 @@ function AppContent() {
 
   useEffect(() => {
     prepareNotifications();
-  }, []);
+  }, [idioma]);
 
   const base = escuro ? DarkTheme : DefaultTheme;
   const paleta = tema.paleta;
@@ -128,6 +135,32 @@ function RaizTematica() {
 }
 
 export default function App() {
+  const [idiomaCarregado, setIdiomaCarregado] = useState(false);
+  useEffect(() => {
+    let active = true;
+    inicializarIdioma()
+      .catch(error => {
+        console.error('Failed to load language preference:', error);
+        if (active) {
+          Alert.alert(
+            t('settings.languageLoadFailed'),
+            t('settings.languageLoadFailedMessage')
+          );
+        }
+      })
+      .finally(() => {
+        if (active) setIdiomaCarregado(true);
+      });
+    const subscription = AppState.addEventListener('change', state => {
+      if (state === 'active') atualizarIdiomaDoSistema();
+    });
+    return () => {
+      active = false;
+      subscription.remove();
+    };
+  }, []);
+
+  if (!idiomaCarregado) return null;
   return (
     <ThemeProvider>
       <RaizTematica />

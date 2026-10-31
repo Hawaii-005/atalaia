@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { checkLocalNetworkPermission } from '../utils/LocalNetworkUtils';
 import { eTailscale } from '../utils/rede';
-import { t } from '../i18n';
+import { t, useIdioma } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 
@@ -30,16 +30,18 @@ interface FormErrors {
   alternateIp?: string;
 }
 
-const validationSchema = yup.object().shape({
-  printerName: yup
-    .string()
-    .required(t('addPrinter.nomeObrigatorio'))
-    .min(2, t('addPrinter.nomeMinimo'))
-    .max(50, t('addPrinter.nomeMaximo')),
-  ipAddress: yup.string().required(t('addPrinter.ipObrigatorio')),
-});
+const validationSchema = () =>
+  yup.object().shape({
+    printerName: yup
+      .string()
+      .required(t('addPrinter.nomeObrigatorio'))
+      .min(2, t('addPrinter.nomeMinimo'))
+      .max(50, t('addPrinter.nomeMaximo')),
+    ipAddress: yup.string().required(t('addPrinter.ipObrigatorio')),
+  });
 
 export const AddEditPrinterScreen = () => {
+  useIdioma();
   const { tema } = useTheme();
   const navigation = useNavigation<any>();
   const { addPrinter } = usePrinterConnections();
@@ -62,7 +64,7 @@ export const AddEditPrinterScreen = () => {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      await validationSchema.validate(formData, { abortEarly: false });
+      await validationSchema().validate(formData, { abortEarly: false });
       // Fora de casa (Tailscale) a permissão de rede local do Android não se
       // aplica: nesse caso não se bloqueia a gravação.
       const porTailscale =

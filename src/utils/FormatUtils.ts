@@ -22,9 +22,9 @@ export const formatTimeAgo = (
   const seconds = Math.floor(diff / 1000);
 
   if (minutes > 0) {
-    return `${minutes}m ${seconds % 60}s ago`;
+    return t('comum.minutesAgo', { m: minutes, s: seconds % 60 });
   } else if (seconds > 5) {
-    return `${seconds}s ago`;
+    return t('comum.secondsAgo', { n: seconds });
   } else {
     return t('comum.agoraMesmo');
   }

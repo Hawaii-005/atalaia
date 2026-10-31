@@ -3,7 +3,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
-import { t } from '../i18n';
+import { t, useIdioma } from '../i18n';
 
 type Props = {
   host: string;
@@ -27,6 +27,7 @@ export const CartaoCamara = ({
   altura = 180,
   esticar,
 }: Props) => {
+  useIdioma();
   const { tema } = useTheme();
   const p = tema.paleta;
 

@@ -8,6 +8,7 @@ import {
   Linking,
   Switch,
   Share,
+  Modal,
 } from 'react-native';
 import { gerarRelatorioDiagnostico } from '../utils/diagnostico';
 import {
@@ -33,7 +34,13 @@ import {
   prepareNotifications,
   saveNotificationPrefs,
 } from '../utils/notifications';
-import { t } from '../i18n';
+import {
+  t,
+  IDIOMAS,
+  useIdioma,
+  definirPreferenciaIdioma,
+  PreferenciaIdioma,
+} from '../i18n';
 import { getPrintStatus } from '../types';
 import { useNavigation } from '@react-navigation/native';
 
@@ -232,6 +239,21 @@ const formatarIntervalo = (ms: number) => {
 const INTERVALOS = [30000, 60000, 120000, 300000];
 
 export const SettingsScreen = () => {
+  const { preferencia } = useIdioma();
+  const [mostrarIdiomas, setMostrarIdiomas] = useState(false);
+  const [aGuardarIdioma, setAGuardarIdioma] = useState(false);
+  const guardarIdioma = async (value: PreferenciaIdioma) => {
+    setAGuardarIdioma(true);
+    try {
+      await definirPreferenciaIdioma(value);
+      setMostrarIdiomas(false);
+    } catch (error) {
+      console.error('Failed to save language preference:', error);
+      Alert.alert(t('comum.erro'), t('settings.languageChangeFailed'));
+    } finally {
+      setAGuardarIdioma(false);
+    }
+  };
   const { tema, temaId, setTema } = useTheme();
   const navigation = useNavigation<any>();
   const {
@@ -419,6 +441,20 @@ export const SettingsScreen = () => {
         contentContainerStyle={{ padding: 16, paddingBottom: 88, gap: 12 }}
         showsVerticalScrollIndicator={false}
       >
+        <Section title={t('settings.language')}>
+          <Row
+            icon="language-outline"
+            label={t('settings.language')}
+            description={t('settings.languageDescription')}
+            value={
+              preferencia === 'system'
+                ? t('settings.languageSystem')
+                : IDIOMAS.find(item => item.id === preferencia)?.nome
+            }
+            onPress={() => setMostrarIdiomas(true)}
+            last
+          />
+        </Section>
         <Section title={t('settings.seccaoMaquinas')}>
           {printers.length === 0 ? (
             <Row
@@ -675,6 +711,79 @@ export const SettingsScreen = () => {
           {t('settings.avisoComunidade')}
         </Text>
       </ScrollView>
+      <Modal
+        visible={mostrarIdiomas}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          if (!aGuardarIdioma) setMostrarIdiomas(false);
+        }}
+      >
+        <SafeAreaView
+          className="flex-1 items-center justify-center px-4"
+          style={{ backgroundColor: 'rgba(0,0,0,0.65)' }}
+        >
+          <View
+            className="rounded-2xl border border-line bg-cartao overflow-hidden"
+            style={{ width: '100%', maxWidth: 480, maxHeight: '85%' }}
+            accessibilityViewIsModal
+          >
+            <View className="flex-row items-center pl-4 pr-2 py-2">
+              <Text className="flex-1 text-[18px] font-semibold text-ink">
+                {t('settings.language')}
+              </Text>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel={t('comum.fechar')}
+                disabled={aGuardarIdioma}
+                onPress={() => setMostrarIdiomas(false)}
+                style={{
+                  minWidth: 48,
+                  minHeight: 48,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Ionicons
+                  name="close"
+                  size={24}
+                  color={hexDe(tema.paleta.tinta)}
+                />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={{ flexGrow: 0 }}>
+              {[
+                { id: 'system' as const, nome: t('settings.languageSystem') },
+                ...IDIOMAS,
+              ].map(item => (
+                <TouchableOpacity
+                  key={item.id}
+                  accessibilityRole="radio"
+                  accessibilityState={{
+                    selected: preferencia === item.id,
+                    disabled: aGuardarIdioma,
+                  }}
+                  disabled={aGuardarIdioma}
+                  onPress={() => guardarIdioma(item.id)}
+                  className="flex-row items-center px-4 py-4 border-t border-line"
+                  style={{ minHeight: 56 }}
+                >
+                  <Text className="flex-1 text-[15px] text-ink">
+                    {item.nome}
+                  </Text>
+                  {preferencia === item.id && (
+                    <Ionicons
+                      name="checkmark"
+                      size={22}
+                      color={hexDe(tema.paleta.acentoTexto)}
+                    />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 };

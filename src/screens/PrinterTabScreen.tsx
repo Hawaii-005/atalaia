@@ -16,7 +16,7 @@ import {
   raio as raioToken,
   texto as textoToken,
 } from '../theme/tokensV6';
-import { t } from '../i18n';
+import { t, useIdioma } from '../i18n';
 import { EstadoSection } from '../sections/EstadoSection';
 import { PainelSection } from '../sections/PainelSection';
 import { FilamentosScreen } from '../screens/FilamentosScreen';
@@ -35,6 +35,7 @@ const ETIQUETAS: Record<Secao, string> = {
  * trocar de secção não empilha ecrãs nem perde o estado.
  */
 export const PrinterTabScreen = ({ navigation }: any) => {
+  useIdioma();
   const { tema } = useTheme();
   const paleta = tema.paleta;
   const { printers, removePrinter, reconnectAll } = usePrinterConnections();

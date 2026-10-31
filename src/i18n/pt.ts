@@ -5,6 +5,27 @@ export default {
   'comum.erroLigacao': 'Não foi possível abrir a ligação.',
   'comum.voltar': 'Voltar',
   'comum.agoraMesmo': 'Agora mesmo',
+  'comum.secondsAgo': 'Há {n}s',
+  'comum.minutesAgo': 'Há {m}m {s}s',
+  'notifications.channel': 'Estado da impressão',
+  'notifications.viewCamera': 'Ver câmara',
+  'notifications.defaultPrint': 'a sua impressão',
+  'notifications.offlineBody': '{nome} perdeu a ligação à rede a imprimir.',
+  'notifications.completedBody': '{nome} concluiu {ficheiro}.',
+  'notifications.pausedTitle': 'Impressão em pausa',
+  'notifications.pausedBody': '{nome} pausou {ficheiro}.',
+  'notifications.stoppedTitle': 'Impressão parada',
+  'notifications.stoppedBody': '{nome} parou {ficheiro}.',
+  'notifications.milestoneTitle': '{n}% impressos',
+  'notifications.milestoneBody': '{nome} chegou aos {n}%.',
+  'notifications.monitorBody': 'A app está a acompanhar a impressão',
+  'network.permissionTitle': 'Acesso à rede local necessário',
+  'network.permissionBody':
+    'Esta app precisa de acesso à rede local para ligar às impressoras. Ative o acesso em Definições para continuar.',
+  'network.openSettings': 'Abrir definições',
+  'network.permissionErrorTitle': 'Erro de acesso à rede',
+  'network.permissionErrorBody':
+    'Não foi possível verificar o acesso à rede local. Confirme as permissões.',
   'comum.ligada': 'Ligada',
   'comum.aLigar': 'A ligar',
   'comum.desligada': 'Desligada',
@@ -266,6 +287,15 @@ export default {
   'inv.aviso':
     'O saldo é uma estimativa local: a impressora não informa gramas nem ml. O consumo sai do peso que o slicer escreve no G-code; sem esse valor, fica por confirmar.',
   'settings.title': 'Definições',
+  'settings.language': 'Idioma',
+  'settings.languageDescription':
+    'Escolha o idioma da aplicação. As alterações são imediatas.',
+  'settings.languageSystem': 'Seguir o idioma do telemóvel',
+  'settings.languageChangeFailed':
+    'Não foi possível guardar o idioma. Tente novamente.',
+  'settings.languageLoadFailed': 'Não foi possível carregar o idioma guardado',
+  'settings.languageLoadFailedMessage':
+    'Por agora, será usado o idioma do telemóvel. A preferência guardada não foi alterada.',
   'settings.subtitulo': 'Preferências e sobre',
   'settings.seccaoPrefs': 'PREFERÊNCIAS',
   'settings.seccaoMaquinas': 'IMPRESSORAS',

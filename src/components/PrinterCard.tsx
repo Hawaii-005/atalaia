@@ -15,7 +15,7 @@ import {
   formatTextMaxEllipsis,
   formatTicksToReadableTime,
 } from '../utils/FormatUtils';
-import { t } from '../i18n';
+import { t, useIdioma } from '../i18n';
 import Svg, { Circle } from 'react-native-svg';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
@@ -80,6 +80,7 @@ export const PrinterCard = ({
   onToggleLight,
   onOpenCamera,
 }: PrinterCardProps) => {
+  useIdioma();
   const { tema } = useTheme();
   const [currentTime, setCurrentTime] = useState(Date.now());
 
@@ -353,7 +354,7 @@ export const PrinterCard = ({
                   <TouchableOpacity
                     onPress={onOpenCamera}
                     accessibilityRole="button"
-                    accessibilityLabel="Abrir câmara"
+                    accessibilityLabel={t('notifications.viewCamera')}
                     className={`${BT_NEUTRA} px-2.5 py-1.5`}
                     activeOpacity={0.7}
                   >

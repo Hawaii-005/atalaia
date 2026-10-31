@@ -5,7 +5,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 import { larguraRail } from '../theme/layout';
 import PrinterIcon from './icons/PrinterIcon';
-import { t } from '../i18n';
+import { t, useIdioma } from '../i18n';
 
 const ICONES: Record<
   string,
@@ -29,6 +29,7 @@ const ROTULOS: Record<string, string> = {
  * inferior, para que `navigate('Impressora')` funcione em qualquer shell.
  */
 export const RailLateral = ({ state, navigation }: any) => {
+  useIdioma();
   const { tema } = useTheme();
   const paleta = tema.paleta;
 

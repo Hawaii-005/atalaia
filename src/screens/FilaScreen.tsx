@@ -5,10 +5,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 import { CartaoFila } from '../components/CartaoFila';
-import { t } from '../i18n';
+import { t, useIdioma } from '../i18n';
 
 /** Ecrã da fila: ver, remover e limpar os trabalhos à espera. */
 export const FilaScreen = ({ navigation }: any) => {
+  useIdioma();
   const { tema } = useTheme();
   const p = tema.paleta;
 

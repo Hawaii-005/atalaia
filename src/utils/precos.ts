@@ -4,6 +4,7 @@
  * disco a cada abertura do ecrã de detalhe.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { localeActual } from '../i18n';
 
 const CHAVE = 'precoKgFilamento';
 
@@ -35,6 +36,9 @@ export const setPrecoKg = async (valor: number): Promise<void> => {
 export const custoDe = (gramas: number, precoKg: number): number =>
   precoKg > 0 ? (gramas / 1000) * precoKg : 0;
 
-/** Formata em euros com duas casas e vírgula decimal (pt-PT). */
+/** A moeda mantém-se em euros; a apresentação segue o idioma escolhido. */
 export const euros = (valor: number): string =>
-  `${valor.toFixed(2).replace('.', ',')} €`;
+  new Intl.NumberFormat(localeActual(), {
+    style: 'currency',
+    currency: 'EUR',
+  }).format(valor);

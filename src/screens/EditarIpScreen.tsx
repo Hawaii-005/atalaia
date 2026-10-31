@@ -12,7 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
-import { t } from '../i18n';
+import { t, useIdioma } from '../i18n';
 
 /**
  * Editar IP — a app só atualizava o endereço pela descoberta na rede local.
@@ -20,6 +20,7 @@ import { t } from '../i18n';
  * pode ser o da impressora na LAN ou o de um encaminhador na tailnet.
  */
 export const EditarIpScreen = ({ route, navigation }: any) => {
+  useIdioma();
   const { tema } = useTheme();
   const paleta = tema.paleta;
   const { printers, updatePrinterIp } = usePrinterConnections();

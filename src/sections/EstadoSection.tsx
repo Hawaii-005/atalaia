@@ -22,7 +22,7 @@ import { Mascote } from '../ui/Mascote';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 import { anel, espaco, raio as raioToken } from '../theme/tokensV6';
-import { t } from '../i18n';
+import { t, useIdioma } from '../i18n';
 import { getPrintStatus, Printer } from '../types';
 import {
   pausePrintCommand,
@@ -119,6 +119,7 @@ export const EstadoSection = ({
   printer?: Printer;
   onAbrirCamara?: () => void;
 }) => {
+  useIdioma();
   const { tema } = useTheme();
   const paleta = tema.paleta;
   const { request, sendCommand, reconnectAll } = usePrinterConnections();
@@ -151,7 +152,7 @@ export const EstadoSection = ({
     if (s === 'stopped')
       return { texto: t('estado.parada'), cor: hexDe(paleta.perigo) };
     return { texto: t('inicio.pronta'), cor: hexDe(paleta.ok) };
-  }, [info, ligada, paleta]);
+  })();
 
   const segundosRestantes = restante(
     (info?.TotalTicks ?? 0) - (info?.CurrentTicks ?? 0)

@@ -1,88 +1,101 @@
-/** I18n mínimo, sem dependências: escolhe o idioma no arranque a partir do
- * telemóvel e resolve chaves de texto nos dicionários `pt.ts` / `en.ts`. */
-import { NativeModules } from 'react-native';
+import { useSyncExternalStore } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getLocales } from 'expo-localization';
 import pt from './pt';
 import en from './en';
+import es from './es';
+import fr from './fr';
+import de from './de';
+import it from './it';
+import nl from './nl';
+import pl from './pl';
+import ja from './ja';
+import zh from './zh';
+import {
+  IDIOMAS,
+  Idioma,
+  PreferenciaIdioma,
+  isPreferenciaIdioma,
+  resolverIdioma,
+} from './language';
 
-export type Idioma = 'pt' | 'en';
+export { IDIOMAS } from './language';
+export type { Idioma, PreferenciaIdioma } from './language';
 
-// Descobre o idioma do telemóvel, por ordem de fiabilidade:
-// 1) identificador nativo (Android e iOS costumam devolver 'pt_PT'/'pt-PT');
-// 2) locale resolvido pela API Intl;
-// 3) inglês como último recurso.
-const resolverIdioma = (): Idioma => {
-  const nativo = NativeModules.I18nManager?.localeIdentifier as
-    | string
-    | undefined;
-  const intl = (() => {
-    try {
-      return Intl.DateTimeFormat().resolvedOptions().locale;
-    } catch {
-      return '';
-    }
-  })();
+const STORAGE_KEY = 'languagePreference';
+const tabelas: Record<Idioma, Record<string, string>> = {
+  pt,
+  en,
+  es,
+  fr,
+  de,
+  it,
+  nl,
+  pl,
+  ja,
+  zh,
+};
+const idiomaDoTelefone = () =>
+  resolverIdioma(getLocales().map(locale => locale.languageTag));
+let estado: { preferencia: PreferenciaIdioma; idioma: Idioma } = {
+  preferencia: 'system',
+  idioma: idiomaDoTelefone(),
+};
+const listeners = new Set<() => void>();
 
-  for (const candidato of [nativo, intl]) {
-    if (candidato && candidato.toLowerCase().startsWith('pt')) {
-      return 'pt';
-    }
+const publicar = (preferencia: PreferenciaIdioma) => {
+  const idioma = preferencia === 'system' ? idiomaDoTelefone() : preferencia;
+  if (estado.preferencia === preferencia && estado.idioma === idioma) return;
+  estado = { preferencia, idioma };
+  listeners.forEach(listener => listener());
+};
+
+const subscribe = (listener: () => void) => {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+};
+const getSnapshot = () => estado;
+
+export const useIdioma = () =>
+  useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+
+export const localeActual = () =>
+  IDIOMAS.find(item => item.id === estado.idioma)!.locale;
+
+export const inicializarIdioma = async () => {
+  const saved = await AsyncStorage.getItem(STORAGE_KEY);
+  if (saved !== null && !isPreferenciaIdioma(saved)) {
+    throw new Error('Invalid saved language preference');
   }
-  return 'en';
+  publicar(saved ?? 'system');
 };
 
-/** Idioma calculado uma vez no arranque. */
-export const idiomaActual: Idioma = resolverIdioma();
-
-let idiomCorrente: Idioma = idiomaActual;
-
-/** Troca o idioma em execução (para uso futuro nas Definições). */
-export const definirIdioma = (id: Idioma) => {
-  idiomCorrente = id;
+export const definirPreferenciaIdioma = async (
+  preferencia: PreferenciaIdioma
+) => {
+  if (!isPreferenciaIdioma(preferencia)) {
+    throw new Error('Invalid language preference');
+  }
+  await AsyncStorage.setItem(STORAGE_KEY, preferencia);
+  publicar(preferencia);
 };
 
-const tabelas: Record<string, Record<string, string>> = {
-  pt: pt as Record<string, string>,
-  en: en as Record<string, string>,
-};
+export const atualizarIdiomaDoSistema = () => publicar(estado.preferencia);
 
-/** Devolve o texto da chave, com `{nome}` substituído por `params.nome`.
- * Em desenvolvimento avisa e devolve a própria chave se esta não existir. */
 export const t = (
   chave: string,
   params?: Record<string, string | number>
 ): string => {
-  // Se a chave não existir no idioma corrente, cai para português em vez de
-  // mostrar a chave crua ao utilizador.
-  let valor = tabelas[idiomCorrente]?.[chave];
-  if (valor === undefined && idiomCorrente !== 'pt') {
-    valor = tabelas.pt?.[chave];
-  }
+  const valor = tabelas[estado.idioma][chave] ?? tabelas.en[chave];
   if (valor === undefined) {
-    if (__DEV__) {
-      console.warn(`[i18n] chave em falta: ${chave}`);
+    if (typeof __DEV__ !== 'undefined' && __DEV__) {
+      console.warn(`[i18n] missing translation: ${chave}`);
     }
     return chave;
   }
-  if (params) {
-    for (const [nome, substituto] of Object.entries(params)) {
-      valor = valor.replace(
-        new RegExp(`\\{${nome}\\}`, 'g'),
-        String(substituto)
-      );
-    }
-  }
-  return valor;
+  return valor.replace(/\{([^{}]+)\}/g, (match, nome: string) =>
+    params?.[nome] === undefined ? match : String(params[nome])
+  );
 };
-
-// Verificação simples: ambas as tabelas devem ter exactamente as mesmas chaves.
-if (__DEV__) {
-  const chavesPt = Object.keys(pt).sort();
-  const chavesEn = Object.keys(en).sort();
-  if (chavesPt.join('|') !== chavesEn.join('|')) {
-    console.warn(
-      '[i18n] as tabelas pt/en não têm as mesmas chaves',
-      chavesPt.filter(k => !chavesEn.includes(k)),
-      chavesEn.filter(k => !chavesPt.includes(k))
-    );
-  }
-}

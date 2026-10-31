@@ -16,13 +16,14 @@ import {
   discoverPrinters,
   getLocalSubnet,
 } from '../utils/PrinterDiscovery';
-import { t } from '../i18n';
+import { t, useIdioma } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 
 type ScanState = 'idle' | 'scanning' | 'done' | 'error';
 
 export const DiscoveryScreen = ({ navigation }: any) => {
+  useIdioma();
   const { tema } = useTheme();
   const { printers, addPrinter, updatePrinterIp } = usePrinterConnections();
   const [scanState, setScanState] = useState<ScanState>('idle');

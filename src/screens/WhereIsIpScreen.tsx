@@ -1,8 +1,9 @@
 import { View, Text, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { t } from '../i18n';
+import { t, useIdioma } from '../i18n';
 
 const WhereIsIpScreen = () => {
+  useIdioma();
   const navigation = useNavigation();
 
   return (

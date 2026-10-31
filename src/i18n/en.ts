@@ -8,6 +8,28 @@ const en = {
   'comum.erroLigacao': "Couldn't open the link.",
   'comum.voltar': 'Back',
   'comum.agoraMesmo': 'Just now',
+  'comum.secondsAgo': '{n}s ago',
+  'comum.minutesAgo': '{m}m {s}s ago',
+  'notifications.channel': 'Print status',
+  'notifications.viewCamera': 'View camera',
+  'notifications.defaultPrint': 'your print',
+  'notifications.offlineBody':
+    '{nome} lost its network connection while printing.',
+  'notifications.completedBody': '{nome} completed {ficheiro}.',
+  'notifications.pausedTitle': 'Print paused',
+  'notifications.pausedBody': '{nome} paused {ficheiro}.',
+  'notifications.stoppedTitle': 'Print stopped',
+  'notifications.stoppedBody': '{nome} stopped {ficheiro}.',
+  'notifications.milestoneTitle': '{n}% printed',
+  'notifications.milestoneBody': '{nome} reached {n}%.',
+  'notifications.monitorBody': 'The app is monitoring your print',
+  'network.permissionTitle': 'Local network access needed',
+  'network.permissionBody':
+    'This app needs local network access to connect to your printers. Enable it in Settings to continue.',
+  'network.openSettings': 'Open settings',
+  'network.permissionErrorTitle': 'Network access error',
+  'network.permissionErrorBody':
+    'Could not check local network access. Please check the permissions.',
   'comum.ligada': 'Connected',
   'comum.aLigar': 'Connecting',
   'comum.desligada': 'Disconnected',
@@ -267,6 +289,15 @@ const en = {
   'inv.aviso':
     'The balance is a local estimate: the printer reports neither grams nor ml. Usage comes from the weight the slicer writes into the G-code; without it, it stays to confirm.',
   'settings.title': 'Settings',
+  'settings.language': 'Language',
+  'settings.languageDescription':
+    'Choose the app language. Changes apply immediately.',
+  'settings.languageSystem': 'Follow phone language',
+  'settings.languageChangeFailed':
+    'Could not save the language. Please try again.',
+  'settings.languageLoadFailed': 'Could not load the saved language',
+  'settings.languageLoadFailedMessage':
+    'Using your phone language for now. Your saved preference has not been changed.',
   'settings.subtitulo': 'Preferences and about',
   'settings.seccaoPrefs': 'PREFERENCES',
   'settings.seccaoMaquinas': 'PRINTERS',

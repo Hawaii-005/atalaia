@@ -16,7 +16,7 @@ import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 import { fonteNumeros } from '../theme/tokensV6';
-import { t } from '../i18n';
+import { t, useIdioma } from '../i18n';
 import {
   carregarInventario,
   adicionarGarrafa,
@@ -79,6 +79,7 @@ const Barra: React.FC<{
 );
 
 export const InventarioScreen = () => {
+  useIdioma();
   const { tema } = useTheme();
   const p = tema.paleta;
   const { printers } = usePrinterConnections();
@@ -867,6 +868,7 @@ const FormularioRolo = ({
     preco: number;
   }) => void;
 }) => {
+  useIdioma();
   const { tema } = useTheme();
   const p = tema.paleta;
   const [nome, setNome] = useState('');
@@ -1029,6 +1031,7 @@ const FormularioGarrafa = ({
     preco: number;
   }) => void;
 }) => {
+  useIdioma();
   const { tema } = useTheme();
   const p = tema.paleta;
   const [nome, setNome] = useState('');

@@ -19,7 +19,7 @@ import {
   formatDuration,
   loadHistory,
 } from '../utils/printHistory';
-import { t, idiomaActual } from '../i18n';
+import { t, localeActual, useIdioma } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { custoDe, euros, getPrecoKg } from '../utils/precos';
@@ -42,12 +42,9 @@ const outcomeLabel: Record<PrintRecord['outcome'], string> = {
   unknown: 'history.semConfirmacao',
 };
 
-// Locale de formatação de datas segue o idioma detectado.
-const LOCALE = idiomaActual === 'pt' ? 'pt-PT' : 'en-GB';
-
 const formatDate = (timestamp: number) => {
   const date = new Date(timestamp);
-  return date.toLocaleDateString(LOCALE, {
+  return date.toLocaleDateString(localeActual(), {
     day: '2-digit',
     month: 'short',
   });
@@ -65,7 +62,10 @@ const rotuloDoDia = (timestamp: number) => {
     a.getDate() === b.getDate();
   if (igual(dia, hoje)) return t('history.hoje');
   if (igual(dia, ontem)) return t('history.ontem');
-  return dia.toLocaleDateString(LOCALE, { day: '2-digit', month: 'long' });
+  return dia.toLocaleDateString(localeActual(), {
+    day: '2-digit',
+    month: 'long',
+  });
 };
 
 const segundosDe = (record: PrintRecord) =>
@@ -80,6 +80,7 @@ const HistoryRow = ({
   record: PrintRecord;
   onReprint: () => void;
 }) => {
+  useIdioma();
   // Um só pedido por linha: o mesmo texto dá a miniatura, as cores e as gramas.
   const { preview, filamentos, consumo } = useGcodePreview(
     record.printerIp,
@@ -167,6 +168,7 @@ const HistoryRow = ({
 };
 
 export const HistoryScreen = ({ navigation }: any) => {
+  useIdioma();
   const { tema } = useTheme();
   const { printers, request } = usePrinterConnections();
   const [records, setRecords] = useState<PrintRecord[]>([]);
