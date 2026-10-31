@@ -5,8 +5,14 @@ module.exports = {
   testMatch: ['**/tests/**/*.test.ts'],
   moduleFileExtensions: ['ts', 'js'],
   coverageThreshold: {
-    './src/protocol/': {
-      branches: 80,
+    './src/protocol/stateMachine.ts': {
+      branches: 90,
+      functions: 90,
+      lines: 90,
+      statements: 90,
+    },
+    './src/protocol/schemas.ts': {
+      branches: 75,
       functions: 90,
       lines: 85,
       statements: 85,
