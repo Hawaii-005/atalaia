@@ -2,6 +2,7 @@ import { log } from './log';
 import * as Network from 'expo-network';
 import { Buffer } from 'buffer';
 import dgram from 'react-native-udp';
+import { getDiscoveryAddress } from './printerDiscoverySafety';
 
 export interface DiscoveredPrinter {
   ip: string;
@@ -113,7 +114,7 @@ const udpDiscovery = (subnet: string | null): Promise<DiscoveredPrinter[]> =>
     try {
       socket = dgram.createSocket({ type: 'udp4' });
       socket.on('error', finish);
-      socket.on('message', (data: any) => {
+      socket.on('message', (data: any, remote: { address: string }) => {
         try {
           const text = Buffer.isBuffer(data)
             ? data.toString('utf8')
@@ -123,8 +124,11 @@ const udpDiscovery = (subnet: string | null): Promise<DiscoveredPrinter[]> =>
           // A Saturn 3 Ultra aninha tudo em Data.Attributes; a Centauri manda
           // os campos à superfície de Data. Aceitam-se as duas formas.
           const attrs = info?.Attributes ?? info;
-          const ip = attrs?.MainboardIP;
-          if (!ip) return;
+          const ip = getDiscoveryAddress(attrs?.MainboardIP, remote?.address);
+          if (!ip) {
+            log('[discovery] Ignored invalid or mismatched UDP address');
+            return;
+          }
           if (!graceTimer) {
             graceTimer = setTimeout(finish, 600);
           }

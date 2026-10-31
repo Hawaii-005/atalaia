@@ -35,6 +35,8 @@ import { ItemFila, carregarFila, gravarFila } from '../utils/fila';
 import { notify } from '../utils/notifications';
 import { mensagemDoErro } from '../utils/errors';
 import { lerTimelapse } from '../utils/timelapse';
+import { requestPrinterRecovery } from '../utils/printerDiscoverySafety';
+import { t } from '../i18n';
 
 interface PrinterConnectionsContextType {
   printers: Printer[];
@@ -57,13 +59,10 @@ interface PrinterConnectionsContextType {
   statusIntervalMs: number;
   fila: ItemFila[];
   filaAuto: boolean;
-  pendentesMesaLimpa: Record<string, ItemFila>;
   adicionarAFila: (item: ItemFila) => void;
   removerDaFila: (id: string) => void;
   limparFila: () => void;
   definirFilaAuto: (ligada: boolean) => void;
-  confirmarMesaLimpa: (printerId: string) => Promise<boolean>;
-  cancelarMesaLimpa: (printerId: string) => void;
   setStatusInterval: (ms: number) => Promise<void>;
   /** Envia um .goo/.ctb para uma impressora de resina (comando 256). */
   carregarParaSaturno: (
@@ -115,17 +114,6 @@ export const PrinterConnectionsProvider = ({
   const [fila, setFila] = useState<ItemFila[]>([]);
   const [hidratado, setHidratado] = useState(false);
   const [filaAuto, setFilaAuto] = useState(false);
-  const [pendentesMesaLimpa, setPendentesMesaLimpa] = useState<
-    Record<string, ItemFila>
-  >({});
-
-  const cancelarMesaLimpa = useCallback((printerId: string) => {
-    setPendentesMesaLimpa(prev => {
-      const nov = { ...prev };
-      delete nov[printerId];
-      return nov;
-    });
-  }, []);
   const filaRef = useRef<ItemFila[]>([]);
   const estadoAnteriorRef = useRef<Record<string, number | undefined>>({});
   const webSocketsRef = useRef<{ [key: string]: WebSocket }>({});
@@ -149,6 +137,7 @@ export const PrinterConnectionsProvider = ({
     DEFAULT_STATUS_INTERVAL
   );
   const printersRef = useRef<Printer[]>([]);
+  const pendingIpChangesRef = useRef(new Set<string>());
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
   const pendingRequestsRef = useRef<{
     [key: string]: {
@@ -168,11 +157,13 @@ export const PrinterConnectionsProvider = ({
   const intentionalCloseRef = useRef<{ [key: string]: boolean }>({});
   const timerPrimeiroPlano = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+
   const pendingCommandsRef = useRef<{
     [key: string]: { command: string; timestamp: number };
   }>({});
 
   useEffect(() => {
+    const pendingIpChanges = pendingIpChangesRef.current;
     const loadPrinters = async () => {
       try {
         const savedPrintersJSON = await AsyncStorage.getItem('printers');
@@ -200,6 +191,7 @@ export const PrinterConnectionsProvider = ({
     loadPrinters();
 
     return () => {
+      pendingIpChanges.clear();
       // Sem reconexões nem pedidos órfãos depois do unmount: mata timers,
       // rejeita pedidos pendentes e tira os handlers antes de fechar, para o
       // `onclose` não tentar fazer setState sobre um componente morto.
@@ -242,13 +234,20 @@ export const PrinterConnectionsProvider = ({
   // Handle app state changes (background/foreground)
   useEffect(() => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
-      log('App state changed from', appStateRef.current, 'to', nextAppState);
+      log(
+        'App state changed from',
+        appStateRef.current,
+        'to',
+        nextAppState
+      );
 
       if (
         appStateRef.current.match(/inactive|background/) &&
         nextAppState === 'active'
       ) {
-        log('App came to foreground, reconnecting disconnected printers...');
+        log(
+          'App came to foreground, reconnecting disconnected printers...'
+        );
         // Fecho em segundo plano conta como recomeço: sem tentativas acumuladas.
         Object.keys(reconnectAttemptsRef.current).forEach(id => {
           delete reconnectAttemptsRef.current[id];
@@ -373,7 +372,9 @@ export const PrinterConnectionsProvider = ({
     log('websocket', websocket);
 
     if (!websocket) {
-      log(`No WebSocket found for ${printer.printerName}, stopping timer`);
+      log(
+        `No WebSocket found for ${printer.printerName}, stopping timer`
+      );
       stopStatusTimer(printer.id);
       return;
     }
@@ -400,7 +401,9 @@ export const PrinterConnectionsProvider = ({
         websocket.readyState === WebSocket.CLOSED ||
         websocket.readyState === WebSocket.CLOSING
       ) {
-        log(`WebSocket closed for ${printer.printerName}, stopping timer`);
+        log(
+          `WebSocket closed for ${printer.printerName}, stopping timer`
+        );
         stopStatusTimer(printer.id);
         updatePrinterStatus(printer.id, 'disconnected');
       }
@@ -410,7 +413,9 @@ export const PrinterConnectionsProvider = ({
   const startStatusTimer = (printer: Printer) => {
     // A resina não faz polling: recebe o estado por MQTT a cada ~5 s.
     if (printer.kind === 'resin') return;
-    log(`Starting status timer for ${printer.printerName} (${printer.id})`);
+    log(
+      `Starting status timer for ${printer.printerName} (${printer.id})`
+    );
 
     // Clear any existing timer for this printer
     if (statusTimersRef.current[printer.id]) {
@@ -427,7 +432,9 @@ export const PrinterConnectionsProvider = ({
       if (currentPrinter && currentPrinter.connectionStatus === 'connected') {
         sendStatusRequest(printer);
       } else {
-        log(`Printer ${printer.printerName} is not connected, stopping timer`);
+        log(
+          `Printer ${printer.printerName} is not connected, stopping timer`
+        );
         stopStatusTimer(printer.id);
       }
     }, statusIntervalRef.current);
@@ -460,8 +467,8 @@ export const PrinterConnectionsProvider = ({
 
   /**
    * The printer gets its address from DHCP, so it can come back on a different
-   * IP after a reboot. When a connection drops, rescan the network once a
-   * minute and reconnect silently if the same machine answers elsewhere.
+   * IP after a reboot. Discovery can suggest a replacement, but cannot
+   * authenticate it: require approval before changing the saved destination.
    */
   const healPrinterIp = async (printer: Printer) => {
     // Pelo Tailscale não se "cura" IP: a rede é outra e a descoberta UDP
@@ -477,32 +484,71 @@ export const PrinterConnectionsProvider = ({
     const estado = printer.status?.PrintInfo;
     const aImprimir =
       !!estado?.Filename && ![0, 7, 8, 9].includes(estado.Status ?? 0);
+    if (aImprimir || pendingIpChangesRef.current.has(printer.id)) {
+      return;
+    }
     const ultima = ipHealRef.current[printer.id] ?? 0;
     if (Date.now() - ultima < 5 * 60 * 1000) {
       return;
     }
     ipHealRef.current[printer.id] = Date.now();
+    pendingIpChangesRef.current.add(printer.id);
 
     try {
       const discovered = await descobrirSoUdp();
-      // A meio de uma impressão só se aceita a máquina certa: o nome pode
-      // repetir-se na rede, o mainboardId não.
-      const match = discovered.find(d =>
-        aImprimir
-          ? !!printer.mainboardId && d.mainboardId === printer.mainboardId
-          : (!!printer.mainboardId && d.mainboardId === printer.mainboardId) ||
-            d.name.trim().toLowerCase() ===
-              printer.printerName.trim().toLowerCase()
+      const currentPrinter = () => {
+        const current = printersRef.current.find(p => p.id === printer.id);
+        const info = current?.status?.PrintInfo;
+        if (
+          !pendingIpChangesRef.current.has(printer.id) ||
+          AppState.currentState !== 'active' ||
+          !current ||
+          current.ipAddress !== printer.ipAddress ||
+          current.mainboardId !== printer.mainboardId ||
+          current.connectionStatus === 'connected' ||
+          (current.activeIp && current.activeIp !== current.ipAddress) ||
+          (info?.Filename && ![0, 7, 8, 9].includes(info.Status ?? 0))
+        ) {
+          return undefined;
+        }
+        return current;
+      };
+      if (!currentPrinter()) return;
+      const match = await requestPrinterRecovery(
+        printer,
+        discovered,
+        candidate =>
+          new Promise<boolean>(resolve => {
+            Alert.alert(
+              t('home.confirmarIpTitulo'),
+              t('home.confirmarIpMensagem', {
+                nome: printer.printerName,
+                antigo: printer.ipAddress,
+                novo: candidate.ip,
+              }),
+              [
+                {
+                  text: t('comum.cancelar'),
+                  style: 'cancel',
+                  onPress: () => resolve(false),
+                },
+                {
+                  text: t('home.confirmarIpAceitar'),
+                  onPress: () => resolve(true),
+                },
+              ],
+              { cancelable: true, onDismiss: () => resolve(false) }
+            );
+          })
       );
-
-      if (match && match.ip !== printer.ipAddress) {
-        log(
-          `Auto-healed ${printer.printerName}: ${printer.ipAddress} -> ${match.ip}`
-        );
+      if (match && currentPrinter()) {
+        log(`Approved IP change for ${printer.printerName}`);
         updatePrinterIp(printer.id, match.ip);
       }
     } catch (error) {
       log('Auto IP heal failed', error);
+    } finally {
+      pendingIpChangesRef.current.delete(printer.id);
     }
   };
 
@@ -645,8 +691,7 @@ export const PrinterConnectionsProvider = ({
       }
 
       const ligacao = new LigacaoSaturno(redeSaturno, {
-        aoEstado: estado =>
-          updatePrinterData(printer.id, estadoParaApp(estado)),
+        aoEstado: estado => updatePrinterData(printer.id, estadoParaApp(estado)),
         aoLigar: () => updatePrinterStatus(printer.id, 'connected'),
         aoDesligar: motivo => {
           log(`saturno: ${printer.printerName} desligou (${motivo})`);
@@ -771,7 +816,10 @@ export const PrinterConnectionsProvider = ({
           From: 1,
         },
       };
-      log(`Sending enable command to ${printer.printerName}:`, enableCommand);
+      log(
+        `Sending enable command to ${printer.printerName}:`,
+        enableCommand
+      );
       ws.send(JSON.stringify(enableCommand));
 
       // Send initial status request using the ws instance directly
@@ -824,7 +872,10 @@ export const PrinterConnectionsProvider = ({
         }
 
         if (data.Status) {
-          log(`Status update from ${printer.printerName}:`, data.Status);
+          log(
+            `Status update from ${printer.printerName}:`,
+            data.Status
+          );
           updatePrinterData(printer.id, data.Status);
         }
 
@@ -854,11 +905,17 @@ export const PrinterConnectionsProvider = ({
 
           // Mensagem honesta e em português: o código Ack é o que a máquina
           // devolveu, sem inventar causas que não foram observadas.
-          const aviso = descreverAck(data.Data.Data.Ack as number, commandName);
+          const aviso = descreverAck(
+            data.Data.Data.Ack as number,
+            commandName
+          );
           Alert.alert(aviso.titulo, aviso.mensagem, [{ text: 'OK' }]);
         }
       } catch (error) {
-        log(`Error parsing message from ${printer.printerName}:`, error);
+        log(
+          `Error parsing message from ${printer.printerName}:`,
+          error
+        );
         log(`Raw message:`, event.data);
       }
     };
@@ -1185,10 +1242,6 @@ export const PrinterConnectionsProvider = ({
               printerId,
               stopPrintCommand({ id: `aviso-parar-${Date.now()}` })
             );
-          } else if (acao === 'ARRANCAR_AGORA') {
-            await confirmarMesaLimpa(printerId);
-          } else if (acao === 'CANCELAR_ARRANQUE') {
-            cancelarMesaLimpa(printerId);
           }
         } catch (erro) {
           const texto =
@@ -1202,6 +1255,7 @@ export const PrinterConnectionsProvider = ({
     );
     return () => inscricao.remove();
   }, [request]);
+
 
   // ---------- Serviço em primeiro plano ----------
   // Enquanto há impressão, o Android pode matar a app e os avisos morrem com
@@ -1262,16 +1316,24 @@ export const PrinterConnectionsProvider = ({
     AsyncStorage.setItem('filaAuto', ligada ? '1' : '0').catch(() => undefined);
   }, []);
 
-  // Só arranca com a fila ligada e na transição para "terminada" (9).
+  // Só arranca com a fila ligada e na transição para "terminada" (9). Sem a
+  // transição disparava em cada actualização de estado com 9.
   const aArrancarRef = useRef<Record<string, boolean>>({});
   const imprimiuRef = useRef<Record<string, boolean>>({});
+  // Depois de arrancar um trabalho a máquina demora a sair do estado 9; sem
+  // esta pausa o mesmo fim de trabalho podia arrancar dois itens da fila.
   const ultimoArranqueRef = useRef<Record<string, number>>({});
 
-  const executarArranque = useCallback(
-    async (printer: Printer, proximo: ItemFila): Promise<boolean> => {
+  // Arranca o primeiro item da fila desta impressora. Só sai da fila quando a
+  // máquina aceita (Ack 0); fora disso repete, porque o Cmd 128 leva Ack != 0
+  // nos segundos seguintes ao fim do trabalho anterior.
+  const arrancarProximo = useCallback(
+    async (printer: Printer | undefined): Promise<boolean> => {
+      if (!printer || !filaAuto) return false;
       if (aArrancarRef.current[printer.id]) return false;
-      if (Date.now() - (ultimoArranqueRef.current[printer.id] ?? 0) < 120_000)
-        return false;
+      if (Date.now() - (ultimoArranqueRef.current[printer.id] ?? 0) < 120_000) return false;
+      const proximo = filaRef.current.find(item => item.printerId === printer.id);
+      if (!proximo) return false;
 
       aArrancarRef.current[printer.id] = true;
       try {
@@ -1288,7 +1350,6 @@ export const PrinterConnectionsProvider = ({
             if (ack === 0) {
               ultimoArranqueRef.current[printer.id] = Date.now();
               removerDaFila(proximo.id);
-              cancelarMesaLimpa(printer.id);
               notify(
                 'A arrancar o próximo',
                 `${printer.printerName} começou ${proximo.label}.`,
@@ -1296,12 +1357,7 @@ export const PrinterConnectionsProvider = ({
               );
               return true;
             }
-            log(
-              'fila: a máquina recusou',
-              descreverAck(ack, 'imprimir').mensagem,
-              'tentativa',
-              tentativa
-            );
+            log('fila: a máquina recusou', descreverAck(ack, 'imprimir').mensagem, 'tentativa', tentativa);
           } catch (erro) {
             log('fila: tentativa falhou', tentativa, erro);
           }
@@ -1309,6 +1365,7 @@ export const PrinterConnectionsProvider = ({
             await new Promise(resolver => setTimeout(resolver, 6000));
           }
         }
+        // Sem sucesso fica na fila: o aviso diz porquê e o Bruno pode arrancar à mão.
         notify(
           'Não arrancou',
           `${proximo.label}: a máquina não aceitou. O trabalho fica na fila.`,
@@ -1319,37 +1376,7 @@ export const PrinterConnectionsProvider = ({
         aArrancarRef.current[printer.id] = false;
       }
     },
-    [request, removerDaFila, cancelarMesaLimpa]
-  );
-
-  const confirmarMesaLimpa = useCallback(
-    async (printerId: string): Promise<boolean> => {
-      const printer = printersRef.current.find(p => p.id === printerId);
-      const proximo = pendentesMesaLimpa[printerId];
-      if (!printer || !proximo) return false;
-      return executarArranque(printer, proximo);
-    },
-    [pendentesMesaLimpa, executarArranque]
-  );
-
-  const arrancarProximo = useCallback(
-    async (printer: Printer | undefined): Promise<boolean> => {
-      if (!printer || !filaAuto) return false;
-      const proximo = filaRef.current.find(
-        item => item.printerId === printer.id
-      );
-      if (!proximo) return false;
-
-      setPendentesMesaLimpa(prev => ({ ...prev, [printer.id]: proximo }));
-      notify(
-        'Mesa limpa?',
-        `${printer.printerName}: confirma que a mesa está limpa para arrancar ${proximo.label}.`,
-        { printerId: printer.id },
-        'fila-arranque'
-      );
-      return false;
-    },
-    [filaAuto]
+    [filaAuto, request, removerDaFila]
   );
 
   // Dispara na transição para "terminada" (9). Sem exigir a transição, corria
@@ -1381,8 +1408,7 @@ export const PrinterConnectionsProvider = ({
       if (estado !== 'active') return;
       setTimeout(() => {
         printersRef.current.forEach(printer => {
-          if (printer.status?.PrintInfo?.Status === 9)
-            void arrancarProximo(printer);
+          if (printer.status?.PrintInfo?.Status === 9) void arrancarProximo(printer);
         });
       }, 1500);
     });
@@ -1525,13 +1551,10 @@ export const PrinterConnectionsProvider = ({
         imprimirNoSaturno,
         fila,
         filaAuto,
-        pendentesMesaLimpa,
         adicionarAFila,
         removerDaFila,
         limparFila,
         definirFilaAuto,
-        confirmarMesaLimpa,
-        cancelarMesaLimpa,
       }}
     >
       {children}

@@ -50,6 +50,10 @@ export default {
   'home.aReconectarMsg':
     '{nome}: tentativa {n}. Já está a ser tentado automaticamente.',
   'home.tentarAgora': 'Tentar agora',
+  'home.confirmarIpTitulo': 'Confirmar endereço da impressora',
+  'home.confirmarIpMensagem':
+    '{nome} foi encontrada em {novo} em vez de {antigo}. A descoberta não verifica a identidade. Confirme o endereço na impressora antes de permitir o envio de ficheiros e comandos.',
+  'home.confirmarIpAceitar': 'Usar endereço verificado',
   'home.naoLigadaMsg':
     '{nome} não está ligada. Pode eliminá-la e adicioná-la de novo.',
   'home.eliminarImpressora': 'Eliminar impressora',

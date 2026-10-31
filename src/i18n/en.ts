@@ -52,6 +52,10 @@ const en = {
   'home.aReconectarMsg':
     '{nome}: attempt {n}. A reconnect is already being attempted automatically.',
   'home.tentarAgora': 'Try now',
+  'home.confirmarIpTitulo': 'Confirm printer address',
+  'home.confirmarIpMensagem':
+    '{nome} was found at {novo} instead of {antigo}. Discovery cannot verify its identity. Check the address on your printer before allowing files and commands to be sent there.',
+  'home.confirmarIpAceitar': 'Use verified address',
   'home.naoLigadaMsg':
     '{nome} is not connected. You can remove it and add it again.',
   'home.eliminarImpressora': 'Remove printer',
