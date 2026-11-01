@@ -390,23 +390,17 @@ const it = {
   'settings.ajudaTema': 'Cambia i colori dell’app. La modifica è immediata.',
   'settings.ajudaIntervalo':
     'Ogni quanto l’app chiede lo stato alla stampante. Intervalli brevi consumano più batteria e rete.',
-  'settings.pausaFila': 'Pausa tra gli avvii',
-  'settings.pausaFilaDesc':
-    'Attesa fissa tra due lavori in coda, per far uscire la macchina dallo stato precedente.',
-  'settings.pausaFilaValor': '2 min',
-  'settings.mesaLimpa': 'Conferma piano pulito',
-  'settings.mesaLimpaDesc':
-    'Prima di avviare il lavoro successivo l’app chiede di confermare che il piano sia libero.',
   'settings.ajudaTesteNotificacao':
     'Invia un avviso ora, per verificare che le notifiche siano consentite.',
   'settings.limiteTitulo': 'Avviso bobina quasi finita',
   'settings.limiteDesc':
     'Percentuale di filamento rimasto che fa scattare l’avviso (da 1 a 50%).',
   'settings.kwhTitulo': 'Prezzo dell’elettricità',
-  'settings.kwhDesc': 'Usato per stimare il costo energetico di un lavoro.',
+  'settings.kwhDesc':
+    'Salvato per il costo energetico. Nessuna schermata lo mostra ancora.',
   'settings.potenciaTitulo': 'Potenza della stampante',
   'settings.potenciaDesc':
-    'Consumo medio in watt. Usato nel calcolo del costo energetico.',
+    'Consumo medio in watt, per lo stesso calcolo. Non ancora mostrato da nessuna parte.',
   'settings.exportarDiagnostico': 'Esporta diagnostica',
   'settings.exportarDiagnosticoDesc':
     'Rapporto con versione, stampanti ed errori recenti, con IP mascherati.',

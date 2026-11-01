@@ -7,8 +7,6 @@ import { PropsSecao } from '../tipos';
 
 const IDS = [
   'fila.auto',
-  'fila.pausa',
-  'fila.mesaLimpa',
   'fila.notifConcluida',
   'fila.notifPausada',
   'fila.notifMarcos',
@@ -43,25 +41,6 @@ export const SecaoFila = ({ ctx, visivel }: PropsSecao) => {
           valor={ctx.filaAuto}
           aoMudar={ctx.definirFilaAuto}
           ultimo={ultimo('fila.auto')}
-        />
-      )}
-
-      {visivel('fila.pausa') && (
-        <Linha
-          icone="hourglass-outline"
-          rotulo={t('settings.pausaFila')}
-          ajuda={t('settings.pausaFilaDesc')}
-          valor={t('settings.pausaFilaValor')}
-          ultimo={ultimo('fila.pausa')}
-        />
-      )}
-
-      {visivel('fila.mesaLimpa') && (
-        <Linha
-          icone="shield-checkmark-outline"
-          rotulo={t('settings.mesaLimpa')}
-          ajuda={t('settings.mesaLimpaDesc')}
-          ultimo={ultimo('fila.mesaLimpa')}
         />
       )}
 

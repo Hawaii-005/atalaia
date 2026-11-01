@@ -69,11 +69,13 @@ export const SecaoImpressoras = ({ ctx, visivel }: PropsSecao) => {
           rotulo={t('settings.adicionarImpressora')}
           ajuda={t('settings.ajudaAdicionarImpressora')}
           aoTocar={() => ctx.navegar('AddEditPrinter')}
-          ultimo={!visivel('impressoras.alternativo')}
+          ultimo={
+            !visivel('impressoras.alternativo') || ctx.printers.length === 0
+          }
         />
       )}
 
-      {visivel('impressoras.alternativo') && (
+      {visivel('impressoras.alternativo') && ctx.printers.length > 0 && (
         <Linha
           icone="git-network-outline"
           rotulo={t('settings.enderecoAlternativo')}

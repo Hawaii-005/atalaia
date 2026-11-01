@@ -103,6 +103,55 @@ export const guardarPotenciaW = (valor: number): Promise<number> =>
   });
 
 /**
+ * Preferências que uma cópia de segurança pode trazer. Campos ausentes ou
+ * inválidos ficam de fora — a importação só mexe no que reconhece.
+ */
+export interface PreferenciasBackup {
+  statusIntervalMs?: number;
+  filaAuto?: boolean;
+  limiteQuaseNoFim?: number;
+  precoKwh?: number;
+  potenciaW?: number;
+}
+
+const INTERVALOS_ACEITES = [30000, 31000, 60000, 120000, 300000];
+
+export const lerPreferenciasDeBackup = (
+  bruto: Record<string, unknown>
+): PreferenciasBackup => {
+  const saida: PreferenciasBackup = {};
+
+  if (
+    typeof bruto.statusIntervalMs === 'number' &&
+    INTERVALOS_ACEITES.includes(bruto.statusIntervalMs)
+  ) {
+    saida.statusIntervalMs = bruto.statusIntervalMs;
+  }
+  if (typeof bruto.filaAuto === 'boolean') saida.filaAuto = bruto.filaAuto;
+
+  const limite = bruto.limiteQuaseNoFim;
+  if (typeof limite === 'number' && limite >= 1 && limite <= 50) {
+    saida.limiteQuaseNoFim = Math.round(limite);
+  }
+
+  const kwh = normalizarDecimal(
+    bruto.precoKwh,
+    { min: KWH_MIN, max: KWH_MAX, omissao: -1 },
+    -1
+  );
+  if (kwh >= 0) saida.precoKwh = kwh;
+
+  const potencia = normalizarDecimal(
+    bruto.potenciaW,
+    { min: POTENCIA_MIN, max: POTENCIA_MAX, omissao: -1 },
+    -1
+  );
+  if (potencia >= 0) saida.potenciaW = potencia;
+
+  return saida;
+};
+
+/**
  * Custo energético em euros para uma duração em horas.
  * Sem preço ou sem potência devolve 0: quem mostra decide escrever «—».
  */

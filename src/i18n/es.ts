@@ -389,23 +389,17 @@ const es = {
     'Cambia los colores de la aplicación. El cambio es inmediato.',
   'settings.ajudaIntervalo':
     'Cada cuánto pide la app el estado a la impresora. Menos segundos gastan más batería y red.',
-  'settings.pausaFila': 'Pausa entre arranques',
-  'settings.pausaFilaDesc':
-    'Espera fija entre dos trabajos de la cola, para que la máquina salga del estado anterior.',
-  'settings.pausaFilaValor': '2 min',
-  'settings.mesaLimpa': 'Confirmar mesa limpia',
-  'settings.mesaLimpaDesc':
-    'Antes de arrancar el siguiente trabajo, la app pide confirmar que la mesa está libre.',
   'settings.ajudaTesteNotificacao':
     'Envía un aviso ahora, para confirmar que las notificaciones están permitidas.',
   'settings.limiteTitulo': 'Aviso de bobina casi al final',
   'settings.limiteDesc':
     'Porcentaje de filamento restante que dispara el aviso (1 a 50 %).',
   'settings.kwhTitulo': 'Precio de la electricidad',
-  'settings.kwhDesc': 'Se usa para estimar el coste energético de un trabajo.',
+  'settings.kwhDesc':
+    'Guardado para el coste energético. Aún no hay pantalla que lo muestre.',
   'settings.potenciaTitulo': 'Potencia de la impresora',
   'settings.potenciaDesc':
-    'Consumo medio en vatios. Se usa en el cálculo del coste energético.',
+    'Consumo medio en vatios, para el mismo cálculo. Aún no aparece en ninguna pantalla.',
   'settings.exportarDiagnostico': 'Exportar diagnóstico',
   'settings.exportarDiagnosticoDesc':
     'Informe con versión, impresoras y errores recientes, con las IP enmascaradas.',

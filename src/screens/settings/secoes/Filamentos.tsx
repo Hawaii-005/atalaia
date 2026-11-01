@@ -9,8 +9,8 @@ export const SecaoFilamentos = ({ ctx, visivel }: PropsSecao) => {
   const { tema } = useTheme();
   const nada =
     !visivel('filamentos.limite') &&
-    !visivel('filamentos.kwh') &&
-    !visivel('filamentos.potencia') &&
+    visivel('filamentos.kwh') &&
+    visivel('filamentos.potencia') &&
     !visivel('filamentos.inventario');
   if (nada) return <Vazio texto={t('settings.semResultados')} />;
 
@@ -30,8 +30,8 @@ export const SecaoFilamentos = ({ ctx, visivel }: PropsSecao) => {
           teclado="number-pad"
           aoGuardar={ctx.guardarLimite}
           ultimo={
-            !visivel('filamentos.kwh') &&
-            !visivel('filamentos.potencia') &&
+            visivel('filamentos.kwh') &&
+            visivel('filamentos.potencia') &&
             !visivel('filamentos.inventario')
           }
         />
@@ -46,7 +46,7 @@ export const SecaoFilamentos = ({ ctx, visivel }: PropsSecao) => {
           unidade="€/kWh"
           aoGuardar={ctx.guardarPrecoKwh}
           ultimo={
-            !visivel('filamentos.potencia') && !visivel('filamentos.inventario')
+            visivel('filamentos.potencia') && !visivel('filamentos.inventario')
           }
         />
       )}

@@ -10,9 +10,14 @@ import { PropsSecao } from '../tipos';
 const INTERVALOS = [30000, 60000, 120000, 300000];
 
 const formatarIntervalo = (ms: number): string => {
-  const segundos = Math.round(ms / 1000);
+  // O valor guardado pode ter folga de um segundo (31000 = 30 s), por isso
+  // arredondamos aos 5 s para não mostrar "31 s".
+  const segundos = Math.round(ms / 5000) * 5;
   return segundos < 60 ? `${segundos} s` : `${segundos / 60} min`;
 };
+
+const mesmoIntervalo = (a: number, b: number) =>
+  Math.round(a / 5000) === Math.round(b / 5000);
 
 export const SecaoAparencia = ({ ctx, visivel }: PropsSecao) => {
   const { tema } = useTheme();
@@ -65,16 +70,50 @@ export const SecaoAparencia = ({ ctx, visivel }: PropsSecao) => {
                 >
                   <View
                     style={{
-                      width: 26,
-                      height: 26,
-                      borderRadius: 9,
+                      width: 40,
+                      height: 40,
+                      borderRadius: 12,
                       backgroundColor: item.amostra[0],
                       borderWidth: activo ? 2 : 1,
                       borderColor: activo
-                        ? hexDe(paleta.tinta)
-                        : hexDe(paleta.tintaMuted),
+                        ? hexDe(paleta.acentoTexto)
+                        : hexDe(paleta.linha),
+                      padding: 5,
+                      justifyContent: 'space-between',
                     }}
-                  />
+                  >
+                    <View
+                      style={{
+                        height: 9,
+                        borderRadius: 3,
+                        backgroundColor: item.amostra[1],
+                      }}
+                    />
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 3,
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: 11,
+                          height: 11,
+                          borderRadius: 6,
+                          backgroundColor: item.amostra[2],
+                        }}
+                      />
+                      <View
+                        style={{
+                          flex: 1,
+                          height: 5,
+                          borderRadius: 3,
+                          backgroundColor: item.amostra[1],
+                        }}
+                      />
+                    </View>
+                  </View>
                 </TouchableOpacity>
               );
             })}
@@ -93,7 +132,7 @@ export const SecaoAparencia = ({ ctx, visivel }: PropsSecao) => {
           />
           <View className="flex-row px-4 pb-3 pt-1" style={{ gap: 8 }}>
             {INTERVALOS.map(opcao => {
-              const activo = ctx.intervaloMs === opcao;
+              const activo = mesmoIntervalo(ctx.intervaloMs, opcao);
               return (
                 <TouchableOpacity
                   key={opcao}

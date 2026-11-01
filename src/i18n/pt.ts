@@ -326,11 +326,12 @@ export default {
   'settings.seccaoBackup': 'Cópia de segurança',
   'settings.exportar': 'Guardar impressoras e definições',
   'settings.exportarDesc':
-    'Grava um ficheiro JSON com as tuas impressoras e IPs de rede local.',
+    'Grava um ficheiro JSON com as impressoras, as preferências e o inventário de filamentos.',
   'settings.backupAvisoRede':
     'O ficheiro de cópia de segurança contém os endereços IP e nomes das tuas impressoras na rede local. Partilha apenas com quem confias.',
   'settings.importar': 'Restaurar de um ficheiro',
-  'settings.importarDesc': 'Lê o JSON e volta a criar as impressoras.',
+  'settings.importarDesc':
+    'Lê o JSON e repõe as impressoras, as preferências e os filamentos.',
   'settings.backupTitulo': 'Cópia de segurança',
   'settings.backupExportado': 'Ficheiro gravado.',
   'settings.backupImportado': 'Restauradas {n} impressoras.',
@@ -395,23 +396,17 @@ export default {
   'settings.ajudaTema': 'Muda as cores da aplicação. A alteração é imediata.',
   'settings.ajudaIntervalo':
     'Com que frequência a app pede o estado à impressora. Menos segundos gastam mais bateria e rede.',
-  'settings.pausaFila': 'Pausa entre arranques',
-  'settings.pausaFilaDesc':
-    'Espera fixa entre dois trabalhos da fila, para a máquina sair do estado anterior.',
-  'settings.pausaFilaValor': '2 min',
-  'settings.mesaLimpa': 'Confirmar mesa limpa',
-  'settings.mesaLimpaDesc':
-    'Antes de arrancar o próximo trabalho, a app pede confirmação de que a mesa está livre.',
   'settings.ajudaTesteNotificacao':
     'Envia um aviso agora, para confirmar que as notificações estão permitidas.',
   'settings.limiteTitulo': 'Aviso de bobina quase no fim',
   'settings.limiteDesc':
     'Percentagem de filamento restante que dispara o aviso (1 a 50%).',
   'settings.kwhTitulo': 'Preço da eletricidade',
-  'settings.kwhDesc': 'Usado para estimar o custo energético de um trabalho.',
+  'settings.kwhDesc':
+    'Guardado para o custo energético. Ainda não há ecrã que o mostre.',
   'settings.potenciaTitulo': 'Potência da impressora',
   'settings.potenciaDesc':
-    'Consumo médio em watts. Usado no cálculo do custo energético.',
+    'Consumo médio em watts, para o mesmo cálculo. Ainda não aparece em nenhum ecrã.',
   'settings.exportarDiagnostico': 'Exportar diagnóstico',
   'settings.exportarDiagnosticoDesc':
     'Relatório com versão, impressoras e erros recentes, com os IPs mascarados.',

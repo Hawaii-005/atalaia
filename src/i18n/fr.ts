@@ -392,23 +392,17 @@ const fr = {
     'Change les couleurs de l’application. Le changement est immédiat.',
   'settings.ajudaIntervalo':
     'Fréquence à laquelle l’app demande l’état à l’imprimante. Des intervalles courts consomment plus de batterie et de réseau.',
-  'settings.pausaFila': 'Pause entre les démarrages',
-  'settings.pausaFilaDesc':
-    'Attente fixe entre deux travaux de la file, pour que la machine quitte son état précédent.',
-  'settings.pausaFilaValor': '2 min',
-  'settings.mesaLimpa': 'Confirmer plateau propre',
-  'settings.mesaLimpaDesc':
-    'Avant de lancer le travail suivant, l’app demande de confirmer que le plateau est libre.',
   'settings.ajudaTesteNotificacao':
     'Envoie une alerte maintenant, pour vérifier que les notifications sont autorisées.',
   'settings.limiteTitulo': 'Alerte de bobine presque vide',
   'settings.limiteDesc':
     'Pourcentage de filament restant qui déclenche l’alerte (1 à 50 %).',
   'settings.kwhTitulo': 'Prix de l’électricité',
-  'settings.kwhDesc': 'Sert à estimer le coût énergétique d’un travail.',
+  'settings.kwhDesc':
+    'Enregistré pour le coût énergétique. Aucun écran ne l’affiche encore.',
   'settings.potenciaTitulo': 'Puissance de l’imprimante',
   'settings.potenciaDesc':
-    'Consommation moyenne en watts. Utilisée dans le calcul du coût énergétique.',
+    'Consommation moyenne en watts, pour le même calcul. Encore affichée nulle part.',
   'settings.exportarDiagnostico': 'Exporter le diagnostic',
   'settings.exportarDiagnosticoDesc':
     'Rapport avec version, imprimantes et erreurs récentes, IP masquées.',

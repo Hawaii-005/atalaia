@@ -367,19 +367,14 @@ const zh = {
   'settings.ajudaTema': '更改应用配色，立即生效。',
   'settings.ajudaIntervalo':
     '应用向打印机请求状态的频率。间隔越短越耗电和流量。',
-  'settings.pausaFila': '启动间隔',
-  'settings.pausaFilaDesc':
-    '两个队列任务之间的固定等待，让机器退出上一个状态。',
-  'settings.pausaFilaValor': '2 分钟',
-  'settings.mesaLimpa': '确认平台已清空',
-  'settings.mesaLimpaDesc': '开始下一个任务前，应用会要求确认平台是空的。',
   'settings.ajudaTesteNotificacao': '立即发送一条通知，确认通知权限是否开启。',
   'settings.limiteTitulo': '料盘余量提醒',
   'settings.limiteDesc': '触发提醒的剩余百分比 (1 到 50%)。',
   'settings.kwhTitulo': '电费',
-  'settings.kwhDesc': '用于估算任务的能耗成本。',
+  'settings.kwhDesc': '用于能耗成本，目前还没有界面显示。',
   'settings.potenciaTitulo': '打印机功率',
-  'settings.potenciaDesc': '平均功耗（瓦）。用于能耗成本计算。',
+  'settings.potenciaDesc':
+    '同一计算所用的平均功耗（瓦），目前尚未在任何界面显示。',
   'settings.exportarDiagnostico': '导出诊断',
   'settings.exportarDiagnosticoDesc':
     '包含版本、打印机和最近错误的报告，IP 已遮蔽。',

@@ -394,13 +394,6 @@ const nl = {
     'Wijzigt de kleuren van de app. De wijziging is direct zichtbaar.',
   'settings.ajudaIntervalo':
     'Hoe vaak de app de status opvraagt. Kortere intervallen kosten meer batterij en netwerk.',
-  'settings.pausaFila': 'Pauze tussen starts',
-  'settings.pausaFilaDesc':
-    'Vaste wachttijd tussen twee wachtrijtaken, zodat de machine de vorige status verlaat.',
-  'settings.pausaFilaValor': '2 min',
-  'settings.mesaLimpa': 'Schoon bed bevestigen',
-  'settings.mesaLimpaDesc':
-    'Voordat de volgende taak start, vraagt de app te bevestigen dat het bed vrij is.',
   'settings.ajudaTesteNotificacao':
     'Stuurt nu een melding, om te controleren of meldingen zijn toegestaan.',
   'settings.limiteTitulo': 'Waarschuwing bij bijna lege spoel',
@@ -408,10 +401,10 @@ const nl = {
     'Percentage resterend filament dat de waarschuwing activeert (1 tot 50%).',
   'settings.kwhTitulo': 'Stroomprijs',
   'settings.kwhDesc':
-    'Wordt gebruikt om de energiekosten van een taak te schatten.',
+    'Bewaard voor de energiekosten. Nog geen scherm toont het.',
   'settings.potenciaTitulo': 'Vermogen van de printer',
   'settings.potenciaDesc':
-    'Gemiddeld verbruik in watt. Wordt gebruikt bij de energiekostenberekening.',
+    'Gemiddeld verbruik in watt, voor dezelfde schatting. Nergens te zien.',
   'settings.exportarDiagnostico': 'Diagnose exporteren',
   'settings.exportarDiagnosticoDesc':
     'Rapport met versie, printers en recente fouten, met gemaskeerde IP’s.',

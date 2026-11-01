@@ -328,11 +328,12 @@ const en = {
   'settings.seccaoBackup': 'Backup',
   'settings.exportar': 'Save printers and settings',
   'settings.exportarDesc':
-    'Saves a JSON file with your printers and local network IP addresses.',
+    'Saves a JSON file with printers, preferences and filament inventory.',
   'settings.backupAvisoRede':
     'The backup JSON file contains local IP addresses and printer names. Only share with trusted recipients.',
   'settings.importar': 'Restore from a file',
-  'settings.importarDesc': 'Reads the JSON and recreates the printers.',
+  'settings.importarDesc':
+    'Reads the JSON and restores printers, preferences and filaments.',
   'settings.backupTitulo': 'Backup',
   'settings.backupExportado': 'File saved.',
   'settings.backupImportado': 'Restored {n} printers.',
@@ -394,23 +395,16 @@ const en = {
   'settings.ajudaTema': 'Changes the app colours. The change is immediate.',
   'settings.ajudaIntervalo':
     'How often the app asks the printer for its status. Shorter intervals use more battery and network.',
-  'settings.pausaFila': 'Pause between starts',
-  'settings.pausaFilaDesc':
-    'Fixed wait between two queue jobs, so the machine can leave its previous state.',
-  'settings.pausaFilaValor': '2 min',
-  'settings.mesaLimpa': 'Confirm clean plate',
-  'settings.mesaLimpaDesc':
-    'Before starting the next job the app asks you to confirm the plate is clear.',
   'settings.ajudaTesteNotificacao':
     'Sends an alert now, to confirm notifications are allowed.',
   'settings.limiteTitulo': 'Low spool warning',
   'settings.limiteDesc':
     'Remaining filament percentage that triggers the warning (1 to 50%).',
   'settings.kwhTitulo': 'Electricity price',
-  'settings.kwhDesc': 'Used to estimate the energy cost of a job.',
+  'settings.kwhDesc': 'Stored for the energy cost. No screen shows it yet.',
   'settings.potenciaTitulo': 'Printer power',
   'settings.potenciaDesc':
-    'Average draw in watts. Used in the energy cost estimate.',
+    'Average draw in watts, for the same estimate. Not shown on any screen yet.',
   'settings.exportarDiagnostico': 'Export diagnostics',
   'settings.exportarDiagnosticoDesc':
     'Report with version, printers and recent errors, with IPs masked.',

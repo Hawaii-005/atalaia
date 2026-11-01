@@ -12,6 +12,7 @@ import {
   lerPotenciaW,
   lerPrecoKwh,
   normalizarDecimal,
+  lerPreferenciasDeBackup,
 } from '../src/utils/definicoes/preferencias';
 
 jest.mock('@react-native-async-storage/async-storage', () => {
@@ -102,5 +103,57 @@ describe('custoEnergetico', () => {
     expect(custoEnergetico(2, 350, 0)).toBe(0);
     expect(custoEnergetico(0, 350, 0.19)).toBe(0);
     expect(custoEnergetico(-1, 350, 0.19)).toBe(0);
+  });
+});
+
+describe('lerPreferenciasDeBackup', () => {
+  it('aceita valores válidos de uma cópia de segurança', () => {
+    expect(
+      lerPreferenciasDeBackup({
+        statusIntervalMs: 60000,
+        filaAuto: true,
+        limiteQuaseNoFim: 20,
+        precoKwh: 0.17,
+        potenciaW: 350,
+      })
+    ).toEqual({
+      statusIntervalMs: 60000,
+      filaAuto: true,
+      limiteQuaseNoFim: 20,
+      precoKwh: 0.17,
+      potenciaW: 350,
+    });
+  });
+
+  it('ignora campos ausentes, com tipo errado ou fora de limites', () => {
+    expect(
+      lerPreferenciasDeBackup({
+        statusIntervalMs: 45000,
+        filaAuto: 'sim',
+        limiteQuaseNoFim: 99,
+        precoKwh: -1,
+        potenciaW: 9000,
+      })
+    ).toEqual({});
+  });
+
+  it('mantém o que é válido e descarta o resto', () => {
+    expect(
+      lerPreferenciasDeBackup({
+        statusIntervalMs: 31000,
+        filaAuto: false,
+        limiteQuaseNoFim: 12.6,
+        precoKwh: '0,25',
+      })
+    ).toEqual({
+      statusIntervalMs: 31000,
+      filaAuto: false,
+      limiteQuaseNoFim: 13,
+      precoKwh: 0.25,
+    });
+  });
+
+  it('não rebenta com objetos antigos sem preferências', () => {
+    expect(lerPreferenciasDeBackup({})).toEqual({});
   });
 });

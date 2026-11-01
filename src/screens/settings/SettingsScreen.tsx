@@ -69,6 +69,7 @@ import {
   guardarPrecoKwh,
   lerPotenciaW,
   lerPrecoKwh,
+  lerPreferenciasDeBackup,
 } from '../../utils/definicoes/preferencias';
 import { useLayout } from '../../hooks/useLayout';
 import { ALVO_MINIMO, CampoPesquisa, Vazio } from './componentes';
@@ -226,20 +227,6 @@ export const SettingsScreen = () => {
         palavras: ['fila', 'seguinte', 'automatico'],
       },
       {
-        id: 'fila.pausa',
-        secao: 'fila',
-        titulo: t('settings.pausaFila'),
-        ajuda: t('settings.pausaFilaDesc'),
-        palavras: ['espera', 'intervalo', 'arranque'],
-      },
-      {
-        id: 'fila.mesaLimpa',
-        secao: 'fila',
-        titulo: t('settings.mesaLimpa'),
-        ajuda: t('settings.mesaLimpaDesc'),
-        palavras: ['confirmacao', 'confirmação', 'mesa', 'fila'],
-      },
-      {
         id: 'fila.notifConcluida',
         secao: 'fila',
         titulo: t('settings.notifConcluida'),
@@ -293,14 +280,14 @@ export const SettingsScreen = () => {
         secao: 'filamentos',
         titulo: t('settings.kwhTitulo'),
         ajuda: t('settings.kwhDesc'),
-        palavras: ['energia', 'electricidade', 'eletricidade', 'custo'],
+        palavras: ['energia', 'electricidade', 'eletricidade', 'custo', 'kwh'],
       },
       {
         id: 'filamentos.potencia',
         secao: 'filamentos',
         titulo: t('settings.potenciaTitulo'),
         ajuda: t('settings.potenciaDesc'),
-        palavras: ['watts', 'energia', 'consumo'],
+        palavras: ['watts', 'energia', 'consumo', 'potencia', 'w'],
       },
       {
         id: 'filamentos.inventario',
@@ -564,6 +551,20 @@ export const SettingsScreen = () => {
         const { estado: fundido } = importarFilamentos(estado, dados);
         await guardarEstado(fundido);
       }
+      const prefs = lerPreferenciasDeBackup(dados.preferencias);
+      if (prefs.statusIntervalMs !== undefined) {
+        setStatusInterval(prefs.statusIntervalMs);
+      }
+      if (prefs.filaAuto !== undefined) definirFilaAuto(prefs.filaAuto);
+      if (prefs.limiteQuaseNoFim !== undefined) {
+        setLimite(await guardarLimiteQuaseNoFim(prefs.limiteQuaseNoFim));
+      }
+      if (prefs.precoKwh !== undefined) {
+        setPrecoKwh(await guardarPrecoKwh(prefs.precoKwh));
+      }
+      if (prefs.potenciaW !== undefined) {
+        setPotenciaW(await guardarPotenciaW(prefs.potenciaW));
+      }
       Alert.alert(
         t('settings.backupTitulo'),
         t('settings.backupImportado', { n: dados.impressoras.length })
@@ -706,13 +707,7 @@ export const SettingsScreen = () => {
             </View>
             {lista}
           </View>
-          <View className="flex-1">
-            <Header
-              title={seccaoActual ? t(META[seccaoActual].titulo) : ''}
-              subtitle={t('settings.title')}
-            />
-            {detalhe}
-          </View>
+          <View className="flex-1">{detalhe}</View>
         </View>
       ) : seccaoActual === null ? (
         <>
@@ -725,8 +720,8 @@ export const SettingsScreen = () => {
       ) : (
         <>
           <Header
-            title={t(META[seccaoActual].titulo)}
-            subtitle={t('settings.title')}
+            title={t('settings.title')}
+            subtitle={t(META[seccaoActual].descricao)}
             onBack={() => setSeccaoAberta(null)}
           />
           {detalhe}

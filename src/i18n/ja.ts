@@ -386,21 +386,16 @@ const ja = {
   'settings.ajudaTema': 'アプリの配色を変更します。すぐに反映されます。',
   'settings.ajudaIntervalo':
     'プリンターの状態を問い合わせる頻度。短いほどバッテリーと通信を使います。',
-  'settings.pausaFila': '開始間隔',
-  'settings.pausaFilaDesc':
-    '2 つのキューの間に固定で待ち、機械が前の状態から抜けるようにします。',
-  'settings.pausaFilaValor': '2 分',
-  'settings.mesaLimpa': 'ベッドの清掃を確認',
-  'settings.mesaLimpaDesc':
-    '次のジョブを始める前に、ベッドが空いているか確認します。',
   'settings.ajudaTesteNotificacao':
     '通知が許可されているか確認するため、今すぐ通知を送ります。',
   'settings.limiteTitulo': 'スプール残量警告',
   'settings.limiteDesc': '警告を出す残量の割合 (1〜50%)。',
   'settings.kwhTitulo': '電気料金',
-  'settings.kwhDesc': 'ジョブの電力コストの見積もりに使います。',
+  'settings.kwhDesc':
+    '電力コスト用に保存されます。まだ表示する画面はありません。',
   'settings.potenciaTitulo': 'プリンターの消費電力',
-  'settings.potenciaDesc': '平均消費電力 (W)。電力コストの計算に使います。',
+  'settings.potenciaDesc':
+    '同じ計算用の平均消費電力 (W)。まだどこにも表示されません。',
   'settings.exportarDiagnostico': '診断をエクスポート',
   'settings.exportarDiagnosticoDesc':
     'バージョン、プリンター、最近のエラーを含むレポート (IP はマスク)。',

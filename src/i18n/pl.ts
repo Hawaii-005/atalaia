@@ -383,23 +383,17 @@ const pl = {
   'settings.ajudaTema': 'Zmienia kolory aplikacji. Zmiana jest natychmiastowa.',
   'settings.ajudaIntervalo':
     'Jak często aplikacja pyta drukarkę o stan. Krótsze odstępy zużywają więcej baterii i sieci.',
-  'settings.pausaFila': 'Pauza między startami',
-  'settings.pausaFilaDesc':
-    'Stałe oczekiwanie między dwoma zadaniami kolejki, aby maszyna opuściła poprzedni stan.',
-  'settings.pausaFilaValor': '2 min',
-  'settings.mesaLimpa': 'Potwierdź czysty stół',
-  'settings.mesaLimpaDesc':
-    'Przed uruchomieniem kolejnego zadania aplikacja prosi o potwierdzenie, że stół jest wolny.',
   'settings.ajudaTesteNotificacao':
     'Wysyła teraz powiadomienie, aby sprawdzić, czy są dozwolone.',
   'settings.limiteTitulo': 'Ostrzeżenie o prawie pustej szpuli',
   'settings.limiteDesc':
     'Procent pozostałego filamentu, który wyzwala ostrzeżenie (1 do 50%).',
   'settings.kwhTitulo': 'Cena energii',
-  'settings.kwhDesc': 'Używana do szacowania kosztu energii zadania.',
+  'settings.kwhDesc':
+    'Zapisywane dla kosztu energii. Żaden ekran go jeszcze nie pokazuje.',
   'settings.potenciaTitulo': 'Moc drukarki',
   'settings.potenciaDesc':
-    'Średni pobór w watach. Używany w obliczeniu kosztu energii.',
+    'Średni pobór w watach, do tego samego obliczenia. Nigdzie jeszcze nie widoczny.',
   'settings.exportarDiagnostico': 'Eksportuj diagnostykę',
   'settings.exportarDiagnosticoDesc':
     'Raport z wersją, drukarkami i ostatnimi błędami, z zamaskowanymi IP.',

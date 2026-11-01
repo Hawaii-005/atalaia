@@ -395,13 +395,6 @@ const de = {
     'Ändert die Farben der App. Die Änderung ist sofort sichtbar.',
   'settings.ajudaIntervalo':
     'Wie oft die App den Status abfragt. Kürzere Abstände brauchen mehr Akku und Netzwerk.',
-  'settings.pausaFila': 'Pause zwischen Starts',
-  'settings.pausaFilaDesc':
-    'Feste Wartezeit zwischen zwei Aufträgen, damit die Maschine den vorherigen Zustand verlässt.',
-  'settings.pausaFilaValor': '2 Min.',
-  'settings.mesaLimpa': 'Saubere Platte bestätigen',
-  'settings.mesaLimpaDesc':
-    'Vor dem nächsten Auftrag fragt die App, ob die Platte frei ist.',
   'settings.ajudaTesteNotificacao':
     'Sendet jetzt einen Hinweis, um zu prüfen, ob Benachrichtigungen erlaubt sind.',
   'settings.limiteTitulo': 'Warnung bei fast leerer Spule',
@@ -409,10 +402,10 @@ const de = {
     'Restprozentsatz, ab dem die Warnung erscheint (1 bis 50 %).',
   'settings.kwhTitulo': 'Strompreis',
   'settings.kwhDesc':
-    'Wird für die Energiekostenschätzung eines Auftrags verwendet.',
+    'Für die Energiekosten gespeichert. Noch in keinem Bildschirm sichtbar.',
   'settings.potenciaTitulo': 'Leistung des Druckers',
   'settings.potenciaDesc':
-    'Durchschnittliche Leistungsaufnahme in Watt. Wird für die Energiekosten verwendet.',
+    'Durchschnittliche Leistungsaufnahme in Watt, für dieselbe Schätzung. Noch nirgends sichtbar.',
   'settings.exportarDiagnostico': 'Diagnose exportieren',
   'settings.exportarDiagnosticoDesc':
     'Bericht mit Version, Druckern und letzten Fehlern, IPs maskiert.',
