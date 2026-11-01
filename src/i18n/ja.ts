@@ -189,6 +189,7 @@ const ja = {
   'files.impressao': '印刷',
   'files.custo': '費用',
   'files.filamentos': 'フィラメント',
+  'files.impressoes': '印刷回数',
   'files.imprimirTitulo': '印刷',
   'files.imprimirMsg': '{nome} の印刷を開始しますか？',
   'files.naoArrancou': '開始できませんでした',

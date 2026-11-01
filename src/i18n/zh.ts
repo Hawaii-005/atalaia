@@ -180,6 +180,7 @@ const zh = {
   'files.impressao': '打印',
   'files.custo': '成本',
   'files.filamentos': '耗材',
+  'files.impressoes': '打印次数',
   'files.imprimirTitulo': '打印',
   'files.imprimirMsg': '开始打印 {nome}？',
   'files.naoArrancou': '未能启动',

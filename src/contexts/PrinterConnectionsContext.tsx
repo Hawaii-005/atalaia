@@ -39,6 +39,7 @@ import { requestPrinterRecovery } from '../utils/printerDiscoverySafety';
 import { t, useIdioma } from '../i18n';
 import { buildPrintMonitorStatus } from '../utils/printMonitorStatus';
 import { createPrintMonitorService } from '../utils/printMonitorService';
+import { guardarArranque } from '../utils/ficheiros/armazenamento';
 
 interface PrinterConnectionsContextType {
   printers: Printer[];
@@ -1331,17 +1332,29 @@ export const PrinterConnectionsProvider = ({
       aArrancarRef.current[printer.id] = true;
       try {
         const timelapse = await lerTimelapse(printer.id).catch(() => false);
-        const comando = startPrintCommand(proximo.name, {
-          nivelar: false,
-          lado: 0,
-          timelapse: timelapse ? 1 : 0,
-        });
+        const jobId = `fila-${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2, 8)}`;
+        const comando = startPrintCommand(
+          proximo.name,
+          {
+            nivelar: false,
+            lado: 0,
+            timelapse: timelapse ? 1 : 0,
+          },
+          { id: jobId }
+        );
         for (let tentativa = 1; tentativa <= 4; tentativa++) {
           try {
             const resposta = await request(printer.id, comando, 15000);
             const ack = ackDaResposta(resposta) ?? 0;
             if (ack === 0) {
               ultimoArranqueRef.current[printer.id] = Date.now();
+              // O item da fila também conta como impressão deste ficheiro.
+              guardarArranque(
+                { printerId: printer.id, nome: proximo.name },
+                comando.Id || jobId
+              ).catch(() => undefined);
               removerDaFila(proximo.id);
               cancelarMesaLimpa(printer.id);
               notify(

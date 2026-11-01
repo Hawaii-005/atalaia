@@ -189,6 +189,7 @@ const nl = {
   'files.impressao': 'Print',
   'files.custo': 'Kosten',
   'files.filamentos': 'Filamenten',
+  'files.impressoes': 'Printen',
   'files.imprimirTitulo': 'Printen',
   'files.imprimirMsg': 'Printen van {nome} starten?',
   'files.naoArrancou': 'Niet gestart',

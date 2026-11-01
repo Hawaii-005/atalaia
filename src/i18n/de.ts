@@ -189,6 +189,7 @@ const de = {
   'files.impressao': 'Druck',
   'files.custo': 'Kosten',
   'files.filamentos': 'Filamente',
+  'files.impressoes': 'Drucke',
   'files.imprimirTitulo': 'Drucken',
   'files.imprimirMsg': 'Druck von {nome} starten?',
   'files.naoArrancou': 'Nicht gestartet',
