@@ -19,6 +19,7 @@ import { FaixaArranque } from './fila/FaixaArranque';
 import { DetalheItem } from './fila/DetalheItem';
 import { SeletorModo } from './fila/SeletorModo';
 import { Contagem } from './fila/Contagem';
+import { Historico } from './fila/Historico';
 
 const ALTURA_CARTAO = 96;
 
@@ -389,6 +390,10 @@ export const FilaScreen = ({ navigation }: any) => {
           ) : (
             lista
           )}
+
+          {impressora ? (
+            <Historico impressora={impressora.printerName} />
+          ) : null}
 
           {itens.length > 0 ? (
             <TouchableOpacity

@@ -549,6 +549,12 @@ export default {
   'fila.fechar': 'Fechar',
   'fila.acoes': 'Ações',
   'fila.detalheImpressora': 'Impressora',
+  'fila.historicoTitulo': 'Últimas impressões',
+  'fila.historicoVazio': 'Ainda não há impressões registadas nesta máquina.',
+  'fila.resultado.completed': 'Concluída',
+  'fila.resultado.stopped': 'Parada',
+  'fila.resultado.printing': 'A imprimir',
+  'fila.resultado.unknown': 'Sem confirmação',
   'fila.modoTitulo': 'Modo de arranque',
   'fila.modoManual': 'Manual',
   'fila.modoManualDesc':

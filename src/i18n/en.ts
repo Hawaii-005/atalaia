@@ -545,6 +545,12 @@ const en = {
   'fila.fechar': 'Close',
   'fila.acoes': 'Actions',
   'fila.detalheImpressora': 'Printer',
+  'fila.historicoTitulo': 'Recent prints',
+  'fila.historicoVazio': 'No prints recorded on this printer yet.',
+  'fila.resultado.completed': 'Completed',
+  'fila.resultado.stopped': 'Stopped',
+  'fila.resultado.printing': 'Printing',
+  'fila.resultado.unknown': 'Unconfirmed',
   'fila.modoTitulo': 'Start mode',
   'fila.modoManual': 'Manual',
   'fila.modoManualDesc':

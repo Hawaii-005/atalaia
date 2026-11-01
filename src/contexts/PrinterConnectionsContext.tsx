@@ -107,6 +107,8 @@ export interface PrinterConnectionsContextType {
   limparFila: () => void;
   substituirFila: (itens: ItemFila[]) => void;
   moverItem: (id: string, destino: number) => void;
+  /** Guarda o nome do ficheiro de miniatura na cache. */
+  definirMiniatura: (id: string, ficheiro: string) => void;
   duplicarItem: (id: string) => ItemFila | undefined;
   definirFilaAuto: (ligada: boolean) => void;
   confirmarMesaLimpa: (printerId: string) => Promise<boolean>;
@@ -1394,6 +1396,15 @@ export const PrinterConnectionsProvider = ({
     gravarFila(itens);
   }, []);
 
+  const definirMiniatura = useCallback(
+    (id: string, ficheiro: string) => {
+      const item = filaRef.current.find(i => i.id === id);
+      if (!item || item.miniatura === ficheiro) return;
+      substituirItem({ ...item, miniatura: ficheiro });
+    },
+    [substituirItem]
+  );
+
   const moverItem = useCallback((id: string, destino: number) => {
     const nova = moverNaFila(filaRef.current, id, destino);
     filaRef.current = nova;
@@ -1845,6 +1856,7 @@ export const PrinterConnectionsProvider = ({
         limparFila,
         substituirFila,
         moverItem,
+        definirMiniatura,
         duplicarItem,
         definirFilaAuto,
         confirmarMesaLimpa,
