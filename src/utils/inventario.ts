@@ -7,7 +7,9 @@ import {
 import { ConsumoPendente, Garrafa, Rolo } from './filamentos/modelo';
 import {
   apagarBobina,
+  associarSlot,
   criarBobina,
+  desassociarSlot,
   descontarConsumo,
   editarBobina,
   idNovo,
@@ -119,6 +121,40 @@ export const removerRolo = async (id: string): Promise<void> => {
   await mutar(estado => ({
     ...estado,
     bobinas: apagarBobina(estado.bobinas, id),
+  }));
+};
+
+/** Edita os dados locais de uma bobina (nome, marca, preço, peso, notas…). */
+export const actualizarRolo = async (
+  id: string,
+  alteracoes: Partial<Omit<Rolo, 'id' | 'criadoEm' | 'canvasSlot'>> & {
+    canvasSlot?: number | null;
+  }
+): Promise<void> => {
+  await mutar(estado => ({
+    ...estado,
+    bobinas: estado.bobinas.map(rolo =>
+      rolo.id === id ? editarBobina(rolo, alteracoes) : rolo
+    ),
+  }));
+};
+
+/** Liga a bobina a um slot do Canvas (só localmente — nada é enviado). */
+export const associarRolo = async (
+  id: string,
+  printerId: string,
+  slot: number
+): Promise<void> => {
+  await mutar(estado => ({
+    ...estado,
+    bobinas: associarSlot(estado.bobinas, id, printerId, slot),
+  }));
+};
+
+export const desassociarRolo = async (id: string): Promise<void> => {
+  await mutar(estado => ({
+    ...estado,
+    bobinas: desassociarSlot(estado.bobinas, id),
   }));
 };
 
