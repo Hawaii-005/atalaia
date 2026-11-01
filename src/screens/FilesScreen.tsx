@@ -51,6 +51,7 @@ import {
   urlMiniatura,
 } from '../utils/miniatura';
 import { duracaoDoNome, formatDuracao } from '../utils/duracao';
+import { guardarMiniaturaDoItem } from '../utils/fila/miniaturas';
 import { descarregarGcode, partilharFicheiro } from '../utils/transferir';
 import { lerTimelapse } from '../utils/timelapse';
 import { t, useIdioma } from '../i18n';
@@ -319,7 +320,8 @@ export const FilesScreen = ({
   useIdioma();
   const { tema } = useTheme();
   const printerId = printerIdProp ?? route?.params?.printerId;
-  const { printers, request, adicionarAFila } = usePrinterConnections();
+  const { printers, request, adicionarAFila, definirMiniatura } =
+    usePrinterConnections();
   const printer = printers.find(item => item.id === printerId) ?? printers[0];
   // Só o id: o objeto do printer muda a cada actualização de estado (1 s) e
   // isso fazia o useFocusEffect recarregar a lista sem parar.
@@ -776,7 +778,7 @@ export const FilesScreen = ({
         onClose={() => setSelecionado(null)}
         onAddToQueue={() => {
           if (!printer) return;
-          adicionarAFila({
+          const novo = adicionarAFila({
             printerId: printer.id,
             name: alvo.name,
             label: alvo.name.split('/').pop() ?? alvo.name,
@@ -786,6 +788,17 @@ export const FilesScreen = ({
             tamanho: tamanhoDoFicheiro(alvo) || undefined,
             duracaoSeg: duracaoDoNome(alvo.name) || undefined,
           });
+          // A miniatura vem do G-code e demora; o cartão aparece já e ganha-a
+          // quando estiver pronta. Se não houver, fica o marcador.
+          guardarMiniaturaDoItem(
+            printer.activeIp ?? printer.ipAddress,
+            alvo.name,
+            printer.id
+          )
+            .then(ficheiro => {
+              if (ficheiro) definirMiniatura(novo.id, ficheiro);
+            })
+            .catch(() => undefined);
           setSelecionado(null);
           Alert.alert(t('files.filaTitulo'), t('files.filaAdicionado'));
         }}
