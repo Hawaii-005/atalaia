@@ -187,6 +187,25 @@ const pl = {
   'files.custo': 'Koszt',
   'files.filamentos': 'Filamenty',
   'files.impressoes': 'Wydruki',
+  'camadas.ver': 'Pokaż warstwy',
+  'camadas.aCarregar': 'Wczytywanie G-code…',
+  'camadas.contagem': 'Warstwa {n} z {total}',
+  'camadas.altura': 'Wysokość',
+  'camadas.cor': 'Kolor',
+  'camadas.total': 'Warstwy',
+  'camadas.anterior': 'Poprzednia',
+  'camadas.seguinte': 'Następna',
+  'camadas.semCopia':
+    'Brak lokalnej kopii tego pliku. Drukarka udostępnia G-code tylko plików, które mają już podgląd; pozostałe pokazują miniaturę.',
+  'camadas.grande':
+    'Ten plik ma ponad 6 MB. Warstwy nie są generowane, żeby nie obciążać aplikacji.',
+  'camadas.ocupada':
+    'Drukarka jest zajęta drukowaniem i nie udostępnia wtedy plików. Spróbuj po zakończeniu wydruku.',
+  'camadas.erro': 'Nie udało się odczytać G-code tego pliku.',
+  'camadas.truncado':
+    'Widok częściowy: plik ma więcej ruchów, niż przechowuje aplikacja.',
+  'camadas.comCores': 'Ten plik zmienia kolor {n} razy.',
+  'camadas.tentar': 'Spróbuj ponownie',
   'files.imprimirTitulo': 'Drukuj',
   'files.imprimirMsg': 'Rozpocząć drukowanie {nome}?',
   'files.naoArrancou': 'Nie uruchomiono',

@@ -190,6 +190,25 @@ const fr = {
   'files.custo': 'Coût',
   'files.filamentos': 'Filaments',
   'files.impressoes': 'Impressions',
+  'camadas.ver': 'Voir les couches',
+  'camadas.aCarregar': 'Lecture du G-code…',
+  'camadas.contagem': 'Couche {n} sur {total}',
+  'camadas.altura': 'Hauteur',
+  'camadas.cor': 'Couleur',
+  'camadas.total': 'Couches',
+  'camadas.anterior': 'Précédente',
+  'camadas.seguinte': 'Suivante',
+  'camadas.semCopia':
+    "Pas de copie locale de ce fichier. L'imprimante ne fournit le G-code que des fichiers déjà prévisualisés ; les autres affichent la miniature.",
+  'camadas.grande':
+    "Ce fichier dépasse 6 Mo. Les couches ne sont pas générées pour ne pas ralentir l'app.",
+  'camadas.ocupada':
+    "L'imprimante est occupée à imprimer et ne fournit pas de fichiers pendant ce temps. Réessaie à la fin du travail.",
+  'camadas.erro': 'Impossible de lire le G-code de ce fichier.',
+  'camadas.truncado':
+    "Vue partielle : le fichier contient plus de mouvements que l'app n'en garde.",
+  'camadas.comCores': 'Ce fichier change de couleur {n} fois.',
+  'camadas.tentar': 'Réessayer',
   'files.imprimirTitulo': 'Imprimer',
   'files.imprimirMsg': 'Lancer l’impression de {nome} ?',
   'files.naoArrancou': 'Démarrage impossible',

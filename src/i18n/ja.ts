@@ -190,6 +190,25 @@ const ja = {
   'files.custo': '費用',
   'files.filamentos': 'フィラメント',
   'files.impressoes': '印刷回数',
+  'camadas.ver': 'レイヤーを見る',
+  'camadas.aCarregar': 'G-code を読み込み中…',
+  'camadas.contagem': 'レイヤー {n} / {total}',
+  'camadas.altura': '高さ',
+  'camadas.cor': '色',
+  'camadas.total': 'レイヤー',
+  'camadas.anterior': '前へ',
+  'camadas.seguinte': '次へ',
+  'camadas.semCopia':
+    'このファイルのローカルコピーがありません。プリンターはプレビュー済みのファイルの G-code しか配信しません。それ以外はサムネイルを表示します。',
+  'camadas.grande':
+    'このファイルは 6 MB を超えています。アプリが重くならないよう、レイヤーは生成しません。',
+  'camadas.ocupada':
+    'プリンターは印刷中で、その間はファイルを配信しません。印刷が終わってから再試行してください。',
+  'camadas.erro': 'このファイルの G-code を読み込めませんでした。',
+  'camadas.truncado':
+    '一部のみ表示: ファイルの移動数がアプリの保存上限を超えています。',
+  'camadas.comCores': 'このファイルは {n} 回色が変わります。',
+  'camadas.tentar': '再試行',
   'files.imprimirTitulo': '印刷',
   'files.imprimirMsg': '{nome} の印刷を開始しますか？',
   'files.naoArrancou': '開始できませんでした',

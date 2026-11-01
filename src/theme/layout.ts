@@ -31,6 +31,22 @@ export const margemDe = (classe: ClasseJanela): number =>
 export const colunasDe = (classe: ClasseJanela): number =>
   classe === 'expandida' ? 3 : classe === 'media' ? 2 : 1;
 
+/**
+ * Colunas da grelha de ficheiros, por tamanho de miniatura.
+ *
+ * O telemóvel fica com 3/2/1 (uma miniatura legível por cartão). O tablet tem
+ * muito mais largura: 8/6/4 aproveita-a sem cartões gigantes.
+ */
+export const colunasFicheiros = (
+  classe: ClasseJanela,
+  tamanho: 'p' | 'm' | 'g'
+): number => {
+  if (classe === 'expandida')
+    return tamanho === 'p' ? 8 : tamanho === 'm' ? 6 : 4;
+  if (classe === 'media') return tamanho === 'p' ? 5 : tamanho === 'm' ? 4 : 3;
+  return tamanho === 'p' ? 3 : tamanho === 'm' ? 2 : 1;
+};
+
 /** Largura do rail de navegação (tablet). */
 export const larguraRail = 88;
 
