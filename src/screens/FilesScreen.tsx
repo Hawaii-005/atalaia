@@ -904,7 +904,7 @@ export const FilesScreen = ({
               maxToRenderPerBatch={14}
               windowSize={9}
               removeClippedSubviews
-              contentContainerStyle={{ paddingBottom: 32 }}
+              contentContainerStyle={{ paddingBottom: 104 }}
               ListHeaderComponent={
                 <>
                   <View className="flex-row items-center justify-between px-4 py-3 border-b border-line">
