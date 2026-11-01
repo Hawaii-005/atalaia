@@ -186,6 +186,7 @@ const pl = {
   'files.impressao': 'Wydruk',
   'files.custo': 'Koszt',
   'files.filamentos': 'Filamenty',
+  'files.impressoes': 'Wydruki',
   'files.imprimirTitulo': 'Drukuj',
   'files.imprimirMsg': 'Rozpocząć drukowanie {nome}?',
   'files.naoArrancou': 'Nie uruchomiono',

@@ -128,7 +128,7 @@ seleção não navega.
 2. **«Mais impressos»** — precisa do contador local (Fase 1). Sem registo, a ordem fica indisponível com explicação.
 3. **Miniaturas: 144×144** — ampliar muito fica desfocado. Proposta: no detalhe, 144 dp com fundo desfocado, não interpolação.
 4. **Cache da última lista** — hoje não existe. A Fase 2 passa a guardar a última resposta boa por impressora para o estado «sem ligação».
-5. **Dois painéis no tablet** — o ecrã Ficheiros é hoje uma secção dentro de `PrinterTabScreen`; passa a layout próprio quando `expandida` for verdadeiro.
+5. **Dois painéis no tablet** — feito na Fase 3: com a janela a partir de 1000 dp, a lista fica à esquerda e o detalhe à direita (painel, não modal). Abaixo disso, modal, como no telemóvel.
 
 ## Depende do que a app ainda não tem
 
@@ -138,5 +138,5 @@ seleção não navega.
 | 9 / camadas | Geometria por camada exige descarregar o ficheiro; acima de 6 MB não há vista (limite actual do `useGcodePreview`) |
 | camadas (7) | O `.ctb`/`.goo` não é analisado pela app: só o que o formato e o código actual derem |
 | lista (resina) | O SDCP v1 da Saturn não expõe listagem de ficheiros na app |
-| detalhe 9 | Reimpressões e última impressão: registo local da Fase 1 (`atalaia.ficheiros.v1`); ligado às ações na Fase 3 |
+| detalhe 9 | Reimpressões e última impressão vêm do registo local (`atalaia.ficheiros.v1`), contado no arranque de cada impressão (ficheiro, fila ou histórico), com o Id do comando como testemunho |
 | filtro material | Só com `Cmd 260` por ficheiro; não vale a pena pedi-lo para 2000 ficheiros de uma vez |

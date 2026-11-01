@@ -192,6 +192,7 @@ const en = {
   'files.impressao': 'Print',
   'files.custo': 'Cost',
   'files.filamentos': 'Filaments',
+  'files.impressoes': 'Prints',
   'files.imprimirTitulo': 'Print',
   'files.imprimirMsg': 'Start printing {nome}?',
   'files.naoArrancou': "Didn't start",

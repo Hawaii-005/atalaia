@@ -33,6 +33,7 @@ import { mensagemDeErro } from '../utils/errors';
 import { hexDe } from '../theme/temas';
 import { EstadoVazio } from '../ui/EstadoVazio';
 import { lerTimelapse } from '../utils/timelapse';
+import { guardarArranque } from '../utils/ficheiros/armazenamento';
 
 // Etiquetas visíveis para o desfecho de cada impressão (chaves i18n).
 const outcomeLabel: Record<PrintRecord['outcome'], string> = {
@@ -230,20 +231,31 @@ export const HistoryScreen = ({ navigation }: any) => {
           );
           return;
         }
-        const resposta = await request(
-          printer.id,
-          startPrintCommand(alvo.name, {
+        const jobId = `reprint-${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2, 8)}`;
+        const comando = startPrintCommand(
+          alvo.name,
+          {
             nivelar: false,
             lado: 0,
             timelapse: (await lerTimelapse(printer.id)) ? 1 : 0,
-          }),
-          15000
+          },
+          { id: jobId }
         );
+        const resposta = await request(printer.id, comando, 15000);
         const ack = ackDaResposta(resposta) ?? 0;
         if (ack !== 0) {
           Alert.alert(t('history.reimprimirTitulo'), descreverAck(ack));
           return;
         }
+        await guardarArranque(
+          {
+            printerId: printer.id,
+            nome: alvo.name,
+          },
+          comando.Id || jobId
+        ).catch(() => undefined);
         Alert.alert(t('history.reimprimirTitulo'), t('history.aReimprimir'));
         navigation.navigate('Impressora');
       } catch (erro) {

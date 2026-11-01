@@ -189,6 +189,7 @@ const it = {
   'files.impressao': 'Stampa',
   'files.custo': 'Costo',
   'files.filamentos': 'Filamenti',
+  'files.impressoes': 'Stampe',
   'files.imprimirTitulo': 'Stampa',
   'files.imprimirMsg': 'Avviare la stampa di {nome}?',
   'files.naoArrancou': 'Non avviata',

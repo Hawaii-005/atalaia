@@ -188,6 +188,7 @@ const es = {
   'files.impressao': 'Impresión',
   'files.custo': 'Coste',
   'files.filamentos': 'Filamentos',
+  'files.impressoes': 'Impresiones',
   'files.imprimirTitulo': 'Imprimir',
   'files.imprimirMsg': '¿Empezar a imprimir {nome}?',
   'files.naoArrancou': 'No se ha iniciado',
