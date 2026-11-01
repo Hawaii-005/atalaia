@@ -1,35 +1,36 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Alert,
+  Image,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIsFocused } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSelectedPrinter } from '../contexts/SelectedPrinterContext';
+import { hexDe } from '../theme/temas';
 import { t, useIdioma } from '../i18n';
-import { Printer } from '../types';
-import { loadHistory, PrintRecord } from '../utils/printHistory';
+import { getPrintStatus, isResumable, Printer } from '../types';
+import {
+  loadHistory,
+  formatDuration,
+  PrintRecord,
+} from '../utils/printHistory';
 import { useJanela } from '../theme/layout';
-import {
-  espaco,
-  margemEcra,
-  obterPaleta,
-  raio,
-  texto as tipos,
-} from '../theme/tokensV6';
+import { fonteNumeros } from '../theme/tokensV6';
+import { formatTicksToReadableTime } from '~/utils/FormatUtils';
 import { CartaoFila } from '../components/CartaoFila';
+import { urlMiniatura } from '../utils/miniatura';
 import {
-  AnelProgresso,
-  CabecalhoImpressora,
-  CartaoTemperatura,
-  SlotsCanvas,
-} from '../components/inicio';
+  pausePrintCommand,
+  resumePrintCommand,
+  stopPrintCommand,
+} from '../utils/commands';
 import {
   carregarInventario,
   custoPorGrama,
@@ -37,45 +38,29 @@ import {
   Inventario,
   roloActivo,
 } from '../utils/inventario';
-import {
-  estadoDoTrabalho,
-  formatarPercentagem,
-  formatarRestante,
-  restanteEmSegundos,
-} from '../utils/inicio/formatadores';
-import { LIMITE_QUASE_NO_FIM, Spool } from '../utils/filamentos/modelo';
-import { construirVistaSlots } from '../utils/filamentos/vista';
-import {
-  canvasSlotsCommand,
-  CanvasTray,
-  lightCommand,
-  pausePrintCommand,
-  resumePrintCommand,
-  stopPrintCommand,
-  videoCommand,
-} from '../utils/commands';
-import { SecaoCamara } from './inicio/SecaoCamara';
-import { CartaoTrabalho } from './inicio/CartaoTrabalho';
-import { SeletorMaquinas } from './inicio/SeletorMaquinas';
-import { LinhaConsumivel } from './inicio/LinhaConsumivel';
-import { ListaHistorico } from './inicio/ListaHistorico';
+
+const nomeCurto = (ficheiro?: string) => {
+  if (!ficheiro) return '';
+  return (
+    ficheiro
+      .split('/')
+      .pop()
+      ?.replace(/\.gcode$/i, '')
+      .replace(/[_-]?Elegoo PLA.*$/i, '')
+      .replace(/_[0-9.]+_[0-9]+m[0-9]*s$/i, '')
+      .trim() ?? ''
+  );
+};
 
 const euros = (valor: number) => `${valor.toFixed(2).replace('.', ',')} €`;
 
-/**
- * Início — o ecrã de quem só quer saber «está a correr bem?».
- *
- * Segue os blocos aprovados em `docs/design/inicio/`. A ordem muda entre
- * telemóvel e tablet; os blocos são os mesmos. Nada aqui inventa dados: gramas
- * por slot e cores do G-code só aparecem quando existem mesmo.
- */
 export const InicioScreen = ({ navigation }: any) => {
   useIdioma();
   const { tema } = useTheme();
-  const p = obterPaleta(tema.id);
+  const paleta = tema.paleta;
   const { printers, request } = usePrinterConnections();
   const { mudarMaquina, mudarSecao } = useSelectedPrinter();
-  const { expandida } = useJanela();
+  const { height, expandida } = useJanela();
   const emFoco = useIsFocused();
   const duasColunas = expandida;
 
@@ -86,108 +71,43 @@ export const InicioScreen = ({ navigation }: any) => {
     pendentes: [],
   });
   const [escolhidaId, setEscolhidaId] = useState<string | undefined>(undefined);
-  const [camaraAberta, setCamaraAberta] = useState(false);
-  const [slots, setSlots] = useState<CanvasTray[] | null>(null);
-  const [trayAtivo, setTrayAtivo] = useState(-1);
-  const [ticksParados, setTicksParados] = useState(false);
 
   useEffect(() => {
-    if (!emFoco) return;
     loadHistory()
-      .then(setHistorico)
+      .then(r => setHistorico(r))
       .catch(() => {});
+  }, []);
+
+  // Ao voltar do inventário ou do histórico, os números têm de ser os de agora.
+  useEffect(() => {
+    if (!emFoco) return;
     carregarInventario()
       .then(setInventario)
+      .catch(() => {});
+    loadHistory()
+      .then(setHistorico)
       .catch(() => {});
   }, [emFoco]);
 
   useEffect(() => {
-    if (escolhidaId && printers.some(maquina => maquina.id === escolhidaId)) {
-      return;
-    }
-    const ligadaJa =
-      printers.find(maquina => maquina.connectionStatus === 'connected') ??
-      printers[0];
-    setEscolhidaId(ligadaJa?.id);
+    if (escolhidaId && printers.some(p => p.id === escolhidaId)) return;
+    const ligada =
+      printers.find(p => p.connectionStatus === 'connected') ?? printers[0];
+    setEscolhidaId(ligada?.id);
   }, [printers, escolhidaId]);
 
   const escolhida = useMemo(
-    () => printers.find(maquina => maquina.id === escolhidaId) ?? printers[0],
+    () => printers.find(p => p.id === escolhidaId) ?? printers[0],
     [printers, escolhidaId]
   );
-  const outras = printers.filter(maquina => maquina.id !== escolhida?.id);
+  const outras = printers.filter(p => p.id !== escolhida?.id);
 
-  const resina = (escolhida?.kind ?? 'fdm') === 'resin';
-  const info = escolhida?.status?.PrintInfo;
-  const ligada = escolhida?.connectionStatus === 'connected';
-  const luzLigada = !!escolhida?.status?.LightStatus?.SecondLight;
-  const estado = estadoDoTrabalho({ ligada, printInfo: info, ticksParados });
-  // Só um trabalho a decorrer conta para o anel. Depois de terminar, a máquina
-  // mantém o PrintInfo da última impressão — mostrar esses números ao lado de
-  // «sem trabalhos a correr» seria mentir sobre o presente.
-  const emCurso =
-    estado === 'imprimindo' || estado === 'pausada' || estado === 'preparando';
-  const temTrabalho = emCurso && !!info?.Filename;
-  const progresso =
-    estado === 'terminada' ? 100 : emCurso ? (info?.Progress ?? 0) : 0;
-  const restante = emCurso ? formatarRestante(restanteEmSegundos(info)) : null;
-  const camadas =
-    emCurso && info?.TotalLayer
-      ? `${t('detalhes.camada')} ${info?.CurrentLayer ?? 0} / ${info.TotalLayer}`
-      : null;
-
-  // A pausa não tem código próprio: o que muda é o tempo de impressão parar de
-  // andar. Um temporizador compara os ticks e destapa o estado «em pausa».
-  const ticksRef = useRef<{ ticks: number } | null>(null);
-  useEffect(() => {
-    if (!info?.Filename) {
-      ticksRef.current = null;
-      setTicksParados(false);
-      return;
-    }
-    if (ticksRef.current && ticksRef.current.ticks !== info.CurrentTicks) {
-      setTicksParados(false);
-    }
-    ticksRef.current = { ticks: info.CurrentTicks };
-    const id = setInterval(() => {
-      setTicksParados(
-        !!ticksRef.current && ticksRef.current.ticks === info.CurrentTicks
-      );
-    }, 15000);
-    return () => clearInterval(id);
-  }, [info?.CurrentTicks, info?.Filename]);
-
-  // Slots do CANVAS: só a uma FDM ligada, e só com o ecrã em foco.
-  useEffect(() => {
-    if (!emFoco || !escolhida || resina || !ligada) return;
-    let vivo = true;
-    request(escolhida.id, canvasSlotsCommand({ id: escolhida.id }), 10000)
-      .then((resposta: any) => {
-        if (!vivo) return;
-        const dados = resposta?.Data ?? resposta;
-        const lista = dados?.canvas_list?.[0]?.tray_list;
-        setSlots(Array.isArray(lista) ? lista : []);
-        setTrayAtivo(
-          typeof dados?.active_tray_id === 'number' ? dados.active_tray_id : -1
-        );
-      })
-      .catch(() => {
-        if (vivo) setSlots([]);
-      });
-    return () => {
-      vivo = false;
-    };
-  }, [emFoco, escolhida, resina, ligada, request]);
-
-  // O vídeo da Centauri só aceita uma ligação: liga ao entrar, desliga ao sair.
-  useEffect(() => {
-    if (!emFoco || !escolhida || !ligada || resina) return;
-    try {
-      request(escolhida.id, videoCommand(true, { id: escolhida.id }), 8000);
-    } catch {
-      // sem ligação, a moldura mostra «sem sinal»
-    }
-  }, [emFoco, escolhida, ligada, resina, request]);
+  const cartao = {
+    backgroundColor: hexDe(paleta.cartao),
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: hexDe(paleta.linha),
+  } as const;
 
   const acao = useCallback(
     async (printer: Printer, tipo: 'pausar' | 'retomar' | 'parar') => {
@@ -225,67 +145,24 @@ export const InicioScreen = ({ navigation }: any) => {
     [request]
   );
 
-  const alternarLuz = useCallback(async () => {
-    if (!escolhida) return;
-    try {
-      await request(
-        escolhida.id,
-        lightCommand(!luzLigada, { id: `luz-${Date.now()}` }),
-        8000
-      );
-    } catch (erro) {
-      Alert.alert(
-        t('comum.erro'),
-        erro instanceof Error ? erro.message : String(erro)
-      );
-    }
-  }, [escolhida, luzLigada, request]);
-
-  const rolo = escolhida
-    ? roloActivo(inventario.rolos, escolhida.id)
-    : undefined;
-  const garrafa = escolhida
-    ? garrafaActiva(inventario.garrafas, escolhida.id)
-    : undefined;
-
-  const vistasSlots = useMemo(() => {
-    if (!slots || !escolhida || resina) return [];
-    return construirVistaSlots(
-      slots,
-      inventario.rolos as Spool[],
-      escolhida.id,
-      LIMITE_QUASE_NO_FIM,
-      trayAtivo
-    );
-  }, [slots, escolhida, inventario.rolos, resina, trayAtivo]);
-
-  const historicoDaMaquina = useMemo(
-    () =>
-      historico.filter(
-        registo =>
-          !registo.printerName || registo.printerName === escolhida?.printerName
-      ),
-    [historico, escolhida?.printerName]
-  );
-
   if (!escolhida) {
     return (
       <SafeAreaView
         edges={['top']}
-        style={{ flex: 1, backgroundColor: p.fundo }}
+        style={{ flex: 1, backgroundColor: hexDe(paleta.fundo) }}
       >
         <View
           style={{
             flex: 1,
             alignItems: 'center',
             justifyContent: 'center',
-            padding: espaco.xl,
+            padding: 24,
           }}
         >
           <Text
             style={{
-              ...tipos.legenda,
-              color: p.textoSecundario,
+              fontSize: 14,
+              color: hexDe(paleta.tintaSoft),
               textAlign: 'center',
             }}
           >
@@ -294,18 +171,16 @@ export const InicioScreen = ({ navigation }: any) => {
           <TouchableOpacity
             onPress={() => navigation.navigate('AddEditPrinter')}
             style={{
-              marginTop: espaco.md,
-              paddingHorizontal: espaco.lg,
+              marginTop: 14,
+              paddingHorizontal: 18,
               height: 42,
-              borderRadius: raio.botao,
-              backgroundColor: p.primaria,
+              borderRadius: 12,
+              backgroundColor: hexDe(paleta.acento),
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Text
-              style={{ ...tipos.legendaForte, color: p.textoSobrePrimaria }}
-            >
+            <Text style={{ fontSize: 12, fontWeight: '800', color: '#fff' }}>
               {t('home.adicionarImpressora')}
             </Text>
           </TouchableOpacity>
@@ -314,438 +189,746 @@ export const InicioScreen = ({ navigation }: any) => {
     );
   }
 
-  const abrirCamara = () =>
-    navigation.navigate('Camera', { printerId: escolhida.id });
-  const irParaFicheiros = () => {
-    mudarMaquina(escolhida.id);
-    mudarSecao('ficheiros');
-    navigation.navigate('Impressora');
-  };
-  const irParaFilamentos = () => {
-    mudarMaquina(escolhida.id);
-    mudarSecao('filamentos');
-    navigation.navigate('Impressora');
-  };
+  const resina = (escolhida.kind ?? 'fdm') === 'resin';
+  const info = escolhida.status?.PrintInfo;
+  const fase = getPrintStatus(info?.Status ?? 0);
+  const aCorrer =
+    !!info?.Filename &&
+    (fase === 'printing' || fase === 'paused' || fase === 'preparing');
+  const progresso = aCorrer ? (info?.Progress ?? 0) : 0;
+  const ticksPorFazer = (info?.TotalTicks ?? 0) - (info?.CurrentTicks ?? 0);
+  const falta =
+    aCorrer && ticksPorFazer > 0
+      ? formatTicksToReadableTime(ticksPorFazer)
+      : '';
+  const ligadaEscolhida = escolhida.connectionStatus === 'connected';
 
-  // ── blocos ────────────────────────────────────────────────────────────────
+  const ligada = fase === 'printing' || fase === 'preparing';
+  const estadoTexto = !ligadaEscolhida
+    ? t('inicio.semLigacao')
+    : aCorrer
+      ? ligada
+        ? t('estado.imprimindo')
+        : t('estado.emPausa')
+      : resina
+        ? t('inicio.prontaResina')
+        : t('inicio.pronta');
+  const corEstado = !ligadaEscolhida
+    ? hexDe(paleta.perigo)
+    : aCorrer
+      ? hexDe(paleta.ok)
+      : hexDe(paleta.tintaSoft);
 
-  const blocoSeletor =
-    printers.length > 1 ? (
-      <SeletorMaquinas
-        maquinas={printers.map(maquina => ({
-          id: maquina.id,
-          nome: maquina.printerName,
-          estado: estadoDoTrabalho({
-            ligada: maquina.connectionStatus === 'connected',
-            printInfo: maquina.status?.PrintInfo,
-          }),
-        }))}
-        activaId={escolhida.id}
-        onEscolher={setEscolhidaId}
-      />
-    ) : null;
+  const rolo = roloActivo(inventario.rolos, escolhida.id);
+  const garrafa = garrafaActiva(inventario.garrafas, escolhida.id);
+  const imagem =
+    info?.Filename && !resina
+      ? urlMiniatura(escolhida.ipAddress, info.Filename)
+      : null;
 
-  const blocoCamara = (
-    <SecaoCamara
-      host={escolhida.ipAddress}
-      activa={emFoco && ligada && !resina}
-      grande={duasColunas}
-      aberta={camaraAberta}
-      onAbrir={() => setCamaraAberta(true)}
-      onFechar={() => setCamaraAberta(false)}
-      luzLigada={luzLigada}
-      onLuz={alternarLuz}
-      onAbrirCamara={abrirCamara}
-    />
-  );
-
-  const blocoAnel = (
-    <View
-      style={{
-        flexDirection: duasColunas ? 'row' : 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: espaco.lg,
-        padding: espaco.lg,
-        borderRadius: raio.cartao,
-        backgroundColor: p.cartao,
-        borderWidth: 1,
-        borderColor: p.contorno,
-      }}
-    >
-      <AnelProgresso
-        progresso={progresso}
-        tamanho={duasColunas ? 'grande' : 'medio'}
-        legenda={restante}
-        accessibilityLabel={`${formatarPercentagem(progresso)}${
-          restante ? ` · ${restante}` : ''
-        }`}
-      />
-      {camadas || estado === 'terminada' || restante ? (
-        <View
-          style={{
-            flex: duasColunas ? 1 : 0,
-            gap: 2,
-            alignItems: duasColunas ? 'flex-start' : 'center',
-          }}
-        >
-          <Text
-            numberOfLines={1}
-            style={{ ...tipos.micro, color: p.textoSecundario }}
-          >
-            {camadas ?? (estado === 'terminada' ? t('estado.terminada') : null)}
-          </Text>
-          {restante ? (
-            <Text style={{ ...tipos.legendaForte, color: p.texto }}>
-              {restante}
-            </Text>
-          ) : null}
-        </View>
-      ) : null}
-    </View>
-  );
-
-  const blocoTrabalho = (
-    <CartaoTrabalho
-      nome={
-        emCurso || estado === 'terminada'
-          ? info?.Filename.split('/').pop()
-          : undefined
-      }
-      camadaAtual={emCurso ? info?.CurrentLayer : undefined}
-      camadaTotal={emCurso ? info?.TotalLayer : undefined}
-      percentagem={progresso}
-      restante={restante}
-      resina={resina}
-      onEscolher={irParaFicheiros}
-    />
-  );
-
-  const blocoTemperaturas = resina ? null : (
-    <View style={{ flexDirection: 'row', gap: espaco.sm }}>
-      <CartaoTemperatura
-        rotulo={t('comum.bico')}
-        valor={escolhida.status?.TempOfNozzle}
-        alvo={escolhida.status?.TempTargetNozzle}
-        cor={p.bico}
-        desactivado={!ligada}
-      />
-      <CartaoTemperatura
-        rotulo={t('comum.mesa')}
-        valor={escolhida.status?.TempOfHotbed}
-        alvo={escolhida.status?.TempTargetHotbed}
-        cor={p.mesa}
-        desactivado={!ligada}
-      />
-      <CartaoTemperatura
-        rotulo={t('comum.camara')}
-        valor={escolhida.status?.TempOfBox}
-        alvo={escolhida.status?.TempTargetBox}
-        cor={p.camara}
-        desactivado={!ligada}
-      />
-    </View>
-  );
-
-  const blocoSlots = resina ? null : (
-    <View
-      style={{
-        gap: espaco.sm,
-        padding: espaco.md,
-        borderRadius: raio.cartao,
-        backgroundColor: p.cartao,
-        borderWidth: 1,
-        borderColor: p.contorno,
-      }}
-    >
-      <Text style={{ ...tipos.microForte, color: p.textoSecundario }}>
-        {t('inicio.slotsCanvas')}
-      </Text>
-      <SlotsCanvas
-        slots={vistasSlots}
-        carregando={slots === null && ligada}
-        onSlot={irParaFilamentos}
-      />
-    </View>
-  );
-
-  const blocoAcoes = temTrabalho ? (
-    <View style={{ flexDirection: 'row', gap: espaco.sm }}>
-      <TouchableOpacity
-        onPress={() =>
-          acao(escolhida, estado === 'pausada' ? 'retomar' : 'pausar')
-        }
-        accessibilityRole="button"
-        style={{
-          flex: 1,
-          height: 46,
-          borderRadius: raio.botao,
-          backgroundColor: p.cartaoAlt,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Text style={{ ...tipos.botao, fontSize: 15, color: p.texto }}>
-          {estado === 'pausada' ? t('comum.retomar') : t('comum.pausar')}
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        onPress={() => acao(escolhida, 'parar')}
-        accessibilityRole="button"
-        style={{
-          flex: 1,
-          height: 46,
-          borderRadius: raio.botao,
-          borderWidth: 1.5,
-          borderColor: p.perigo,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Text style={{ ...tipos.botao, fontSize: 15, color: p.perigo }}>
-          {t('comum.parar')}
-        </Text>
-      </TouchableOpacity>
-    </View>
-  ) : null;
-
-  const blocoConsumivel =
-    rolo || garrafa ? (
-      <LinhaConsumivel
-        icone={rolo ? 'ellipse-outline' : 'water-outline'}
-        nome={rolo ? rolo.nome : (garrafa?.nome ?? '')}
-        detalhe={
-          rolo
-            ? `${rolo.material} · ${Math.round(rolo.restante)} g de ${
-                rolo.pesoInicial
-              } g · ${euros(custoPorGrama(rolo) * 1000)}/kg`
-            : `${Math.round(garrafa?.restante ?? 0)} ml de ${
-                garrafa?.volumeInicial ?? 0
-              } ml`
-        }
-        cor={rolo?.cor}
-        onPress={() => navigation.navigate('Inventario')}
-      />
-    ) : null;
+  const historicoDaMaquina = historico
+    .filter(r => !r.printerName || r.printerName === escolhida.printerName)
+    .slice(0, duasColunas ? 8 : height >= 1000 ? 5 : 4);
 
   const atalhos = [
-    !resina && {
-      icone: 'videocam-outline' as const,
+    {
+      icone: 'videocam-outline',
       etiqueta: t('inicio.camara'),
-      aoTocar: abrirCamara,
+      aoTocar: () => navigation.navigate('Camera', { printerId: escolhida.id }),
+      soFdm: true,
     },
     {
-      icone: 'folder-open-outline' as const,
+      icone: 'folder-open-outline',
       etiqueta: t('inicio.ficheiros'),
-      aoTocar: irParaFicheiros,
+      aoTocar: () => {
+        mudarMaquina(escolhida.id);
+        mudarSecao('ficheiros');
+        navigation.navigate('Impressora');
+      },
     },
     {
-      icone: 'stats-chart-outline' as const,
-      etiqueta: t('history.title'),
+      icone: 'stats-chart-outline',
+      etiqueta: t('inicio.historico'),
       aoTocar: () => navigation.navigate('History'),
     },
     {
-      icone: 'layers-outline' as const,
-      etiqueta: t('inicio.inventario'),
+      icone: 'layers-outline',
+      etiqueta: t('inv.titulo'),
       aoTocar: () => navigation.navigate('Inventario'),
     },
-  ].filter(Boolean) as {
-    icone: keyof typeof Ionicons.glyphMap;
-    etiqueta: string;
-    aoTocar: () => void;
-  }[];
-
-  const blocoAtalhos = (
-    <View style={{ flexDirection: 'row', gap: espaco.sm }}>
-      {atalhos.map(item => (
-        <TouchableOpacity
-          key={item.etiqueta}
-          onPress={item.aoTocar}
-          accessibilityRole="button"
-          accessibilityLabel={item.etiqueta}
-          style={{
-            flex: 1,
-            height: 64,
-            borderRadius: raio.interno,
-            backgroundColor: p.cartao,
-            borderWidth: 1,
-            borderColor: p.contorno,
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 4,
-          }}
-        >
-          <Ionicons name={item.icone} size={19} color={p.primaria} />
-          <Text numberOfLines={1} style={{ ...tipos.micro, color: p.texto }}>
-            {item.etiqueta}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
-
-  const blocoHistorico = (
-    <ListaHistorico
-      registos={historicoDaMaquina}
-      onVerTudo={() => navigation.navigate('History')}
-      limite={duasColunas ? 6 : 4}
-    />
-  );
-
-  const blocoFila = (
-    <CartaoFila
-      mostrarAuto={false}
-      onAbrir={() => navigation.navigate('Fila')}
-    />
-  );
-
-  const blocoOutras = outras.length ? (
-    <View style={{ gap: espaco.sm }}>
-      {outras.map(maquina => (
-        <TouchableOpacity
-          key={maquina.id}
-          onPress={() => setEscolhidaId(maquina.id)}
-          accessibilityRole="button"
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: espaco.md,
-            padding: espaco.md,
-            borderRadius: raio.cartao,
-            backgroundColor: p.cartao,
-            borderWidth: 1,
-            borderColor: p.contorno,
-          }}
-        >
-          <Ionicons
-            name={
-              (maquina.kind ?? 'fdm') === 'resin'
-                ? 'layers-outline'
-                : 'print-outline'
-            }
-            size={17}
-            color={p.textoSecundario}
-          />
-          <View style={{ flex: 1 }}>
-            <Text
-              numberOfLines={1}
-              style={{ ...tipos.legendaForte, color: p.texto }}
-            >
-              {maquina.printerName}
-            </Text>
-            <Text style={{ ...tipos.micro, color: p.textoSecundario }}>
-              {maquina.connectionStatus !== 'connected'
-                ? t('inicio.semLigacao')
-                : maquina.status?.PrintInfo?.Filename
-                  ? `${t('estado.imprimindo')} · ${Math.round(
-                      maquina.status.PrintInfo.Progress ?? 0
-                    )}%`
-                  : t('inicio.pronta')}
-            </Text>
-          </View>
-          <Ionicons
-            name="chevron-forward"
-            size={16}
-            color={p.textoSecundario}
-          />
-        </TouchableOpacity>
-      ))}
-    </View>
-  ) : null;
+  ].filter(a => !(a.soFdm && resina));
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: p.fundo }} edges={['top']}>
-      <ScrollView
-        contentContainerStyle={{ paddingBottom: duasColunas ? 40 : 110 }}
-      >
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: hexDe(paleta.fundo) }}
+      edges={['top']}
+    >
+      <ScrollView contentContainerStyle={{ paddingBottom: 28 }}>
         <View
           style={{
             flexDirection: 'row',
             alignItems: 'center',
-            paddingHorizontal: margemEcra,
-            paddingTop: espaco.sm,
+            paddingHorizontal: 20,
+            paddingTop: 8,
           }}
         >
-          <Text style={{ flex: 1, ...tipos.tituloEcra, color: p.texto }}>
+          <Text
+            style={{
+              flex: 1,
+              fontSize: 26,
+              fontWeight: '700',
+              color: hexDe(paleta.tinta),
+            }}
+          >
             {t('inicio.titulo')}
           </Text>
           <TouchableOpacity
             onPress={() => navigation.navigate('AddEditPrinter')}
-            accessibilityRole="button"
             accessibilityLabel={t('home.adicionarImpressora')}
             style={{
               width: 40,
               height: 40,
               borderRadius: 20,
-              backgroundColor: p.cartao,
+              backgroundColor: hexDe(paleta.cartao),
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Ionicons name="add" size={22} color={p.texto} />
+            <Ionicons name="add" size={22} color={hexDe(paleta.tinta)} />
           </TouchableOpacity>
         </View>
 
-        <View
-          style={{
-            paddingHorizontal: margemEcra,
-            marginTop: espaco.md,
-            gap: espaco.md,
-          }}
-        >
-          <CabecalhoImpressora
-            nome={escolhida.printerName}
-            estado={estado}
-            ip={escolhida.ipAddress}
-            atualizadoEm={escolhida.lastUpdate}
-            textoEstado={
-              resina && estado === 'pronta'
-                ? t('inicio.prontaResina')
-                : undefined
-            }
-          />
-
-          {blocoSeletor}
-
-          {duasColunas ? (
+        <View style={{ paddingHorizontal: 16, marginTop: 14, gap: 12 }}>
+          {printers.length > 1 && (
             <View
               style={{
                 flexDirection: 'row',
-                gap: espaco.md,
-                alignItems: 'flex-start',
+                gap: 4,
+                backgroundColor: hexDe(paleta.cartao),
+                borderWidth: 1,
+                borderColor: hexDe(paleta.linha),
+                borderRadius: 13,
+                padding: 4,
               }}
             >
-              <View style={{ flex: 1.15, gap: espaco.md }}>
-                {blocoCamara}
-                {blocoTrabalho}
-                {blocoAtalhos}
-                {blocoHistorico}
-              </View>
-              <View style={{ flex: 1, gap: espaco.md }}>
-                {blocoAnel}
-                {blocoTemperaturas}
-                {blocoSlots}
-                {blocoAcoes}
-                {blocoFila}
-                {blocoConsumivel}
-                {blocoOutras}
-              </View>
-            </View>
-          ) : (
-            <View style={{ gap: espaco.md }}>
-              {blocoAnel}
-              {blocoTrabalho}
-              {blocoCamara}
-              {blocoTemperaturas}
-              {blocoAcoes}
-              {blocoOutras}
-              {blocoConsumivel}
-              {blocoAtalhos}
-              {blocoHistorico}
-              {blocoFila}
-              {blocoSlots}
+              {printers.map(pr => {
+                const activa = pr.id === escolhida.id;
+                const prInfo = pr.status?.PrintInfo;
+                const prFase = getPrintStatus(prInfo?.Status ?? 0);
+                const cor =
+                  pr.connectionStatus !== 'connected'
+                    ? hexDe(paleta.perigo)
+                    : prFase === 'printing' || prFase === 'preparing'
+                      ? hexDe(paleta.ok)
+                      : hexDe(paleta.tintaMuted);
+                return (
+                  <TouchableOpacity
+                    key={pr.id}
+                    onPress={() => setEscolhidaId(pr.id)}
+                    activeOpacity={0.85}
+                    style={{
+                      flex: 1,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 6,
+                      paddingVertical: 9,
+                      borderRadius: 10,
+                      backgroundColor: activa
+                        ? hexDe(paleta.acento)
+                        : 'transparent',
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: 3,
+                        backgroundColor: activa ? '#0A0D18' : cor,
+                      }}
+                    />
+                    <Text
+                      numberOfLines={1}
+                      style={{
+                        fontSize: 11,
+                        fontWeight: '700',
+                        color: activa ? '#0A0D18' : hexDe(paleta.tintaSoft),
+                      }}
+                    >
+                      {pr.printerName}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           )}
+
+          {/* herói da máquina escolhida */}
+          <View
+            style={{
+              borderRadius: 20,
+              overflow: 'hidden',
+              borderWidth: 1,
+              borderColor: hexDe(paleta.linha),
+              backgroundColor: '#0A0F18',
+            }}
+          >
+            <View style={{ aspectRatio: duasColunas ? 16 / 9 : 16 / 10 }}>
+              <View
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  width: '100%',
+                  height: '100%',
+                }}
+              >
+                <View style={{ flex: 1, backgroundColor: '#0A0F18' }} />
+              </View>
+              {imagem && (
+                <Image
+                  source={{ uri: imagem }}
+                  resizeMode="cover"
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    width: '100%',
+                    height: '100%',
+                  }}
+                />
+              )}
+              <View
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: imagem ? 'rgba(5,8,15,0.28)' : 'transparent',
+                }}
+              />
+              <View
+                style={{
+                  position: 'absolute',
+                  top: 10,
+                  left: 10,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                  backgroundColor: 'rgba(5,8,15,0.72)',
+                  borderWidth: 1,
+                  borderColor: 'rgba(255,255,255,0.14)',
+                  borderRadius: 9,
+                  paddingHorizontal: 8,
+                  paddingVertical: 5,
+                }}
+              >
+                <View
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: 3,
+                    backgroundColor: corEstado,
+                  }}
+                />
+                <Text
+                  style={{
+                    fontSize: 9.5,
+                    fontWeight: '800',
+                    color: '#E7EDF9',
+                    letterSpacing: 0.5,
+                  }}
+                >
+                  {estadoTexto.toUpperCase()}
+                </Text>
+              </View>
+
+              {!imagem && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Ionicons
+                    name={resina ? 'layers-outline' : 'print-outline'}
+                    size={46}
+                    color="#22304A"
+                  />
+                </View>
+              )}
+
+              <View
+                style={{
+                  position: 'absolute',
+                  left: 14,
+                  right: 14,
+                  bottom: 12,
+                }}
+              >
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    fontSize: 18,
+                    fontWeight: '700',
+                    color: hexDe(paleta.tinta),
+                  }}
+                >
+                  {aCorrer
+                    ? nomeCurto(info?.Filename) || escolhida.printerName
+                    : escolhida.printerName}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 11,
+                    color: hexDe(paleta.tintaSoft),
+                    marginTop: 2,
+                  }}
+                >
+                  {aCorrer
+                    ? `${t('comum.camada', { actual: info?.CurrentLayer ?? 0, total: info?.TotalLayer ?? 0 })}${falta ? ` · ${t('inicio.falta', { t: falta })}` : ''}`
+                    : resina
+                      ? t('inicio.prontaResina')
+                      : `${escolhida.ipAddress} · ${t('inicio.pronta')}`}
+                </Text>
+                {aCorrer && (
+                  <>
+                    <View
+                      style={{
+                        height: 5,
+                        borderRadius: 3,
+                        backgroundColor: hexDe(paleta.linha),
+                        marginTop: 9,
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: `${Math.max(2, Math.min(100, progresso))}%`,
+                          height: 5,
+                          backgroundColor: hexDe(paleta.acento),
+                        }}
+                      />
+                    </View>
+                    <View
+                      style={{ flexDirection: 'row', gap: 14, marginTop: 9 }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 11,
+                          fontWeight: '700',
+                          color: hexDe(paleta.tinta),
+                          fontFamily: fonteNumeros,
+                        }}
+                      >
+                        {`${Math.round(progresso)}%`}
+                      </Text>
+                      {!resina && (
+                        <>
+                          <Text
+                            style={{
+                              fontSize: 11,
+                              color: hexDe(paleta.tintaSoft),
+                              fontFamily: fonteNumeros,
+                            }}
+                          >
+                            {`${t('comum.bico')} ${Math.round(escolhida.status?.TempOfNozzle ?? 0)}°`}
+                          </Text>
+                          <Text
+                            style={{
+                              fontSize: 11,
+                              color: hexDe(paleta.tintaSoft),
+                              fontFamily: fonteNumeros,
+                            }}
+                          >
+                            {`${t('comum.mesa')} ${Math.round(escolhida.status?.TempOfHotbed ?? 0)}°`}
+                          </Text>
+                        </>
+                      )}
+                    </View>
+                  </>
+                )}
+              </View>
+            </View>
+          </View>
+
+          {aCorrer && ligadaEscolhida && (
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <TouchableOpacity
+                onPress={() =>
+                  acao(
+                    escolhida,
+                    isResumable(info?.Status ?? 0) ? 'retomar' : 'pausar'
+                  )
+                }
+                activeOpacity={0.85}
+                style={{
+                  flex: 1,
+                  height: 42,
+                  borderRadius: 12,
+                  backgroundColor: hexDe(paleta.fundoBaixo),
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                }}
+              >
+                <Ionicons
+                  name={isResumable(info?.Status ?? 0) ? 'play' : 'pause'}
+                  size={13}
+                  color={hexDe(paleta.tinta)}
+                />
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontWeight: '700',
+                    color: hexDe(paleta.tinta),
+                  }}
+                >
+                  {isResumable(info?.Status ?? 0)
+                    ? t('comum.retomar')
+                    : t('comum.pausar')}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => acao(escolhida, 'parar')}
+                activeOpacity={0.85}
+                style={{
+                  flex: 1,
+                  height: 42,
+                  borderRadius: 12,
+                  borderWidth: 1.4,
+                  borderColor: hexDe(paleta.perigo),
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                }}
+              >
+                <Ionicons name="stop" size={13} color={hexDe(paleta.perigo)} />
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontWeight: '700',
+                    color: hexDe(paleta.perigo),
+                  }}
+                >
+                  {t('comum.parar')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* a outra máquina, numa linha */}
+          {outras.map(pr => {
+            const prInfo = pr.status?.PrintInfo;
+            const prFase = getPrintStatus(prInfo?.Status ?? 0);
+            const prCorre =
+              !!prInfo?.Filename &&
+              (prFase === 'printing' || prFase === 'preparing');
+            return (
+              <TouchableOpacity
+                key={pr.id}
+                onPress={() => setEscolhidaId(pr.id)}
+                activeOpacity={0.85}
+                style={{
+                  ...cartao,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: 12,
+                }}
+              >
+                <View
+                  style={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: 10,
+                    backgroundColor: hexDe(paleta.fundoBaixo),
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Ionicons
+                    name={
+                      (pr.kind ?? 'fdm') === 'resin'
+                        ? 'layers-outline'
+                        : 'print-outline'
+                    }
+                    size={15}
+                    color={hexDe(paleta.tintaSoft)}
+                  />
+                </View>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      fontSize: 12,
+                      fontWeight: '700',
+                      color: hexDe(paleta.tinta),
+                    }}
+                  >
+                    {pr.printerName}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 9.5,
+                      color: hexDe(paleta.tintaSoft),
+                      marginTop: 1,
+                    }}
+                  >
+                    {pr.connectionStatus !== 'connected'
+                      ? t('inicio.semLigacao')
+                      : prCorre
+                        ? `${t('estado.imprimindo')} · ${Math.round(prInfo?.Progress ?? 0)}%`
+                        : t('inicio.pronta')}
+                  </Text>
+                </View>
+                {prCorre && pr.connectionStatus === 'connected' && (
+                  <>
+                    <TouchableOpacity
+                      onPress={() =>
+                        acao(
+                          pr,
+                          isResumable(prInfo?.Status ?? 0)
+                            ? 'retomar'
+                            : 'pausar'
+                        )
+                      }
+                      style={{
+                        width: 30,
+                        height: 30,
+                        borderRadius: 9,
+                        backgroundColor: hexDe(paleta.fundoBaixo),
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Ionicons
+                        name={
+                          isResumable(prInfo?.Status ?? 0) ? 'play' : 'pause'
+                        }
+                        size={13}
+                        color={hexDe(paleta.tinta)}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => acao(pr, 'parar')}
+                      style={{
+                        width: 30,
+                        height: 30,
+                        borderRadius: 9,
+                        borderWidth: 1,
+                        borderColor: hexDe(paleta.perigo) + '88',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Ionicons
+                        name="stop"
+                        size={12}
+                        color={hexDe(paleta.perigo)}
+                      />
+                    </TouchableOpacity>
+                  </>
+                )}
+              </TouchableOpacity>
+            );
+          })}
+
+          {/* consumíveis */}
+          {(rolo || garrafa) && (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Inventario')}
+              activeOpacity={0.85}
+              style={{
+                ...cartao,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+                padding: 12,
+              }}
+            >
+              <View
+                style={{
+                  width: 26,
+                  height: 26,
+                  borderRadius: 9,
+                  backgroundColor:
+                    rolo?.cor ?? garrafa?.cor ?? hexDe(paleta.linha),
+                  borderWidth: 1,
+                  borderColor: hexDe(paleta.linha),
+                }}
+              />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    fontSize: 12,
+                    fontWeight: '600',
+                    color: hexDe(paleta.tinta),
+                  }}
+                >
+                  {rolo ? rolo.nome : garrafa?.nome}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 9.5,
+                    color: hexDe(paleta.tintaSoft),
+                    marginTop: 1,
+                  }}
+                >
+                  {rolo
+                    ? `${rolo.material} · ${Math.round(rolo.restante)} g de ${rolo.pesoInicial} g · ${euros(custoPorGrama(rolo) * 1000)}/kg`
+                    : `${Math.round(garrafa?.restante ?? 0)} ml de ${garrafa?.volumeInicial ?? 0} ml`}
+                </Text>
+              </View>
+              <Ionicons
+                name="chevron-forward"
+                size={14}
+                color={hexDe(paleta.tintaMuted)}
+              />
+            </TouchableOpacity>
+          )}
+
+          {/* atalhos */}
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {atalhos.map(a => (
+              <TouchableOpacity
+                key={a.etiqueta}
+                onPress={a.aoTocar}
+                activeOpacity={0.85}
+                style={{
+                  ...cartao,
+                  flex: 1,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingVertical: 12,
+                  gap: 5,
+                }}
+              >
+                <Ionicons
+                  name={a.icone as any}
+                  size={18}
+                  color={hexDe(paleta.acentoTexto)}
+                />
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    fontSize: 9.5,
+                    fontWeight: '700',
+                    color: hexDe(paleta.tintaSoft),
+                  }}
+                >
+                  {a.etiqueta}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View
+            style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}
+          >
+            <Text
+              style={{
+                flex: 1,
+                fontSize: 13,
+                fontWeight: '700',
+                color: hexDe(paleta.tinta),
+              }}
+            >
+              {t('inicio.historico')}
+            </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('History')}>
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontWeight: '600',
+                  color: hexDe(paleta.acentoTexto),
+                }}
+              >
+                {t('inicio.verTudo')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View
+            style={{ ...cartao, paddingHorizontal: 13, paddingVertical: 4 }}
+          >
+            {historicoDaMaquina.length === 0 && (
+              <Text
+                style={{
+                  fontSize: 11,
+                  color: hexDe(paleta.tintaSoft),
+                  paddingVertical: 12,
+                  textAlign: 'center',
+                }}
+              >
+                {t('inicio.semHistorico')}
+              </Text>
+            )}
+            {historicoDaMaquina.map((registo, indice) => {
+              const falhou = registo.outcome === 'stopped';
+              return (
+                <View
+                  key={registo.id}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 10,
+                    paddingVertical: 10,
+                    borderTopWidth: indice === 0 ? 0 : 1,
+                    borderTopColor: hexDe(paleta.linha) + '66',
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 12,
+                      backgroundColor: hexDe(paleta.fundoBaixo),
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Ionicons
+                      name={falhou ? 'close' : 'checkmark'}
+                      size={14}
+                      color={falhou ? hexDe(paleta.perigo) : hexDe(paleta.ok)}
+                    />
+                  </View>
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      flex: 1,
+                      fontSize: 12,
+                      fontWeight: '600',
+                      color: hexDe(paleta.tinta),
+                    }}
+                  >
+                    {nomeCurto(registo.filename) || registo.filename}
+                  </Text>
+                  <Text
+                    style={{ fontSize: 10, color: hexDe(paleta.tintaSoft) }}
+                  >
+                    {formatDuration(registo)}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+
+          <CartaoFila onAbrir={() => navigation.navigate('Fila')} />
         </View>
       </ScrollView>
     </SafeAreaView>

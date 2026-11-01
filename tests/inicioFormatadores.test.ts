@@ -7,7 +7,6 @@ import {
   formatarRestante,
   formatarTemperatura,
   limitarPercentagem,
-  nomeDoFicheiro,
   restanteEmSegundos,
 } from '../src/utils/inicio/formatadores';
 
@@ -184,19 +183,5 @@ describe('estado do trabalho', () => {
 
   it('sem PrintInfo mas ligada está pronta', () => {
     expect(estadoDoTrabalho({ ligada: true, printInfo: null })).toBe('pronta');
-  });
-});
-
-describe('nome do ficheiro', () => {
-  it('tira o caminho, a extensão e o sufixo do fatiador', () => {
-    expect(nomeDoFicheiro('/local//suporte_Elegoo PLA_0.2_1h20m.gcode')).toBe(
-      'suporte'
-    );
-    expect(nomeDoFicheiro('peca.gcode')).toBe('peca');
-  });
-
-  it('sem nome devolve vazio', () => {
-    expect(nomeDoFicheiro(undefined)).toBe('');
-    expect(nomeDoFicheiro('')).toBe('');
   });
 });

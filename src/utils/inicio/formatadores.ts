@@ -105,20 +105,3 @@ export const formatarCamadas = (
   if (t <= 0) return null;
   return `${a} / ${t}`;
 };
-
-/**
- * Nome curto de um ficheiro da impressora: «/local//peca_Elegoo PLA_1.2_2h3m.gcode»
- * fica «peca». É o que o histórico mostra; o caminho inteiro não cabe numa linha.
- */
-export const nomeDoFicheiro = (ficheiro?: string | null): string => {
-  if (!ficheiro) return '';
-  return (
-    ficheiro
-      .split('/')
-      .pop()
-      ?.replace(/\.gcode$/i, '')
-      .replace(/[_-]?Elegoo PLA.*$/i, '')
-      .replace(/_[0-9.]+_[0-9]+m[0-9]*s$/i, '')
-      .trim() ?? ''
-  );
-};
