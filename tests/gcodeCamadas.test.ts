@@ -3,6 +3,7 @@ import {
   caminhoDaCamada,
   coresDasCamadas,
   lerCamadas,
+  limitesDoObjeto,
 } from '../src/utils/gcode/camadas';
 
 /** G-code mínimo: uma parede quadrada com N camadas a 0,2 mm. */
@@ -157,5 +158,49 @@ describe('caminhoDaCamada', () => {
       { minX: 0, minY: 0, maxX: 10, maxY: 10 }
     );
     expect(d).toBe('');
+  });
+});
+
+describe('limitesDoObjeto', () => {
+  const comPurga = () => {
+    const linhas = ['M82'];
+    let e = 0;
+    for (let camada = 0; camada < 6; camada += 1) {
+      linhas.push(`G1 Z${(0.2 * (camada + 1)).toFixed(2)}`);
+      if (camada === 0) {
+        // Linha de purga no canto do tabuleiro, só na primeira camada.
+        for (let i = 0; i < 10; i += 1) {
+          e += 0.02;
+          linhas.push(`G1 X${150 + i} Y160 E${e.toFixed(4)}`);
+        }
+      }
+      // Peça: 20 arestas dentro de 0..20
+      for (let i = 0; i < 20; i += 1) {
+        e += 0.02;
+        linhas.push(
+          `G1 X${(i % 10) + 0.5} Y${Math.floor(i / 10) + 0.5} E${e.toFixed(4)}`
+        );
+      }
+    }
+    return lerCamadas(linhas.join('\n'));
+  };
+
+  it('ignora a linha de purga e enquadra a peça', () => {
+    const r = comPurga();
+    const exatos = r.limites;
+    const objeto = limitesDoObjeto(r.camadas);
+    // Os limites exatos vão até aos 160; os da peça ficam perto dos 20.
+    expect(exatos.maxY).toBeGreaterThan(150);
+    expect(objeto.maxY).toBeLessThan(30);
+    expect(objeto.minX).toBeGreaterThanOrEqual(0);
+  });
+
+  it('devolve uma caixa segura sem camadas', () => {
+    expect(limitesDoObjeto([])).toEqual({
+      minX: 0,
+      minY: 0,
+      maxX: 1,
+      maxY: 1,
+    });
   });
 });

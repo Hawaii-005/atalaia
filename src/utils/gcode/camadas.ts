@@ -297,6 +297,52 @@ export const caminhoDaCamada = (
   return d.trim();
 };
 
+/**
+ * Limites da peça para o desenho.
+ *
+ * O ficheiro real da Centauri começa com uma linha de purga no canto do
+ * tabuleiro (e só na primeira camada). Com os limites de todas as camadas,
+ * essa linha estica a caixa e a peça fica encolhida num canto. Aqui as
+ * primeiras camadas ficam de fora — são as da purga e do rafts — e a caixa é
+ * a da peça. Num ficheiro com poucas camadas usa-se tudo, que não há como
+ * distinguir.
+ */
+export const limitesDoObjeto = (
+  camadas: CamadaGcode[],
+  saltarPrimeiras = 3
+): LimitesCamadas => {
+  const usadas =
+    camadas.length > saltarPrimeiras + 1
+      ? camadas.slice(saltarPrimeiras)
+      : camadas;
+
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+
+  usadas.forEach(c => {
+    const s = c.segmentos;
+    for (let k = 0; k < s.length; k += 4) {
+      if (s[k] < minX) minX = s[k];
+      if (s[k] > maxX) maxX = s[k];
+      if (s[k + 1] < minY) minY = s[k + 1];
+      if (s[k + 1] > maxY) maxY = s[k + 1];
+    }
+  });
+
+  if (!isFinite(minX) || !isFinite(minY)) {
+    return { minX: 0, minY: 0, maxX: 1, maxY: 1 };
+  }
+
+  return {
+    minX,
+    minY,
+    maxX: Math.max(maxX, minX + 0.001),
+    maxY: Math.max(maxY, minY + 0.001),
+  };
+};
+
 /** Alturas das camadas, para mostrar a altura usada. */
 export const alturaDaCamada = (
   camadas: CamadaGcode[],

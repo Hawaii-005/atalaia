@@ -20,6 +20,7 @@ import {
   caminhoDaCamada,
   coresDasCamadas,
   lerCamadas,
+  limitesDoObjeto,
 } from '../../utils/gcode/camadas';
 
 type Estado =
@@ -180,10 +181,15 @@ export const Camadas = ({
     void carregar();
   }, [carregar]);
 
+  const limites = useMemo(
+    () => (dados ? limitesDoObjeto(dados.camadas) : null),
+    [dados]
+  );
+
   const caminho = useMemo(() => {
-    if (!dados) return '';
-    return caminhoDaCamada(dados.camadas[indice], dados.limites);
-  }, [dados, indice]);
+    if (!dados || !limites) return '';
+    return caminhoDaCamada(dados.camadas[indice], limites);
+  }, [dados, limites, indice]);
 
   const total = dados?.camadas.length ?? 0;
   const camada = dados?.camadas[indice];
