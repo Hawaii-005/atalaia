@@ -142,7 +142,16 @@ motivo. Transições fora disto são rejeitadas (função pura + testes).
 | Filamento suficiente | `verificarTodosOsSlots` + inventário | existe; no máximo é aviso |
 | Motivo de bloqueio por estado antigo | `lastUpdate` da impressora | existe; limiar a definir (45 s) |
 
-## Decisões em aberto (precisam de resposta antes da Fase 2)
+## Decisões tomadas (1 nov 2026)
+
+1. **Tema**: o aspeto vem dos temas existentes; não se recria o «vidro».
+2. **Arrastar**: `react-native-gesture-handler` + `react-native-reanimated` (já instalados), sem dependência nova; ↑↓ mantém-se como alternativa.
+3. **Definições de arranque**: guardadas no item **ao pôr na fila** (`nivelar`, `lado`); o `slotMap` continua a ser escolhido no momento de imprimir.
+4. **Miniaturas**: ficheiro na cache da app; o item guarda só o nome. Sem ficheiro (ex.: backup noutro telemóvel) → sem miniatura, nunca um valor inventado.
+5. **i18n**: PT e EN escritos; os outros oito idiomas caem no inglês até revisão (`t()` já faz fallback para `en`). O teste passa a exigir paridade só entre `pt` e `en`.
+6. **Botão da notificação**: mantém-se por agora; decide-se na Fase 3 (a proposta é retirá-lo, porque com a app fechada não faz nada).
+
+## Decisões ainda em aberto
 
 1. **Tema «vidro»**: não existe na app — foi removido em 2.3.7 e restam ametista,
    esmeralda, cobre e citrino. Os desenhos usam tokens; confirmas que o aspeto
