@@ -67,12 +67,6 @@ const RAIO = anel.grande.raio;
 const TRACO = anel.grande.traco;
 const PERIMETRO = 2 * Math.PI * RAIO;
 
-const PRESETS = [
-  { nome: 'PLA', bico: 210, mesa: 60 },
-  { nome: 'PETG', bico: 240, mesa: 80 },
-  { nome: 'ABS', bico: 260, mesa: 100 },
-];
-
 const PASSOS = [0.1, 1, 10, 50];
 
 const restante = (segundos: number) => {
@@ -471,25 +465,6 @@ export const PainelSection = ({
   const definirVelocidade = (pct: number) =>
     enviar(printSpeedCommand(pct, { id: printer?.id }));
 
-  const preAquecer = (bico: number, mesa: number) =>
-    Alert.alert(
-      `${t('painel.preAquecer')} · ${bico}° / ${mesa}°`,
-      t('painel.preAquecerMsg'),
-      [
-        { text: t('comum.cancelar'), style: 'cancel' },
-        {
-          text: t('comum.confirmar'),
-          onPress: () =>
-            enviar(
-              temperatureCommand(
-                { nozzle: bico, bed: mesa },
-                { id: printer?.id }
-              )
-            ),
-        },
-      ]
-    );
-
   // Sem ligação não há painel: mostra-se o que o resto da app já diz.
   if (!printer) {
     return (
@@ -531,18 +506,21 @@ export const PainelSection = ({
 
   return (
     <ScrollView
+      showsVerticalScrollIndicator={false}
+      scrollEnabled={!isTablet}
       contentContainerStyle={{
         padding: espaco.lg,
         gap: espaco.md,
         paddingBottom: 40,
+        flexGrow: isTablet ? 1 : undefined,
       }}
-      showsVerticalScrollIndicator={false}
     >
       <View
         style={{
           flexDirection: isTablet ? 'row' : 'column',
           gap: espaco.md,
           alignItems: 'stretch',
+          flex: isTablet ? 1 : undefined,
         }}
       >
         <View style={{ flex: 1, gap: espaco.md }}>
@@ -662,7 +640,7 @@ export const PainelSection = ({
           )}
         </View>
 
-        <View style={{ flex: isTablet ? 1.15 : undefined, gap: espaco.md }}>
+        <ColunaControlos tablet={isTablet} gap={espaco.md}>
           {/* trabalho ou espera */}
           {aImprimir ? (
             <Cartao>
@@ -895,48 +873,6 @@ export const PainelSection = ({
                   />
                 </TouchableOpacity>
               </View>
-
-              <Rotulo style={{ marginTop: espaco.md, marginBottom: espaco.sm }}>
-                {t('painel.preAquecer')}
-              </Rotulo>
-              <View style={{ flexDirection: 'row', gap: espaco.sm }}>
-                {PRESETS.map(p => (
-                  <TouchableOpacity
-                    key={p.nome}
-                    disabled={!ligada}
-                    onPress={() => preAquecer(p.bico, p.mesa)}
-                    style={{
-                      flex: 1,
-                      borderRadius: raioToken.interno,
-                      backgroundColor: hexDe(paleta.fundoBaixo),
-                      borderWidth: 1,
-                      borderColor: hexDe(paleta.linha),
-                      paddingVertical: 11,
-                      alignItems: 'center',
-                      opacity: ligada ? 1 : 0.4,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 12,
-                        fontWeight: '700',
-                        color: hexDe(paleta.tinta),
-                      }}
-                    >
-                      {p.nome}
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: 10,
-                        color: hexDe(paleta.tintaSoft),
-                        marginTop: 2,
-                      }}
-                    >
-                      {`${p.bico}° · ${p.mesa}°`}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
             </Cartao>
           )}
 
@@ -1066,11 +1002,30 @@ export const PainelSection = ({
               />
             )}
           </Cartao>
-        </View>
+        </ColunaControlos>
       </View>
     </ScrollView>
   );
 };
+
+/** Coluna de controlos: rola sozinha no tablet, segue a página no telemóvel. */
+const ColunaControlos: React.FC<{
+  tablet: boolean;
+  gap: number;
+  children: React.ReactNode;
+}> = ({ tablet, gap, children }) =>
+  tablet ? (
+    <ScrollView
+      style={{ flex: 1.15 }}
+      contentContainerStyle={{ gap, paddingBottom: 24 }}
+      showsVerticalScrollIndicator={false}
+      nestedScrollEnabled
+    >
+      {children}
+    </ScrollView>
+  ) : (
+    <View style={{ gap }}>{children}</View>
+  );
 
 /** Tecla do D-Pad. */
 const Tecla: React.FC<{
