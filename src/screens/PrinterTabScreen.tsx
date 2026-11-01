@@ -39,11 +39,17 @@ export const PrinterTabScreen = ({ navigation }: any) => {
   const { tema } = useTheme();
   const paleta = tema.paleta;
   const { printers, removePrinter, reconnectAll } = usePrinterConnections();
-  const { maquina, secao, mudarMaquina, mudarSecao } = useSelectedPrinter();
+  const {
+    maquina,
+    secao,
+    mudarMaquina,
+    mudarSecao,
+    partilhado,
+    definirPartilhado,
+  } = useSelectedPrinter();
 
   const secoes = secoesDaMaquina(maquina);
   const ligada = maquina?.connectionStatus === 'connected';
-
   const corDoPonto = ligada ? hexDe(paleta.ok) : hexDe(paleta.perigo);
 
   const corpo = () => {
@@ -72,6 +78,8 @@ export const PrinterTabScreen = ({ navigation }: any) => {
             printerId={maquina.id}
             embutido
             navigation={navigation}
+            partilhado={partilhado}
+            onPartilhadoUsado={() => definirPartilhado(null)}
           />
         );
       case 'filamentos':

@@ -9,6 +9,7 @@ import React, {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { usePrinterConnections } from './PrinterConnectionsContext';
 import { Printer } from '../types';
+import { FicheiroPartilhado } from '../utils/partilha';
 
 /**
  * Máquina seleccionada na aba Impressora.
@@ -34,6 +35,9 @@ interface Contexto {
   secao: Secao;
   mudarMaquina: (id: string) => void;
   mudarSecao: (s: Secao) => void;
+  /** G-code entregue pelo «Partilhar» do Android e ainda por enviar. */
+  partilhado: FicheiroPartilhado | null;
+  definirPartilhado: (f: FicheiroPartilhado | null) => void;
 }
 
 const SelectedPrinterContext = createContext<Contexto | undefined>(undefined);
@@ -46,6 +50,7 @@ export const SelectedPrinterProvider = ({
   const { printers } = usePrinterConnections();
   const [maquinaId, setMaquinaId] = useState<string | null>(null);
   const [secao, setSecao] = useState<Secao>('painel');
+  const [partilhado, setPartilhado] = useState<FicheiroPartilhado | null>(null);
 
   useEffect(() => {
     AsyncStorage.getItem(CHAVE)
@@ -83,9 +88,30 @@ export const SelectedPrinterProvider = ({
 
   const mudarSecao = useCallback((s: Secao) => setSecao(s), []);
 
+  const definirPartilhado = useCallback(
+    (f: FicheiroPartilhado | null) => setPartilhado(f),
+    []
+  );
+
   const valor = useMemo(
-    () => ({ maquinaId, maquina, secao, mudarMaquina, mudarSecao }),
-    [maquinaId, maquina, secao, mudarMaquina, mudarSecao]
+    () => ({
+      maquinaId,
+      maquina,
+      secao,
+      mudarMaquina,
+      mudarSecao,
+      partilhado,
+      definirPartilhado,
+    }),
+    [
+      maquinaId,
+      maquina,
+      secao,
+      mudarMaquina,
+      mudarSecao,
+      partilhado,
+      definirPartilhado,
+    ]
   );
 
   return (

@@ -26,6 +26,29 @@
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="exp+cc-tool"/>
       </intent-filter>
+      <!-- «Partilhar» de outra app: G-code e modelos fatiáveis. Os tipos
+           genéricos são os que o Gestor de Ficheiros e o Chrome usam para
+           .gcode; sem eles a Atalaia não aparece na folha de partilha. -->
+      <intent-filter>
+        <action android:name="android.intent.action.SEND"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <data android:mimeType="application/octet-stream"/>
+        <data android:mimeType="application/x-gcode"/>
+        <data android:mimeType="application/gcode"/>
+        <data android:mimeType="text/x-gcode"/>
+        <data android:mimeType="model/stl"/>
+        <data android:mimeType="application/sla"/>
+        <data android:mimeType="model/3mf"/>
+        <data android:mimeType="application/zip"/>
+      </intent-filter>
+      <!-- «Abrir com» a partir de um gestor de ficheiros. -->
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <data android:mimeType="application/octet-stream"/>
+        <data android:mimeType="application/x-gcode"/>
+        <data android:mimeType="text/x-gcode"/>
+      </intent-filter>
     </activity>
           <service
             android:name=".MonitorService"

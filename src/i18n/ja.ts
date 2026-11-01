@@ -106,6 +106,13 @@ const ja = {
   'files.enviado': 'アップロード済み',
   'files.enviadoMsg':
     '{nome} がプリンターに保存されました。今すぐ印刷しますか？',
+  'files.partilhaSemImpressora':
+    'ファイルを受け取るプリンターが接続されていません。プリンターを接続して再試行してください。',
+  'files.partilhaOutro':
+    '「{nome}」は G-code ではありません。送信できるのは .gcode のみです。',
+  'files.partilhaModelo':
+    '「{nome}」はモデルで、G-code ではありません。Atalaia が送れるのはスライス済みのファイルだけです。ElegooSlicer で開いてスライスし、.gcode を共有してください。',
+  'files.partilhaTitulo': '共有されたファイル',
   'files.falhouEnvio': 'アップロードに失敗しました',
   'files.imprimirAgora': '今すぐ印刷',
   'files.naoEncontrado': 'プリンターの一覧にファイルがありません。',

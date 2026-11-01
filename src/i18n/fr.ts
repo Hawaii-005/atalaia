@@ -106,6 +106,13 @@ const fr = {
   'files.aEnviar': 'Envoi en cours…',
   'files.enviado': 'Envoyé',
   'files.enviadoMsg': '{nome} est sur l’imprimante. Imprimer maintenant ?',
+  'files.partilhaSemImpressora':
+    'Aucune imprimante connectée pour recevoir le fichier. Connectez une imprimante et réessayez.',
+  'files.partilhaOutro':
+    "« {nome} » n'est pas un G-code. Seuls les fichiers .gcode peuvent être envoyés.",
+  'files.partilhaModelo':
+    "« {nome} » est un modèle, pas du G-code. Atalaia n'envoie que ce qui est déjà tranché — ouvrez-le dans ElegooSlicer, tranchez-le et partagez le .gcode.",
+  'files.partilhaTitulo': 'Fichier partagé',
   'files.falhouEnvio': 'Échec de l’envoi',
   'files.imprimirAgora': 'Imprimer maintenant',
   'files.naoEncontrado':

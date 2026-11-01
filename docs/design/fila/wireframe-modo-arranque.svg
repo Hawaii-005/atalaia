@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="390" height="844" viewBox="0 0 390 844">
+  <title>Fila — modo de arranque</title>
+  <style>
+    text { font-family: "Helvetica Neue", Arial, sans-serif; fill: #111; }
+    .t { font-size: 15px; font-weight: 700; }
+    .p { font-size: 12px; font-weight: 700; }
+    .d { font-size: 11px; fill: #444; }
+    .s { font-size: 9px; fill: #666; letter-spacing: .6px; }
+    .n { font-size: 12px; font-weight: 700; fill: #fff; }
+    .b { fill: none; stroke: #555; stroke-width: 1.2; stroke-dasharray: 5 4; }
+    .ff { fill: #f2f2f2; stroke: #555; stroke-width: 1; }
+    .sk { fill: #e6e6e6; }
+  </style>
+<rect x="0" y="0" width="390" height="844" fill="#fff" stroke="#bbb"/>
+<text x="14" y="22" class="t">ATALAIA · FILA · MODO DE ARRANQUE</text>
+<text x="14" y="37" class="d">por impressora · em Definições › Fila e impressão</text>
+<rect x="12" y="52" width="366" height="62" rx="10" class="b"/><circle cx="26" cy="66" r="9" fill="#111"/><text x="26" y="70" text-anchor="middle" class="n">1</text><text x="42" y="70" class="s">CABEÇALHO</text>
+<text x="24" y="92" style="font-size:14px;font-weight:700">Arranque do próximo</text>
+<text x="24" y="108" class="d">Centauri Carbon</text>
+<rect x="12" y="122" width="366" height="100" rx="10" class="b"/><circle cx="26" cy="136" r="9" fill="#111"/><text x="26" y="140" text-anchor="middle" class="n">2</text><text x="42" y="140" class="s">MANUAL (POR DEFEITO)</text>
+<circle cx="34" cy="154" r="7" fill="none" stroke="#555" stroke-width="1.6"/>
+<circle cx="34" cy="154" r="3" fill="#555"/>
+<text x="52" y="158" class="p">Manual</text>
+<text x="52" y="180" class="d">Nada arranca sozinho.</text>
+<text x="52" y="198" class="d">Tocas em «Arrancar» quando quiseres.</text>
+<rect x="12" y="230" width="366" height="136" rx="10" class="b"/><circle cx="26" cy="244" r="9" fill="#111"/><text x="26" y="248" text-anchor="middle" class="n">3</text><text x="42" y="248" class="s">COM CONFIRMAÇÃO</text>
+<circle cx="34" cy="262" r="7" fill="none" stroke="#555" stroke-width="1.6"/>
+<text x="52" y="266" class="p">Com confirmação</text>
+<text x="52" y="288" class="d">Pergunta «Mesa limpa?» no fim.</text>
+<text x="52" y="306" class="d">Nunca arranca por timeout.</text>
+<text x="52" y="332" class="s">CONTAGEM</text>
+<rect x="52" y="338" width="74" height="24" rx="8" fill="none" stroke="#555" stroke-width="1.2"/><text x="89.0" y="354.0" text-anchor="middle" style="font-size:11px;fill:#333">60 s ⌄</text>
+<text x="136" y="355" class="s">15 · 30 · 60 · 120</text>
+<rect x="12" y="374" width="366" height="186" rx="10" class="b"/><circle cx="26" cy="388" r="9" fill="#111"/><text x="26" y="392" text-anchor="middle" class="n">4</text><text x="42" y="392" class="s">AUTOMÁTICO</text>
+<circle cx="34" cy="406" r="7" fill="none" stroke="#555" stroke-width="1.6"/>
+<text x="52" y="410" class="p">Automático</text>
+<text x="52" y="432" class="d">O próximo item arranca sozinho.</text>
+<rect x="24" y="446" width="342" height="56" rx="8" fill="#f2f2f2" stroke="#555" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text x="34" y="464" class="s">AVISO FORTE</text>
+<text x="34" y="482" class="d">Arranca sem confirmares a mesa livre.</text>
+<text x="34" y="496" class="s">RISCO DE CHOQUE COM A PEÇA ANTERIOR</text>
+<rect x="24" y="512" width="16" height="16" rx="3" fill="none" stroke="#555" stroke-width="1.4"/>
+<text x="48" y="524" class="d">Confirmo que entendo o risco</text>
+<text x="24" y="548" class="s">PAUSA ENTRE ARRANQUES: 2 MIN (FIXA HOJE)</text>
+<rect x="12" y="568" width="366" height="96" rx="10" class="b"/><circle cx="26" cy="582" r="9" fill="#111"/><text x="26" y="586" text-anchor="middle" class="n">5</text><text x="42" y="586" class="s">GUARDAR</text>
+<rect x="24" y="594" width="160" height="42" rx="8" fill="#e6e6e6" stroke="#555" stroke-width="1.2"/><text x="104.0" y="619.0" text-anchor="middle" style="font-size:11px;fill:#333">GUARDAR</text>
+<rect x="196" y="594" width="160" height="42" rx="8" fill="none" stroke="#555" stroke-width="1.2"/><text x="276.0" y="619.0" text-anchor="middle" style="font-size:11px;fill:#333">Cancelar</text>
+<text x="24" y="652" class="s">SEM CONFIRMAÇÃO NO AUTOMÁTICO, NÃO GRAVA</text>
+<rect x="12" y="672" width="366" height="160" rx="10" class="b"/><circle cx="26" cy="686" r="9" fill="#111"/><text x="26" y="690" text-anchor="middle" class="n">6</text><text x="42" y="690" class="s">O QUE ISTO SIGNIFICA</text>
+<text x="24" y="714" class="d">• Só funciona com a app aberta.</text>
+<text x="24" y="732" class="d">• Fechada: o item fica «à espera».</text>
+<text x="24" y="750" class="d">• Ao reabrir, a app avisa.</text>
+<text x="24" y="768" class="d">• O modo é guardado por impressora.</text>
+<text x="24" y="794" class="s">MODO ANTIGO MIGRA PARA «COM CONFIRMAÇÃO»</text>
+<text x="24" y="812" class="s">NUNCA PARA «AUTOMÁTICO» SEM CONSENTIMENTO</text>
+</svg>

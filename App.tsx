@@ -4,6 +4,8 @@ import { Alert, AppState, Platform, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { vars } from 'nativewind';
 import { AppNavigator } from './src/navigation/AppNavigator';
+import { ReceberPartilha } from './src/components/ReceberPartilha';
+import { navegacaoRef } from './src/navigation/navegacaoRef';
 import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 import { SelectedPrinterProvider } from './src/contexts/SelectedPrinterContext';
 import { hexDe } from './src/theme/temas';
@@ -64,8 +66,9 @@ function AppContent() {
   }, [escuro, paleta.fundo]);
 
   return (
-    <NavigationContainer theme={temaNavegacao}>
+    <NavigationContainer ref={navegacaoRef} theme={temaNavegacao}>
       <StatusBar style={escuro ? 'light' : 'dark'} />
+      <ReceberPartilha />
       <AppNavigator />
     </NavigationContainer>
   );
