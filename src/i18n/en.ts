@@ -829,6 +829,14 @@ const en = {
   'controlos.confirmarTemperaturasMsg':
     'Nozzle to {bico}° and bed to {mesa}°. The printer will heat up.',
   'controlos.arrefecerMsg': 'Targets go to 0°. The printer cools on its own.',
+  'controlos.saturn.semTrabalho': 'Saturn 3 Ultra',
+  'controlos.saturn.eixoZ': 'Z axis',
+  'controlos.saturn.naoSuportado': 'Not supported',
+  'controlos.saturn.semXY': 'X/Y movement: no verified command',
+  'controlos.saturn.semVentoinhas': 'Fans and speed: awaiting confirmation',
+  'controlos.saturn.semTemperatura': 'Heating: does not exist on resin',
+  'controlos.saturn.avisoUV':
+    'No control in this app starts UV exposure or moves the platform without confirmation.',
   'controlos.velocidade': 'Speed',
   'controlos.ventoinhas': 'Fans',
   'controlos.ventoinhaBico': 'Nozzle',

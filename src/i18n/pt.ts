@@ -840,6 +840,15 @@ export default {
   'controlos.confirmarTemperaturasMsg':
     'Bico a {bico}° e mesa a {mesa}°. A máquina vai aquecer.',
   'controlos.arrefecerMsg': 'Os alvos passam a 0°. A máquina arrefece sozinha.',
+  'controlos.saturn.semTrabalho': 'Saturn 3 Ultra',
+  'controlos.saturn.eixoZ': 'Eixo Z',
+  'controlos.saturn.naoSuportado': 'Não suportado',
+  'controlos.saturn.semXY': 'Movimento X/Y: sem comando verificado',
+  'controlos.saturn.semVentoinhas':
+    'Ventoinhas e velocidade: depende de confirmação',
+  'controlos.saturn.semTemperatura': 'Aquecimento: não existe na resina',
+  'controlos.saturn.avisoUV':
+    'Nenhum controlo desta app inicia exposição UV nem move a plataforma sem confirmação.',
   'controlos.velocidade': 'Velocidade',
   'controlos.ventoinhas': 'Ventoinhas',
   'controlos.ventoinhaBico': 'Bico',
