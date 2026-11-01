@@ -15,6 +15,7 @@ import {
   OpcoesArranque,
   sanearAoCarregar,
 } from './modelo';
+import { CursoGravado, lerCursos } from './reconciliacao';
 import {
   CHAVE_FILA_AUTO,
   CHAVE_MODOS,
@@ -207,5 +208,31 @@ export const gravarModos = async (
     await AsyncStorage.setItem(CHAVE_MODOS, JSON.stringify(modos));
   } catch (erro) {
     log('fila: não consegui gravar os modos', erro);
+  }
+};
+
+export const CHAVE_CURSO = 'atalaia.fila.curso.v1';
+
+/** O que a fila arrancou e ainda não foi confirmado como terminado. */
+export const carregarCursos = async (): Promise<
+  Record<string, CursoGravado>
+> => {
+  try {
+    const guardado = await AsyncStorage.getItem(CHAVE_CURSO);
+    if (guardado === null) return {};
+    return lerCursos(lerJson(guardado));
+  } catch (erro) {
+    log('fila: não consegui ler o trabalho em curso', erro);
+    return {};
+  }
+};
+
+export const gravarCursos = async (
+  cursos: Record<string, CursoGravado>
+): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(CHAVE_CURSO, JSON.stringify(cursos));
+  } catch (erro) {
+    log('fila: não consegui gravar o trabalho em curso', erro);
   }
 };

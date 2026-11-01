@@ -42,11 +42,19 @@ import {
   semResposta,
 } from '../utils/fila';
 import {
+  carregarCursos,
   carregarFila,
   carregarModos,
+  gravarCursos,
   gravarFila,
   gravarModos,
 } from '../utils/fila/armazenamento';
+import {
+  CursoGravado,
+  EstadoReal,
+  estadoDoCurso,
+  reconciliarFila,
+} from '../utils/fila/reconciliacao';
 import { ModoConfig, modoDe, pedeConfirmacao } from '../utils/fila/modos';
 import { notify } from '../utils/notifications';
 import { mensagemDoErro } from '../utils/errors';
@@ -157,6 +165,7 @@ export const PrinterConnectionsProvider = ({
   const [filaAuto, setFilaAuto] = useState(false);
   const [modos, setModos] = useState<Record<string, ModoConfig>>({});
   const modosRef = useRef<Record<string, ModoConfig>>({});
+  const cursosRef = useRef<Record<string, CursoGravado>>({});
   const [pendentesMesaLimpa, setPendentesMesaLimpa] = useState<
     Record<string, ItemFila>
   >({});
@@ -1321,6 +1330,11 @@ export const PrinterConnectionsProvider = ({
       filaRef.current = lista;
       setFila(lista);
     });
+    carregarCursos()
+      .then(carregados => {
+        cursosRef.current = carregados;
+      })
+      .catch(() => undefined);
     carregarModos()
       .then(carregados => {
         modosRef.current = carregados;
@@ -1529,8 +1543,20 @@ export const PrinterConnectionsProvider = ({
               { printerId: printer.id, nome: item.name },
               comando.Id || `fila-${tentativaId}`
             ).catch(() => undefined);
-            // Por agora sai da fila ao arrancar; a Fase 4 mantém-no até
-            // reconciliar com o estado real.
+            // Fica registado o que a fila arrancou: sem isto, ao reabrir a app
+            // não havia como saber se o trabalho ainda corre.
+            const curso: CursoGravado = {
+              printerId: printer.id,
+              itemId: item.id,
+              name: item.name,
+              startedAt: Date.now(),
+              comandoId: comando.Id,
+            };
+            cursosRef.current = {
+              ...cursosRef.current,
+              [printer.id]: curso,
+            };
+            gravarCursos(cursosRef.current);
             removerDaFila(item.id);
             cancelarMesaLimpa(printer.id);
             notify(
@@ -1585,6 +1611,9 @@ export const PrinterConnectionsProvider = ({
       if (!printer || !filaAuto) return false;
       const config = modoDe(modosRef.current, printer.id);
       if (!pedeConfirmacao(config)) return false;
+      const emCurso = cursosRef.current[printer.id];
+      const real = estadoRealDa(printer);
+      if (emCurso && estadoDoCurso(emCurso, real) === 'aCorrer') return false;
       const proximo = proximoDaFila(filaRef.current, printer.id);
       if (!proximo) return false;
 
@@ -1599,6 +1628,31 @@ export const PrinterConnectionsProvider = ({
     },
     [filaAuto]
   );
+
+  // Reconciliação: quando a máquina volta a falar, resolve-se o que ficou
+  // pendente de um fecho a meio — sem reenviar nada.
+  useEffect(() => {
+    printers.forEach(printer => {
+      const real = estadoRealDa(printer);
+      if (!real.ligada) return;
+
+      const curso = cursosRef.current[printer.id];
+      if (curso && estadoDoCurso(curso, real) === 'terminou') {
+        const restantes = { ...cursosRef.current };
+        delete restantes[printer.id];
+        cursosRef.current = restantes;
+        gravarCursos(restantes);
+      }
+
+      const atuais = filaRef.current;
+      const reconciliados = reconciliarFila(atuais, real, Date.now());
+      if (reconciliados.some((item, i) => item.estado !== atuais[i].estado)) {
+        filaRef.current = reconciliados;
+        setFila(reconciliados);
+        gravarFila(reconciliados);
+      }
+    });
+  }, [printers]);
 
   // Dispara na transição para "terminada" (9). Sem exigir a transição, corria
   // em cada actualização de estado com 9.
@@ -1636,6 +1690,15 @@ export const PrinterConnectionsProvider = ({
     });
     return () => sub.remove();
   }, [arrancarProximo]);
+
+  const estadoRealDa = (printer: Printer): EstadoReal => {
+    const info = printer.status?.PrintInfo;
+    return {
+      ligada: printer.connectionStatus === 'connected' && !!info,
+      aImprimir: info?.Filename || undefined,
+      estado: info?.Status,
+    };
+  };
 
   const sendCommand = (printerId: string, command: SdcpCommand<unknown>) => {
     // Erro de programação: rejeita já, sem tocar na rede.
