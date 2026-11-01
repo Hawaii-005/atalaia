@@ -21,6 +21,8 @@ import {
   carregarInventario,
   adicionarGarrafa,
   adicionarRolo,
+  actualizarRolo,
+  arquivarRolo,
   ajustarRestante,
   ajustarRestanteMl,
   confirmarConsumo,
@@ -30,11 +32,12 @@ import {
   garrafaActiva,
   Inventario,
   Rolo,
-  Garrafa,
   reporRolo,
   roloActivo,
   valorRestante,
 } from '../utils/inventario';
+import { filtrarEBuscarBobinas } from '../utils/filamentos/operacoes';
+import { partilharInventarioCsv } from '../utils/filamentos/exportarCsv';
 
 const MATERIAIS = ['PLA', 'PETG', 'ABS', 'TPU', 'ASA'];
 const PESOS = [250, 500, 750, 1000];
@@ -96,6 +99,36 @@ export const InventarioScreen = () => {
   } | null>(null);
   const [formGarrafa, setFormGarrafa] = useState<string | null>(null);
   const [aGravar, setAGravar] = useState(false);
+  const [termoBusca, setTermoBusca] = useState('');
+  const [filtroEstado, setFiltroEstado] = useState<
+    'activas' | 'arquivadas' | 'todas'
+  >('activas');
+  const [roloAEditar, setRoloAEditar] = useState<Rolo | null>(null);
+
+  const guardarEdicaoRolo = async (
+    id: string,
+    alteracoes: Partial<Rolo> & { canvasSlot?: number | null }
+  ) => {
+    setAGravar(true);
+    try {
+      await actualizarRolo(id, alteracoes);
+      setRoloAEditar(null);
+      await recarregar();
+    } finally {
+      setAGravar(false);
+    }
+  };
+
+  const alternarArquivarRolo = async (id: string, arquivada: boolean) => {
+    setAGravar(true);
+    try {
+      await arquivarRolo(id, arquivada);
+      setRoloAEditar(null);
+      await recarregar();
+    } finally {
+      setAGravar(false);
+    }
+  };
 
   const recarregar = useCallback(async () => {
     setInventario(await carregarInventario());
@@ -196,7 +229,132 @@ export const InventarioScreen = () => {
           />
         ) : (
           <>
+            {/* Barra de Pesquisa, Filtros e Exportação CSV */}
+            <View style={{ gap: 10, marginBottom: 4 }}>
+              <View
+                style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}
+              >
+                <View
+                  style={{
+                    flex: 1,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    height: 40,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: hexDe(p.linha),
+                    paddingHorizontal: 10,
+                    backgroundColor: hexDe(p.cartao),
+                  }}
+                >
+                  <Ionicons
+                    name="search"
+                    size={16}
+                    color={hexDe(p.tintaSoft)}
+                    style={{ marginRight: 6 }}
+                  />
+                  <TextInput
+                    value={termoBusca}
+                    onChangeText={setTermoBusca}
+                    placeholder={t('inventario.pesquisar')}
+                    placeholderTextColor={hexDe(p.tintaMuted)}
+                    style={{ flex: 1, color: hexDe(p.tinta), fontSize: 13 }}
+                  />
+                  {termoBusca.length > 0 && (
+                    <TouchableOpacity onPress={() => setTermoBusca('')}>
+                      <Ionicons
+                        name="close-circle"
+                        size={16}
+                        color={hexDe(p.tintaSoft)}
+                      />
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                <TouchableOpacity
+                  onPress={() =>
+                    partilharInventarioCsv(
+                      inventario.rolos,
+                      inventario.garrafas
+                    )
+                  }
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 5,
+                    height: 40,
+                    paddingHorizontal: 12,
+                    borderRadius: 12,
+                    backgroundColor: hexDe(p.acento) + '22',
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons
+                    name="download-outline"
+                    size={16}
+                    color={hexDe(p.acentoTexto)}
+                  />
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      fontWeight: '700',
+                      color: hexDe(p.acentoTexto),
+                    }}
+                  >
+                    {t('inventario.exportarCsv')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <View
+                style={{
+                  flexDirection: 'row',
+                  borderRadius: 12,
+                  backgroundColor: hexDe(p.linha) + '44',
+                  padding: 3,
+                }}
+              >
+                {(['activas', 'arquivadas', 'todas'] as const).map(tab => (
+                  <TouchableOpacity
+                    key={tab}
+                    onPress={() => setFiltroEstado(tab)}
+                    style={{
+                      flex: 1,
+                      height: 32,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: 9,
+                      backgroundColor:
+                        filtroEstado === tab ? hexDe(p.cartao) : 'transparent',
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 11,
+                        fontWeight: filtroEstado === tab ? '700' : '500',
+                        color:
+                          filtroEstado === tab
+                            ? hexDe(p.tinta)
+                            : hexDe(p.tintaSoft),
+                      }}
+                    >
+                      {t(`inventario.${tab}` as any)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
             {fdm.map(printer => {
+              const rolosDoPrinter = inventario.rolos.filter(
+                r => r.printerId === printer.id
+              );
+              const rolosFiltrados = filtrarEBuscarBobinas(
+                rolosDoPrinter,
+                termoBusca,
+                filtroEstado
+              );
               const rolo = roloActivo(inventario.rolos, printer.id);
               return (
                 <Cartao key={printer.id}>
@@ -395,6 +553,29 @@ export const InventarioScreen = () => {
                             }}
                           >
                             {t('inv.ajustar')}
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => setRoloAEditar(rolo)}
+                          style={{
+                            flex: 1,
+                            height: 34,
+                            borderRadius: 10,
+                            borderWidth: 1,
+                            borderColor: hexDe(p.linha),
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                          activeOpacity={0.8}
+                        >
+                          <Text
+                            style={{
+                              fontSize: 11,
+                              fontWeight: '700',
+                              color: hexDe(p.tinta),
+                            }}
+                          >
+                            {t('inventario.editar')}
                           </Text>
                         </TouchableOpacity>
                       </View>
@@ -706,6 +887,15 @@ export const InventarioScreen = () => {
         aGravar={aGravar}
         onFechar={() => setFormGarrafa(null)}
         onGuardar={guardarGarrafa}
+      />
+
+      <FormularioEditarRolo
+        aberto={!!roloAEditar}
+        rolo={roloAEditar}
+        aGravar={aGravar}
+        onFechar={() => setRoloAEditar(null)}
+        onGuardar={guardarEdicaoRolo}
+        onArquivar={alternarArquivarRolo}
       />
     </SafeAreaView>
   );
@@ -1128,6 +1318,203 @@ const FormularioGarrafa = ({
           {aGravar ? t('inv.aGuardar') : t('inv.guardar')}
         </Text>
       </TouchableOpacity>
+    </Moldura>
+  );
+};
+
+const FormularioEditarRolo: React.FC<{
+  aberto: boolean;
+  rolo: Rolo | null;
+  aGravar: boolean;
+  onFechar: () => void;
+  onGuardar: (
+    id: string,
+    alteracoes: Partial<Rolo> & { canvasSlot?: number | null }
+  ) => Promise<void>;
+  onArquivar: (id: string, arquivada: boolean) => Promise<void>;
+}> = ({ aberto, rolo, aGravar, onFechar, onGuardar, onArquivar }) => {
+  const { tema } = useTheme();
+  const p = tema.paleta;
+
+  const [nome, setNome] = useState('');
+  const [marca, setMarca] = useState('');
+  const [material, setMaterial] = useState('PLA');
+  const [cor, setCor] = useState('#F5F5F5');
+  const [pesoInicial, setPesoInicial] = useState('1000');
+  const [restante, setRestante] = useState('1000');
+  const [preco, setPreco] = useState('20,00');
+  const [dataCompra, setDataCompra] = useState('');
+  const [notas, setNotas] = useState('');
+  const [canvasSlot, setCanvasSlot] = useState('');
+
+  useEffect(() => {
+    if (rolo) {
+      setNome(rolo.nome);
+      setMarca(rolo.marca ?? '');
+      setMaterial(rolo.material);
+      setCor(rolo.cor);
+      setPesoInicial(String(rolo.pesoInicial));
+      setRestante(String(rolo.restante));
+      setPreco(String(rolo.preco).replace('.', ','));
+      setDataCompra(rolo.dataCompra ?? '');
+      setNotas(rolo.notas ?? '');
+      setCanvasSlot(
+        rolo.canvasSlot !== undefined ? String(rolo.canvasSlot) : ''
+      );
+    }
+  }, [rolo]);
+
+  if (!rolo) return null;
+
+  return (
+    <Moldura
+      aberto={aberto}
+      titulo={t('inventario.editar')}
+      onFechar={onFechar}
+    >
+      <ScrollView style={{ maxHeight: 380 }}>
+        <Campo etiqueta={t('inv.nome')} valor={nome} onChange={setNome} />
+        <Campo
+          etiqueta={t('inventario.marca')}
+          valor={marca}
+          onChange={setMarca}
+          placeholder="eSUN, Polymaker..."
+        />
+        <Campo
+          etiqueta={t('inv.material')}
+          valor={material}
+          onChange={setMaterial}
+        />
+        <Text
+          style={{
+            fontSize: 10,
+            fontWeight: '700',
+            color: hexDe(p.tintaSoft),
+            marginBottom: 5,
+          }}
+        >
+          {t('inv.cor')}
+        </Text>
+        <View
+          style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 12 }}
+        >
+          {CORES.map(c => (
+            <TouchableOpacity
+              key={c}
+              onPress={() => setCor(c)}
+              style={{
+                width: 30,
+                height: 30,
+                borderRadius: 10,
+                backgroundColor: c,
+                marginRight: 7,
+                marginBottom: 7,
+                borderWidth: cor === c ? 2 : 1,
+                borderColor: cor === c ? hexDe(p.tinta) : hexDe(p.linha),
+              }}
+            />
+          ))}
+        </View>
+        <Campo
+          etiqueta={t('inv.peso')}
+          valor={pesoInicial}
+          onChange={setPesoInicial}
+          numerico
+        />
+        <Campo
+          etiqueta={t('filamentos.pesoRestante')}
+          valor={restante}
+          onChange={setRestante}
+          numerico
+        />
+        <Campo
+          etiqueta={t('inv.preco')}
+          valor={preco}
+          onChange={setPreco}
+          numerico
+        />
+        <Campo
+          etiqueta={t('inventario.dataCompra')}
+          valor={dataCompra}
+          onChange={setDataCompra}
+          placeholder="2026-11-01"
+        />
+        <Campo
+          etiqueta={t('inventario.notas')}
+          valor={notas}
+          onChange={setNotas}
+          placeholder="Observações do rolo..."
+        />
+        <Campo
+          etiqueta={t('inventario.slotCanvas')}
+          valor={canvasSlot}
+          onChange={setCanvasSlot}
+          placeholder="0, 1, 2, 3 ou vazio"
+          numerico
+        />
+      </ScrollView>
+
+      <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+        <TouchableOpacity
+          onPress={() => onArquivar(rolo.id, !rolo.arquivada)}
+          style={{
+            flex: 1,
+            height: 44,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: hexDe(p.linha),
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 12,
+              fontWeight: '700',
+              color: hexDe(p.tintaSoft),
+            }}
+          >
+            {rolo.arquivada
+              ? t('inventario.desarquivar')
+              : t('inventario.arquivar')}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() =>
+            onGuardar(rolo.id, {
+              nome: nome.trim() || rolo.nome,
+              marca: marca.trim(),
+              material: material.trim().toUpperCase() || 'PLA',
+              cor,
+              pesoInicial:
+                Number(pesoInicial.replace(',', '.')) || rolo.pesoInicial,
+              restante: Number(restante.replace(',', '.')) || rolo.restante,
+              preco: Number(preco.replace(',', '.')) || rolo.preco,
+              dataCompra: dataCompra.trim() || undefined,
+              notas: notas.trim() || undefined,
+              canvasSlot:
+                canvasSlot.trim() !== '' && !isNaN(Number(canvasSlot))
+                  ? Number(canvasSlot)
+                  : undefined,
+            })
+          }
+          disabled={aGravar}
+          style={{
+            flex: 2,
+            height: 44,
+            borderRadius: 12,
+            backgroundColor: hexDe(p.acento),
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: aGravar ? 0.6 : 1,
+          }}
+        >
+          <Text style={{ fontSize: 13, fontWeight: '800', color: '#fff' }}>
+            {aGravar ? t('inv.aGuardar') : t('inv.guardar')}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </Moldura>
   );
 };
