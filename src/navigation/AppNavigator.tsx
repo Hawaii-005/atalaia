@@ -18,6 +18,7 @@ import WhereIsIpScreen from '../screens/WhereIsIpScreen';
 import { InicioScreen } from '../screens/InicioScreen';
 import { FilaScreen } from '../screens/FilaScreen';
 import { InventarioScreen } from '../screens/InventarioScreen';
+import { useConsumoFilamento } from '../hooks/useConsumoFilamento';
 import { PrinterTabScreen } from '../screens/PrinterTabScreen';
 import { EditarIpScreen } from '../screens/EditarIpScreen';
 import PrinterIcon from '../components/icons/PrinterIcon';
@@ -141,6 +142,7 @@ const ShellLargo = () => {
 
 const Conteudo = () => {
   const { compacta } = useJanela();
+  useConsumoFilamento();
   return compacta ? <Abas /> : <ShellLargo />;
 };
 
