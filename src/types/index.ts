@@ -69,6 +69,20 @@ export type PrintStatus =
   | 'stopped'
   | 'unknown';
 
+/**
+ * Estados que a interface mostra numa pílula. Vive aqui (e não nos tokens)
+ * porque é lógica pura: os testes de estado não podem importar React Native.
+ */
+export type EstadoTrabalho =
+  | 'imprimindo'
+  | 'pausada'
+  | 'preparando'
+  | 'pronta'
+  | 'terminada'
+  | 'parada'
+  | 'erro'
+  | 'semLigacao';
+
 // Códigos lidos da Centauri Carbon (firmware 1.4.49):
 // 0 parada · 1/16/20 preparação (o 20 também aparece em pausa) · 13 arranque
 // de camada · 5 transição · 6 a imprimir · 7 a parar · 8 parada (mantém

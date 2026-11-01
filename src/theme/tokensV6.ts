@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import type { EstadoTrabalho } from '../types';
 
 /**
  * Ataláia — tokens de design (v6)
@@ -373,17 +374,20 @@ export const opacidade = { desactivado: 0.4, pressionado: 0.85 } as const;
 
 // ───────────────────────── Estados de uma impressora ─────────────────────────
 
-export type EstadoImpressora =
-  | 'imprimindo'
-  | 'pausada'
-  | 'pronta'
-  | 'semLigacao'
-  | 'foraDeCasa';
+export type EstadoImpressora = EstadoTrabalho | 'foraDeCasa';
 
 export const corDoEstado = (p: Paleta, e: EstadoImpressora) =>
   ({
     imprimindo: { ponto: p.sucesso, fundo: p.sucessoFundo, texto: p.sucesso },
     pausada: { ponto: p.aviso, fundo: p.avisoFundo, texto: p.aviso },
+    preparando: { ponto: p.aviso, fundo: p.avisoFundo, texto: p.aviso },
+    terminada: {
+      ponto: p.textoSecundario,
+      fundo: p.cartaoAlt,
+      texto: p.textoSecundario,
+    },
+    parada: { ponto: p.perigo, fundo: p.perigoFundo, texto: p.perigo },
+    erro: { ponto: p.perigo, fundo: p.perigoFundo, texto: p.perigo },
     pronta: { ponto: p.sucesso, fundo: p.cartaoAlt, texto: p.textoSecundario },
     semLigacao: { ponto: p.perigo, fundo: p.perigoFundo, texto: p.perigo },
     foraDeCasa: {
