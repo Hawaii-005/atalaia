@@ -30,7 +30,7 @@ inventados — quando um valor depende de algo que a app ainda não tem, escreve
 | Enviar do telemóvel | `uploadGcode(ip, uri, nome, onProgresso)` — HTTP em blocos de 1 MB para `:3030/uploadFile/upload` |
 | Resina | `carregarParaSaturno` (`Cmd 256` + servidor local) e `imprimirNoSaturno`; **não há listagem** de ficheiros no SDCP v1 usado pela Saturn |
 | Preferências locais | `AsyncStorage` (`atalaia.ficheiros.prefs`, `atalaia.filamentos.v2`, `filaImpressao`) |
-| Cópia de segurança | `utils/backup.ts` (versão 2, aceita backups antigos) |
+| Cópia de segurança | `utils/backup.ts` (versão 3 desde a Fase 1; aceita backups das versões 1 e 2) |
 | Tema / i18n | `tokensV6.ts` (o Início já o usa) e `src/i18n` com 10 idiomas |
 
 ## Blocos — tablet
@@ -138,5 +138,5 @@ seleção não navega.
 | 9 / camadas | Geometria por camada exige descarregar o ficheiro; acima de 6 MB não há vista (limite actual do `useGcodePreview`) |
 | camadas (7) | O `.ctb`/`.goo` não é analisado pela app: só o que o formato e o código actual derem |
 | lista (resina) | O SDCP v1 da Saturn não expõe listagem de ficheiros na app |
-| detalhe 9 | Reimpressões e última impressão: registo local novo (Fase 1) |
+| detalhe 9 | Reimpressões e última impressão: registo local da Fase 1 (`atalaia.ficheiros.v1`); ligado às ações na Fase 3 |
 | filtro material | Só com `Cmd 260` por ficheiro; não vale a pena pedi-lo para 2000 ficheiros de uma vez |

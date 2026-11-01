@@ -2,16 +2,20 @@
  * Cópia de segurança em JSON.
  *
  * A versão 1 só levava impressoras e preferências; a versão 2 acrescenta o
- * inventário de filamento. O import aceita as duas: um backup antigo entra
- * sem erro e simplesmente não traz inventário.
+ * inventário de filamento; a versão 3 acrescenta o registo de ficheiros
+ * (favoritos, reimpressões, última impressão, etiquetas). O import aceita
+ * todas: um backup antigo entra sem erro e simplesmente não traz o que não
+ * tinha.
  */
 import {
   EstadoFilamentos,
   migrarEstado,
   VERSAO_ESQUEMA,
 } from './filamentos/armazenamento';
+import { EstadoFicheiros } from './ficheiros/modelo';
+import { lerRegistos } from './ficheiros/armazenamento';
 
-export const VERSAO_BACKUP = 2;
+export const VERSAO_BACKUP = 3;
 
 export interface BackupImpressora {
   printerName: string;
@@ -28,18 +32,24 @@ export interface BackupFilamentos {
   usos: unknown[];
 }
 
+export interface BackupFicheiros {
+  registos: unknown[];
+}
+
 export interface Backup {
   versao: number;
   criadoEm: string;
   impressoras: BackupImpressora[];
   preferencias: Record<string, unknown>;
   filamentos?: BackupFilamentos;
+  ficheiros?: BackupFicheiros;
 }
 
 export const montarBackup = (dados: {
   impressoras: BackupImpressora[];
   preferencias: Record<string, unknown>;
   filamentos?: EstadoFilamentos;
+  ficheiros?: EstadoFicheiros;
   criadoEm?: string;
 }): Backup => ({
   versao: VERSAO_BACKUP,
@@ -56,6 +66,9 @@ export const montarBackup = (dados: {
           usos: dados.filamentos.usos,
         },
       }
+    : {}),
+  ...(dados.ficheiros
+    ? { ficheiros: { registos: dados.ficheiros.registos } }
     : {}),
 });
 
@@ -115,6 +128,13 @@ export const lerBackup = (texto: string): Backup => {
           },
         }
       : {}),
+    ...(bruto.ficheiros && typeof bruto.ficheiros === 'object'
+      ? {
+          ficheiros: {
+            registos: lerRegistos((bruto.ficheiros as any).registos),
+          },
+        }
+      : {}),
   };
 };
 
@@ -164,5 +184,29 @@ export const importarFilamentos = (
       usos: usos.lista,
     },
     bobinasNovas: bobinas.novos,
+  };
+};
+
+/**
+ * Junta o registo de ficheiros do backup ao actual. O backup ganha em caso de
+ * conflito de chave (é um restauro). Devolve quantos registos entraram de novo.
+ */
+export const importarFicheiros = (
+  actual: EstadoFicheiros,
+  backup: Backup
+): { estado: EstadoFicheiros; novos: number } => {
+  if (!backup.ficheiros) return { estado: actual, novos: 0 };
+  const importados = lerRegistos(backup.ficheiros.registos);
+  const mapa = new Map(
+    actual.registos.map(registo => [registo.chave, registo])
+  );
+  let novos = 0;
+  importados.forEach(registo => {
+    if (!mapa.has(registo.chave)) novos += 1;
+    mapa.set(registo.chave, registo);
+  });
+  return {
+    estado: { versao: actual.versao, registos: Array.from(mapa.values()) },
+    novos,
   };
 };

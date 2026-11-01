@@ -1,9 +1,11 @@
 import {
+  importarFicheiros,
   importarFilamentos,
   lerBackup,
   montarBackup,
   VERSAO_BACKUP,
 } from '../src/utils/backup';
+import { estadoVazio as estadoFicheirosVazio } from '../src/utils/ficheiros/modelo';
 import { estadoVazio } from '../src/utils/filamentos/armazenamento';
 
 const impressoras = [
@@ -192,5 +194,102 @@ describe('importarFilamentos', () => {
     const { estado } = importarFilamentos(actual, backup);
     expect(estado.garrafas.map(g => g.id)).toEqual(['g1']);
     expect(estado.bobinas).toHaveLength(1);
+  });
+});
+
+const registo = {
+  chave: 'p1|/local/peça.gcode|1000',
+  printerId: 'p1',
+  nome: '/local/peça.gcode',
+  tamanho: 1000,
+  favorito: true,
+  reimpressoes: 3,
+  ultimaImpressao: '2026-11-01T09:00:00.000Z',
+  etiquetas: ['cliente'],
+};
+
+describe('registo de ficheiros na cópia de segurança', () => {
+  it('a versão 3 leva os registos', () => {
+    const ficheiros = estadoFicheirosVazio();
+    ficheiros.registos.push(registo);
+    const backup = montarBackup({
+      impressoras,
+      preferencias: {},
+      ficheiros,
+    });
+    expect(backup.versao).toBe(3);
+    expect(backup.ficheiros?.registos).toHaveLength(1);
+  });
+
+  it('um backup da versão 2 entra sem ficheiros e sem erro', () => {
+    const lido = lerBackup(
+      JSON.stringify({
+        versao: 2,
+        impressoras,
+        preferencias: {},
+        filamentos: {
+          bobinas: [],
+          garrafas: [],
+          pendentes: [],
+          perfis: [],
+          usos: [],
+        },
+      })
+    );
+    expect(lido.ficheiros).toBeUndefined();
+    expect(() => importarFicheiros(estadoFicheirosVazio(), lido)).not.toThrow();
+  });
+
+  it('lê os registos da versão 3 e descarta lixo', () => {
+    const lido = lerBackup(
+      JSON.stringify({
+        versao: 3,
+        impressoras,
+        preferencias: {},
+        ficheiros: { registos: [registo, { nada: true }, null] },
+      })
+    );
+    expect(lido.ficheiros?.registos).toHaveLength(1);
+  });
+
+  it('um backup sem a chave ficheiros não rebenta o import', () => {
+    const lido = lerBackup(
+      JSON.stringify({
+        versao: 3,
+        impressoras,
+        preferencias: {},
+        ficheiros: 'estragado',
+      })
+    );
+    expect(lido.ficheiros).toBeUndefined();
+  });
+
+  it('importa sem duplicar e conta os novos', () => {
+    const actual = estadoFicheirosVazio();
+    actual.registos.push({ ...registo, reimpressoes: 1 });
+    const backup = lerBackup(
+      JSON.stringify({
+        versao: 3,
+        impressoras,
+        preferencias: {},
+        ficheiros: {
+          registos: [
+            registo,
+            {
+              ...registo,
+              chave: 'p1|/local/outro.gcode|',
+              nome: '/local/outro.gcode',
+            },
+          ],
+        },
+      })
+    );
+    const { estado, novos } = importarFicheiros(actual, backup);
+    expect(novos).toBe(1);
+    expect(estado.registos).toHaveLength(2);
+    // O backup ganha: é um restauro.
+    expect(
+      estado.registos.find(r => r.chave === registo.chave)?.reimpressoes
+    ).toBe(3);
   });
 });
