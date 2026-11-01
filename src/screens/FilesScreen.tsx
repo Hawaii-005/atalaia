@@ -777,10 +777,14 @@ export const FilesScreen = ({
         onAddToQueue={() => {
           if (!printer) return;
           adicionarAFila({
-            id: `${Date.now()}-${alvo.name}`,
             printerId: printer.id,
             name: alvo.name,
             label: alvo.name.split('/').pop() ?? alvo.name,
+            // As opções de mesa ficam guardadas com o item: o arranque pela
+            // fila usa-as tal como estavam quando o trabalho entrou.
+            opcoes: { nivelar: bedLevel, lado: plateSide },
+            tamanho: tamanhoDoFicheiro(alvo) || undefined,
+            duracaoSeg: duracaoDoNome(alvo.name) || undefined,
           });
           setSelecionado(null);
           Alert.alert(t('files.filaTitulo'), t('files.filaAdicionado'));

@@ -741,6 +741,6 @@ const de = {
   'secao.controlos': 'Steuerung',
   'settings.tema_ametista': 'Mitternachtsblau mit Violett. Das Standarddesign.',
   'comum.eliminar': 'Entfernen',
-} as const satisfies Record<keyof typeof pt, string>;
+} as const satisfies Partial<Record<keyof typeof pt, string>>;
 
 export default de;

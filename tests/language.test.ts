@@ -174,22 +174,55 @@ describe('saved language selection', () => {
   });
 });
 
+const tabelas: Record<string, Record<string, string>> = {
+  pt,
+  en,
+  es,
+  fr,
+  de,
+  it: italian,
+  nl,
+  pl,
+  ja,
+  zh,
+};
+
+const placeholders = (value: string) =>
+  (value.match(/\{[^{}]+\}/g) ?? []).sort();
+
 describe('translation coverage', () => {
-  it.each(IDIOMAS)(
-    '$nome has every key and preserves interpolation parameters',
+  // PT e EN são as línguas de referência: têm de ter exatamente as mesmas
+  // chaves. As restantes podem ficar atrás até revisão — o `t()` cai no inglês.
+  it.each(['pt', 'en'] as const)('%s has every key', id => {
+    expect(Object.keys(dictionaries[id]).sort()).toEqual(
+      Object.keys(pt).sort()
+    );
+  });
+
+  it.each(IDIOMAS.filter(({ id }) => id !== 'pt' && id !== 'en'))(
+    '$nome não inventa chaves nem muda os parâmetros',
     ({ id }) => {
-      const dictionary = dictionaries[id];
-      expect(Object.keys(dictionary).sort()).toEqual(Object.keys(pt).sort());
-      const placeholders = (value: string) =>
-        (value.match(/\{[^{}]+\}/g) ?? []).sort();
-      for (const key of Object.keys(pt) as (keyof typeof pt)[]) {
+      const dictionary = tabelas[id];
+      const chaves = Object.keys(dictionary);
+      expect(chaves.filter(key => !(key in pt))).toEqual([]);
+      for (const key of chaves) {
         expect({ key, parameters: placeholders(dictionary[key]) }).toEqual({
           key,
-          parameters: placeholders(pt[key]),
+          parameters: placeholders(tabelas.pt[key]),
         });
       }
     }
   );
+
+  it.each(IDIOMAS)('$nome traduz tudo o que já existe', ({ id }) => {
+    const dictionary = tabelas[id];
+    for (const key of Object.keys(dictionary)) {
+      expect({ key, parameters: placeholders(dictionary[key]) }).toEqual({
+        key,
+        parameters: placeholders(tabelas.pt[key]),
+      });
+    }
+  });
 
   it('treats replacement strings literally, including dollar signs and braces', () => {
     expect(

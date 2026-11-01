@@ -209,7 +209,7 @@ const registo = {
 };
 
 describe('registo de ficheiros na cópia de segurança', () => {
-  it('a versão 3 leva os registos', () => {
+  it('a partir da versão 3 a cópia leva os registos', () => {
     const ficheiros = estadoFicheirosVazio();
     ficheiros.registos.push(registo);
     const backup = montarBackup({
@@ -217,7 +217,7 @@ describe('registo de ficheiros na cópia de segurança', () => {
       preferencias: {},
       ficheiros,
     });
-    expect(backup.versao).toBe(3);
+    expect(backup.versao).toBe(VERSAO_BACKUP);
     expect(backup.ficheiros?.registos).toHaveLength(1);
   });
 

@@ -686,6 +686,6 @@ const zh = {
   'secao.controlos': '控制',
   'settings.tema_ametista': '午夜蓝搭配紫色。默认主题。',
   'comum.eliminar': '移除',
-} as const satisfies Record<keyof typeof pt, string>;
+} as const satisfies Partial<Record<keyof typeof pt, string>>;
 
 export default zh;

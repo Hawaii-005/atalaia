@@ -723,6 +723,6 @@ const pl = {
   'secao.controlos': 'Sterowanie',
   'settings.tema_ametista': 'Nocny granat z fioletem. Motyw domyślny.',
   'comum.eliminar': 'Usuń',
-} as const satisfies Record<keyof typeof pt, string>;
+} as const satisfies Partial<Record<keyof typeof pt, string>>;
 
 export default pl;

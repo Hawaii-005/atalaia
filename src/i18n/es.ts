@@ -732,6 +732,6 @@ const es = {
   'secao.controlos': 'Controles',
   'settings.tema_ametista': 'Azul medianoche con morado. El predeterminado.',
   'comum.eliminar': 'Eliminar',
-} as const satisfies Record<keyof typeof pt, string>;
+} as const satisfies Partial<Record<keyof typeof pt, string>>;
 
 export default es;

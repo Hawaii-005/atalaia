@@ -1,4 +1,5 @@
 import 'react-native-gesture-handler';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import React, { useEffect, useState } from 'react';
 import { Alert, AppState, Platform, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
@@ -165,8 +166,11 @@ export default function App() {
 
   if (!idiomaCarregado) return null;
   return (
-    <ThemeProvider>
-      <RaizTematica />
-    </ThemeProvider>
+    // Necessário no Android para o arrastar da fila (react-native-gesture-handler).
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider>
+        <RaizTematica />
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }

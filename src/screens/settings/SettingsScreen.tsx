@@ -47,6 +47,7 @@ import {
   lerBackup,
   importarFicheiros,
   importarFilamentos,
+  importarFila,
 } from '../../utils/backup';
 import {
   carregarFicheiros,
@@ -142,6 +143,7 @@ export const SettingsScreen = () => {
     setStatusInterval,
     filaAuto,
     fila,
+    substituirFila,
     definirFilaAuto,
     addPrinter,
   } = usePrinterConnections();
@@ -515,6 +517,7 @@ export const SettingsScreen = () => {
         },
         filamentos,
         ficheiros,
+        fila,
       });
       const permissao =
         await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
@@ -557,6 +560,10 @@ export const SettingsScreen = () => {
         const estado = await carregarEstado();
         const { estado: fundido } = importarFilamentos(estado, dados);
         await guardarEstado(fundido);
+      }
+      if (dados.fila) {
+        const { fila: fundida } = importarFila(fila, dados);
+        substituirFila(fundida);
       }
       if (dados.ficheiros) {
         const registo = await carregarFicheiros();

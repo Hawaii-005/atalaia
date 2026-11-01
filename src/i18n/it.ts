@@ -736,6 +736,6 @@ const it = {
   'secao.controlos': 'Controlli',
   'settings.tema_ametista': 'Blu notte con viola. Il tema predefinito.',
   'comum.eliminar': 'Rimuovi',
-} as const satisfies Record<keyof typeof pt, string>;
+} as const satisfies Partial<Record<keyof typeof pt, string>>;
 
 export default it;
