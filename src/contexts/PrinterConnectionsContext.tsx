@@ -34,6 +34,7 @@ import * as Notifications from 'expo-notifications';
 import {
   ItemFila,
   aguardarAck,
+  moverNaFila,
   criarItem,
   iniciarEnvio,
   proximoDaFila,
@@ -87,6 +88,8 @@ export interface PrinterConnectionsContextType {
   removerDaFila: (id: string) => void;
   limparFila: () => void;
   substituirFila: (itens: ItemFila[]) => void;
+  moverItem: (id: string, destino: number) => void;
+  duplicarItem: (id: string) => ItemFila | undefined;
   definirFilaAuto: (ligada: boolean) => void;
   confirmarMesaLimpa: (printerId: string) => Promise<boolean>;
   cancelarMesaLimpa: (printerId: string) => void;
@@ -1360,6 +1363,38 @@ export const PrinterConnectionsProvider = ({
     gravarFila(itens);
   }, []);
 
+  const moverItem = useCallback((id: string, destino: number) => {
+    const nova = moverNaFila(filaRef.current, id, destino);
+    filaRef.current = nova;
+    setFila(nova);
+    gravarFila(nova);
+  }, []);
+
+  /** Cópia com id novo: nunca confunde o original já enviado. */
+  const duplicarItem = useCallback((id: string): ItemFila | undefined => {
+    const original = filaRef.current.find(item => item.id === id);
+    if (!original) return undefined;
+    const agora = Date.now();
+    const copia: ItemFila = {
+      ...original,
+      id: `fila-${agora}-${Math.random().toString(36).slice(2, 8)}`,
+      estado: 'pendente',
+      criadoEm: agora,
+      atualizadoEm: agora,
+      arranqueTentado: false,
+      tentativas: 0,
+      tentativaId: undefined,
+      tentativaEm: undefined,
+      motivo: undefined,
+      ackCode: undefined,
+    };
+    const nova = [...filaRef.current, copia];
+    filaRef.current = nova;
+    setFila(nova);
+    gravarFila(nova);
+    return copia;
+  }, []);
+
   const definirFilaAuto = useCallback((ligada: boolean) => {
     setFilaAuto(ligada);
     AsyncStorage.setItem('filaAuto', ligada ? '1' : '0').catch(() => undefined);
@@ -1690,6 +1725,8 @@ export const PrinterConnectionsProvider = ({
         removerDaFila,
         limparFila,
         substituirFila,
+        moverItem,
+        duplicarItem,
         definirFilaAuto,
         confirmarMesaLimpa,
         cancelarMesaLimpa,

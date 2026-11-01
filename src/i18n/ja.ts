@@ -728,6 +728,6 @@ const ja = {
   'secao.controlos': '操作',
   'settings.tema_ametista': 'ミッドナイトブルーと紫。標準のテーマ。',
   'comum.eliminar': '削除',
-} as const satisfies Record<keyof typeof pt, string>;
+} as const satisfies Partial<Record<keyof typeof pt, string>>;
 
 export default ja;

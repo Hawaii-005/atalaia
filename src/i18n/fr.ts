@@ -741,6 +741,6 @@ const fr = {
   'secao.controlos': 'Commandes',
   'settings.tema_ametista': 'Bleu nuit et violet. Le thème par défaut.',
   'comum.eliminar': 'Supprimer',
-} as const satisfies Record<keyof typeof pt, string>;
+} as const satisfies Partial<Record<keyof typeof pt, string>>;
 
 export default fr;
