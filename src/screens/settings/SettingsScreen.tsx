@@ -45,8 +45,13 @@ import { gerarRelatorioDiagnostico } from '../../utils/diagnostico';
 import {
   montarBackup,
   lerBackup,
+  importarFicheiros,
   importarFilamentos,
 } from '../../utils/backup';
+import {
+  carregarFicheiros,
+  gravarFicheiros,
+} from '../../utils/ficheiros/armazenamento';
 import {
   carregarEstado,
   guardarEstado,
@@ -493,6 +498,7 @@ export const SettingsScreen = () => {
   const executarExportar = async () => {
     try {
       const filamentos = await carregarEstado();
+      const ficheiros = await carregarFicheiros();
       const dados = montarBackup({
         impressoras: printers.map(p => ({
           printerName: p.printerName,
@@ -508,6 +514,7 @@ export const SettingsScreen = () => {
           potenciaW,
         },
         filamentos,
+        ficheiros,
       });
       const permissao =
         await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
@@ -550,6 +557,11 @@ export const SettingsScreen = () => {
         const estado = await carregarEstado();
         const { estado: fundido } = importarFilamentos(estado, dados);
         await guardarEstado(fundido);
+      }
+      if (dados.ficheiros) {
+        const registo = await carregarFicheiros();
+        const { estado: fundido } = importarFicheiros(registo, dados);
+        await gravarFicheiros(fundido);
       }
       const prefs = lerPreferenciasDeBackup(dados.preferencias);
       if (prefs.statusIntervalMs !== undefined) {
