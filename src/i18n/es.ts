@@ -586,6 +586,7 @@ const es = {
   'inicio.semHistorico': 'Aún no hay impresiones registradas.',
   'inicio.slotsVazios': 'Sin ranuras conectadas',
   'inicio.slotsCanvas': 'Ranuras del Canvas',
+  'inicio.miniatura': 'Miniatura del G-code',
   'inicio.camaraSemSinal': 'Sin señal de cámara',
   'inicio.coresGcode': '{n} colores en el G-code',
   'inicio.inventario': 'Inventario',

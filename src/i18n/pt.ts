@@ -610,6 +610,7 @@ export default {
   'inicio.semHistorico': 'Ainda não há trabalhos registados.',
   'inicio.slotsVazios': 'Sem slots ligados',
   'inicio.slotsCanvas': 'Slots do Canvas',
+  'inicio.miniatura': 'Miniatura do G-code',
   'inicio.camaraSemSinal': 'Sem sinal da câmara',
   'inicio.coresGcode': '{n} cores no G-code',
   'inicio.inventario': 'Inventário',

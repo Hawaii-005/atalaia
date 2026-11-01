@@ -578,6 +578,7 @@ const pl = {
   'inicio.semHistorico': 'Nie zarejestrowano jeszcze wydruków.',
   'inicio.slotsVazios': 'Brak podłączonych slotów',
   'inicio.slotsCanvas': 'Sloty Canvas',
+  'inicio.miniatura': 'Miniatura G-code',
   'inicio.camaraSemSinal': 'Brak sygnału kamery',
   'inicio.coresGcode': '{n} kolorów w G-code',
   'inicio.inventario': 'Magazyn',

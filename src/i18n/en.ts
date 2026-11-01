@@ -604,6 +604,7 @@ const en = {
   'inicio.semHistorico': 'No prints recorded yet.',
   'inicio.slotsVazios': 'No slots connected',
   'inicio.slotsCanvas': 'Canvas slots',
+  'inicio.miniatura': 'G-code thumbnail',
   'inicio.camaraSemSinal': 'No camera signal',
   'inicio.coresGcode': '{n} colours in the G-code',
   'inicio.inventario': 'Inventory',

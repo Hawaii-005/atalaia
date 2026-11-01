@@ -549,6 +549,7 @@ const zh = {
   'inicio.semHistorico': '尚无打印记录。',
   'inicio.slotsVazios': '未连接槽位',
   'inicio.slotsCanvas': 'Canvas 槽位',
+  'inicio.miniatura': 'G代码缩略图',
   'inicio.camaraSemSinal': '无摄像头信号',
   'inicio.coresGcode': 'G-code 中 {n} 种颜色',
   'inicio.inventario': '库存',

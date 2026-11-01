@@ -592,6 +592,7 @@ const fr = {
   'inicio.semHistorico': 'Aucune impression enregistrée pour le moment.',
   'inicio.slotsVazios': 'Aucun emplacement connecté',
   'inicio.slotsCanvas': 'Emplacements Canvas',
+  'inicio.miniatura': 'Vignette du G-code',
   'inicio.camaraSemSinal': 'Pas de signal caméra',
   'inicio.coresGcode': '{n} couleurs dans le G-code',
   'inicio.inventario': 'Inventaire',

@@ -593,6 +593,7 @@ const de = {
   'inicio.semHistorico': 'Noch keine Drucke erfasst.',
   'inicio.slotsVazios': 'Keine Slots verbunden',
   'inicio.slotsCanvas': 'Canvas-Slots',
+  'inicio.miniatura': 'G-Code-Vorschau',
   'inicio.camaraSemSinal': 'Kein Kamerasignal',
   'inicio.coresGcode': '{n} Farben im G-Code',
   'inicio.inventario': 'Inventar',

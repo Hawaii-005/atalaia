@@ -581,6 +581,7 @@ const ja = {
   'inicio.semHistorico': '印刷記録はまだありません。',
   'inicio.slotsVazios': 'スロットが接続されていません',
   'inicio.slotsCanvas': 'Canvasスロット',
+  'inicio.miniatura': 'G-codeサムネイル',
   'inicio.camaraSemSinal': 'カメラ信号なし',
   'inicio.coresGcode': 'G-code内 {n} 色',
   'inicio.inventario': '在庫',

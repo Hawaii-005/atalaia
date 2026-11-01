@@ -592,6 +592,7 @@ const nl = {
   'inicio.semHistorico': 'Nog geen prints geregistreerd.',
   'inicio.slotsVazios': 'Geen sleuven verbonden',
   'inicio.slotsCanvas': 'Canvas-sleuven',
+  'inicio.miniatura': 'G-code-miniatuur',
   'inicio.camaraSemSinal': 'Geen camerasignaal',
   'inicio.coresGcode': '{n} kleuren in de G-code',
   'inicio.inventario': 'Voorraad',

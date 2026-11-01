@@ -588,6 +588,7 @@ const it = {
   'inicio.semHistorico': 'Nessuna stampa ancora registrata.',
   'inicio.slotsVazios': 'Nessuno slot collegato',
   'inicio.slotsCanvas': 'Slot Canvas',
+  'inicio.miniatura': 'Miniatura del G-code',
   'inicio.camaraSemSinal': 'Nessun segnale camera',
   'inicio.coresGcode': '{n} colori nel G-code',
   'inicio.inventario': 'Inventario',

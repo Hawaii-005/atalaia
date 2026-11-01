@@ -5,7 +5,14 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Alert,
+  Image,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIsFocused } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -37,6 +44,8 @@ import {
   Inventario,
   roloActivo,
 } from '../utils/inventario';
+import { extrairMiniaturaEmbutida, urlMiniatura } from '../utils/miniatura';
+import { enderecoDe } from '../utils/rede';
 import {
   estadoDoTrabalho,
   formatarPercentagem,
@@ -135,6 +144,29 @@ export const InicioScreen = ({ navigation }: any) => {
     emCurso && info?.TotalLayer
       ? `${t('detalhes.camada')} ${info?.CurrentLayer ?? 0} / ${info.TotalLayer}`
       : null;
+
+  // Miniatura do ficheiro em curso: a impressora serve-a em /thumbnail e, nos
+  // ficheiros que ela não fatiou, vale a PNG que vem no cabeçalho do .gcode.
+  const endereco = enderecoDe(escolhida);
+  const ficheiroEmCurso = info?.Filename;
+  const [miniatura, setMiniatura] = useState<string | null>(null);
+  const tentouEmbutida = useRef<string | null>(null);
+  useEffect(() => {
+    setMiniatura(null);
+    tentouEmbutida.current = null;
+    if (!endereco || !ficheiroEmCurso) return;
+    setMiniatura(urlMiniatura(endereco, ficheiroEmCurso));
+  }, [endereco, ficheiroEmCurso]);
+
+  const tentarEmbutida = useCallback(async () => {
+    if (!endereco || !ficheiroEmCurso) return;
+    if (tentouEmbutida.current === ficheiroEmCurso) {
+      setMiniatura(null);
+      return;
+    }
+    tentouEmbutida.current = ficheiroEmCurso;
+    setMiniatura(await extrairMiniaturaEmbutida(endereco, ficheiroEmCurso));
+  }, [endereco, ficheiroEmCurso]);
 
   // A pausa não tem código próprio: o que muda é o tempo de impressão parar de
   // andar. Um temporizador compara os ticks e destapa o estado «em pausa».
@@ -359,13 +391,16 @@ export const InicioScreen = ({ navigation }: any) => {
     />
   );
 
+  const tamanhoMiniatura = duasColunas ? 94 : 76;
+  const temMiniatura = !!miniatura && !!ficheiroEmCurso;
+
   const blocoAnel = (
     <View
       style={{
-        flexDirection: duasColunas ? 'row' : 'column',
+        flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: espaco.lg,
+        gap: duasColunas ? espaco.lg : espaco.md,
         padding: espaco.lg,
         borderRadius: raio.cartao,
         backgroundColor: p.cartao,
@@ -384,7 +419,7 @@ export const InicioScreen = ({ navigation }: any) => {
       {camadas || estado === 'terminada' || restante ? (
         <View
           style={{
-            flex: duasColunas ? 1 : 0,
+            flex: 1,
             gap: 2,
             alignItems: duasColunas ? 'flex-start' : 'center',
           }}
@@ -400,6 +435,29 @@ export const InicioScreen = ({ navigation }: any) => {
               {restante}
             </Text>
           ) : null}
+        </View>
+      ) : temMiniatura ? (
+        <View style={{ flex: 1 }} />
+      ) : null}
+      {temMiniatura ? (
+        <View
+          style={{
+            width: tamanhoMiniatura,
+            height: tamanhoMiniatura,
+            borderRadius: raio.interno,
+            overflow: 'hidden',
+            backgroundColor: p.cartaoAlt,
+            borderWidth: 1,
+            borderColor: p.contorno,
+          }}
+        >
+          <Image
+            source={{ uri: miniatura as string }}
+            style={{ width: '100%', height: '100%' }}
+            resizeMode="cover"
+            onError={tentarEmbutida}
+            accessibilityLabel={t('inicio.miniatura')}
+          />
         </View>
       ) : null}
     </View>
