@@ -361,6 +361,45 @@ const pl = {
   'settings.concluido': 'Gotowe',
   'settings.boasVindasReiniciado': 'Wprowadzenie zostało zresetowane.',
   'settings.erroBoasVindas': 'Nie udało się zresetować wprowadzenia.',
+  'settings.pesquisa': 'Szukaj ustawień',
+  'settings.limparPesquisa': 'Wyczyść wyszukiwanie',
+  'settings.semResultados': 'Żadne ustawienie nie pasuje do wyszukiwania.',
+  'settings.seccaoFila': 'Kolejka i drukowanie',
+  'settings.seccaoFilamentos': 'Filamenty',
+  'settings.seccaoDados': 'Bezpieczeństwo i dane',
+  'settings.descSecaoImpressoras': 'Dodaj, edytuj i adres alternatywny',
+  'settings.descSecaoAparencia': 'Motyw, język i częstotliwość odświeżania',
+  'settings.descSecaoFila': 'Autostart, powiadomienia i dane mobilne',
+  'settings.descSecaoFilamentos': 'Ostrzeżenie o szpuli, energia i zapas',
+  'settings.descSecaoDados': 'Kopia zapasowa, diagnostyka i konserwacja',
+  'settings.descSecaoSobre': 'Wersja, licencja i pomoc',
+  'settings.ajudaImpressoras':
+    'Dotknij drukarki, aby zmienić nazwę, IP i adres alternatywny.',
+  'settings.ajudaAdicionarImpressora':
+    'Szuka drukarki w sieci lokalnej lub pozwala wpisać IP ręcznie.',
+  'settings.enderecoAlternativo': 'Adres alternatywny (Tailscale)',
+  'settings.enderecoAlternativoDesc':
+    'IP w tailnecie, gdy sieć lokalna jest nieosiągalna. Ustawia się przy edycji drukarki.',
+  'settings.ajudaTema': 'Zmienia kolory aplikacji. Zmiana jest natychmiastowa.',
+  'settings.ajudaIntervalo':
+    'Jak często aplikacja pyta drukarkę o stan. Krótsze odstępy zużywają więcej baterii i sieci.',
+  'settings.ajudaTesteNotificacao':
+    'Wysyła teraz powiadomienie, aby sprawdzić, czy są dozwolone.',
+  'settings.limiteTitulo': 'Ostrzeżenie o prawie pustej szpuli',
+  'settings.limiteDesc':
+    'Procent pozostałego filamentu, który wyzwala ostrzeżenie (1 do 50%).',
+  'settings.kwhTitulo': 'Cena energii',
+  'settings.kwhDesc':
+    'Zapisywane dla kosztu energii. Żaden ekran go jeszcze nie pokazuje.',
+  'settings.potenciaTitulo': 'Moc drukarki',
+  'settings.potenciaDesc':
+    'Średni pobór w watach, do tego samego obliczenia. Nigdzie jeszcze nie widoczny.',
+  'settings.exportarDiagnostico': 'Eksportuj diagnostykę',
+  'settings.exportarDiagnosticoDesc':
+    'Raport z wersją, drukarkami i ostatnimi błędami, z zamaskowanymi IP.',
+  'settings.timelapseExperimental': 'Time-lapse (eksperymentalne)',
+  'settings.timelapseExperimentalDesc':
+    'Włącza eksperymentalne nagrywanie time-lapse (Cmd 323).',
   'settings.avisoComunidade':
     'Atalaia to niezależna aplikacja do drukarek Elegoo, tworzona przez społeczność. Nie jest w żaden sposób powiązana z Elegoo ani przez tę firmę zatwierdzona lub polecana.',
   'stats.title': 'Statystyki',

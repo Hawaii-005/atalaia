@@ -328,11 +328,12 @@ const en = {
   'settings.seccaoBackup': 'Backup',
   'settings.exportar': 'Save printers and settings',
   'settings.exportarDesc':
-    'Saves a JSON file with your printers and local network IP addresses.',
+    'Saves a JSON file with printers, preferences and filament inventory.',
   'settings.backupAvisoRede':
     'The backup JSON file contains local IP addresses and printer names. Only share with trusted recipients.',
   'settings.importar': 'Restore from a file',
-  'settings.importarDesc': 'Reads the JSON and recreates the printers.',
+  'settings.importarDesc':
+    'Reads the JSON and restores printers, preferences and filaments.',
   'settings.backupTitulo': 'Backup',
   'settings.backupExportado': 'File saved.',
   'settings.backupImportado': 'Restored {n} printers.',
@@ -372,6 +373,44 @@ const en = {
   'settings.concluido': 'Done',
   'settings.boasVindasReiniciado': 'The welcome flow has been reset.',
   'settings.erroBoasVindas': 'The welcome flow could not be reset.',
+  'settings.pesquisa': 'Search settings',
+  'settings.limparPesquisa': 'Clear search',
+  'settings.semResultados': 'No setting matches the search.',
+  'settings.seccaoFila': 'Queue and printing',
+  'settings.seccaoFilamentos': 'Filaments',
+  'settings.seccaoDados': 'Security and data',
+  'settings.descSecaoImpressoras': 'Add, edit and alternate address',
+  'settings.descSecaoAparencia': 'Theme, language and refresh rate',
+  'settings.descSecaoFila': 'Auto start, alerts and mobile data',
+  'settings.descSecaoFilamentos': 'Spool warning, energy and inventory',
+  'settings.descSecaoDados': 'Backup, diagnostics and maintenance',
+  'settings.descSecaoSobre': 'Version, licence and support',
+  'settings.ajudaImpressoras':
+    'Tap a printer to edit its name, IP and alternate address.',
+  'settings.ajudaAdicionarImpressora':
+    'Looks for the printer on the local network or lets you type the IP.',
+  'settings.enderecoAlternativo': 'Alternate address (Tailscale)',
+  'settings.enderecoAlternativoDesc':
+    'IP on the tailnet, used when the local network is out of reach. Set it when editing the printer.',
+  'settings.ajudaTema': 'Changes the app colours. The change is immediate.',
+  'settings.ajudaIntervalo':
+    'How often the app asks the printer for its status. Shorter intervals use more battery and network.',
+  'settings.ajudaTesteNotificacao':
+    'Sends an alert now, to confirm notifications are allowed.',
+  'settings.limiteTitulo': 'Low spool warning',
+  'settings.limiteDesc':
+    'Remaining filament percentage that triggers the warning (1 to 50%).',
+  'settings.kwhTitulo': 'Electricity price',
+  'settings.kwhDesc': 'Stored for the energy cost. No screen shows it yet.',
+  'settings.potenciaTitulo': 'Printer power',
+  'settings.potenciaDesc':
+    'Average draw in watts, for the same estimate. Not shown on any screen yet.',
+  'settings.exportarDiagnostico': 'Export diagnostics',
+  'settings.exportarDiagnosticoDesc':
+    'Report with version, printers and recent errors, with IPs masked.',
+  'settings.timelapseExperimental': 'Time-lapse (experimental)',
+  'settings.timelapseExperimentalDesc':
+    'Enables experimental time-lapse recording (Cmd 323).',
   'settings.avisoComunidade':
     'Atalaia is an independent, community-built app for Elegoo printers. Not affiliated with, endorsed, or recommended by Elegoo in any way.',
 

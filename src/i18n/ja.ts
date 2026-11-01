@@ -364,6 +364,44 @@ const ja = {
   'settings.concluido': '完了',
   'settings.boasVindasReiniciado': '初回ガイドをリセットしました。',
   'settings.erroBoasVindas': '初回ガイドをリセットできませんでした。',
+  'settings.pesquisa': '設定を検索',
+  'settings.limparPesquisa': '検索をクリア',
+  'settings.semResultados': '検索に一致する設定がありません。',
+  'settings.seccaoFila': 'キューと印刷',
+  'settings.seccaoFilamentos': 'フィラメント',
+  'settings.seccaoDados': 'セキュリティとデータ',
+  'settings.descSecaoImpressoras': '追加、編集、代替アドレス',
+  'settings.descSecaoAparencia': 'テーマ、言語、更新間隔',
+  'settings.descSecaoFila': '自動開始、通知、モバイルデータ',
+  'settings.descSecaoFilamentos': 'スプール警告、電力、在庫',
+  'settings.descSecaoDados': 'バックアップ、診断、メンテナンス',
+  'settings.descSecaoSobre': 'バージョン、ライセンス、サポート',
+  'settings.ajudaImpressoras':
+    'プリンターをタップすると名前、IP、代替アドレスを編集できます。',
+  'settings.ajudaAdicionarImpressora':
+    'ローカルネットワークでプリンターを探すか、IP を入力します。',
+  'settings.enderecoAlternativo': '代替アドレス (Tailscale)',
+  'settings.enderecoAlternativoDesc':
+    'ローカルネットワークが届かないときに使う tailnet の IP。プリンター編集時に設定します。',
+  'settings.ajudaTema': 'アプリの配色を変更します。すぐに反映されます。',
+  'settings.ajudaIntervalo':
+    'プリンターの状態を問い合わせる頻度。短いほどバッテリーと通信を使います。',
+  'settings.ajudaTesteNotificacao':
+    '通知が許可されているか確認するため、今すぐ通知を送ります。',
+  'settings.limiteTitulo': 'スプール残量警告',
+  'settings.limiteDesc': '警告を出す残量の割合 (1〜50%)。',
+  'settings.kwhTitulo': '電気料金',
+  'settings.kwhDesc':
+    '電力コスト用に保存されます。まだ表示する画面はありません。',
+  'settings.potenciaTitulo': 'プリンターの消費電力',
+  'settings.potenciaDesc':
+    '同じ計算用の平均消費電力 (W)。まだどこにも表示されません。',
+  'settings.exportarDiagnostico': '診断をエクスポート',
+  'settings.exportarDiagnosticoDesc':
+    'バージョン、プリンター、最近のエラーを含むレポート (IP はマスク)。',
+  'settings.timelapseExperimental': 'タイムラプス (実験的)',
+  'settings.timelapseExperimentalDesc':
+    '実験的なタイムラプス録画を有効にします (Cmd 323)。',
   'settings.avisoComunidade':
     'Atalaia はコミュニティが開発した、Elegoo プリンター用の独立したアプリです。Elegoo との提携関係はなく、同社による承認や推奨も一切受けていません。',
   'stats.title': '統計',

@@ -326,11 +326,12 @@ export default {
   'settings.seccaoBackup': 'Cópia de segurança',
   'settings.exportar': 'Guardar impressoras e definições',
   'settings.exportarDesc':
-    'Grava um ficheiro JSON com as tuas impressoras e IPs de rede local.',
+    'Grava um ficheiro JSON com as impressoras, as preferências e o inventário de filamentos.',
   'settings.backupAvisoRede':
     'O ficheiro de cópia de segurança contém os endereços IP e nomes das tuas impressoras na rede local. Partilha apenas com quem confias.',
   'settings.importar': 'Restaurar de um ficheiro',
-  'settings.importarDesc': 'Lê o JSON e volta a criar as impressoras.',
+  'settings.importarDesc':
+    'Lê o JSON e repõe as impressoras, as preferências e os filamentos.',
   'settings.backupTitulo': 'Cópia de segurança',
   'settings.backupExportado': 'Ficheiro gravado.',
   'settings.backupImportado': 'Restauradas {n} impressoras.',
@@ -373,6 +374,45 @@ export default {
   'settings.boasVindasReiniciado': 'O fluxo de boas-vindas foi reiniciado.',
   'settings.erroBoasVindas':
     'Não foi possível reiniciar o fluxo de boas-vindas.',
+  'settings.pesquisa': 'Procurar definições',
+  'settings.limparPesquisa': 'Limpar pesquisa',
+  'settings.semResultados': 'Nenhuma definição corresponde à pesquisa.',
+  'settings.seccaoFila': 'Fila e impressão',
+  'settings.seccaoFilamentos': 'Filamentos',
+  'settings.seccaoDados': 'Segurança e dados',
+  'settings.descSecaoImpressoras': 'Adicionar, editar e endereço alternativo',
+  'settings.descSecaoAparencia': 'Tema, idioma e ritmo de atualização',
+  'settings.descSecaoFila': 'Arranque automático, avisos e dados móveis',
+  'settings.descSecaoFilamentos': 'Aviso de bobina, energia e inventário',
+  'settings.descSecaoDados': 'Cópia de segurança, diagnóstico e manutenção',
+  'settings.descSecaoSobre': 'Versão, licença e apoio',
+  'settings.ajudaImpressoras':
+    'Toque numa impressora para editar o nome, o IP e o endereço alternativo.',
+  'settings.ajudaAdicionarImpressora':
+    'Procura a impressora na rede local ou escreve o IP à mão.',
+  'settings.enderecoAlternativo': 'Endereço alternativo (Tailscale)',
+  'settings.enderecoAlternativoDesc':
+    'IP na tailnet, usado quando a rede local não chega. Configura-se ao editar a impressora.',
+  'settings.ajudaTema': 'Muda as cores da aplicação. A alteração é imediata.',
+  'settings.ajudaIntervalo':
+    'Com que frequência a app pede o estado à impressora. Menos segundos gastam mais bateria e rede.',
+  'settings.ajudaTesteNotificacao':
+    'Envia um aviso agora, para confirmar que as notificações estão permitidas.',
+  'settings.limiteTitulo': 'Aviso de bobina quase no fim',
+  'settings.limiteDesc':
+    'Percentagem de filamento restante que dispara o aviso (1 a 50%).',
+  'settings.kwhTitulo': 'Preço da eletricidade',
+  'settings.kwhDesc':
+    'Guardado para o custo energético. Ainda não há ecrã que o mostre.',
+  'settings.potenciaTitulo': 'Potência da impressora',
+  'settings.potenciaDesc':
+    'Consumo médio em watts, para o mesmo cálculo. Ainda não aparece em nenhum ecrã.',
+  'settings.exportarDiagnostico': 'Exportar diagnóstico',
+  'settings.exportarDiagnosticoDesc':
+    'Relatório com versão, impressoras e erros recentes, com os IPs mascarados.',
+  'settings.timelapseExperimental': 'Time-lapse (experimental)',
+  'settings.timelapseExperimentalDesc':
+    'Ativa o suporte experimental a gravações time-lapse (Cmd 323).',
   'settings.avisoComunidade':
     'A Atalaia é uma aplicação independente, criada pela comunidade, para impressoras Elegoo. Sem qualquer afiliação, apoio ou recomendação da Elegoo.',
 

@@ -366,6 +366,46 @@ const es = {
   'settings.concluido': 'Hecho',
   'settings.boasVindasReiniciado': 'Se ha restablecido la bienvenida.',
   'settings.erroBoasVindas': 'No se pudo restablecer la bienvenida.',
+  'settings.pesquisa': 'Buscar ajustes',
+  'settings.limparPesquisa': 'Borrar búsqueda',
+  'settings.semResultados': 'Ningún ajuste coincide con la búsqueda.',
+  'settings.seccaoFila': 'Cola e impresión',
+  'settings.seccaoFilamentos': 'Filamentos',
+  'settings.seccaoDados': 'Seguridad y datos',
+  'settings.descSecaoImpressoras': 'Añadir, editar y dirección alternativa',
+  'settings.descSecaoAparencia': 'Tema, idioma y frecuencia de actualización',
+  'settings.descSecaoFila': 'Inicio automático, avisos y datos móviles',
+  'settings.descSecaoFilamentos': 'Aviso de bobina, energía e inventario',
+  'settings.descSecaoDados': 'Copia de seguridad, diagnóstico y mantenimiento',
+  'settings.descSecaoSobre': 'Versión, licencia y soporte',
+  'settings.ajudaImpressoras':
+    'Toca una impresora para editar el nombre, la IP y la dirección alternativa.',
+  'settings.ajudaAdicionarImpressora':
+    'Busca la impresora en la red local o escribe la IP a mano.',
+  'settings.enderecoAlternativo': 'Dirección alternativa (Tailscale)',
+  'settings.enderecoAlternativoDesc':
+    'IP en la tailnet, para cuando la red local no llega. Se configura al editar la impresora.',
+  'settings.ajudaTema':
+    'Cambia los colores de la aplicación. El cambio es inmediato.',
+  'settings.ajudaIntervalo':
+    'Cada cuánto pide la app el estado a la impresora. Menos segundos gastan más batería y red.',
+  'settings.ajudaTesteNotificacao':
+    'Envía un aviso ahora, para confirmar que las notificaciones están permitidas.',
+  'settings.limiteTitulo': 'Aviso de bobina casi al final',
+  'settings.limiteDesc':
+    'Porcentaje de filamento restante que dispara el aviso (1 a 50 %).',
+  'settings.kwhTitulo': 'Precio de la electricidad',
+  'settings.kwhDesc':
+    'Guardado para el coste energético. Aún no hay pantalla que lo muestre.',
+  'settings.potenciaTitulo': 'Potencia de la impresora',
+  'settings.potenciaDesc':
+    'Consumo medio en vatios, para el mismo cálculo. Aún no aparece en ninguna pantalla.',
+  'settings.exportarDiagnostico': 'Exportar diagnóstico',
+  'settings.exportarDiagnosticoDesc':
+    'Informe con versión, impresoras y errores recientes, con las IP enmascaradas.',
+  'settings.timelapseExperimental': 'Time-lapse (experimental)',
+  'settings.timelapseExperimentalDesc':
+    'Activa la grabación experimental de time-lapse (Cmd 323).',
   'settings.avisoComunidade':
     'Atalaia es una aplicación independiente creada por la comunidad para impresoras Elegoo. No está afiliada, avalada ni recomendada por Elegoo de ninguna manera.',
   'stats.title': 'Estadísticas',
