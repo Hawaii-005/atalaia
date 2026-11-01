@@ -12,6 +12,8 @@ export type ResultadoComando =
   | { estado: 'aviso'; motivo: 'precisa-home' }
   | { estado: 'erro'; motivo: 'ack' | 'timeout'; ack?: number };
 
+import { ackDaResposta } from '../commands';
+
 /** Tempo máximo à espera de Ack antes de desistir. */
 export const ESPERA_ACK_MS = 8000;
 
@@ -27,3 +29,17 @@ export const resultadoDeFalha = (_erro: unknown): ResultadoComando => ({
   estado: 'erro',
   motivo: 'timeout',
 });
+
+/** Envia e traduz, seja qual for o cliente SDCP (real ou falso, nos testes). */
+export type EnviarComando = (cmd: unknown) => Promise<unknown>;
+
+export const executarComando = async (
+  enviar: EnviarComando,
+  cmd: unknown
+): Promise<ResultadoComando> => {
+  try {
+    return resultadoDeAck(ackDaResposta(await enviar(cmd)));
+  } catch (erro) {
+    return resultadoDeFalha(erro);
+  }
+};
