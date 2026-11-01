@@ -42,7 +42,7 @@ export class CentauriDriver implements PrinterDriver {
         const timer = setTimeout(() => {
           this.status.connected = false;
           resolve();
-        }, 3000);
+        }, 8000);
 
         ws.onopen = () => {
           clearTimeout(timer);
