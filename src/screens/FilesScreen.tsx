@@ -35,6 +35,8 @@ import {
   ackDaResposta,
 } from '../utils/commands';
 import { mensagemDeErro } from '../utils/errors';
+import { carregarInventario } from '../utils/inventario';
+import { verificarTodosOsSlots } from '../utils/filamentos/verificacao';
 import * as FileSystem from 'expo-file-system';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as DocumentPicker from 'expo-document-picker';
@@ -1051,11 +1053,34 @@ export const FilesScreen = ({
     }
   };
 
-  const handlePrint = (file: PrinterFile, slotMap: any[] = []) => {
+  const handlePrint = async (
+    file: PrinterFile,
+    slotMap: any[] = [],
+    ferramentasGcode: any[] = []
+  ) => {
     const label = file.name.split('/').pop() ?? file.name;
+    let avisoTexto = '';
+    try {
+      const inv = await carregarInventario();
+      const bobinasLocais = inv.rolos.filter(r => r.printerId === printer?.id);
+      const ferramentas = (ferramentasGcode ?? []).map((f: any) => ({
+        index: f.tool ?? f.index ?? 0,
+        material: f.material,
+        pesoG: f.gramas ?? f.pesoG,
+      }));
+      const avisos = verificarTodosOsSlots(ferramentas, bobinasLocais);
+      if (avisos.length > 0) {
+        avisoTexto =
+          '\n\n⚠️ Avisos de Compatibilidade:\n' +
+          avisos.map(a => `• ${a.mensagem}`).join('\n');
+      }
+    } catch {
+      // Ignorar erros de leitura de inventario ao abrir o dialogo
+    }
+
     Alert.alert(
       t('files.imprimirTitulo'),
-      t('files.imprimirMsg', { nome: label }),
+      t('files.imprimirMsg', { nome: label }) + avisoTexto,
       [
         { text: t('comum.cancelar'), style: 'cancel' },
         {
