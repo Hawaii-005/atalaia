@@ -111,6 +111,13 @@ const en = {
   'files.aEnviar': 'Uploading…',
   'files.enviado': 'Uploaded',
   'files.enviadoMsg': '{nome} is on the printer. Print now?',
+  'files.partilhaSemImpressora':
+    'No printer is connected to receive the file. Connect a printer and try again.',
+  'files.partilhaOutro':
+    '“{nome}” is not a G-code file. Only .gcode files can be sent.',
+  'files.partilhaModelo':
+    '“{nome}” is a model, not G-code. Atalaia only sends what is already sliced — open it in ElegooSlicer, slice it and share the .gcode.',
+  'files.partilhaTitulo': 'Shared file',
   'files.falhouEnvio': 'Upload failed',
   'files.imprimirAgora': 'Print now',
   'files.naoEncontrado': 'The file is not in the printer list.',

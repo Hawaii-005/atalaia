@@ -108,6 +108,13 @@ export default {
   'files.aEnviar': 'A enviar…',
   'files.enviado': 'Enviado',
   'files.enviadoMsg': '{nome} já está na impressora. Imprimir agora?',
+  'files.partilhaSemImpressora':
+    'Não há impressora ligada para receber o ficheiro. Liga uma impressora e tenta outra vez.',
+  'files.partilhaOutro':
+    '«{nome}» não é um G-code. Só é possível enviar ficheiros .gcode.',
+  'files.partilhaModelo':
+    '«{nome}» é um modelo, não G-code. A Atalaia envia só o que já vem fatiado — abre-o no ElegooSlicer, fatia e partilha o .gcode.',
+  'files.partilhaTitulo': 'Ficheiro partilhado',
   'files.falhouEnvio': 'O envio falhou',
   'files.imprimirAgora': 'Imprimir agora',
   'files.naoEncontrado': 'O ficheiro não aparece na lista da máquina.',

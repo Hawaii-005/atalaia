@@ -313,6 +313,8 @@ export const FilesScreen = ({
   navigation,
   printerId: printerIdProp,
   embutido,
+  partilhado,
+  onPartilhadoUsado,
 }: any) => {
   useIdioma();
   const { tema } = useTheme();
@@ -610,7 +612,81 @@ export const FilesScreen = ({
     );
   };
 
-  /** Envia um G-code do telemóvel e oferece imprimir logo a seguir. */
+  /** Envia um G-code (do seletor ou de outra app) e oferece imprimir. */
+  const enviarFicheiro = useCallback(
+    async (origem: { uri: string; nome: string }) => {
+      if (!printer) {
+        Alert.alert(t('files.partilhaSemImpressora'));
+        return;
+      }
+      const nomeFinal = origem.nome;
+      try {
+        setOcupado(`${t('files.aEnviar')} 0%`);
+        await uploadGcode(
+          enderecoDe(printer),
+          origem.uri,
+          nomeFinal,
+          (enviado, total) => {
+            setOcupado(
+              `${t('files.aEnviar')} ${Math.round((enviado / total) * 100)}%`
+            );
+          }
+        );
+        await load();
+        Alert.alert(
+          t('files.enviado'),
+          t('files.enviadoMsg', { nome: nomeFinal }),
+          [
+            { text: t('comum.nao'), style: 'cancel' },
+            {
+              text: t('files.imprimirAgora'),
+              onPress: async () => {
+                try {
+                  // O nome tem de ser o que a máquina devolve no Cmd 258.
+                  const lista = await listarTodosOsFicheiros();
+                  const alvo = lista.find(f =>
+                    f.name.endsWith(`/${nomeFinal}`)
+                  );
+                  if (!alvo) {
+                    Alert.alert(
+                      t('files.naoArrancou'),
+                      t('files.naoEncontrado')
+                    );
+                    return;
+                  }
+                  const comando = startPrintCommand(alvo.name, {
+                    nivelar: bedLevel,
+                    lado: plateSide,
+                    timelapse: (await lerTimelapse(printer.id)) ? 1 : 0,
+                  });
+                  const resposta = await request(printer.id, comando, 15000);
+                  const ack = ackDaResposta(resposta) ?? 0;
+                  if (ack !== 0) {
+                    Alert.alert(t('files.naoArrancou'), descreverAck(ack));
+                    return;
+                  }
+                  Alert.alert(
+                    t('files.aArrancar'),
+                    t('files.aArrancarMsg', { nome: nomeFinal })
+                  );
+                  navigation.navigate('Impressora');
+                } catch (e) {
+                  Alert.alert(t('files.naoArrancou'), mensagemDeErro(e));
+                }
+              },
+            },
+          ]
+        );
+      } catch (e) {
+        Alert.alert(t('files.falhouEnvio'), mensagemDeErro(e));
+      } finally {
+        setOcupado(null);
+      }
+    },
+    [printer, load, bedLevel, plateSide, request, navigation]
+  );
+
+  /** Botão ENVIAR G-CODE: escolhe o ficheiro no telefone e manda-o. */
   const handleUpload = useCallback(async () => {
     if (!printer) return;
     const picked = await DocumentPicker.getDocumentAsync({
@@ -618,65 +694,22 @@ export const FilesScreen = ({
       multiple: false,
     });
     if (picked.canceled || !picked.assets?.length) return;
-    const asset = picked.assets[0];
-    try {
-      setOcupado(`${t('files.aEnviar')} 0%`);
-      await uploadGcode(
-        enderecoDe(printer),
-        asset.uri,
-        asset.name,
-        (enviado, total) => {
-          setOcupado(
-            `${t('files.aEnviar')} ${Math.round((enviado / total) * 100)}%`
-          );
-        }
-      );
-      await load();
-      Alert.alert(
-        t('files.enviado'),
-        t('files.enviadoMsg', { nome: asset.name }),
-        [
-          { text: t('comum.nao'), style: 'cancel' },
-          {
-            text: t('files.imprimirAgora'),
-            onPress: async () => {
-              try {
-                // O nome tem de ser o que a máquina devolve no Cmd 258.
-                const lista = await listarTodosOsFicheiros();
-                const alvo = lista.find(f => f.name.endsWith(`/${asset.name}`));
-                if (!alvo) {
-                  Alert.alert(t('files.naoArrancou'), t('files.naoEncontrado'));
-                  return;
-                }
-                const comando = startPrintCommand(alvo.name, {
-                  nivelar: bedLevel,
-                  lado: plateSide,
-                  timelapse: (await lerTimelapse(printer.id)) ? 1 : 0,
-                });
-                const resposta = await request(printer.id, comando, 15000);
-                const ack = ackDaResposta(resposta) ?? 0;
-                if (ack !== 0) {
-                  Alert.alert(t('files.naoArrancou'), descreverAck(ack));
-                  return;
-                }
-                Alert.alert(
-                  t('files.aArrancar'),
-                  t('files.aArrancarMsg', { nome: asset.name })
-                );
-                navigation.navigate('Impressora');
-              } catch (e) {
-                Alert.alert(t('files.naoArrancou'), mensagemDeErro(e));
-              }
-            },
-          },
-        ]
-      );
-    } catch (e) {
-      Alert.alert(t('files.falhouEnvio'), mensagemDeErro(e));
-    } finally {
-      setOcupado(null);
-    }
-  }, [printer, load, bedLevel, plateSide, request, navigation]);
+    await enviarFicheiro({
+      uri: picked.assets[0].uri,
+      nome: picked.assets[0].name,
+    });
+  }, [printer, enviarFicheiro]);
+
+  /**
+   * Ficheiro que chegou pelo «Partilhar» do Android. O pai só entrega um de
+   * cada vez e limpa o estado depois de o usarmos, para não repetir o envio
+   * em cada render.
+   */
+  useEffect(() => {
+    if (!partilhado?.uri) return;
+    onPartilhadoUsado?.();
+    enviarFicheiro({ uri: partilhado.uri, nome: partilhado.nome });
+  }, [partilhado, onPartilhadoUsado, enviarFicheiro]);
 
   const handleDelete = (file: PrinterFile) => {
     const label = file.name.split('/').pop() ?? file.name;

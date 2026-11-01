@@ -100,6 +100,12 @@ const zh = {
   'files.aEnviar': '正在上传…',
   'files.enviado': '已上传',
   'files.enviadoMsg': '{nome} 已保存到打印机。立即打印？',
+  'files.partilhaSemImpressora':
+    '没有已连接的打印机可以接收文件。请连接打印机后重试。',
+  'files.partilhaOutro': '“{nome}” 不是 G-code 文件。只能发送 .gcode 文件。',
+  'files.partilhaModelo':
+    '“{nome}” 是模型，不是 G-code。Atalaia 只发送已切片的文件——请在 ElegooSlicer 中打开、切片，然后共享 .gcode。',
+  'files.partilhaTitulo': '共享的文件',
   'files.falhouEnvio': '上传失败',
   'files.imprimirAgora': '立即打印',
   'files.naoEncontrado': '打印机的文件列表中没有此文件。',

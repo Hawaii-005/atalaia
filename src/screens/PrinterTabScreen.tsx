@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
@@ -21,6 +21,12 @@ import { EstadoSection } from '../sections/EstadoSection';
 import { PainelSection } from '../sections/PainelSection';
 import { FilamentosScreen } from '../screens/FilamentosScreen';
 import { FilesScreen } from '../screens/FilesScreen';
+import {
+  FicheiroPartilhado,
+  lerPartilha,
+  ouvirPartilha,
+  tipoDoFicheiro,
+} from '../utils/partilha';
 
 const ETIQUETAS: Record<Secao, string> = {
   painel: 'secao.painel',
@@ -43,6 +49,39 @@ export const PrinterTabScreen = ({ navigation }: any) => {
 
   const secoes = secoesDaMaquina(maquina);
   const ligada = maquina?.connectionStatus === 'connected';
+  /** G-code recebido pelo «Partilhar» do Android, à espera de ser enviado. */
+  const [partilhado, setPartilhado] = useState<FicheiroPartilhado | null>(null);
+
+  const tratarPartilha = useCallback(async () => {
+    const lista = await lerPartilha();
+    if (lista.length === 0) return;
+    const ficheiro = lista[0];
+    const tipo = tipoDoFicheiro(ficheiro.nome);
+    if (tipo === 'gcode') {
+      mudarSecao('ficheiros');
+      setPartilhado(ficheiro);
+      return;
+    }
+    Alert.alert(
+      t('files.partilhaTitulo'),
+      tipo === 'modelo'
+        ? t('files.partilhaModelo', { nome: ficheiro.nome })
+        : t('files.partilhaOutro', { nome: ficheiro.nome })
+    );
+  }, [mudarSecao]);
+
+  // Dois caminhos: a app já estava aberta (evento) ou arrancou por causa da
+  // partilha (a caixa nativa ainda tem o ficheiro quando o JS monta).
+  useEffect(() => {
+    tratarPartilha();
+  }, [tratarPartilha]);
+
+  useEffect(() => {
+    const parar = ouvirPartilha(() => {
+      tratarPartilha();
+    });
+    return parar;
+  }, [tratarPartilha]);
 
   const corDoPonto = ligada ? hexDe(paleta.ok) : hexDe(paleta.perigo);
 
@@ -72,6 +111,8 @@ export const PrinterTabScreen = ({ navigation }: any) => {
             printerId={maquina.id}
             embutido
             navigation={navigation}
+            partilhado={partilhado}
+            onPartilhadoUsado={() => setPartilhado(null)}
           />
         );
       case 'filamentos':

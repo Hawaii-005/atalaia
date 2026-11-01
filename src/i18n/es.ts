@@ -106,6 +106,13 @@ const es = {
   'files.aEnviar': 'Subiendo…',
   'files.enviado': 'Subido',
   'files.enviadoMsg': '{nome} está en la impresora. ¿Imprimir ahora?',
+  'files.partilhaSemImpressora':
+    'No hay impresora conectada para recibir el archivo. Conecta una impresora e inténtalo de nuevo.',
+  'files.partilhaOutro':
+    '«{nome}» no es un G-code. Solo se pueden enviar archivos .gcode.',
+  'files.partilhaModelo':
+    '«{nome}» es un modelo, no G-code. Atalaia solo envía lo que ya está laminado: ábrelo en ElegooSlicer, lamínalo y comparte el .gcode.',
+  'files.partilhaTitulo': 'Archivo compartido',
   'files.falhouEnvio': 'Error al subir',
   'files.imprimirAgora': 'Imprimir ahora',
   'files.naoEncontrado': 'El archivo no está en la lista de la impresora.',

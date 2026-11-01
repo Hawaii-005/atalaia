@@ -107,6 +107,13 @@ const de = {
   'files.aEnviar': 'Wird hochgeladen…',
   'files.enviado': 'Hochgeladen',
   'files.enviadoMsg': '{nome} ist auf dem Drucker. Jetzt drucken?',
+  'files.partilhaSemImpressora':
+    'Kein Drucker verbunden, der die Datei empfangen kann. Drucker verbinden und erneut versuchen.',
+  'files.partilhaOutro':
+    '„{nome}“ ist keine G-code-Datei. Es lassen sich nur .gcode-Dateien senden.',
+  'files.partilhaModelo':
+    '„{nome}“ ist ein Modell, kein G-code. Atalaia sendet nur bereits geslicte Dateien — im ElegooSlicer slicen und die .gcode teilen.',
+  'files.partilhaTitulo': 'Geteilte Datei',
   'files.falhouEnvio': 'Hochladen fehlgeschlagen',
   'files.imprimirAgora': 'Jetzt drucken',
   'files.naoEncontrado': 'Die Datei ist nicht in der Dateiliste des Druckers.',

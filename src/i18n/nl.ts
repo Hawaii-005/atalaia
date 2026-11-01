@@ -106,6 +106,13 @@ const nl = {
   'files.aEnviar': 'Uploaden…',
   'files.enviado': 'Geüpload',
   'files.enviadoMsg': '{nome} staat op de printer. Nu printen?',
+  'files.partilhaSemImpressora':
+    'Geen printer verbonden om het bestand te ontvangen. Verbind een printer en probeer opnieuw.',
+  'files.partilhaOutro':
+    '‘{nome}’ is geen G-code. Alleen .gcode-bestanden kunnen worden verstuurd.',
+  'files.partilhaModelo':
+    '‘{nome}’ is een model, geen G-code. Atalaia verstuurt alleen wat al gesliced is — open het in ElegooSlicer, slice het en deel de .gcode.',
+  'files.partilhaTitulo': 'Gedeeld bestand',
   'files.falhouEnvio': 'Upload mislukt',
   'files.imprimirAgora': 'Nu printen',
   'files.naoEncontrado':

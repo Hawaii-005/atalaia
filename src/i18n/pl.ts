@@ -105,6 +105,13 @@ const pl = {
   'files.aEnviar': 'Przesyłanie…',
   'files.enviado': 'Przesłano',
   'files.enviadoMsg': '{nome} jest na drukarce. Drukować teraz?',
+  'files.partilhaSemImpressora':
+    'Brak podłączonej drukarki, która przyjmie plik. Podłącz drukarkę i spróbuj ponownie.',
+  'files.partilhaOutro':
+    '„{nome}” nie jest plikiem G-code. Można wysyłać tylko pliki .gcode.',
+  'files.partilhaModelo':
+    '„{nome}” to model, a nie G-code. Atalaia wysyła tylko to, co jest już pocięte — otwórz go w ElegooSlicer, pokrój i udostępnij .gcode.',
+  'files.partilhaTitulo': 'Udostępniony plik',
   'files.falhouEnvio': 'Przesyłanie nieudane',
   'files.imprimirAgora': 'Drukuj teraz',
   'files.naoEncontrado': 'Pliku nie ma na liście plików drukarki.',
