@@ -132,6 +132,7 @@ export const Camadas = ({
   onClose: () => void;
 }) => {
   const { tema } = useTheme();
+  const [area, setArea] = useState({ largura: 100, altura: 100 });
   const [estado, setEstado] = useState<Estado>('aCarregar');
   const [dados, setDados] = useState<CamadasGcode | null>(null);
   const [indice, setIndice] = useState(0);
@@ -188,8 +189,8 @@ export const Camadas = ({
 
   const caminho = useMemo(() => {
     if (!dados || !limites) return '';
-    return caminhoDaCamada(dados.camadas[indice], limites);
-  }, [dados, limites, indice]);
+    return caminhoDaCamada(dados.camadas[indice], limites, area);
+  }, [dados, limites, indice, area]);
 
   const total = dados?.camadas.length ?? 0;
   const camada = dados?.camadas[indice];
@@ -246,12 +247,26 @@ export const Camadas = ({
             <View
               className="flex-1 rounded-2xl border border-line items-center justify-center overflow-hidden"
               style={{ backgroundColor: hexDe(tema.paleta.fundoBaixo) }}
+              onLayout={evento => {
+                const { width, height } = evento.nativeEvent.layout;
+                if (width > 0 && height > 0) {
+                  setArea(previo =>
+                    previo.largura === width && previo.altura === height
+                      ? previo
+                      : { largura: width, altura: height }
+                  );
+                }
+              }}
             >
-              <Svg viewBox="0 0 100 100" width="100%" height="100%">
+              <Svg
+                viewBox={`0 0 ${area.largura} ${area.altura}`}
+                width="100%"
+                height="100%"
+              >
                 <Path
                   d={caminho}
                   stroke={hexDe(tema.paleta.acento)}
-                  strokeWidth={0.5}
+                  strokeWidth={1.4}
                   strokeLinejoin="round"
                   fill="none"
                 />

@@ -255,24 +255,34 @@ export const lerCamadas = (
   };
 };
 
+/** Área de desenho, em unidades do viewBox (os píxeis do ecrã). */
+export type AreaDesenho = { largura: number; altura: number };
+
 /**
- * Converte uma camada num `d` de SVG numa caixa de 100×100, mantendo a
- * proporção (centrada). Levanta o traço quando há deslocação entre
- * segmentos — sem isto, paredes separadas ficavam ligadas por riscos.
+ * Converte uma camada num `d` de SVG que enche a área de desenho, mantendo a
+ * proporção e centrado. A área é a do próprio ecrã: num tablet em paisagem o
+ * desenho aproveita a largura toda em vez de ficar num quadrado ao meio.
+ * Levanta o traço quando há deslocação entre segmentos — sem isto, paredes
+ * separadas ficavam ligadas por riscos.
  */
 export const caminhoDaCamada = (
   camada: CamadaGcode,
   limites: LimitesCamadas,
-  caixa = 100
+  area: AreaDesenho = { largura: 100, altura: 100 },
+  margem = 4
 ): string => {
   const largura = Math.max(limites.maxX - limites.minX, 0.001);
   const altura = Math.max(limites.maxY - limites.minY, 0.001);
-  const escala = Math.min((caixa - 4) / largura, (caixa - 4) / altura);
-  const desvioX = (caixa - largura * escala) / 2;
-  const desvioY = (caixa - altura * escala) / 2;
+  const escala = Math.min(
+    (area.largura - 2 * margem) / largura,
+    (area.altura - 2 * margem) / altura
+  );
+  const desvioX = (area.largura - largura * escala) / 2;
+  const desvioY = (area.altura - altura * escala) / 2;
 
   const px = (v: number) => (v - limites.minX) * escala + desvioX;
-  const py = (v: number) => caixa - ((v - limites.minY) * escala + desvioY);
+  const py = (v: number) =>
+    area.altura - ((v - limites.minY) * escala + desvioY);
 
   const s = camada.segmentos;
   let d = '';

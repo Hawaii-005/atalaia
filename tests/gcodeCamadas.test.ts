@@ -195,6 +195,25 @@ describe('limitesDoObjeto', () => {
     expect(objeto.minX).toBeGreaterThanOrEqual(0);
   });
 
+  it('aproveita a largura toda num ecrã largo, como o tablet', () => {
+    const r = lerCamadas(quadrado(1));
+    const d = caminhoDaCamada(r.camadas[0], r.limites, {
+      largura: 1200,
+      altura: 600,
+    });
+    // O quadrado é 10x10, por isso a altura manda: a peça fica com ~592 de
+    // altura e centrada na horizontal.
+    const nums = (d.match(/-?\d+(?:\.\d+)?/g) || []).map(Number);
+    const xs = nums.filter((_, i) => i % 2 === 0);
+    const ys = nums.filter((_, i) => i % 2 === 1);
+    expect(Math.min(...xs)).toBeGreaterThan(280);
+    expect(Math.max(...xs)).toBeLessThan(920);
+    expect(Math.min(...ys)).toBeGreaterThanOrEqual(0);
+    expect(Math.max(...ys)).toBeLessThanOrEqual(600);
+    // Aproveita a altura (menos a margem de 4 em cima e em baixo).
+    expect(Math.max(...ys) - Math.min(...ys)).toBeGreaterThan(585);
+  });
+
   it('devolve uma caixa segura sem camadas', () => {
     expect(limitesDoObjeto([])).toEqual({
       minX: 0,
