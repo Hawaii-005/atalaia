@@ -41,7 +41,6 @@ import * as FileSystem from 'expo-file-system';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as DocumentPicker from 'expo-document-picker';
 import { uploadGcode } from '../utils/gcodeUpload';
-import { custoDe, euros, getPrecoKg, setPrecoKg } from '../utils/precos';
 import { slotValido } from '../utils/slots';
 import {
   extrairMiniaturaEmbutida,
@@ -369,9 +368,6 @@ const FileDetails = ({
     }
     if (vivoRef.current) setMini(null);
   };
-  const [precoKg, definirPrecoKg] = useState(0);
-  const [precoTexto, definirPrecoTexto] = useState('');
-
   useEffect(() => {
     let vivo = true;
     const chave = `${printerId}|${file.name}`;
@@ -412,13 +408,6 @@ const FileDetails = ({
     };
   }, [printerId, file.name, request]);
 
-  useEffect(() => {
-    getPrecoKg().then(valor => {
-      definirPrecoKg(valor);
-      definirPrecoTexto(valor > 0 ? String(valor).replace('.', ',') : '');
-    });
-  }, []);
-
   const gramasDoCabecalho = filamentos.reduce((soma, f) => soma + f.gramas, 0);
   // Sem `filament used [g]` no cabeçalho, conta-se o E do próprio G-code.
   const gramasDetalhe = Number(detalhe?.EstWeight);
@@ -428,13 +417,6 @@ const FileDetails = ({
       : gramasDoCabecalho > 0
         ? gramasDoCabecalho
         : (consumo?.gramas ?? 0);
-  // O valor escrito conta logo: não se espera que o campo perca o foco.
-  const precoEscrito = Number.parseFloat(
-    precoTexto.replace(',', '.').replace(/[^0-9.]/g, '')
-  );
-  const precoEfectivo = Number.isFinite(precoEscrito) ? precoEscrito : precoKg;
-  const custo = custoDe(totalGramas, precoEfectivo);
-
   return (
     <Modal transparent animationType="slide" visible onRequestClose={onClose}>
       <View
@@ -541,10 +523,6 @@ const FileDetails = ({
                     totalGramas > 0
                       ? `${totalGramas.toFixed(1).replace('.', ',')} g`
                       : '—',
-                },
-                {
-                  rotulo: t('files.custo'),
-                  valor: custo > 0 ? `≈ ${euros(custo)}` : '—',
                 },
                 {
                   rotulo: t('files.filamentos'),
@@ -695,35 +673,6 @@ const FileDetails = ({
                 </View>
               ))
             )}
-
-            {/* Preço por quilo */}
-            <View className="flex-row items-center justify-between mt-3 pt-3 border-t border-line">
-              <Text className="text-[12px] text-ink-soft flex-1">
-                {t('files.precoKg')}
-              </Text>
-              <TextInput
-                value={precoTexto}
-                onChangeText={texto => {
-                  definirPrecoTexto(texto);
-                  const valor = Number.parseFloat(
-                    texto.replace(',', '.').replace(/[^0-9.]/g, '')
-                  );
-                  if (Number.isFinite(valor)) definirPrecoKg(valor);
-                }}
-                onEndEditing={async () => {
-                  const valor = Number.parseFloat(
-                    precoTexto.replace(',', '.').replace(/[^0-9.]/g, '')
-                  );
-                  const limpo = Number.isFinite(valor) ? valor : 0;
-                  definirPrecoKg(limpo);
-                  await setPrecoKg(limpo);
-                }}
-                keyboardType="decimal-pad"
-                placeholder="0,00"
-                placeholderTextColor={hexDe(tema.paleta.tintaMuted)}
-                className="w-24 h-9 px-3 rounded-lg border border-line text-[12px] text-ink text-right"
-              />
-            </View>
 
             {/* Impressão */}
             <Text className="text-[10px] tracking-[1.4px] font-semibold text-ink-soft mt-5">
