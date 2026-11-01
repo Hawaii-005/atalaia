@@ -41,30 +41,38 @@ class MainActivity : ReactActivity() {
    * ficheiro mais tarde sem uma cópia.
    */
   private fun receberPartilha(intent: Intent?) {
-    if (intent == null) return
-    val acao = intent.action ?: return
-    if (acao != Intent.ACTION_SEND && acao != Intent.ACTION_VIEW) return
+    try {
+      if (intent == null) return
+      val acao = intent.action ?: return
+      if (acao != Intent.ACTION_SEND && acao != Intent.ACTION_VIEW) return
 
-    @Suppress("DEPRECATION")
-    val doExtra = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
-    val uris = listOfNotNull(doExtra ?: intent.data)
-    if (uris.isEmpty()) return
+      @Suppress("DEPRECATION")
+      val doExtra = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
+      val uris = listOfNotNull(doExtra ?: intent.data)
+      if (uris.isEmpty()) return
 
-    var recebidos = 0
-    uris.forEach { uri ->
-      val copia = copiarParaCache(uri)
-      if (copia != null) {
-        CaixaDePartilha.juntar(copia.absolutePath, nomeDe(uri) ?: copia.name)
-        recebidos += 1
+      var recebidos = 0
+      uris.forEach { uri ->
+        val copia = copiarParaCache(uri)
+        if (copia != null) {
+          CaixaDePartilha.juntar(copia.absolutePath, nomeDe(uri) ?: copia.name)
+          recebidos += 1
+        }
       }
-    }
 
-    if (recebidos == 0) {
+      if (recebidos == 0) {
+        Toast.makeText(this, "Não foi possível ler o ficheiro partilhado", Toast.LENGTH_LONG)
+            .show()
+        return
+      }
+      avisarJs()
+    } catch (e: Throwable) {
+      // Um intent de outra app nunca pode derrubar a Atalaia: quem partilha
+      // um URI sem permissão recebe um aviso, não um crash.
+      Log.w("AtalaiaPartilha", "Falhou a receber a partilha: ${e.message}", e)
       Toast.makeText(this, "Não foi possível ler o ficheiro partilhado", Toast.LENGTH_LONG)
           .show()
-      return
     }
-    avisarJs()
   }
 
   /** Emite o aviso para o JS, se ele já estiver a correr. */
@@ -85,20 +93,24 @@ class MainActivity : ReactActivity() {
 
   private fun nomeDe(uri: Uri): String? {
     if (uri.scheme == "content") {
-      contentResolver
-          .query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
-          ?.use { cursor ->
-            if (cursor.moveToFirst() && !cursor.isNull(0)) return cursor.getString(0)
-          }
+      try {
+        contentResolver
+            .query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+            ?.use { cursor ->
+              if (cursor.moveToFirst() && !cursor.isNull(0)) return cursor.getString(0)
+            }
+      } catch (e: Exception) {
+        Log.w("AtalaiaPartilha", "Sem acesso ao nome de $uri: ${e.message}")
+      }
     }
     return uri.lastPathSegment?.substringAfterLast('/')
   }
 
   private fun copiarParaCache(uri: Uri): File? {
-    val nome = (nomeDe(uri) ?: "partilhado.gcode").replace('/', '_')
-    val pasta = File(cacheDir, "partilha").apply { mkdirs() }
-    val destino = File(pasta, "${System.currentTimeMillis()}-$nome")
     return try {
+      val nome = (nomeDe(uri) ?: "partilhado.gcode").replace('/', '_')
+      val pasta = File(cacheDir, "partilha").apply { mkdirs() }
+      val destino = File(pasta, "${System.currentTimeMillis()}-$nome")
       val entrada =
           if (uri.scheme == "content") {
             contentResolver.openInputStream(uri)

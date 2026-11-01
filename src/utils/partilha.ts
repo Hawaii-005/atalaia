@@ -28,6 +28,14 @@ export const tipoDoFicheiro = (nome: string): TipoDeFicheiro => {
 };
 
 /**
+ * O lado nativo entrega caminhos absolutos; o expo-file-system só abre
+ * `file://…`. Sem esta normalização o tamanho lido é 0 e o envio recusa o
+ * ficheiro como «vazio».
+ */
+export const uriDoFicheiro = (caminho: string): string =>
+  caminho.startsWith('/') ? `file://${caminho}` : caminho;
+
+/**
  * Ficheiros recebidos desde a última chamada. O lado nativo guarda-os numa
  * caixa: se o intent chegar antes de o JS arrancar, ninguém os perde.
  */
@@ -41,7 +49,10 @@ export const lerPartilha = async (): Promise<FicheiroPartilhado[]> => {
     if (!Array.isArray(lista)) return [];
     return lista
       .filter(item => typeof item?.uri === 'string')
-      .map(item => ({ uri: item.uri, nome: nomeLimpo(String(item.nome)) }));
+      .map(item => ({
+        uri: uriDoFicheiro(item.uri),
+        nome: nomeLimpo(String(item.nome)),
+      }));
   } catch {
     return [];
   }

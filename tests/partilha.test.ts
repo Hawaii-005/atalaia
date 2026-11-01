@@ -3,7 +3,11 @@ jest.mock('react-native', () => ({
   DeviceEventEmitter: { addListener: () => ({ remove: () => {} }) },
 }));
 
-import { nomeLimpo, tipoDoFicheiro } from '../src/utils/partilha';
+import {
+  nomeLimpo,
+  tipoDoFicheiro,
+  uriDoFicheiro,
+} from '../src/utils/partilha';
 
 describe('nomeLimpo', () => {
   it('tira o caminho e mantém o nome', () => {
@@ -44,5 +48,18 @@ describe('tipoDoFicheiro', () => {
     expect(tipoDoFicheiro('foto.jpg')).toBe('outro');
     expect(tipoDoFicheiro('arquivo.zip')).toBe('outro');
     expect(tipoDoFicheiro('')).toBe('outro');
+  });
+});
+
+describe('uriDoFicheiro', () => {
+  it('põe o esquema file:// nos caminhos absolutos do lado nativo', () => {
+    expect(uriDoFicheiro('/data/user/0/app/cache/partilha/x.gcode')).toBe(
+      'file:///data/user/0/app/cache/partilha/x.gcode'
+    );
+  });
+
+  it('deixa em paz o que já tem esquema', () => {
+    expect(uriDoFicheiro('file:///tmp/x.gcode')).toBe('file:///tmp/x.gcode');
+    expect(uriDoFicheiro('content://media/x')).toBe('content://media/x');
   });
 });
