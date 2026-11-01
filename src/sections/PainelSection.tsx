@@ -505,16 +505,7 @@ export const PainelSection = ({
       : hexDe(paleta.acento);
 
   return (
-    <ScrollView
-      showsVerticalScrollIndicator={false}
-      scrollEnabled={!isTablet}
-      contentContainerStyle={{
-        padding: espaco.lg,
-        gap: espaco.md,
-        paddingBottom: 40,
-        flexGrow: isTablet ? 1 : undefined,
-      }}
-    >
+    <PaginaControlos tablet={isTablet} padding={espaco.lg} gap={espaco.md}>
       <View
         style={{
           flexDirection: isTablet ? 'row' : 'column',
@@ -906,9 +897,14 @@ export const PainelSection = ({
 
           {/* eixos: babystep a imprimir, D-Pad em espera */}
           <Cartao>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Rotulo style={{ flex: 1 }}>{t('controlos.movimento')}</Rotulo>
-              {aImprimir && (
+            {aImprimir && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                }}
+              >
                 <View
                   style={{
                     backgroundColor: hexDe(paleta.aviso) + '22',
@@ -927,8 +923,8 @@ export const PainelSection = ({
                     {t('painel.xyBloqueados')}
                   </Text>
                 </View>
-              )}
-            </View>
+              </View>
+            )}
 
             {aImprimir ? (
               <>
@@ -1004,9 +1000,27 @@ export const PainelSection = ({
           </Cartao>
         </ColunaControlos>
       </View>
-    </ScrollView>
+    </PaginaControlos>
   );
 };
+
+/** Moldura: no tablet não rola (a coluna é que rola); no telemóvel é a página. */
+const PaginaControlos: React.FC<{
+  tablet: boolean;
+  padding: number;
+  gap: number;
+  children: React.ReactNode;
+}> = ({ tablet, padding, gap, children }) =>
+  tablet ? (
+    <View style={{ flex: 1, padding, gap }}>{children}</View>
+  ) : (
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ padding, gap, paddingBottom: 40 }}
+    >
+      {children}
+    </ScrollView>
+  );
 
 /** Coluna de controlos: rola sozinha no tablet, segue a página no telemóvel. */
 const ColunaControlos: React.FC<{
