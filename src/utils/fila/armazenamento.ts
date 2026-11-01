@@ -15,6 +15,13 @@ import {
   OpcoesArranque,
   sanearAoCarregar,
 } from './modelo';
+import {
+  CHAVE_FILA_AUTO,
+  CHAVE_MODOS,
+  ModoConfig,
+  lerModos,
+  migrarFilaAuto,
+} from './modos';
 
 export const VERSAO_FILA = 2;
 export const CHAVE_FILA = 'atalaia.fila.v2';
@@ -174,5 +181,31 @@ export const gravarFila = async (itens: ItemFila[]): Promise<void> => {
     await AsyncStorage.setItem(CHAVE_FILA, JSON.stringify(estado));
   } catch (erro) {
     log('fila: não consegui gravar', erro);
+  }
+};
+
+/** Modos de arranque por impressora, migrando o `filaAuto` antigo. */
+export const carregarModos = async (): Promise<Record<string, ModoConfig>> => {
+  try {
+    const guardado = await AsyncStorage.getItem(CHAVE_MODOS);
+    if (guardado !== null) return lerModos(lerJson(guardado));
+    const antigo = await AsyncStorage.getItem(CHAVE_FILA_AUTO);
+    const migrado = migrarFilaAuto(antigo);
+    // Não há impressoras conhecidas neste ponto: guarda-se só a intenção e o
+    // contexto aplica-a quando souber os ids.
+    return { '*': migrado };
+  } catch (erro) {
+    log('fila: não consegui ler os modos', erro);
+    return {};
+  }
+};
+
+export const gravarModos = async (
+  modos: Record<string, ModoConfig>
+): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(CHAVE_MODOS, JSON.stringify(modos));
+  } catch (erro) {
+    log('fila: não consegui gravar os modos', erro);
   }
 };

@@ -11,11 +11,14 @@ import { t, useIdioma } from '../i18n';
 import { formatDuracao } from '../utils/duracao';
 import { ItemFila, daImpressora, podeReordenar } from '../utils/fila/modelo';
 import { estimarFila } from '../utils/fila/estimativas';
+import { modoDe } from '../utils/fila/modos';
 import { CartaoItemFila } from './fila/CartaoItemFila';
 import { ListaArrastavel } from './fila/ListaArrastavel';
 import { ChipsImpressora } from './fila/ChipsImpressora';
 import { FaixaArranque } from './fila/FaixaArranque';
 import { DetalheItem } from './fila/DetalheItem';
+import { SeletorModo } from './fila/SeletorModo';
+import { Contagem } from './fila/Contagem';
 
 const ALTURA_CARTAO = 96;
 
@@ -30,6 +33,9 @@ export const FilaScreen = ({ navigation }: any) => {
     fila,
     filaAuto,
     definirFilaAuto,
+    modos,
+    definirModo,
+    pedirArranque,
     moverItem,
     duplicarItem,
     removerDaFila,
@@ -72,6 +78,13 @@ export const FilaScreen = ({ navigation }: any) => {
 
   const ligada = impressora?.connectionStatus === 'connected';
   const mesa = printerId ? pendentesMesaLimpa[printerId] : undefined;
+  const config = modoDe(modos, printerId ?? '');
+  const [modoAberto, setModoAberto] = useState(false);
+  // A contagem começa quando o pedido aparece e não reinicia a cada render.
+  const fimContagem = useMemo(
+    () => Date.now() + config.contagemSeg * 1000,
+    [mesa?.id, config.contagemSeg]
+  );
 
   const limparTudo = () => {
     if (!itens.length) return;
@@ -235,7 +248,44 @@ export const FilaScreen = ({ navigation }: any) => {
             nota={t('fila.subtitulo')}
           />
 
-          <FaixaArranque pausada={!filaAuto} ligada={!!ligada} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View style={{ flex: 1 }}>
+              <FaixaArranque pausada={!filaAuto} ligada={!!ligada} />
+            </View>
+            <TouchableOpacity
+              onPress={() => setModoAberto(true)}
+              accessibilityRole="button"
+              accessibilityLabel={t('fila.modoTitulo')}
+              style={{
+                minHeight: 44,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                paddingHorizontal: 12,
+                borderRadius: 14,
+                borderWidth: 1.5,
+                borderColor: hexDe(p.linha),
+                backgroundColor: hexDe(p.cartao),
+              }}
+            >
+              <Ionicons
+                name="options-outline"
+                size={15}
+                color={hexDe(p.tinta)}
+              />
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontWeight: '700',
+                  color: hexDe(p.tinta),
+                }}
+              >
+                {config.modo === 'confirmar'
+                  ? `${t('fila.modoConfirmar')} · ${config.contagemSeg}s`
+                  : t('fila.modoManual')}
+              </Text>
+            </TouchableOpacity>
+          </View>
 
           {mesa && printerId ? (
             <View
@@ -380,6 +430,14 @@ export const FilaScreen = ({ navigation }: any) => {
                 estimativa={estimativa.itens[aberto.id]}
                 impressora={impressora?.printerName ?? ''}
                 onFechar={() => setAbertoId(null)}
+                onArrancar={
+                  ligada && aberto.estado === 'pendente' && printerId
+                    ? () => {
+                        pedirArranque(printerId, aberto.id);
+                        setAbertoId(null);
+                      }
+                    : undefined
+                }
                 onMover={destino => mover(aberto.id, destino)}
                 onDuplicar={() => {
                   duplicarItem(aberto.id);
@@ -428,6 +486,14 @@ export const FilaScreen = ({ navigation }: any) => {
             estimativa={aberto ? estimativa.itens[aberto.id] : undefined}
             impressora={impressora?.printerName ?? ''}
             onFechar={() => setAbertoId(null)}
+            onArrancar={
+              aberto && ligada && aberto.estado === 'pendente' && printerId
+                ? () => {
+                    pedirArranque(printerId, aberto.id);
+                    setAbertoId(null);
+                  }
+                : undefined
+            }
             onMover={destino => aberto && mover(aberto.id, destino)}
             onDuplicar={() => {
               if (!aberto) return;
@@ -438,6 +504,17 @@ export const FilaScreen = ({ navigation }: any) => {
           />
         )}
       </View>
+
+      <SeletorModo
+        visivel={modoAberto}
+        impressora={impressora?.printerName ?? ''}
+        config={config}
+        onFechar={() => setModoAberto(false)}
+        onGuardar={novo => {
+          if (printerId) definirModo(printerId, novo);
+          setModoAberto(false);
+        }}
+      />
     </SafeAreaView>
   );
 };

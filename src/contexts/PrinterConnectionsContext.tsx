@@ -41,7 +41,13 @@ import {
   registarAck,
   semResposta,
 } from '../utils/fila';
-import { carregarFila, gravarFila } from '../utils/fila/armazenamento';
+import {
+  carregarFila,
+  carregarModos,
+  gravarFila,
+  gravarModos,
+} from '../utils/fila/armazenamento';
+import { ModoConfig, modoDe, pedeConfirmacao } from '../utils/fila/modos';
 import { notify } from '../utils/notifications';
 import { mensagemDoErro } from '../utils/errors';
 import { lerTimelapse } from '../utils/timelapse';
@@ -83,6 +89,10 @@ export interface PrinterConnectionsContextType {
   statusIntervalMs: number;
   fila: ItemFila[];
   filaAuto: boolean;
+  modos: Record<string, ModoConfig>;
+  definirModo: (printerId: string, config: ModoConfig) => void;
+  /** Pede «Mesa limpa?» para um item pendente (arranque manual). */
+  pedirArranque: (printerId: string, itemId: string) => void;
   pendentesMesaLimpa: Record<string, ItemFila>;
   adicionarAFila: (item: ItemNovaFila) => ItemFila;
   removerDaFila: (id: string) => void;
@@ -145,6 +155,8 @@ export const PrinterConnectionsProvider = ({
   const [fila, setFila] = useState<ItemFila[]>([]);
   const [hidratado, setHidratado] = useState(false);
   const [filaAuto, setFilaAuto] = useState(false);
+  const [modos, setModos] = useState<Record<string, ModoConfig>>({});
+  const modosRef = useRef<Record<string, ModoConfig>>({});
   const [pendentesMesaLimpa, setPendentesMesaLimpa] = useState<
     Record<string, ItemFila>
   >({});
@@ -1309,8 +1321,13 @@ export const PrinterConnectionsProvider = ({
       filaRef.current = lista;
       setFila(lista);
     });
-    AsyncStorage.getItem('filaAuto')
-      .then(valor => setFilaAuto(valor === '1'))
+    carregarModos()
+      .then(carregados => {
+        modosRef.current = carregados;
+        setModos(carregados);
+        const efetivo = modoDe(carregados, '*');
+        setFilaAuto(efetivo.modo !== 'manual');
+      })
       .catch(() => undefined);
   }, []);
 
@@ -1395,9 +1412,43 @@ export const PrinterConnectionsProvider = ({
     return copia;
   }, []);
 
+  /** Interruptor global (Definições e cartão do Início): aplica a todas. */
   const definirFilaAuto = useCallback((ligada: boolean) => {
     setFilaAuto(ligada);
-    AsyncStorage.setItem('filaAuto', ligada ? '1' : '0').catch(() => undefined);
+    const atual = modosRef.current;
+    const proximos: Record<string, ModoConfig> = { ...atual };
+    const base = modoDe(atual, '*');
+    proximos['*'] = {
+      ...base,
+      modo: ligada ? 'confirmar' : 'manual',
+    };
+    Object.keys(atual)
+      .filter(id => id !== '*')
+      .forEach(id => {
+        proximos[id] = { ...atual[id], modo: ligada ? 'confirmar' : 'manual' };
+      });
+    modosRef.current = proximos;
+    setModos(proximos);
+    gravarModos(proximos);
+  }, []);
+
+  const definirModo = useCallback((printerId: string, config: ModoConfig) => {
+    const proximos = { ...modosRef.current, [printerId]: config };
+    modosRef.current = proximos;
+    setModos(proximos);
+    gravarModos(proximos);
+    setFilaAuto(
+      Object.entries(proximos).some(
+        ([id, valor]) => id !== '*' && valor.modo !== 'manual'
+      ) || config.modo !== 'manual'
+    );
+  }, []);
+
+  const pedirArranque = useCallback((printerId: string, itemId: string) => {
+    const item = filaRef.current.find(i => i.id === itemId);
+    if (!item || item.printerId !== printerId) return;
+    if (item.estado !== 'pendente') return;
+    setPendentesMesaLimpa(prev => ({ ...prev, [printerId]: item }));
   }, []);
 
   // Só arranca com a fila ligada e na transição para "terminada" (9). Sem a
@@ -1532,6 +1583,8 @@ export const PrinterConnectionsProvider = ({
   const arrancarProximo = useCallback(
     async (printer: Printer | undefined): Promise<boolean> => {
       if (!printer || !filaAuto) return false;
+      const config = modoDe(modosRef.current, printer.id);
+      if (!pedeConfirmacao(config)) return false;
       const proximo = proximoDaFila(filaRef.current, printer.id);
       if (!proximo) return false;
 
@@ -1720,6 +1773,9 @@ export const PrinterConnectionsProvider = ({
         imprimirNoSaturno,
         fila,
         filaAuto,
+        modos,
+        definirModo,
+        pedirArranque,
         pendentesMesaLimpa,
         adicionarAFila,
         removerDaFila,

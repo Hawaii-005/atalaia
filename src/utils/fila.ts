@@ -34,11 +34,26 @@ export {
   semResposta,
   transitar,
 } from './fila/modelo';
+export type { Contagem, ModoArranque, ModoConfig } from './fila/modos';
+export {
+  CHAVE_MODOS,
+  CONTAGENS,
+  MODO_PREDEFINIDO,
+  MODOS,
+  lerModoConfig,
+  lerModos,
+  migrarFilaAuto,
+  modoDe,
+  pedeConfirmacao,
+  segundosRestantes,
+} from './fila/modos';
 export {
   CHAVE_ANTIGA,
   CHAVE_FILA,
   VERSAO_FILA,
   carregarFila,
+  carregarModos,
+  gravarModos,
   gravarFila,
   lerEstadoFila,
   lerItem,

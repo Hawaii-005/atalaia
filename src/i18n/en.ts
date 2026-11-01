@@ -545,6 +545,20 @@ const en = {
   'fila.fechar': 'Close',
   'fila.acoes': 'Actions',
   'fila.detalheImpressora': 'Printer',
+  'fila.modoTitulo': 'Start mode',
+  'fila.modoManual': 'Manual',
+  'fila.modoManualDesc':
+    'Nothing happens when a print ends. Jobs wait until you start them.',
+  'fila.modoConfirmar': 'With confirmation',
+  'fila.modoConfirmarDesc':
+    'When a print ends it asks “Bed clear?” and waits for a tap. Nothing starts on its own.',
+  'fila.modoGuardar': 'Save mode',
+  'fila.modoAutomaticoIndisponivel':
+    'Automatic mode (starting without confirming the bed) does not exist: it would break the bed-clear rule.',
+  'fila.contagemTitulo': 'Time to confirm',
+  'fila.contagemDesc':
+    'If time runs out without confirmation nothing starts and the job stays in the queue.',
+  'fila.contagemRestante': 'Confirm in {s}s',
   'fila.mesaTitulo': 'Bed clear?',
   'fila.arrancarAgora': 'Start now',
   'fila.detalheTamanho': 'Size',

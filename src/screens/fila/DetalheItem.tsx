@@ -28,6 +28,8 @@ type Props = {
   /** No tablet o detalhe é um painel ao lado da lista, não uma folha. */
   painel?: boolean;
   onFechar: () => void;
+  /** Arrancar este item (pede «Mesa limpa?»); ausente se não pode arrancar. */
+  onArrancar?: () => void;
   onMover: (destino: number) => void;
   onDuplicar: () => void;
   onRemover: () => void;
@@ -43,6 +45,7 @@ export const DetalheItem = ({
   visivel,
   painel,
   onFechar,
+  onArrancar,
   onMover,
   onDuplicar,
   onRemover,
@@ -192,6 +195,33 @@ export const DetalheItem = ({
           onPress={() => onMover(posicao)}
         />
       </View>
+
+      {onArrancar ? (
+        <TouchableOpacity
+          onPress={onArrancar}
+          accessibilityRole="button"
+          style={{
+            minHeight: 52,
+            borderRadius: 16,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: hexDe(p.acentoSuave),
+            borderWidth: 1.5,
+            borderColor: hexDe(p.acentoTexto) + '66',
+            marginTop: 10,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 14,
+              fontWeight: '800',
+              color: hexDe(p.acentoTexto),
+            }}
+          >
+            {t('fila.arrancarAgora')}
+          </Text>
+        </TouchableOpacity>
+      ) : null}
 
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
         <Botao

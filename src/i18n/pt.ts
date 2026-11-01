@@ -549,6 +549,20 @@ export default {
   'fila.fechar': 'Fechar',
   'fila.acoes': 'Ações',
   'fila.detalheImpressora': 'Impressora',
+  'fila.modoTitulo': 'Modo de arranque',
+  'fila.modoManual': 'Manual',
+  'fila.modoManualDesc':
+    'No fim de uma impressão não acontece nada. Os trabalhos ficam à espera até os arrancares.',
+  'fila.modoConfirmar': 'Com confirmação',
+  'fila.modoConfirmarDesc':
+    'No fim pergunta «Mesa limpa?» e espera por um toque. Nada arranca sozinho.',
+  'fila.modoGuardar': 'Guardar modo',
+  'fila.modoAutomaticoIndisponivel':
+    'O modo automático (arrancar sem confirmar a mesa) não existe: contraria a regra de confirmar a mesa limpa.',
+  'fila.contagemTitulo': 'Tempo para confirmar',
+  'fila.contagemDesc':
+    'Se o tempo acabar sem confirmação, não arranca nada e o trabalho continua na fila.',
+  'fila.contagemRestante': 'Confirma em {s}s',
   'fila.mesaTitulo': 'Mesa limpa confirmada?',
   'fila.arrancarAgora': 'Arrancar agora',
   'fila.detalheTamanho': 'Tamanho',
