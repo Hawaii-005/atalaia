@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="390" height="844" viewBox="0 0 390 844">
+  <title>Controlos — confirmação de Home</title>
+  <style>
+    text { font-family: "Helvetica Neue", Arial, sans-serif; fill: #111; }
+    .t { font-size: 15px; font-weight: 700; }
+    .p { font-size: 12px; font-weight: 700; }
+    .d { font-size: 11px; fill: #444; }
+    .s { font-size: 9px; fill: #666; letter-spacing: .6px; }
+    .n { font-size: 12px; font-weight: 700; fill: #fff; }
+    .b { fill: none; stroke: #555; stroke-width: 1.2; stroke-dasharray: 5 4; }
+    .ff { fill: #f2f2f2; stroke: #555; stroke-width: 1; }
+    .sk { fill: #e6e6e6; }
+  </style>
+<rect width="390" height="844" fill="#f2f2f2"/>
+<rect x="0" y="0" width="390" height="844" fill="#000" opacity="0.18"/>
+<rect x="24" y="250" width="342" height="268" rx="10" class="b"/><circle cx="38" cy="264" r="9" fill="#111"/><text x="38" y="268" text-anchor="middle" class="n">1</text><text x="54" y="268" class="s">DIÁLOGO DE CONFIRMAÇÃO</text>
+<text x="44" y="300" class="t">Levar à origem?</text>
+<text x="44" y="326" class="d">Verifica que a mesa e o bico estão livres.</text>
+<text x="44" y="346" class="d">Os eixos vão mover-se até aos fins de curso.</text>
+<rect x="44" y="364" width="302" height="56" rx="8" fill="#fafafa" stroke="#888" stroke-dasharray="4 4"/>
+<text x="56" y="388" class="s">AÇÃO</text>
+<text x="56" y="406" class="d">Home XYZ · Cmd 402 Axis=XYZ</text>
+<rect x="44" y="444" width="140" height="48" rx="8" fill="none" stroke="#555" stroke-width="1.2"/><text x="114.0" y="472.0" text-anchor="middle" style="font-size:11px;fill:#333">Cancelar</text>
+<rect x="196" y="444" width="150" height="48" rx="8" fill="#e6e6e6" stroke="#555" stroke-width="1.2"/><text x="271.0" y="472.0" text-anchor="middle" style="font-size:11px;fill:#333">Mover para origem</text>
+<text x="44" y="510" class="s">A IMPRIMIR / EM PAUSA / SEM LIGAÇÃO → BOTÃO DESATIVADO</text>
+</svg>
