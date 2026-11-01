@@ -17,6 +17,7 @@ import {
   Modal,
   TextInput,
   Image,
+  FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -64,6 +65,29 @@ import {
   TX_PERIGO,
 } from '../theme/botoes';
 import { EstadoVazio } from '../ui/EstadoVazio';
+import { useJanela } from '../theme/layout';
+import {
+  aplicarFiltros,
+  contarFavoritos,
+  nomeCurto,
+  tamanhoDoFicheiro,
+} from '../utils/ficheiros/lista';
+import {
+  carregarCache,
+  guardarCache,
+  idadeEmPartes,
+} from '../utils/ficheiros/cache';
+import {
+  carregarFicheiros,
+  gravarFicheiros,
+  guardarAlternarFavorito,
+} from '../utils/ficheiros/armazenamento';
+import {
+  EstadoFicheiros,
+  estadoVazio,
+  podarRegistos,
+  procurarRegisto,
+} from '../utils/ficheiros/modelo';
 
 interface PrinterFile {
   name: string;
@@ -86,6 +110,17 @@ const formatTempo = (seg?: number) => {
   return h ? `${h}h ${String(m).padStart(2, '0')}m` : `${m}m`;
 };
 
+const idadeDaCache = (iso: string): string => {
+  const quando = new Date(iso).getTime();
+  const partes = Number.isFinite(quando)
+    ? idadeEmPartes(Date.now() - quando)
+    : null;
+  if (!partes) return t('files.cacheAgora');
+  if (partes.unidade === 'min') return t('files.cacheMin', { n: partes.valor });
+  if (partes.unidade === 'h') return t('files.cacheH', { n: partes.valor });
+  return t('files.cacheDia', { n: partes.valor });
+};
+
 const formatSize = (bytes?: number) => {
   if (!bytes) return '—';
   if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -99,6 +134,9 @@ const FileRow = ({
   modo = 'lista',
   lado = 56,
   recarga = 0,
+  favorito = false,
+  largura,
+  onToggleFavorito,
 }: {
   file: PrinterFile;
   printerIp: string;
@@ -107,6 +145,10 @@ const FileRow = ({
   lado?: number;
   /** Muda quando o utilizador pede para recarregar: força nova tentativa. */
   recarga?: number;
+  favorito?: boolean;
+  /** Largura fixa na grelha virtualizada (FlatList). */
+  largura?: number;
+  onToggleFavorito?: () => void;
 }) => {
   const { tema } = useTheme();
   const size = file.FileSize ?? file.totalSize ?? file.usedSize ?? 0;
@@ -151,8 +193,17 @@ const FileRow = ({
     return (
       <TouchableOpacity
         onPress={onOpen}
+        onLongPress={onToggleFavorito}
+        delayLongPress={350}
         activeOpacity={0.8}
-        style={{ width: lado === 0 ? '100%' : lado === 1 ? '31.5%' : '48.5%' }}
+        accessibilityLabel={`${label}, ${legenda}`}
+        accessibilityHint={t(
+          favorito ? 'files.desfavoritar' : 'files.favoritar'
+        )}
+        style={{
+          width:
+            largura ?? (lado === 0 ? '100%' : lado === 1 ? '31.5%' : '48.5%'),
+        }}
         className="mb-3 rounded-xl bg-cartao border border-line overflow-hidden"
       >
         <View
@@ -181,7 +232,16 @@ const FileRow = ({
           >
             {label}
           </Text>
-          <Text className="text-[10px] text-ink-muted mt-1">{legenda}</Text>
+          <View className="flex-row items-center mt-1">
+            <Text className="text-[10px] text-ink-muted flex-1">{legenda}</Text>
+            {favorito && (
+              <Ionicons
+                name="star"
+                size={11}
+                color={hexDe(tema.paleta.acento)}
+              />
+            )}
+          </View>
         </View>
       </TouchableOpacity>
     );
@@ -190,7 +250,11 @@ const FileRow = ({
   return (
     <TouchableOpacity
       onPress={onOpen}
+      onLongPress={onToggleFavorito}
+      delayLongPress={350}
       activeOpacity={0.7}
+      accessibilityLabel={`${label}, ${legenda}`}
+      accessibilityHint={t(favorito ? 'files.desfavoritar' : 'files.favoritar')}
       className="flex-row items-center px-4 py-3 border-b border-line"
     >
       <View className="w-14 h-14 rounded-lg bg-cartao border border-line items-center justify-center overflow-hidden">
@@ -215,6 +279,14 @@ const FileRow = ({
         </Text>
         <Text className="text-[11px] text-ink-muted mt-1">{legenda}</Text>
       </View>
+      {favorito && (
+        <Ionicons
+          name="star"
+          size={14}
+          color={hexDe(tema.paleta.acento)}
+          style={{ marginRight: 6 }}
+        />
+      )}
       <Ionicons
         name="chevron-forward"
         size={18}
@@ -857,6 +929,11 @@ export const FilesScreen = ({
   const [procura, setProcura] = useState('');
   const [vista, setVista] = useState<'lista' | 'grelha'>('lista');
   const [tamanhoMini, setTamanhoMini] = useState<'p' | 'm' | 'g'>('m');
+  const [soFavoritos, setSoFavoritos] = useState(false);
+  const [registos, setRegistos] = useState<EstadoFicheiros>(estadoVazio());
+  /** Lista veio da cache porque a impressora não respondeu. */
+  const [emCache, setEmCache] = useState<string | null>(null);
+  const janela = useJanela();
 
   // As escolhas de vista ficam guardadas, como no dashboard.
   useEffect(() => {
@@ -872,6 +949,7 @@ export const FilesScreen = ({
         ) {
           setTamanhoMini(g.tamanhoMini);
         }
+        if (g.soFavoritos === true) setSoFavoritos(true);
       })
       .catch(() => undefined);
   }, []);
@@ -880,7 +958,7 @@ export const FilesScreen = ({
     setVista(valor);
     AsyncStorage.setItem(
       'atalaia.ficheiros.prefs',
-      JSON.stringify({ vista: valor, tamanhoMini })
+      JSON.stringify({ vista: valor, tamanhoMini, soFavoritos })
     ).catch(() => undefined);
   };
 
@@ -888,7 +966,7 @@ export const FilesScreen = ({
     setTamanhoMini(valor);
     AsyncStorage.setItem(
       'atalaia.ficheiros.prefs',
-      JSON.stringify({ vista, tamanhoMini: valor })
+      JSON.stringify({ vista, tamanhoMini: valor, soFavoritos })
     ).catch(() => undefined);
   };
   const [aRenomear, setARenomear] = useState<PrinterFile | null>(null);
@@ -923,13 +1001,32 @@ export const FilesScreen = ({
     if (!printerIdAtual) return;
     setLoading(true);
     setError(null);
+    setEmCache(null);
+    const registoActual = await carregarFicheiros();
+    setRegistos(registoActual);
     try {
-      const list = await listarTodosOsFicheiros();
-      setFiles(
-        list.filter(item => item.name?.toLowerCase().endsWith('.gcode'))
+      const list = (await listarTodosOsFicheiros()).filter(item =>
+        item.name?.toLowerCase().endsWith('.gcode')
       );
+      setFiles(list);
+      // A última lista boa fica guardada: é o que se mostra sem ligação.
+      await guardarCache(printerIdAtual, list);
+      // Esquece favoritos e contadores de ficheiros que já não existem.
+      const podado = podarRegistos(registoActual, {
+        [printerIdAtual]: list.map(item => item.name),
+      });
+      if (podado !== registoActual) {
+        await gravarFicheiros(podado);
+        setRegistos(podado);
+      }
     } catch (e) {
-      setError(mensagemDeErro(e));
+      const cache = await carregarCache(printerIdAtual);
+      if (cache) {
+        setFiles(cache.ficheiros);
+        setEmCache(cache.guardadoEm);
+      } else {
+        setError(mensagemDeErro(e));
+      }
     } finally {
       setLoading(false);
     }
@@ -941,32 +1038,62 @@ export const FilesScreen = ({
     }, [load])
   );
 
-  const visiveis = useMemo(() => {
-    const termo = procura.trim().toLowerCase();
-    const lista = files.filter(
-      f =>
-        !termo ||
-        (f.name.split('/').pop() ?? f.name).toLowerCase().includes(termo)
-    );
-    if (ordem === 'duracao') {
-      // Sem duração conhecida fica sempre no fim, cresça ou decresça.
-      lista.sort((a, b) => {
-        const da = duracaoDoNome(a.name);
-        const db = duracaoDoNome(b.name);
-        if (!da && !db) return a.name.localeCompare(b.name);
-        if (!da) return 1;
-        if (!db) return -1;
-        return crescente ? da - db : db - da;
+  const ehFavorito = useCallback(
+    (nome: string) =>
+      !!printerIdAtual &&
+      !!procurarRegisto(registos, { printerId: printerIdAtual, nome })
+        ?.favorito,
+    [registos, printerIdAtual]
+  );
+
+  const visiveis = useMemo(
+    () =>
+      aplicarFiltros(
+        files,
+        {
+          texto: procura,
+          ordem,
+          crescente,
+          apenasFavoritos: soFavoritos,
+        },
+        ehFavorito
+      ),
+    [files, ordem, crescente, procura, soFavoritos, ehFavorito]
+  );
+
+  const totalFavoritos = useMemo(
+    () => contarFavoritos(files, ehFavorito),
+    [files, ehFavorito]
+  );
+
+  const [larguraLista, setLarguraLista] = useState(0);
+  const colunasGrelha =
+    vista === 'grelha'
+      ? tamanhoMini === 'p'
+        ? 3
+        : tamanhoMini === 'm'
+          ? 2
+          : 1
+      : 1;
+  const larguraItem =
+    colunasGrelha > 1 && larguraLista
+      ? Math.floor(
+          (larguraLista - 24 - (colunasGrelha - 1) * 8) / colunasGrelha
+        )
+      : undefined;
+
+  const alternarFavoritoDoFicheiro = useCallback(
+    async (file: PrinterFile) => {
+      if (!printerIdAtual) return;
+      const novo = await guardarAlternarFavorito({
+        printerId: printerIdAtual,
+        nome: file.name,
+        tamanho: tamanhoDoFicheiro(file) || undefined,
       });
-      return lista;
-    }
-    lista.sort((a, b) => {
-      if (ordem === 'data') return (a.CreateTime ?? 0) - (b.CreateTime ?? 0);
-      if (ordem === 'tamanho') return (a.FileSize ?? 0) - (b.FileSize ?? 0);
-      return a.name.localeCompare(b.name);
-    });
-    return crescente ? lista : lista.reverse();
-  }, [files, ordem, crescente, procura]);
+      setRegistos(novo);
+    },
+    [printerIdAtual]
+  );
 
   const handleRename = async () => {
     if (!aRenomear || !printer) return;
@@ -1198,281 +1325,399 @@ export const FilesScreen = ({
           </TouchableOpacity>
         </View>
       ) : (
-        <ScrollView
-          contentContainerStyle={{ paddingBottom: 32 }}
-          showsVerticalScrollIndicator={false}
+        <View
+          style={{ flex: 1 }}
+          onLayout={evento => setLarguraLista(evento.nativeEvent.layout.width)}
         >
-          <View className="flex-row items-center justify-between px-4 py-3 border-b border-line">
-            <View className="flex-1 pr-3">
-              <Text className="text-[13px] font-semibold text-ink">
-                {t('files.ladoMesa')}
-              </Text>
-              <Text className="text-[11px] text-ink-muted mt-0.5">
-                {t('files.ladoMesaDica')}
-              </Text>
-            </View>
-            <View className="flex-row">
-              {([0, 1] as const).map(side => (
-                <TouchableOpacity
-                  key={side}
-                  onPress={() => setPlateSide(side)}
-                  activeOpacity={0.7}
-                  className={`w-9 h-9 items-center justify-center rounded-lg mr-1.5 border ${
-                    plateSide === side ? 'bg-brand border-brand' : 'border-line'
-                  }`}
-                >
-                  <Text
-                    className={`text-[13px] font-semibold ${
-                      plateSide === side ? 'text-white' : 'text-ink-soft'
-                    }`}
-                  >
-                    {side === 0 ? 'A' : 'B'}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          <View className="flex-row items-center justify-between px-4 py-3 border-b border-line">
-            <View className="flex-1 pr-3">
-              <Text className="text-[13px] font-semibold text-ink">
-                {t('files.nivelarAntes')}
-              </Text>
-              <Text className="text-[11px] text-ink-muted mt-0.5">
-                {t('files.nivelarDica')}
-              </Text>
-            </View>
-            <Switch
-              value={bedLevel}
-              onValueChange={setBedLevel}
-              trackColor={{
-                false: hexDe(tema.paleta.linha),
-                true: hexDe(tema.paleta.acento),
-              }}
-              thumbColor={hexDe(tema.paleta.tinta)}
-              ios_backgroundColor={hexDe(tema.paleta.linha)}
-            />
-          </View>
-
-          <View className="px-4 pt-2 pb-2 border-b border-line">
-            <View className="flex-row items-center rounded-lg border border-line bg-cartao px-2.5 h-10">
-              <Ionicons
-                name="search"
-                size={15}
-                color={hexDe(tema.paleta.tintaMuted)}
-              />
-              <TextInput
-                value={procura}
-                onChangeText={setProcura}
-                placeholder={t('files.procurar')}
-                placeholderTextColor={hexDe(tema.paleta.tintaMuted)}
-                className="flex-1 ml-2 text-[13px] text-ink"
-                autoCorrect={false}
-                returnKeyType="search"
-              />
-              {procura.length > 0 && (
-                <TouchableOpacity
-                  onPress={() => setProcura('')}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons
-                    name="close-circle"
-                    size={16}
-                    color={hexDe(tema.paleta.tintaMuted)}
-                  />
-                </TouchableOpacity>
-              )}
-            </View>
-          </View>
-
-          <View className="flex-row items-center px-4 py-2 border-b border-line">
-            <Text className="text-[12px] text-ink-muted mr-2">
-              {t('files.ordenar')}
-            </Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              className="flex-1"
-            >
-              {(['nome', 'data', 'tamanho', 'duracao'] as const).map(
-                criterio => (
-                  <TouchableOpacity
-                    key={criterio}
-                    onPress={() => setOrdem(criterio)}
-                    activeOpacity={0.7}
-                    className={`px-3 h-8 items-center justify-center rounded-lg mr-1.5 border ${
-                      ordem === criterio
-                        ? 'bg-brand border-brand'
-                        : 'border-line'
-                    }`}
-                  >
-                    <Text
-                      className={`text-[12px] font-semibold ${
-                        ordem === criterio ? 'text-white' : 'text-ink-soft'
-                      }`}
-                    >
-                      {t(
-                        criterio === 'nome'
-                          ? 'files.ordemNome'
-                          : criterio === 'data'
-                            ? 'files.ordemData'
-                            : criterio === 'tamanho'
-                              ? 'files.ordemTamanho'
-                              : 'files.ordemDuracao'
-                      )}
-                    </Text>
-                  </TouchableOpacity>
-                )
-              )}
-            </ScrollView>
+          {emCache ? (
             <TouchableOpacity
-              onPress={() => setCrescente(v => !v)}
-              activeOpacity={0.7}
-              className="w-8 h-8 items-center justify-center rounded-lg border border-line ml-1.5"
+              onPress={load}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              className="flex-row items-center px-4 py-2 border-b border-line bg-canvas-sunken"
             >
               <Ionicons
-                name={crescente ? 'arrow-up' : 'arrow-down'}
-                size={15}
-                color={hexDe(tema.paleta.tinta)}
-              />
-            </TouchableOpacity>
-          </View>
-
-          <View className="flex-row items-center px-4 py-2 border-b border-line">
-            <View className="flex-row rounded-lg border border-line overflow-hidden">
-              {(['lista', 'grelha'] as const).map(modo => (
-                <TouchableOpacity
-                  key={modo}
-                  onPress={() => escolherVista(modo)}
-                  activeOpacity={0.7}
-                  className={`flex-row items-center px-3 h-8 ${
-                    vista === modo ? 'bg-brand' : ''
-                  }`}
-                >
-                  <Ionicons
-                    name={modo === 'lista' ? 'list' : 'grid'}
-                    size={14}
-                    color={
-                      vista === modo ? '#FFFFFF' : hexDe(tema.paleta.tintaSoft)
-                    }
-                  />
-                  <Text
-                    className={`text-[12px] font-semibold ml-1.5 ${
-                      vista === modo ? 'text-white' : 'text-ink-soft'
-                    }`}
-                  >
-                    {t(
-                      modo === 'lista'
-                        ? 'files.vistaLista'
-                        : 'files.vistaGrelha'
-                    )}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <TouchableOpacity
-              onPress={() => {
-                limparCacheMiniaturas();
-                setRecarga(r => r + 1);
-                setARecarregar(true);
-                setTimeout(() => setARecarregar(false), 1500);
-              }}
-              activeOpacity={0.7}
-              accessibilityLabel={t('files.recarregarMiniaturas')}
-              style={{ marginLeft: 'auto' }}
-              className="flex-row items-center h-8 px-2.5 rounded-lg border border-line"
-            >
-              <Ionicons
-                name={aRecarregar ? 'sync' : 'refresh'}
-                size={14}
+                name="cloud-offline-outline"
+                size={16}
                 color={hexDe(tema.paleta.tintaSoft)}
               />
-              <Text className="text-[12px] font-semibold text-ink-soft ml-1.5">
-                {t('files.recarregarMiniaturas')}
+              <View className="flex-1 ml-2">
+                <Text className="text-[12px] font-semibold text-ink">
+                  {t('files.cacheTitulo')}
+                </Text>
+                <Text className="text-[11px] text-ink-muted mt-0.5">
+                  {t('files.cacheAviso', { quando: idadeDaCache(emCache) })}
+                </Text>
+              </View>
+              <Text className="text-[12px] font-semibold text-brand">
+                {t('files.tentarDeNovo')}
               </Text>
             </TouchableOpacity>
+          ) : null}
+          <FlatList
+            key={`${vista}-${tamanhoMini}`}
+            data={visiveis}
+            keyExtractor={item => item.name}
+            numColumns={colunasGrelha}
+            columnWrapperStyle={
+              colunasGrelha > 1 ? { paddingHorizontal: 12, gap: 8 } : undefined
+            }
+            initialNumToRender={14}
+            maxToRenderPerBatch={14}
+            windowSize={9}
+            removeClippedSubviews
+            contentContainerStyle={{ paddingBottom: 32 }}
+            ListHeaderComponent={
+              <>
+                <View className="flex-row items-center justify-between px-4 py-3 border-b border-line">
+                  <View className="flex-1 pr-3">
+                    <Text className="text-[13px] font-semibold text-ink">
+                      {t('files.ladoMesa')}
+                    </Text>
+                    <Text className="text-[11px] text-ink-muted mt-0.5">
+                      {t('files.ladoMesaDica')}
+                    </Text>
+                  </View>
+                  <View className="flex-row">
+                    {([0, 1] as const).map(side => (
+                      <TouchableOpacity
+                        key={side}
+                        onPress={() => setPlateSide(side)}
+                        activeOpacity={0.7}
+                        className={`w-9 h-9 items-center justify-center rounded-lg mr-1.5 border ${
+                          plateSide === side
+                            ? 'bg-brand border-brand'
+                            : 'border-line'
+                        }`}
+                      >
+                        <Text
+                          className={`text-[13px] font-semibold ${
+                            plateSide === side ? 'text-white' : 'text-ink-soft'
+                          }`}
+                        >
+                          {side === 0 ? 'A' : 'B'}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
 
-            {vista === 'grelha' && (
-              <View className="flex-row items-center ml-2">
-                <Text className="text-[11px] text-ink-muted mr-1.5">
-                  {t('files.miniatura')}
-                </Text>
-                {(['p', 'm', 'g'] as const).map(tam => (
+                <View className="flex-row items-center justify-between px-4 py-3 border-b border-line">
+                  <View className="flex-1 pr-3">
+                    <Text className="text-[13px] font-semibold text-ink">
+                      {t('files.nivelarAntes')}
+                    </Text>
+                    <Text className="text-[11px] text-ink-muted mt-0.5">
+                      {t('files.nivelarDica')}
+                    </Text>
+                  </View>
+                  <Switch
+                    value={bedLevel}
+                    onValueChange={setBedLevel}
+                    trackColor={{
+                      false: hexDe(tema.paleta.linha),
+                      true: hexDe(tema.paleta.acento),
+                    }}
+                    thumbColor={hexDe(tema.paleta.tinta)}
+                    ios_backgroundColor={hexDe(tema.paleta.linha)}
+                  />
+                </View>
+
+                <View className="px-4 pt-2 pb-2 border-b border-line">
+                  <View className="flex-row items-center rounded-lg border border-line bg-cartao px-2.5 h-10">
+                    <Ionicons
+                      name="search"
+                      size={15}
+                      color={hexDe(tema.paleta.tintaMuted)}
+                    />
+                    <TextInput
+                      value={procura}
+                      onChangeText={setProcura}
+                      placeholder={t('files.procurar')}
+                      placeholderTextColor={hexDe(tema.paleta.tintaMuted)}
+                      className="flex-1 ml-2 text-[13px] text-ink"
+                      autoCorrect={false}
+                      returnKeyType="search"
+                    />
+                    {procura.length > 0 && (
+                      <TouchableOpacity
+                        onPress={() => setProcura('')}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons
+                          name="close-circle"
+                          size={16}
+                          color={hexDe(tema.paleta.tintaMuted)}
+                        />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+
+                <View className="flex-row items-center px-4 py-2 border-b border-line">
                   <TouchableOpacity
-                    key={tam}
-                    onPress={() => escolherTamanho(tam)}
+                    onPress={() => {
+                      const valor = !soFavoritos;
+                      setSoFavoritos(valor);
+                      AsyncStorage.setItem(
+                        'atalaia.ficheiros.prefs',
+                        JSON.stringify({
+                          vista,
+                          tamanhoMini,
+                          soFavoritos: valor,
+                        })
+                      ).catch(() => undefined);
+                    }}
                     activeOpacity={0.7}
-                    className={`w-8 h-8 items-center justify-center rounded-lg mr-1 border ${
-                      tamanhoMini === tam
-                        ? 'bg-brand border-brand'
-                        : 'border-line'
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: soFavoritos }}
+                    className={`flex-row items-center h-8 px-3 rounded-full border mr-2 ${
+                      soFavoritos ? 'bg-brand border-brand' : 'border-line'
                     }`}
                   >
+                    <Ionicons
+                      name={soFavoritos ? 'star' : 'star-outline'}
+                      size={13}
+                      color={
+                        soFavoritos ? '#FFFFFF' : hexDe(tema.paleta.tintaSoft)
+                      }
+                    />
                     <Text
-                      className={`text-[12px] font-semibold ${
-                        tamanhoMini === tam ? 'text-white' : 'text-ink-soft'
+                      className={`text-[12px] font-semibold ml-1.5 ${
+                        soFavoritos ? 'text-white' : 'text-ink-soft'
                       }`}
                     >
-                      {tam.toUpperCase()}
+                      {t('files.soFavoritos')}
+                    </Text>
+                    {totalFavoritos > 0 && (
+                      <Text
+                        className={`text-[11px] ml-1.5 ${
+                          soFavoritos ? 'text-white' : 'text-ink-muted'
+                        }`}
+                      >
+                        {totalFavoritos}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                  <Text
+                    className="text-[11px] text-ink-muted ml-auto"
+                    numberOfLines={1}
+                  >
+                    {soFavoritos || procura.trim()
+                      ? `${visiveis.length}/${files.length}`
+                      : t('files.contagem', { n: files.length })}
+                  </Text>
+                </View>
+
+                <View className="flex-row items-center px-4 py-2 border-b border-line">
+                  <Text className="text-[12px] text-ink-muted mr-2">
+                    {t('files.ordenar')}
+                  </Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    className="flex-1"
+                  >
+                    {(['nome', 'data', 'tamanho', 'duracao'] as const).map(
+                      criterio => (
+                        <TouchableOpacity
+                          key={criterio}
+                          onPress={() => setOrdem(criterio)}
+                          activeOpacity={0.7}
+                          className={`px-3 h-8 items-center justify-center rounded-lg mr-1.5 border ${
+                            ordem === criterio
+                              ? 'bg-brand border-brand'
+                              : 'border-line'
+                          }`}
+                        >
+                          <Text
+                            className={`text-[12px] font-semibold ${
+                              ordem === criterio
+                                ? 'text-white'
+                                : 'text-ink-soft'
+                            }`}
+                          >
+                            {t(
+                              criterio === 'nome'
+                                ? 'files.ordemNome'
+                                : criterio === 'data'
+                                  ? 'files.ordemData'
+                                  : criterio === 'tamanho'
+                                    ? 'files.ordemTamanho'
+                                    : 'files.ordemDuracao'
+                            )}
+                          </Text>
+                        </TouchableOpacity>
+                      )
+                    )}
+                  </ScrollView>
+                  <TouchableOpacity
+                    onPress={() => setCrescente(v => !v)}
+                    activeOpacity={0.7}
+                    className="w-8 h-8 items-center justify-center rounded-lg border border-line ml-1.5"
+                  >
+                    <Ionicons
+                      name={crescente ? 'arrow-up' : 'arrow-down'}
+                      size={15}
+                      color={hexDe(tema.paleta.tinta)}
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                <View className="flex-row items-center px-4 py-2 border-b border-line">
+                  <View className="flex-row rounded-lg border border-line overflow-hidden">
+                    {(['lista', 'grelha'] as const).map(modo => (
+                      <TouchableOpacity
+                        key={modo}
+                        onPress={() => escolherVista(modo)}
+                        activeOpacity={0.7}
+                        className={`flex-row items-center px-3 h-8 ${
+                          vista === modo ? 'bg-brand' : ''
+                        }`}
+                      >
+                        <Ionicons
+                          name={modo === 'lista' ? 'list' : 'grid'}
+                          size={14}
+                          color={
+                            vista === modo
+                              ? '#FFFFFF'
+                              : hexDe(tema.paleta.tintaSoft)
+                          }
+                        />
+                        <Text
+                          className={`text-[12px] font-semibold ml-1.5 ${
+                            vista === modo ? 'text-white' : 'text-ink-soft'
+                          }`}
+                        >
+                          {t(
+                            modo === 'lista'
+                              ? 'files.vistaLista'
+                              : 'files.vistaGrelha'
+                          )}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  <TouchableOpacity
+                    onPress={() => {
+                      limparCacheMiniaturas();
+                      setRecarga(r => r + 1);
+                      setARecarregar(true);
+                      setTimeout(() => setARecarregar(false), 1500);
+                    }}
+                    activeOpacity={0.7}
+                    accessibilityLabel={t('files.recarregarMiniaturas')}
+                    style={{ marginLeft: 'auto' }}
+                    className="flex-row items-center h-8 px-2.5 rounded-lg border border-line"
+                  >
+                    <Ionicons
+                      name={aRecarregar ? 'sync' : 'refresh'}
+                      size={14}
+                      color={hexDe(tema.paleta.tintaSoft)}
+                    />
+                    <Text className="text-[12px] font-semibold text-ink-soft ml-1.5">
+                      {t('files.recarregarMiniaturas')}
                     </Text>
                   </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </View>
 
-          {files.length === 0 ? (
-            <View style={{ height: 380 }}>
-              <EstadoVazio
-                pose="ocioso"
-                titulo={t('files.semFicheiros')}
-                descricao={t('files.semFicheirosDica')}
-                acaoPrimaria={{
-                  rotulo: t('files.enviar'),
-                  aoTocar: handleUpload,
-                }}
+                  {vista === 'grelha' && (
+                    <View className="flex-row items-center ml-2">
+                      <Text className="text-[11px] text-ink-muted mr-1.5">
+                        {t('files.miniatura')}
+                      </Text>
+                      {(['p', 'm', 'g'] as const).map(tam => (
+                        <TouchableOpacity
+                          key={tam}
+                          onPress={() => escolherTamanho(tam)}
+                          activeOpacity={0.7}
+                          className={`w-8 h-8 items-center justify-center rounded-lg mr-1 border ${
+                            tamanhoMini === tam
+                              ? 'bg-brand border-brand'
+                              : 'border-line'
+                          }`}
+                        >
+                          <Text
+                            className={`text-[12px] font-semibold ${
+                              tamanhoMini === tam
+                                ? 'text-white'
+                                : 'text-ink-soft'
+                            }`}
+                          >
+                            {tam.toUpperCase()}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              </>
+            }
+            ListEmptyComponent={
+              files.length === 0 ? (
+                <View style={{ height: 380 }}>
+                  <EstadoVazio
+                    pose="ocioso"
+                    titulo={t('files.semFicheiros')}
+                    descricao={t('files.semFicheirosDica')}
+                    acaoPrimaria={{
+                      rotulo: t('files.enviar'),
+                      aoTocar: handleUpload,
+                    }}
+                  />
+                </View>
+              ) : (
+                <View className="px-6 py-10 items-center">
+                  <Ionicons
+                    name={
+                      soFavoritos && !procura.trim() ? 'star-outline' : 'search'
+                    }
+                    size={20}
+                    color={hexDe(tema.paleta.tintaMuted)}
+                  />
+                  <Text className="text-[13px] text-ink-muted mt-2 text-center">
+                    {soFavoritos && !procura.trim()
+                      ? t('files.semFavoritos')
+                      : t('files.semResultados', { q: procura.trim() })}
+                  </Text>
+                  {soFavoritos && (
+                    <TouchableOpacity
+                      onPress={() => {
+                        setSoFavoritos(false);
+                        AsyncStorage.setItem(
+                          'atalaia.ficheiros.prefs',
+                          JSON.stringify({
+                            vista,
+                            tamanhoMini,
+                            soFavoritos: false,
+                          })
+                        ).catch(() => undefined);
+                      }}
+                      className="mt-4 px-4 py-2 rounded-lg border border-line"
+                    >
+                      <Text className="text-[13px] font-semibold text-ink">
+                        {t('files.verTodos')}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )
+            }
+            renderItem={({ item }) => (
+              <FileRow
+                file={item}
+                printerIp={enderecoDe(printer)}
+                recarga={recarga}
+                modo={vista}
+                lado={tamanhoMini === 'p' ? 1 : tamanhoMini === 'm' ? 2 : 0}
+                largura={vista === 'grelha' ? larguraItem : undefined}
+                favorito={ehFavorito(item.name)}
+                onToggleFavorito={() => alternarFavoritoDoFicheiro(item)}
+                onOpen={() => setSelecionado(item)}
               />
-            </View>
-          ) : visiveis.length === 0 ? (
-            <View className="px-6 py-10 items-center">
-              <Ionicons
-                name="search"
-                size={20}
-                color={hexDe(tema.paleta.tintaMuted)}
-              />
-              <Text className="text-[13px] text-ink-muted mt-2 text-center">
-                {t('files.semResultados', { q: procura.trim() })}
-              </Text>
-            </View>
-          ) : vista === 'grelha' ? (
-            <View className="flex-row flex-wrap justify-between px-3 pt-3">
-              {visiveis.map(file => (
-                <FileRow
-                  key={file.name}
-                  file={file}
-                  printerIp={enderecoDe(printer)}
-                  recarga={recarga}
-                  modo="grelha"
-                  lado={tamanhoMini === 'p' ? 1 : tamanhoMini === 'm' ? 2 : 0}
-                  onOpen={() => setSelecionado(file)}
-                />
-              ))}
-            </View>
-          ) : (
-            <View className="mt-2">
-              {visiveis.map(file => (
-                <FileRow
-                  key={file.name}
-                  file={file}
-                  printerIp={enderecoDe(printer)}
-                  recarga={recarga}
-                  onOpen={() => setSelecionado(file)}
-                />
-              ))}
-            </View>
-          )}
-        </ScrollView>
+            )}
+          />
+        </View>
       )}
 
       {selecionado && (
