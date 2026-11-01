@@ -27,6 +27,7 @@ import { t, useIdioma } from '../i18n';
 import { getPrintStatus, Printer } from '../types';
 import { htmlDoVideo } from '../utils/cameraStream';
 import { CartaoMovimento } from '../screens/controlos/CartaoMovimento';
+import { CartaoVentilacao } from '../screens/controlos/CartaoVentilacao';
 import {
   LIMITE_ESTADO_ANTIGO_MS,
   controlosDisponiveis,
@@ -402,16 +403,10 @@ export const PainelSection = ({
     ]);
   };
 
-  const alterarVentoinha = (
+  const definirVentoinha = (
     campo: 'model' | 'side' | 'chamber',
-    delta: number
+    valor: number
   ) => {
-    const actual = {
-      model: ventoinhas.ModelFan ?? 0,
-      side: ventoinhas.AuxiliaryFan ?? 0,
-      chamber: ventoinhas.BoxFan ?? 0,
-    }[campo];
-    const valor = Math.max(0, Math.min(100, actual + delta));
     enviar(
       fanCommand(
         {
@@ -423,6 +418,9 @@ export const PainelSection = ({
       )
     );
   };
+
+  const definirVelocidade = (pct: number) =>
+    enviar(printSpeedCommand(pct, { id: printer?.id }));
 
   const preAquecer = (bico: number, mesa: number) =>
     Alert.alert(
@@ -595,6 +593,7 @@ export const PainelSection = ({
           </View>
 
           <TouchableOpacity
+            disabled={disp.luz.estado === 'desactivado'}
             onPress={() => enviar(lightCommand(!luz, { id: printer.id }))}
             style={{
               position: 'absolute',
@@ -985,135 +984,17 @@ export const PainelSection = ({
       {/* velocidade e ventoinhas só com trabalho a correr */}
       {aImprimir && (
         <Cartao>
-          <Rotulo style={{ marginBottom: espaco.sm }}>
-            {t('controlos.velocidade')}
-          </Rotulo>
-          <View style={{ flexDirection: 'row', gap: 6 }}>
-            {[50, 100, 150, 200].map(pct => {
-              const activo = Math.round(velocidade) === pct;
-              return (
-                <TouchableOpacity
-                  key={pct}
-                  onPress={() =>
-                    enviar(printSpeedCommand(pct, { id: printer.id }))
-                  }
-                  disabled={!ligada}
-                  style={{
-                    flex: 1,
-                    height: 38,
-                    borderRadius: raioToken.chip,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: activo
-                      ? hexDe(paleta.acento)
-                      : hexDe(paleta.fundoBaixo),
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 13,
-                      fontWeight: '700',
-                      color: activo ? '#fff' : hexDe(paleta.tinta),
-                    }}
-                  >
-                    {`${pct}%`}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          <Rotulo style={{ marginTop: espaco.md, marginBottom: espaco.sm }}>
-            {t('controlos.ventoinhas')}
-          </Rotulo>
-          {[
-            {
-              rotulo: t('controlos.ventoinhaBico'),
-              valor: ventoinhas.ModelFan ?? 0,
-              campo: 'model' as const,
-            },
-            {
-              rotulo: t('controlos.ventoinhaAuxiliar'),
-              valor: ventoinhas.AuxiliaryFan ?? 0,
-              campo: 'side' as const,
-            },
-            {
-              rotulo: t('controlos.ventoinhaCaixa'),
-              valor: ventoinhas.BoxFan ?? 0,
-              campo: 'chamber' as const,
-            },
-          ].map(v => (
-            <View
-              key={v.campo}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: espaco.sm,
-                marginBottom: 6,
-              }}
-            >
-              <Text
-                style={{ flex: 1, fontSize: 13, color: hexDe(paleta.tinta) }}
-              >
-                {v.rotulo}
-              </Text>
-              <View
-                style={{
-                  width: 90,
-                  height: 5,
-                  borderRadius: 3,
-                  backgroundColor: hexDe(paleta.linha),
-                  overflow: 'hidden',
-                }}
-              >
-                <View
-                  style={{
-                    width: `${Math.max(0, Math.min(100, v.valor))}%`,
-                    height: 5,
-                    backgroundColor: hexDe(paleta.acento),
-                  }}
-                />
-              </View>
-              <Text
-                style={{
-                  width: 40,
-                  textAlign: 'right',
-                  fontSize: 13,
-                  fontWeight: '700',
-                  color: hexDe(paleta.tinta),
-                  fontFamily: fonteNumeros,
-                }}
-              >
-                {`${Math.round(v.valor)}%`}
-              </Text>
-              <TouchableOpacity
-                onPress={() => alterarVentoinha(v.campo, -10)}
-                style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 9,
-                  backgroundColor: hexDe(paleta.fundoBaixo),
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Ionicons name="remove" size={15} color={hexDe(paleta.tinta)} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => alterarVentoinha(v.campo, 10)}
-                style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 9,
-                  backgroundColor: hexDe(paleta.fundoBaixo),
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Ionicons name="add" size={15} color={hexDe(paleta.tinta)} />
-              </TouchableOpacity>
-            </View>
-          ))}
+          <CartaoVentilacao
+            ventoinhas={{
+              model: ventoinhas.ModelFan ?? 0,
+              side: ventoinhas.AuxiliaryFan ?? 0,
+              chamber: ventoinhas.BoxFan ?? 0,
+            }}
+            velocidade={velocidade}
+            disp={disp}
+            onVentoinha={definirVentoinha}
+            onVelocidade={definirVelocidade}
+          />
         </Cartao>
       )}
 
