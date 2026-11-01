@@ -66,7 +66,7 @@ import {
 } from '../theme/botoes';
 import { EstadoVazio } from '../ui/EstadoVazio';
 import { DetalheFicheiro } from './ficheiros/DetalheFicheiro';
-import { useJanela } from '../theme/layout';
+import { colunasFicheiros, useJanela } from '../theme/layout';
 import {
   aplicarFiltros,
   contarFavoritos,
@@ -138,6 +138,7 @@ const FileRow = ({
   recarga = 0,
   favorito = false,
   largura,
+  denso = false,
   onToggleFavorito,
 }: {
   file: PrinterFile;
@@ -150,6 +151,8 @@ const FileRow = ({
   favorito?: boolean;
   /** Largura fixa na grelha virtualizada (FlatList). */
   largura?: number;
+  /** Cartões estreitos (6 ou 8 colunas): uma linha de nome, letra menor. */
+  denso?: boolean;
   onToggleFavorito?: () => void;
 }) => {
   const { tema } = useTheme();
@@ -227,15 +230,22 @@ const FileRow = ({
             />
           )}
         </View>
-        <View className="p-2">
+        <View className={denso ? 'px-1.5 py-1' : 'p-2'}>
           <Text
-            className="text-[11px] font-semibold text-ink"
-            numberOfLines={2}
+            className={`${denso ? 'text-[9.5px]' : 'text-[11px]'} font-semibold text-ink`}
+            numberOfLines={denso ? 1 : 2}
           >
             {label}
           </Text>
-          <View className="flex-row items-center mt-1">
-            <Text className="text-[10px] text-ink-muted flex-1">{legenda}</Text>
+          <View
+            className={`flex-row items-center ${denso ? 'mt-0.5' : 'mt-1'}`}
+          >
+            <Text
+              className={`${denso ? 'text-[9px]' : 'text-[10px]'} text-ink-muted flex-1`}
+              numberOfLines={1}
+            >
+              {legenda}
+            </Text>
             {favorito && (
               <Ionicons
                 name="star"
@@ -468,13 +478,7 @@ export const FilesScreen = ({
 
   const [larguraLista, setLarguraLista] = useState(0);
   const colunasGrelha =
-    vista === 'grelha'
-      ? tamanhoMini === 'p'
-        ? 3
-        : tamanhoMini === 'm'
-          ? 2
-          : 1
-      : 1;
+    vista === 'grelha' ? colunasFicheiros(janela.classe, tamanhoMini) : 1;
   const larguraItem =
     colunasGrelha > 1 && larguraLista
       ? Math.floor(
@@ -1199,6 +1203,7 @@ export const FilesScreen = ({
                   modo={vista}
                   lado={tamanhoMini === 'p' ? 1 : tamanhoMini === 'm' ? 2 : 0}
                   largura={vista === 'grelha' ? larguraItem : undefined}
+                  denso={vista === 'grelha' && colunasGrelha >= 6}
                   favorito={ehFavorito(item.name)}
                   onToggleFavorito={() => alternarFavoritoDoFicheiro(item)}
                   onOpen={() => setSelecionado(item)}
