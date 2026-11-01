@@ -15,7 +15,7 @@ export interface DiscoveredPrinter {
   sdcpId?: string;
 }
 
-const PROBE_TIMEOUT = 1500;
+const PROBE_TIMEOUT = 3000;
 const CONCURRENCY = 48;
 
 /**
@@ -86,7 +86,7 @@ const probePrinter = (ip: string): Promise<DiscoveredPrinter | null> =>
   });
 
 const UDP_PORT = 3000;
-const UDP_TIMEOUT = 2500;
+const UDP_TIMEOUT = 4000;
 
 /**
  * SDCP answers a UDP broadcast of "M99999" on port 3000 with its identity.

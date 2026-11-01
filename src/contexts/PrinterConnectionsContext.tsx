@@ -89,7 +89,7 @@ const generateId = () => {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
 };
 
-const CONNECTION_TIMEOUT = 3000; // 3 seconds
+const CONNECTION_TIMEOUT = 8000; // 8 seconds
 const DEFAULT_STATUS_INTERVAL = 31000; // 30 seconds
 
 // Helper function to get readable command names

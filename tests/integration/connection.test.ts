@@ -1,5 +1,10 @@
 import { FakeSdcpServer } from '../mocks/fakeSdcpServer';
 import { CentauriDriver } from '../../src/protocol/drivers/CentauriDriver';
+import WebSocket from 'ws';
+
+if (typeof global.WebSocket === 'undefined' || process.env.CI) {
+  (global as any).WebSocket = WebSocket;
+}
 
 describe('Testes de Integração com Servidor SDCP Falso', () => {
   let server: FakeSdcpServer;
