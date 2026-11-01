@@ -39,6 +39,7 @@ export interface NovaBobina {
   canvasSlot?: number | null;
   printerId: string;
   id?: string;
+  arquivada?: boolean;
 }
 
 const numeroFinito = (valor: unknown, campo: string): number => {
@@ -91,10 +92,11 @@ export const criarBobina = (
     restante: arredondar1(restante),
     preco,
     dataCompra: dados.dataCompra?.trim() || undefined,
-    notas: dados.notas?.trim() || undefined,
+    notas: dados.notas ? dados.notas.trim() : undefined,
     canvasSlot: slotValidoOuIndefinido(dados.canvasSlot),
     printerId: dados.printerId,
     criadoEm: agora,
+    arquivada: dados.arquivada,
   };
 };
 
@@ -227,3 +229,111 @@ export const desassociarSlot = (bobinas: Spool[], spoolId: string): Spool[] =>
   bobinas.map(bobina =>
     bobina.id === spoolId ? { ...bobina, canvasSlot: undefined } : bobina
   );
+
+export const arquivarBobina = (bobina: Spool, arquivada = true): Spool => ({
+  ...bobina,
+  arquivada,
+  canvasSlot: arquivada ? undefined : bobina.canvasSlot,
+});
+
+export const filtrarEBuscarBobinas = (
+  bobinas: Spool[],
+  termo: string,
+  filtroEstado: 'activas' | 'arquivadas' | 'todas' = 'activas'
+): Spool[] => {
+  const busca = termo.trim().toLowerCase();
+  return bobinas.filter(b => {
+    if (filtroEstado === 'activas' && b.arquivada) return false;
+    if (filtroEstado === 'arquivadas' && !b.arquivada) return false;
+    if (!busca) return true;
+    return (
+      b.nome.toLowerCase().includes(busca) ||
+      b.marca.toLowerCase().includes(busca) ||
+      b.material.toLowerCase().includes(busca) ||
+      (b.notas && b.notas.toLowerCase().includes(busca))
+    );
+  });
+};
+
+const escaparCsv = (valor: unknown): string => {
+  const texto = String(valor ?? '');
+  if (/[",\n\r]/.test(texto)) {
+    return `"${texto.replace(/"/g, '""')}"`;
+  }
+  return texto;
+};
+
+export const gerarCsvInventario = (
+  bobinas: Spool[],
+  garrafas: {
+    id: string;
+    nome: string;
+    marca?: string;
+    material?: string;
+    cor: string;
+    volumeInicial: number;
+    restante: number;
+    preco: number;
+    dataCompra?: string;
+    notas?: string;
+    arquivada?: boolean;
+  }[] = []
+): string => {
+  const cabecalho = [
+    'Tipo',
+    'ID',
+    'Nome',
+    'Marca',
+    'Material',
+    'Cor',
+    'Peso/Vol Inicial',
+    'Restante',
+    'Preco',
+    'Slot Canvas',
+    'Data Compra',
+    'Arquivada',
+    'Notas',
+  ].join(',');
+
+  const linhasBobinas = bobinas.map(b =>
+    [
+      'Filamento',
+      b.id,
+      b.nome,
+      b.marca,
+      b.material,
+      b.cor,
+      b.pesoInicial,
+      b.restante,
+      b.preco,
+      b.canvasSlot !== undefined ? `A${b.canvasSlot + 1}` : '',
+      b.dataCompra ?? '',
+      b.arquivada ? 'Sim' : 'Nao',
+      b.notas ?? '',
+    ]
+      .map(escaparCsv)
+      .join(',')
+  );
+
+  const linhasGarrafas = garrafas.map(g =>
+    [
+      'Resina',
+      g.id,
+      g.nome,
+      g.marca ?? '',
+      g.material ?? '',
+      g.cor,
+      g.volumeInicial,
+      g.restante,
+      g.preco,
+      '',
+      g.dataCompra ?? '',
+      g.arquivada ? 'Sim' : 'Nao',
+      g.notas ?? '',
+    ]
+      .map(escaparCsv)
+      .join(',')
+  );
+
+  return [cabecalho, ...linhasBobinas, ...linhasGarrafas].join('\n');
+};

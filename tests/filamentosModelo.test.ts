@@ -1,5 +1,6 @@
 import {
   apagarBobina,
+  arquivarBobina,
   associarSlot,
   bobinaDoSlot,
   bobinasActivas,
@@ -9,6 +10,8 @@ import {
   desassociarSlot,
   descontarConsumo,
   editarBobina,
+  filtrarEBuscarBobinas,
+  gerarCsvInventario,
   normalizarHex,
   percentagemRestante,
   quaseNoFim,
@@ -214,5 +217,40 @@ describe('listas', () => {
     expect(bobinasActivas([a, arquivada]).map(item => item.nome)).toEqual([
       'A',
     ]);
+  });
+});
+
+describe('arquivar, filtrar e exportar CSV', () => {
+  const b1 = bobina({
+    nome: 'PLA Vermelho',
+    marca: 'eSUN',
+    material: 'PLA',
+    canvasSlot: 0,
+  });
+  const b2 = bobina({
+    nome: 'PETG Preto',
+    marca: 'Prusament',
+    material: 'PETG',
+    arquivada: true,
+  });
+
+  it('arquiva bobina e limpa o slot', () => {
+    const res = arquivarBobina(b1, true);
+    expect(res.arquivada).toBe(true);
+    expect(res.canvasSlot).toBeUndefined();
+  });
+
+  it('filtra bobinas por termo e estado', () => {
+    expect(filtrarEBuscarBobinas([b1, b2], 'PLA', 'activas')).toEqual([b1]);
+    expect(filtrarEBuscarBobinas([b1, b2], 'PETG', 'arquivadas')).toEqual([b2]);
+    expect(filtrarEBuscarBobinas([b1, b2], '', 'todas')).toEqual([b1, b2]);
+  });
+
+  it('gera CSV valido com cabecalhos', () => {
+    const csv = gerarCsvInventario([b1]);
+    expect(csv).toContain('Tipo,ID,Nome,Marca,Material');
+    expect(csv).toContain('Filamento');
+    expect(csv).toContain('PLA Vermelho');
+    expect(csv).toContain('A1');
   });
 });

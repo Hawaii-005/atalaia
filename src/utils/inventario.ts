@@ -158,6 +158,24 @@ export const desassociarRolo = async (id: string): Promise<void> => {
   }));
 };
 
+export const arquivarRolo = async (
+  id: string,
+  arquivada = true
+): Promise<void> => {
+  await mutar(estado => ({
+    ...estado,
+    bobinas: estado.bobinas.map(rolo =>
+      rolo.id === id
+        ? {
+            ...rolo,
+            arquivada,
+            canvasSlot: arquivada ? undefined : rolo.canvasSlot,
+          }
+        : rolo
+    ),
+  }));
+};
+
 export const adicionarGarrafa = async (
   dados: Omit<Garrafa, 'id' | 'criadoEm' | 'restante'> & { restante?: number }
 ): Promise<Garrafa> => {
