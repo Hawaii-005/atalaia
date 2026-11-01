@@ -4,16 +4,28 @@ import {
   EstadoFilamentos,
   guardarEstado,
 } from './filamentos/armazenamento';
-import { ConsumoPendente, Garrafa, Rolo } from './filamentos/modelo';
+import {
+  ConsumoPendente,
+  Garrafa,
+  Rolo,
+  Spool,
+  UsageRecord,
+} from './filamentos/modelo';
 import {
   apagarBobina,
+  aplicarConsumoTrabalho,
   associarSlot,
+  ConsumoItem,
   criarBobina,
+  custoDeConsumo,
   desassociarSlot,
   descontarConsumo,
   editarBobina,
   idNovo,
+  jaRegistado,
+  roloActivo,
 } from './filamentos/operacoes';
+import { filamentosDoCabecalho } from './gcodeCores';
 
 /**
  * Inventário de consumíveis — fachada antiga sobre o armazenamento novo.
@@ -27,7 +39,7 @@ import {
  * mantém a API que os ecrãs já usam (`Rolo` é o nome antigo de `Spool`).
  */
 
-export type { Rolo, Garrafa, ConsumoPendente };
+export type { Rolo, Garrafa, ConsumoPendente, ConsumoItem };
 
 export type Inventario = {
   rolos: Rolo[];
@@ -44,11 +56,7 @@ const paraInventario = (estado: EstadoFilamentos): Inventario => ({
 export const carregarInventario = async (): Promise<Inventario> =>
   paraInventario(await carregarEstado());
 
-/** Rolo mais recente dessa impressora — é o que está carregado. */
-export const roloActivo = (rolos: Rolo[], printerId: string) =>
-  rolos
-    .filter(r => r.printerId === printerId && !r.arquivada)
-    .sort((a, b) => b.criadoEm - a.criadoEm)[0];
+export { roloActivo };
 
 export const garrafaActiva = (garrafas: Garrafa[], printerId: string) =>
   garrafas
@@ -210,15 +218,14 @@ export const ajustarRestanteMl = async (
 };
 
 /**
- * Lê o peso de filamento que o slicer deixou no cabeçalho do G-code.
- * Cura escreve metros (`;Filament used: 12.3m`), Orca/Prusa escrevem gramas.
- * Devolve null quando o ficheiro não traz nada — não há estimativa inventada.
+ * Lê os consumos de filamento por ferramenta/slot ou total que o slicer
+ * deixou no cabeçalho do G-code.
  */
-export const lerPesoDoGcode = async (
+export const lerConsumoDoGcode = async (
   host: string,
   nome: string,
   timeoutMs = 9000
-): Promise<number | null> => {
+): Promise<ConsumoItem[] | null> => {
   const controlador = new AbortController();
   const alarme = setTimeout(() => controlador.abort(), timeoutMs);
   try {
@@ -230,23 +237,33 @@ export const lerPesoDoGcode = async (
     if (!resposta.ok) return null;
     const texto = (await resposta.text()).slice(0, 400000);
 
+    // 1. Tentar ler consumos detalhados por ferramenta
+    const filamentos = filamentosDoCabecalho(texto);
+    if (filamentos.length > 0) {
+      return filamentos.map(f => ({
+        slot: f.tool,
+        gramas: f.gramas,
+      }));
+    }
+
+    // 2. Fallbacks de peso total do ficheiro (sem slot atribuído)
     const gramas = texto.match(/total filament used \[g\]\s*=\s*([\d.]+)/i);
-    if (gramas) return Number(gramas[1]);
+    if (gramas) return [{ gramas: Number(gramas[1]) }];
 
     const gramas2 = texto.match(/filament used \[g\]\s*=\s*([\d.]+)/i);
-    if (gramas2) return Number(gramas2[1]);
+    if (gramas2) return [{ gramas: Number(gramas2[1]) }];
 
     const peso = texto.match(/filament weight[:=]\s*([\d.]+)/i);
-    if (peso) return Number(peso[1]);
+    if (peso) return [{ gramas: Number(peso[1]) }];
 
     const metros = texto.match(/filament used[:=]\s*([\d.]+)\s*m\b/i);
     if (metros) {
       // 1,75 mm de diâmetro e 1,24 g/cm³ → 2,98 g por metro.
-      return Math.round(Number(metros[1]) * 2.98 * 10) / 10;
+      return [{ gramas: Math.round(Number(metros[1]) * 2.98 * 10) / 10 }];
     }
     return null;
   } catch (erro) {
-    log('peso do gcode indisponível', erro);
+    log('consumo do gcode indisponível', erro);
     return null;
   } finally {
     clearTimeout(alarme);
@@ -254,19 +271,54 @@ export const lerPesoDoGcode = async (
 };
 
 /**
- * Desconta o trabalho acabado do rolo carregado. Sem gramas conhecidas fica
- * um pendente para o utilizador fechar à mão.
+ * Lê o peso total de filamento que o slicer deixou no cabeçalho do G-code.
+ * Cura escreve metros (`;Filament used: 12.3m`), Orca/Prusa escrevem gramas.
+ * Devolve null quando o ficheiro não traz nada — não há estimativa inventada.
+ */
+export const lerPesoDoGcode = async (
+  host: string,
+  nome: string,
+  timeoutMs = 9000
+): Promise<number | null> => {
+  const consumos = await lerConsumoDoGcode(host, nome, timeoutMs);
+  if (!consumos || consumos.length === 0) return null;
+  const total = consumos.reduce((soma, item) => soma + item.gramas, 0);
+  return Math.round(total * 10) / 10;
+};
+
+/**
+ * Desconta o trabalho acabado das bobinas correspondentes aos slots ou rolo
+ * activo. Idempotente quando recebe taskId (não desconta duas vezes o mesmo trabalho).
+ * Sem gramas conhecidas ou sem bobina correspondente, regista um pendente.
  */
 export const registarConsumo = async (
   printerId: string,
   host: string,
   filename: string,
-  gramasConhecidas?: number | null
+  gramasConhecidas?: number | ConsumoItem[] | null,
+  taskId?: string
 ): Promise<void> => {
-  const gramas = gramasConhecidas ?? (await lerPesoDoGcode(host, filename));
+  let consumos: ConsumoItem[] | null = null;
+
+  if (typeof gramasConhecidas === 'number') {
+    consumos = [{ gramas: gramasConhecidas }];
+  } else if (Array.isArray(gramasConhecidas)) {
+    consumos = gramasConhecidas;
+  } else {
+    consumos = await lerConsumoDoGcode(host, filename);
+  }
+
+  const agora = Date.now();
+  const effectiveJobId = taskId || `local-${filename}-${agora}`;
 
   await mutar(estado => {
-    if (gramas == null) {
+    // Idempotência: não repetir se este taskId já foi registado nos usos
+    if (taskId && jaRegistado(estado.usos, taskId)) {
+      log(`Consumo já registado para o trabalho ${taskId}, a ignorar.`);
+      return estado;
+    }
+
+    if (!consumos || consumos.length === 0) {
       return {
         ...estado,
         pendentes: [
@@ -275,41 +327,110 @@ export const registarConsumo = async (
             id: idNovo(),
             printerId,
             filename,
-            quando: Date.now(),
+            quando: agora,
             gramas: null,
           },
         ],
       };
     }
 
-    const rolo = roloActivo(estado.bobinas, printerId);
-    if (!rolo) return estado;
+    const { bobinas, novosUsos } = aplicarConsumoTrabalho(
+      estado.bobinas,
+      printerId,
+      consumos,
+      effectiveJobId,
+      agora
+    );
+
+    if (novosUsos.length === 0) {
+      const somaGramas = consumos.reduce((acc, c) => acc + c.gramas, 0);
+      return {
+        ...estado,
+        pendentes: [
+          ...estado.pendentes,
+          {
+            id: idNovo(),
+            printerId,
+            filename,
+            quando: agora,
+            gramas: somaGramas > 0 ? somaGramas : null,
+          },
+        ],
+      };
+    }
 
     return {
       ...estado,
-      bobinas: estado.bobinas.map(item =>
-        item.id === rolo.id ? descontarConsumo(item, gramas) : item
-      ),
+      bobinas,
+      usos: [...estado.usos, ...novosUsos],
     };
   });
+};
+
+/** Desconta o consumo por slot para impressões FDM multi-material. */
+export const registarConsumoPorSlot = async (
+  printerId: string,
+  consumos: Record<number, number>,
+  taskId?: string
+): Promise<void> => {
+  const listaConsumos: ConsumoItem[] = Object.entries(consumos).map(
+    ([slotStr, gramas]) => ({
+      slot: Number(slotStr),
+      gramas,
+    })
+  );
+  await registarConsumo(printerId, '', '', listaConsumos, taskId);
 };
 
 /** Fecha um consumo pendente com os gramas que o utilizador indicar. */
 export const confirmarConsumo = async (
   pendenteId: string,
-  gramas: number
+  gramas: number,
+  slot?: number
 ): Promise<void> => {
   await mutar(estado => {
     const pendente = estado.pendentes.find(p => p.id === pendenteId);
     if (!pendente) return estado;
-    const rolo = roloActivo(estado.bobinas, pendente.printerId);
+
+    let alvo: Spool | null = null;
+    if (slot !== undefined) {
+      alvo =
+        estado.bobinas.find(
+          b =>
+            b.printerId === pendente.printerId &&
+            !b.arquivada &&
+            b.canvasSlot === slot
+        ) ?? null;
+    }
+    if (!alvo) {
+      alvo = roloActivo(estado.bobinas, pendente.printerId);
+    }
+
+    if (!alvo) {
+      return {
+        ...estado,
+        pendentes: estado.pendentes.filter(p => p.id !== pendenteId),
+      };
+    }
+
+    const agora = Date.now();
+    const bobinaActualizada = descontarConsumo(alvo, gramas);
+    const novoUso: UsageRecord = {
+      id: idNovo(),
+      jobId: `pendente-${pendenteId}`,
+      printerId: pendente.printerId,
+      spoolId: alvo.id,
+      gramas,
+      custo: custoDeConsumo(alvo, gramas),
+      quando: agora,
+    };
+
     return {
       ...estado,
-      bobinas: rolo
-        ? estado.bobinas.map(item =>
-            item.id === rolo.id ? descontarConsumo(item, gramas) : item
-          )
-        : estado.bobinas,
+      bobinas: estado.bobinas.map(item =>
+        item.id === alvo!.id ? bobinaActualizada : item
+      ),
+      usos: [...estado.usos, novoUso],
       pendentes: estado.pendentes.filter(p => p.id !== pendenteId),
     };
   });

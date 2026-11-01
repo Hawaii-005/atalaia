@@ -1,5 +1,6 @@
 import {
   apagarBobina,
+  aplicarConsumoTrabalho,
   arquivarBobina,
   associarSlot,
   bobinaDoSlot,
@@ -9,9 +10,11 @@ import {
   custoPorGrama,
   desassociarSlot,
   descontarConsumo,
+  descontarConsumoPorSlot,
   editarBobina,
   filtrarEBuscarBobinas,
   gerarCsvInventario,
+  jaRegistado,
   normalizarHex,
   percentagemRestante,
   quaseNoFim,
@@ -252,5 +255,118 @@ describe('arquivar, filtrar e exportar CSV', () => {
     expect(csv).toContain('Filamento');
     expect(csv).toContain('PLA Vermelho');
     expect(csv).toContain('A1');
+  });
+});
+
+describe('descontarConsumoPorSlot e aplicarConsumoTrabalho', () => {
+  const rolo0 = {
+    ...bobina({
+      id: 'rolo-0',
+      nome: 'Slot 0 (A1)',
+      canvasSlot: 0,
+      pesoInicial: 1000,
+      restante: 1000,
+      preco: 20,
+      printerId: 'p1',
+    }),
+    criadoEm: 100,
+  };
+  const rolo1 = {
+    ...bobina({
+      id: 'rolo-1',
+      nome: 'Slot 1 (A2)',
+      canvasSlot: 1,
+      pesoInicial: 1000,
+      restante: 800,
+      preco: 30,
+      printerId: 'p1',
+    }),
+    criadoEm: 200,
+  };
+
+  it('desconta consumo por slot em multiplas bobinas', () => {
+    const actualizadas = descontarConsumoPorSlot([rolo0, rolo1], 'p1', {
+      0: 50,
+      1: 100,
+    });
+    expect(actualizadas.find(b => b.id === 'rolo-0')?.restante).toBe(950);
+    expect(actualizadas.find(b => b.id === 'rolo-1')?.restante).toBe(700);
+  });
+
+  it('aplica consumo de trabalho gerando registos de uso e calculando custos', () => {
+    const res = aplicarConsumoTrabalho(
+      [rolo0, rolo1],
+      'p1',
+      [
+        { slot: 0, gramas: 25 },
+        { slot: 1, gramas: 50 },
+      ],
+      'task-123',
+      123456789
+    );
+
+    expect(res.bobinas.find(b => b.id === 'rolo-0')?.restante).toBe(975);
+    expect(res.bobinas.find(b => b.id === 'rolo-1')?.restante).toBe(750);
+    expect(res.novosUsos).toHaveLength(2);
+
+    expect(res.novosUsos[0]).toMatchObject({
+      jobId: 'task-123',
+      printerId: 'p1',
+      spoolId: 'rolo-0',
+      gramas: 25,
+      custo: 0.5, // 25g * (20€ / 1000g) = 0.50€
+      quando: 123456789,
+    });
+
+    expect(res.novosUsos[1]).toMatchObject({
+      jobId: 'task-123',
+      printerId: 'p1',
+      spoolId: 'rolo-1',
+      gramas: 50,
+      custo: 1.5, // 50g * (30€ / 1000g) = 1.50€
+      quando: 123456789,
+    });
+  });
+
+  it('faz fallback para o rolo activo quando o slot nao esta associado', () => {
+    const roloSemSlot = {
+      ...bobina({
+        id: 'rolo-ativo',
+        nome: 'Sem slot',
+        canvasSlot: undefined,
+        pesoInicial: 1000,
+        restante: 500,
+        printerId: 'p1',
+      }),
+      criadoEm: 300,
+    };
+
+    const res = aplicarConsumoTrabalho(
+      [rolo0, roloSemSlot],
+      'p1',
+      [{ slot: 3, gramas: 40 }], // slot 3 nao tem bobina
+      'task-456'
+    );
+
+    expect(res.bobinas.find(b => b.id === 'rolo-ativo')?.restante).toBe(460);
+    expect(res.novosUsos[0].spoolId).toBe('rolo-ativo');
+  });
+
+  it('detecta se trabalho ja foi registado (idempotencia)', () => {
+    const usos = [
+      {
+        id: 'u1',
+        jobId: 'task-123',
+        printerId: 'p1',
+        spoolId: 'rolo-0',
+        gramas: 25,
+        custo: 0.5,
+        quando: 123,
+      },
+    ];
+
+    expect(jaRegistado(usos, 'task-123')).toBe(true);
+    expect(jaRegistado(usos, 'task-999')).toBe(false);
+    expect(jaRegistado(usos, undefined)).toBe(false);
   });
 });

@@ -2,7 +2,13 @@
  * Operações puras sobre bobinas. Sem AsyncStorage, sem rede, sem React:
  * tudo o que muda o inventário passa por aqui e é testável em node.
  */
-import { LIMITE_QUASE_NO_FIM, SLOT_MAX, SLOT_MIN, Spool } from './modelo';
+import {
+  LIMITE_QUASE_NO_FIM,
+  SLOT_MAX,
+  SLOT_MIN,
+  Spool,
+  UsageRecord,
+} from './modelo';
 
 const arredondar1 = (valor: number): number => Math.round(valor * 10) / 10;
 
@@ -166,6 +172,90 @@ export const descontarConsumo = (bobina: Spool, gramas: number): Spool => {
     ...bobina,
     restante: arredondar1(Math.max(0, bobina.restante - gramas)),
   };
+};
+
+export const descontarConsumoPorSlot = (
+  bobinas: Spool[],
+  printerId: string,
+  consumos: Record<number, number>
+): Spool[] => {
+  if (!consumos || Object.keys(consumos).length === 0) return bobinas;
+
+  return bobinas.map(bobina => {
+    if (bobina.printerId !== printerId || bobina.arquivada) return bobina;
+    if (bobina.canvasSlot === undefined) return bobina;
+
+    const gramas = consumos[bobina.canvasSlot];
+    if (gramas === undefined || gramas <= 0) return bobina;
+
+    return descontarConsumo(bobina, gramas);
+  });
+};
+
+export interface ConsumoItem {
+  slot?: number;
+  gramas: number;
+}
+
+export interface ResultadoConsumoTrabalho {
+  bobinas: Spool[];
+  novosUsos: UsageRecord[];
+}
+
+export const jaRegistado = (usos: UsageRecord[], jobId?: string): boolean => {
+  if (!jobId) return false;
+  return usos.some(u => u.jobId === jobId);
+};
+
+export const roloActivo = (bobinas: Spool[], printerId: string): Spool | null =>
+  bobinas
+    .filter(r => r.printerId === printerId && !r.arquivada)
+    .sort((a, b) => b.criadoEm - a.criadoEm)[0] ?? null;
+
+export const aplicarConsumoTrabalho = (
+  bobinas: Spool[],
+  printerId: string,
+  consumos: ConsumoItem[],
+  jobId: string,
+  quando: number = Date.now()
+): ResultadoConsumoTrabalho => {
+  const novosUsos: UsageRecord[] = [];
+  let lista = [...bobinas];
+
+  for (const item of consumos) {
+    if (!Number.isFinite(item.gramas) || item.gramas <= 0) continue;
+
+    let alvo: Spool | undefined;
+    if (item.slot !== undefined) {
+      alvo = lista.find(
+        b =>
+          b.printerId === printerId &&
+          !b.arquivada &&
+          b.canvasSlot === item.slot
+      );
+    }
+
+    if (!alvo) {
+      alvo = roloActivo(lista, printerId) ?? undefined;
+    }
+
+    if (!alvo) continue;
+
+    const bobinaActualizada = descontarConsumo(alvo, item.gramas);
+    lista = lista.map(b => (b.id === alvo!.id ? bobinaActualizada : b));
+
+    novosUsos.push({
+      id: idNovo(),
+      jobId,
+      printerId,
+      spoolId: alvo.id,
+      gramas: item.gramas,
+      custo: custoDeConsumo(alvo, item.gramas),
+      quando,
+    });
+  }
+
+  return { bobinas: lista, novosUsos };
 };
 
 /** Percentagem que resta, arredondada a 1 decimal (0 quando não se sabe). */
