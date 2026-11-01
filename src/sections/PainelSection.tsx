@@ -18,6 +18,7 @@ import { WebView } from 'react-native-webview';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import Svg, { Circle } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
@@ -25,6 +26,24 @@ import { anel, espaco, raio as raioToken } from '../theme/tokensV6';
 import { t, useIdioma } from '../i18n';
 import { getPrintStatus, Printer } from '../types';
 import { htmlDoVideo } from '../utils/cameraStream';
+import { CartaoMovimento } from '../screens/controlos/CartaoMovimento';
+import {
+  LIMITE_ESTADO_ANTIGO_MS,
+  controlosDisponiveis,
+} from '../utils/controlos/capacidades';
+import { estadoDeInfo } from '../utils/controlos/estado';
+import {
+  CHAVE_PASSO,
+  PassoMm,
+  lerPassos,
+  zPrecisaConfirmacao,
+} from '../utils/controlos/passo';
+import {
+  ESPERA_ACK_MS,
+  ResultadoComando,
+  resultadoDeAck,
+  resultadoDeFalha,
+} from '../utils/controlos/resultado';
 import { enderecoDe } from '../utils/rede';
 import {
   ackDaResposta,
@@ -217,8 +236,72 @@ export const PainelSection = ({
     }
   }, [info?.CurrentTicks, aImprimir]);
 
-  const [passo, setPasso] = useState(10);
+  const [passo, setPasso] = useState<PassoMm>(10);
+  const [aEnviar, setAEnviar] = useState(false);
+  const [resultado, setResultado] = useState<ResultadoComando | null>(null);
+  // Só para o estado «antigo» envelhecer no ecrã sem depender de pacotes novos.
+  const [agora, setAgora] = useState(Date.now());
   const ocupada = aImprimir;
+
+  useEffect(() => {
+    const relogio = setInterval(() => setAgora(Date.now()), 5000);
+    return () => clearInterval(relogio);
+  }, []);
+
+  useEffect(() => {
+    if (!printer?.id) return;
+    let vivo = true;
+    AsyncStorage.getItem(CHAVE_PASSO)
+      .then(cru => {
+        if (!vivo || !cru) return;
+        setPasso(lerPassos(JSON.parse(cru))[printer.id] ?? 10);
+      })
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+  }, [printer?.id]);
+
+  const escolherPasso = useCallback(
+    (novo: PassoMm) => {
+      setPasso(novo);
+      if (!printer?.id) return;
+      AsyncStorage.getItem(CHAVE_PASSO)
+        .then(cru => {
+          const mapa = lerPassos(cru ? JSON.parse(cru) : {});
+          mapa[printer.id] = novo;
+          return AsyncStorage.setItem(CHAVE_PASSO, JSON.stringify(mapa));
+        })
+        .catch(() => undefined);
+    },
+    [printer?.id]
+  );
+
+  const moverZOffset = (mm: number) => {
+    if (!printer) return;
+    executar(jogCommand('Z', mm, { id: printer.id }));
+  };
+
+  const posicao = useMemo(() => {
+    const numeros = (printer?.status?.CurrenCoord ?? '').match(
+      /-?\d+(?:\.\d+)?/g
+    );
+    if (!numeros || numeros.length < 3) return null;
+    return { x: numeros[0], y: numeros[1], z: numeros[2] };
+  }, [printer?.status?.CurrenCoord]);
+
+  const idadeEstado = printer?.lastUpdate ? agora - printer.lastUpdate : null;
+  const estado = estadoDeInfo(
+    info?.Status,
+    ligada,
+    idadeEstado,
+    emPausa ? 60_000 : 0
+  );
+  const modelo = printer?.kind === 'resin' ? 'resina' : 'fdm';
+  const disp = controlosDisponiveis(modelo, estado, {
+    ligada,
+    idadeEstadoMs: idadeEstado,
+  });
 
   const enviar = useCallback(
     async (cmd: any, avisar = true) => {
@@ -236,44 +319,65 @@ export const PainelSection = ({
     [printer, request]
   );
 
-  const mover = async (eixo: 'X' | 'Y' | 'Z', sentido: 1 | -1, mm?: number) => {
-    if (!printer) return;
-    try {
-      const resposta = await request(
-        printer.id,
-        jogCommand(eixo, sentido * (mm ?? passo), { id: printer.id }),
-        8000
-      );
-      if (ackDaResposta(resposta) === 3) {
-        Alert.alert(t('controlos.movimento'), t('controlos.precisaHome'));
+  /** Envia um comando e traduz o Ack; desativa o bloco enquanto espera. */
+  const executar = useCallback(
+    async (cmd: any) => {
+      if (!printer || aEnviar) return;
+      setAEnviar(true);
+      setResultado(null);
+      try {
+        const resposta = await request(printer.id, cmd, ESPERA_ACK_MS);
+        setResultado(resultadoDeAck(ackDaResposta(resposta)));
+      } catch (e) {
+        setResultado(resultadoDeFalha(e));
+      } finally {
+        setAEnviar(false);
       }
-    } catch (e) {
-      Alert.alert(t('comum.erro'), e instanceof Error ? e.message : String(e));
+    },
+    [printer, request, aEnviar]
+  );
+
+  const mover = (eixo: 'X' | 'Y' | 'Z', sentido: 1 | -1) => {
+    if (!printer) return;
+    const mm = passo;
+    const enviarMovimento = () =>
+      executar(jogCommand(eixo, sentido * mm, { id: printer.id }));
+
+    if (eixo === 'Z' && zPrecisaConfirmacao(mm, sentido)) {
+      Alert.alert(
+        t('controlos.confirmarZ', { passo: `${mm} mm` }),
+        t('controlos.confirmarZMsg'),
+        [
+          { text: t('comum.cancelar'), style: 'cancel' },
+          {
+            text: t('comum.confirmar'),
+            style: 'destructive',
+            onPress: enviarMovimento,
+          },
+        ]
+      );
+      return;
     }
+    enviarMovimento();
   };
 
-  const fazerHome = (eixo: 'XYZ' | 'Z') => {
+  const fazerHome = (eixo: 'XYZ' | 'XY' | 'Z') => {
+    if (!printer) return;
+    const enviarHome = async () => {
+      if (eixo === 'XY') {
+        await executar(homeCommand('X', { id: printer.id }));
+        await new Promise(r => setTimeout(r, 1200));
+        await executar(homeCommand('Y', { id: printer.id }));
+        return;
+      }
+      await executar(homeCommand(eixo, { id: printer.id }));
+    };
     Alert.alert(t('controlos.confirmarHome'), t('controlos.confirmarHomeMsg'), [
       { text: t('comum.cancelar'), style: 'cancel' },
       {
         text: t('comum.confirmar'),
         style: 'destructive',
-        onPress: () => enviar(homeCommand(eixo, { id: printer?.id })),
-      },
-    ]);
-  };
-
-  const fazerHomeXY = () => {
-    Alert.alert(t('controlos.confirmarHome'), t('controlos.confirmarHomeMsg'), [
-      { text: t('comum.cancelar'), style: 'cancel' },
-      {
-        text: t('comum.confirmar'),
-        style: 'destructive',
-        onPress: async () => {
-          await enviar(homeCommand('X', { id: printer?.id }));
-          await new Promise(r => setTimeout(r, 1200));
-          await enviar(homeCommand('Y', { id: printer?.id }));
-        },
+        onPress: enviarHome,
       },
     ]);
   };
@@ -1063,7 +1167,7 @@ export const PainelSection = ({
                   <TouchableOpacity
                     key={mm}
                     disabled={centro}
-                    onPress={() => mover('Z', mm > 0 ? 1 : -1, Math.abs(mm))}
+                    onPress={() => moverZOffset(mm)}
                     style={{
                       flex: 1,
                       height: 42,
@@ -1099,152 +1203,16 @@ export const PainelSection = ({
             </View>
           </>
         ) : (
-          <>
-            <View
-              style={{
-                flexDirection: 'row',
-                gap: espaco.md,
-                alignItems: 'center',
-                marginTop: espaco.sm,
-              }}
-            >
-              {(['X', 'Y', 'Z'] as const).map((eixo, i) => {
-                const numeros =
-                  (printer.status?.CurrenCoord ?? '').match(
-                    /-?\d+(?:\.\d+)?/g
-                  ) ?? [];
-                return (
-                  <View key={eixo} style={{ flexDirection: 'row' }}>
-                    <Text
-                      style={{
-                        fontSize: 12,
-                        fontWeight: '700',
-                        color: hexDe(paleta.acento),
-                      }}
-                    >{`${eixo}: `}</Text>
-                    <Text
-                      style={{
-                        fontSize: 12,
-                        color: hexDe(paleta.tinta),
-                        fontFamily: fonteNumeros,
-                      }}
-                    >
-                      {numeros[i] ?? '0.00'}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-
-            <View
-              style={{ flexDirection: 'row', gap: 6, marginTop: espaco.sm }}
-            >
-              {PASSOS.map(mm => (
-                <TouchableOpacity
-                  key={mm}
-                  onPress={() => setPasso(mm)}
-                  style={{
-                    flex: 1,
-                    height: 32,
-                    borderRadius: 16,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor:
-                      passo === mm
-                        ? hexDe(paleta.acento)
-                        : hexDe(paleta.fundoBaixo),
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 11,
-                      fontWeight: '700',
-                      color: passo === mm ? '#fff' : hexDe(paleta.tintaSoft),
-                    }}
-                  >
-                    {mm === 0.1 ? '0.1 mm' : `${mm} mm`}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <View
-              style={{ alignItems: 'center', marginTop: espaco.md, gap: 6 }}
-            >
-              <Tecla
-                etiqueta="▲"
-                onPress={() => mover('Y', 1)}
-                desactivado={ocupada || !ligada}
-              />
-              <View
-                style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}
-              >
-                <Tecla
-                  etiqueta="◀"
-                  onPress={() => mover('X', -1)}
-                  desactivado={ocupada || !ligada}
-                />
-                <TouchableOpacity
-                  onPress={() => fazerHome('XYZ')}
-                  disabled={ocupada || !ligada}
-                  style={{
-                    width: 46,
-                    height: 46,
-                    borderRadius: 23,
-                    borderWidth: 1.5,
-                    borderColor: hexDe(paleta.acento),
-                    backgroundColor: hexDe(paleta.fundoBaixo),
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    opacity: ocupada || !ligada ? 0.4 : 1,
-                  }}
-                >
-                  <Ionicons name="home" size={18} color={hexDe(paleta.tinta)} />
-                </TouchableOpacity>
-                <Tecla
-                  etiqueta="▶"
-                  onPress={() => mover('X', 1)}
-                  desactivado={ocupada || !ligada}
-                />
-              </View>
-              <Tecla
-                etiqueta="▼"
-                onPress={() => mover('Y', -1)}
-                desactivado={ocupada || !ligada}
-              />
-            </View>
-
-            <View
-              style={{ flexDirection: 'row', gap: 6, marginTop: espaco.sm }}
-            >
-              <Tecla
-                etiqueta="Z ▲"
-                onPress={() => mover('Z', 1)}
-                desactivado={ocupada || !ligada}
-                largo
-              />
-              <Tecla
-                etiqueta="Z ▼"
-                onPress={() => mover('Z', -1)}
-                desactivado={ocupada || !ligada}
-                largo
-              />
-            </View>
-            <View style={{ flexDirection: 'row', gap: 6, marginTop: 6 }}>
-              <Tecla
-                etiqueta="Home XY"
-                onPress={fazerHomeXY}
-                desactivado={ocupada || !ligada}
-                largo
-              />
-              <Tecla
-                etiqueta="Home Z"
-                onPress={() => fazerHome('Z')}
-                desactivado={ocupada || !ligada}
-                largo
-              />
-            </View>
-          </>
+          <CartaoMovimento
+            posicao={posicao}
+            passo={passo}
+            onPasso={escolherPasso}
+            disp={disp}
+            aEnviar={aEnviar}
+            resultado={resultado}
+            onMover={mover}
+            onHome={fazerHome}
+          />
         )}
       </Cartao>
     </ScrollView>
