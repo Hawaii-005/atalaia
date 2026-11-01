@@ -20,6 +20,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
+import { useLayout } from '../hooks/useLayout';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
 import { anel, espaco, raio as raioToken } from '../theme/tokensV6';
@@ -29,6 +30,7 @@ import { htmlDoVideo } from '../utils/cameraStream';
 import { CartaoMovimento } from '../screens/controlos/CartaoMovimento';
 import { CartaoVentilacao } from '../screens/controlos/CartaoVentilacao';
 import { CartaoTemperaturas } from '../screens/controlos/CartaoTemperaturas';
+import { SecaoResina } from '../screens/controlos/SecaoResina';
 import {
   LIMITE_ESTADO_ANTIGO_MS,
   controlosDisponiveis,
@@ -44,8 +46,7 @@ import {
 import {
   ESPERA_ACK_MS,
   ResultadoComando,
-  resultadoDeAck,
-  resultadoDeFalha,
+  executarComando,
 } from '../utils/controlos/resultado';
 import { enderecoDe } from '../utils/rede';
 import {
@@ -203,6 +204,7 @@ export const PainelSection = ({
     temFicheiro &&
     (statusBase === 'printing' || statusBase === 'preparing');
   const resina = (printer?.kind ?? 'fdm') === 'resin';
+  const { isTablet } = useLayout();
 
   const luz = !!printer?.status?.LightStatus?.SecondLight;
   const velocidade = printer?.status?.PrintInfo?.PrintSpeedPct ?? 100;
@@ -329,10 +331,17 @@ export const PainelSection = ({
       setAEnviar(true);
       setResultado(null);
       try {
-        const resposta = await request(printer.id, cmd, ESPERA_ACK_MS);
-        setResultado(resultadoDeAck(ackDaResposta(resposta)));
-      } catch (e) {
-        setResultado(resultadoDeFalha(e));
+        setResultado(
+          await executarComando(
+            c =>
+              request(
+                printer.id,
+                c as Parameters<typeof request>[1],
+                ESPERA_ACK_MS
+              ),
+            cmd
+          )
+        );
       } finally {
         setAEnviar(false);
       }
@@ -501,52 +510,15 @@ export const PainelSection = ({
           paddingBottom: 32,
         }}
       >
-        <Cartao>
-          <Rotulo>{t('secao.estado')}</Rotulo>
-          <Text
-            style={{
-              fontSize: 18,
-              fontWeight: '700',
-              color: hexDe(paleta.tinta),
-              marginTop: 6,
-            }}
-          >
-            {info?.Filename || printer.printerName}
-          </Text>
-          <Text
-            style={{
-              fontSize: 12,
-              color: hexDe(paleta.tintaSoft),
-              marginTop: 4,
-            }}
-          >
-            {ligada ? t('inicio.pronta') : t('inicio.semLigacao')}
-          </Text>
-          <TouchableOpacity
-            onPress={pedirParar}
-            disabled={!temFicheiro}
-            style={{
-              marginTop: espaco.md,
-              height: 46,
-              borderRadius: raioToken.botao,
-              borderWidth: 1.5,
-              borderColor: hexDe(paleta.perigo),
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: temFicheiro ? 1 : 0.4,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 14,
-                fontWeight: '700',
-                color: hexDe(paleta.perigo),
-              }}
-            >
-              {t('comum.parar')}
-            </Text>
-          </TouchableOpacity>
-        </Cartao>
+        <SecaoResina
+          ficheiro={info?.Filename}
+          ligada={ligada}
+          disp={disp}
+          temFicheiro={temFicheiro}
+          progresso={info?.Progress}
+          restanteSeg={null}
+          onParar={pedirParar}
+        />
       </ScrollView>
     );
   }
@@ -566,516 +538,536 @@ export const PainelSection = ({
       }}
       showsVerticalScrollIndicator={false}
     >
-      {/* câmara */}
-      {emFoco && ligada && (
-        <TouchableOpacity
-          activeOpacity={0.92}
-          onPress={onAbrirCamara}
-          style={{
-            borderRadius: raioToken.cartao,
-            overflow: 'hidden',
-            aspectRatio: 16 / 9,
-            backgroundColor: '#000',
-          }}
-        >
-          <WebView
-            key={`cam-${printer.id}`}
-            source={{
-              html: htmlDoVideo(enderecoDe(printer), 'cover', false),
-              baseUrl: `http://${enderecoDe(printer)}`,
-            }}
-            style={{ flex: 1, backgroundColor: '#000' }}
-            allowsInlineMediaPlayback
-            mediaPlaybackRequiresUserAction={false}
-            javaScriptEnabled
-            domStorageEnabled={false}
-            mixedContentMode="always"
-            originWhitelist={['*']}
-            scrollEnabled={false}
-            bounces={false}
-            pointerEvents="none"
-          />
-
-          <View
-            style={{
-              position: 'absolute',
-              top: 10,
-              left: 10,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
-              backgroundColor: 'rgba(5,8,15,0.72)',
-              borderRadius: 9,
-              paddingHorizontal: 8,
-              paddingVertical: 5,
-            }}
-          >
-            <View
+      <View
+        style={{
+          flexDirection: isTablet ? 'row' : 'column',
+          gap: espaco.md,
+          alignItems: 'stretch',
+        }}
+      >
+        <View style={{ flex: 1, gap: espaco.md }}>
+          {/* câmara */}
+          {emFoco && ligada && (
+            <TouchableOpacity
+              activeOpacity={0.92}
+              onPress={onAbrirCamara}
               style={{
-                width: 6,
-                height: 6,
-                borderRadius: 3,
-                backgroundColor: aImprimir
-                  ? hexDe(paleta.perigo)
-                  : hexDe(paleta.tintaSoft),
-              }}
-            />
-            <Text
-              style={{
-                fontSize: 10,
-                fontWeight: '700',
-                color: '#E7EDF9',
-                letterSpacing: 0.4,
+                borderRadius: raioToken.cartao,
+                overflow: 'hidden',
+                aspectRatio: 16 / 9,
+                backgroundColor: '#000',
               }}
             >
-              {t('painel.emDireto')}
-            </Text>
-          </View>
-
-          <TouchableOpacity
-            disabled={disp.luz.estado === 'desactivado'}
-            onPress={() => enviar(lightCommand(!luz, { id: printer.id }))}
-            style={{
-              position: 'absolute',
-              top: 8,
-              right: 8,
-              width: 40,
-              height: 40,
-              borderRadius: 13,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: luz
-                ? 'rgba(251,191,36,0.24)'
-                : 'rgba(5,8,15,0.66)',
-              borderWidth: 1,
-              borderColor: luz
-                ? 'rgba(251,191,36,0.6)'
-                : 'rgba(255,255,255,0.16)',
-            }}
-            accessibilityLabel={t('controlos.luz')}
-          >
-            <Ionicons
-              name={luz ? 'bulb' : 'bulb-outline'}
-              size={18}
-              color={luz ? hexDe(paleta.aviso) : '#DCE5F5'}
-            />
-          </TouchableOpacity>
-
-          <View
-            style={{
-              position: 'absolute',
-              left: 10,
-              bottom: 10,
-              backgroundColor: 'rgba(5,8,15,0.72)',
-              borderRadius: 8,
-              paddingHorizontal: 7,
-              paddingVertical: 4,
-            }}
-          >
-            <Text style={{ fontSize: 10, color: '#C9D4EA' }}>
-              {temFicheiro
-                ? `${t('detalhes.camada')} ${info?.CurrentLayer ?? 0}/${info?.TotalLayer ?? 0}`
-                : t('inicio.pronta')}
-            </Text>
-          </View>
-        </TouchableOpacity>
-      )}
-
-      {/* trabalho ou espera */}
-      {aImprimir ? (
-        <Cartao>
-          <View
-            style={{
-              flexDirection: 'row',
-              gap: espaco.lg,
-              alignItems: 'center',
-            }}
-          >
-            <Anel
-              progresso={progresso}
-              cor={hexDe(paleta.acento)}
-              trilho={hexDe(paleta.linha)}
-            >
-              <Text
-                style={{
-                  fontSize: 26,
-                  fontWeight: '700',
-                  color: hexDe(paleta.tinta),
-                  fontFamily: fonteNumeros,
+              <WebView
+                key={`cam-${printer.id}`}
+                source={{
+                  html: htmlDoVideo(enderecoDe(printer), 'cover', false),
+                  baseUrl: `http://${enderecoDe(printer)}`,
                 }}
-              >
-                {Math.round(progresso)}%
-              </Text>
-            </Anel>
-            <View style={{ flex: 1 }}>
-              <Text
-                style={{
-                  fontSize: 11,
-                  fontWeight: '700',
-                  color: corEstado,
-                  letterSpacing: 0.6,
-                }}
-              >
-                {emPausa
-                  ? t('estado.emPausa').toUpperCase()
-                  : t('estado.imprimindo').toUpperCase()}
-              </Text>
-              <Text
-                numberOfLines={2}
-                style={{
-                  fontSize: 14,
-                  fontWeight: '700',
-                  color: hexDe(paleta.tinta),
-                  marginTop: 4,
-                }}
-              >
-                {info?.Filename}
-              </Text>
+                style={{ flex: 1, backgroundColor: '#000' }}
+                allowsInlineMediaPlayback
+                mediaPlaybackRequiresUserAction={false}
+                javaScriptEnabled
+                domStorageEnabled={false}
+                mixedContentMode="always"
+                originWhitelist={['*']}
+                scrollEnabled={false}
+                bounces={false}
+                pointerEvents="none"
+              />
+
               <View
-                style={{ flexDirection: 'row', gap: espaco.md, marginTop: 8 }}
-              >
-                <View>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: '700',
-                      color: hexDe(paleta.tinta),
-                      fontFamily: fonteNumeros,
-                    }}
-                  >
-                    {`${info?.CurrentLayer ?? 0}/${info?.TotalLayer ?? 0}`}
-                  </Text>
-                  <Text
-                    style={{ fontSize: 10, color: hexDe(paleta.tintaSoft) }}
-                  >
-                    {t('detalhes.camada')}
-                  </Text>
-                </View>
-                <View>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: '700',
-                      color: hexDe(paleta.tinta),
-                      fontFamily: fonteNumeros,
-                    }}
-                  >
-                    {segundosRestantes ?? '—'}
-                  </Text>
-                  <Text
-                    style={{ fontSize: 10, color: hexDe(paleta.tintaSoft) }}
-                  >
-                    {t('painel.restante')}
-                  </Text>
-                </View>
-                <View>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: '700',
-                      color: hexDe(paleta.tinta),
-                      fontFamily: fonteNumeros,
-                    }}
-                  >
-                    {`${Math.round(velocidade)}%`}
-                  </Text>
-                  <Text
-                    style={{ fontSize: 10, color: hexDe(paleta.tintaSoft) }}
-                  >
-                    {t('controlos.velocidade')}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </View>
-
-          <View
-            style={{
-              flexDirection: 'row',
-              gap: espaco.sm,
-              marginTop: espaco.md,
-            }}
-          >
-            <TouchableOpacity
-              onPress={alternarPausa}
-              style={{
-                flex: 1,
-                height: 48,
-                borderRadius: raioToken.botao,
-                backgroundColor: hexDe(paleta.fundoBaixo),
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexDirection: 'row',
-                gap: 7,
-              }}
-            >
-              <Ionicons
-                name={emPausa ? 'play' : 'pause'}
-                size={15}
-                color={hexDe(paleta.tinta)}
-              />
-              <Text
                 style={{
-                  fontSize: 14,
-                  fontWeight: '700',
-                  color: hexDe(paleta.tinta),
-                }}
-              >
-                {emPausa ? t('comum.retomar') : t('comum.pausar')}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={pedirParar}
-              style={{
-                flex: 1,
-                height: 48,
-                borderRadius: raioToken.botao,
-                borderWidth: 1.5,
-                borderColor: hexDe(paleta.perigo),
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexDirection: 'row',
-                gap: 7,
-              }}
-            >
-              <Ionicons name="stop" size={15} color={hexDe(paleta.perigo)} />
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: '700',
-                  color: hexDe(paleta.perigo),
-                }}
-              >
-                {t('comum.parar')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </Cartao>
-      ) : (
-        <Cartao>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'flex-start',
-              gap: espaco.sm,
-            }}
-          >
-            <View style={{ flex: 1 }}>
-              <Rotulo>{t('painel.emEspera')}</Rotulo>
-              <Text
-                style={{
-                  fontSize: 17,
-                  fontWeight: '700',
-                  color: hexDe(paleta.tinta),
-                  marginTop: 5,
-                }}
-              >
-                {ligada ? t('inicio.pronta') : t('inicio.semLigacao')}
-              </Text>
-              <Text
-                style={{
-                  fontSize: 11,
-                  color: hexDe(paleta.tintaSoft),
-                  marginTop: 3,
-                }}
-              >
-                {ligada ? t('painel.prontaMsg') : t('painel.semLigacaoMsg')}
-              </Text>
-            </View>
-            <TouchableOpacity
-              onPress={() =>
-                navigation.navigate('AddEditPrinter', { printerId: printer.id })
-              }
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 12,
-                backgroundColor: hexDe(paleta.fundoBaixo),
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              accessibilityLabel={t('comum.editar')}
-            >
-              <Ionicons
-                name="create-outline"
-                size={17}
-                color={hexDe(paleta.tintaSoft)}
-              />
-            </TouchableOpacity>
-          </View>
-
-          <Rotulo style={{ marginTop: espaco.md, marginBottom: espaco.sm }}>
-            {t('painel.preAquecer')}
-          </Rotulo>
-          <View style={{ flexDirection: 'row', gap: espaco.sm }}>
-            {PRESETS.map(p => (
-              <TouchableOpacity
-                key={p.nome}
-                disabled={!ligada}
-                onPress={() => preAquecer(p.bico, p.mesa)}
-                style={{
-                  flex: 1,
-                  borderRadius: raioToken.interno,
-                  backgroundColor: hexDe(paleta.fundoBaixo),
-                  borderWidth: 1,
-                  borderColor: hexDe(paleta.linha),
-                  paddingVertical: 11,
+                  position: 'absolute',
+                  top: 10,
+                  left: 10,
+                  flexDirection: 'row',
                   alignItems: 'center',
-                  opacity: ligada ? 1 : 0.4,
+                  gap: 6,
+                  backgroundColor: 'rgba(5,8,15,0.72)',
+                  borderRadius: 9,
+                  paddingHorizontal: 8,
+                  paddingVertical: 5,
                 }}
               >
-                <Text
+                <View
                   style={{
-                    fontSize: 12,
-                    fontWeight: '700',
-                    color: hexDe(paleta.tinta),
+                    width: 6,
+                    height: 6,
+                    borderRadius: 3,
+                    backgroundColor: aImprimir
+                      ? hexDe(paleta.perigo)
+                      : hexDe(paleta.tintaSoft),
                   }}
-                >
-                  {p.nome}
-                </Text>
+                />
                 <Text
                   style={{
                     fontSize: 10,
-                    color: hexDe(paleta.tintaSoft),
-                    marginTop: 2,
+                    fontWeight: '700',
+                    color: '#E7EDF9',
+                    letterSpacing: 0.4,
                   }}
                 >
-                  {`${p.bico}° · ${p.mesa}°`}
+                  {t('painel.emDireto')}
                 </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </Cartao>
-      )}
+              </View>
 
-      {/* térmica */}
-      <Cartao>
-        <CartaoTemperaturas
-          atual={{
-            bico: printer.status?.TempOfNozzle ?? 0,
-            mesa: printer.status?.TempOfHotbed ?? 0,
-          }}
-          disp={disp}
-          onAplicar={aplicarTemperaturas}
-          onArrefecer={arrefecer}
-        />
-      </Cartao>
-
-      {/* velocidade e ventoinhas só com trabalho a correr */}
-      {aImprimir && (
-        <Cartao>
-          <CartaoVentilacao
-            ventoinhas={{
-              model: ventoinhas.ModelFan ?? 0,
-              side: ventoinhas.AuxiliaryFan ?? 0,
-              chamber: ventoinhas.BoxFan ?? 0,
-            }}
-            velocidade={velocidade}
-            disp={disp}
-            onVentoinha={definirVentoinha}
-            onVelocidade={definirVelocidade}
-          />
-        </Cartao>
-      )}
-
-      {/* eixos: babystep a imprimir, D-Pad em espera */}
-      <Cartao>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Rotulo style={{ flex: 1 }}>{t('controlos.movimento')}</Rotulo>
-          {aImprimir && (
-            <View
-              style={{
-                backgroundColor: hexDe(paleta.aviso) + '22',
-                borderRadius: 7,
-                paddingHorizontal: 7,
-                paddingVertical: 3,
-              }}
-            >
-              <Text
+              <TouchableOpacity
+                disabled={disp.luz.estado === 'desactivado'}
+                onPress={() => enviar(lightCommand(!luz, { id: printer.id }))}
                 style={{
-                  fontSize: 10,
-                  fontWeight: '700',
-                  color: hexDe(paleta.aviso),
+                  position: 'absolute',
+                  top: 8,
+                  right: 8,
+                  width: 40,
+                  height: 40,
+                  borderRadius: 13,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: luz
+                    ? 'rgba(251,191,36,0.24)'
+                    : 'rgba(5,8,15,0.66)',
+                  borderWidth: 1,
+                  borderColor: luz
+                    ? 'rgba(251,191,36,0.6)'
+                    : 'rgba(255,255,255,0.16)',
+                }}
+                accessibilityLabel={t('controlos.luz')}
+              >
+                <Ionicons
+                  name={luz ? 'bulb' : 'bulb-outline'}
+                  size={18}
+                  color={luz ? hexDe(paleta.aviso) : '#DCE5F5'}
+                />
+              </TouchableOpacity>
+
+              <View
+                style={{
+                  position: 'absolute',
+                  left: 10,
+                  bottom: 10,
+                  backgroundColor: 'rgba(5,8,15,0.72)',
+                  borderRadius: 8,
+                  paddingHorizontal: 7,
+                  paddingVertical: 4,
                 }}
               >
-                {t('painel.xyBloqueados')}
-              </Text>
-            </View>
+                <Text style={{ fontSize: 10, color: '#C9D4EA' }}>
+                  {temFicheiro
+                    ? `${t('detalhes.camada')} ${info?.CurrentLayer ?? 0}/${info?.TotalLayer ?? 0}`
+                    : t('inicio.pronta')}
+                </Text>
+              </View>
+            </TouchableOpacity>
           )}
         </View>
 
-        {aImprimir ? (
-          <>
-            <Text
-              style={{
-                fontSize: 11,
-                color: hexDe(paleta.tintaSoft),
-                marginTop: 6,
-              }}
-            >
-              {t('painel.babystepMsg')}
-            </Text>
-            <View
-              style={{
-                flexDirection: 'row',
-                gap: espaco.sm,
-                marginTop: espaco.md,
-              }}
-            >
-              {[-0.02, 0, 0.02].map((mm, i) => {
-                const centro = i === 1;
-                return (
+        <View style={{ flex: isTablet ? 1.15 : undefined, gap: espaco.md }}>
+          {/* trabalho ou espera */}
+          {aImprimir ? (
+            <Cartao>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  gap: espaco.lg,
+                  alignItems: 'center',
+                }}
+              >
+                <Anel
+                  progresso={progresso}
+                  cor={hexDe(paleta.acento)}
+                  trilho={hexDe(paleta.linha)}
+                >
+                  <Text
+                    style={{
+                      fontSize: 26,
+                      fontWeight: '700',
+                      color: hexDe(paleta.tinta),
+                      fontFamily: fonteNumeros,
+                    }}
+                  >
+                    {Math.round(progresso)}%
+                  </Text>
+                </Anel>
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      fontWeight: '700',
+                      color: corEstado,
+                      letterSpacing: 0.6,
+                    }}
+                  >
+                    {emPausa
+                      ? t('estado.emPausa').toUpperCase()
+                      : t('estado.imprimindo').toUpperCase()}
+                  </Text>
+                  <Text
+                    numberOfLines={2}
+                    style={{
+                      fontSize: 14,
+                      fontWeight: '700',
+                      color: hexDe(paleta.tinta),
+                      marginTop: 4,
+                    }}
+                  >
+                    {info?.Filename}
+                  </Text>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      gap: espaco.md,
+                      marginTop: 8,
+                    }}
+                  >
+                    <View>
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          fontWeight: '700',
+                          color: hexDe(paleta.tinta),
+                          fontFamily: fonteNumeros,
+                        }}
+                      >
+                        {`${info?.CurrentLayer ?? 0}/${info?.TotalLayer ?? 0}`}
+                      </Text>
+                      <Text
+                        style={{ fontSize: 10, color: hexDe(paleta.tintaSoft) }}
+                      >
+                        {t('detalhes.camada')}
+                      </Text>
+                    </View>
+                    <View>
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          fontWeight: '700',
+                          color: hexDe(paleta.tinta),
+                          fontFamily: fonteNumeros,
+                        }}
+                      >
+                        {segundosRestantes ?? '—'}
+                      </Text>
+                      <Text
+                        style={{ fontSize: 10, color: hexDe(paleta.tintaSoft) }}
+                      >
+                        {t('painel.restante')}
+                      </Text>
+                    </View>
+                    <View>
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          fontWeight: '700',
+                          color: hexDe(paleta.tinta),
+                          fontFamily: fonteNumeros,
+                        }}
+                      >
+                        {`${Math.round(velocidade)}%`}
+                      </Text>
+                      <Text
+                        style={{ fontSize: 10, color: hexDe(paleta.tintaSoft) }}
+                      >
+                        {t('controlos.velocidade')}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              <View
+                style={{
+                  flexDirection: 'row',
+                  gap: espaco.sm,
+                  marginTop: espaco.md,
+                }}
+              >
+                <TouchableOpacity
+                  onPress={alternarPausa}
+                  style={{
+                    flex: 1,
+                    height: 48,
+                    borderRadius: raioToken.botao,
+                    backgroundColor: hexDe(paleta.fundoBaixo),
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexDirection: 'row',
+                    gap: 7,
+                  }}
+                >
+                  <Ionicons
+                    name={emPausa ? 'play' : 'pause'}
+                    size={15}
+                    color={hexDe(paleta.tinta)}
+                  />
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: '700',
+                      color: hexDe(paleta.tinta),
+                    }}
+                  >
+                    {emPausa ? t('comum.retomar') : t('comum.pausar')}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={pedirParar}
+                  style={{
+                    flex: 1,
+                    height: 48,
+                    borderRadius: raioToken.botao,
+                    borderWidth: 1.5,
+                    borderColor: hexDe(paleta.perigo),
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexDirection: 'row',
+                    gap: 7,
+                  }}
+                >
+                  <Ionicons
+                    name="stop"
+                    size={15}
+                    color={hexDe(paleta.perigo)}
+                  />
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: '700',
+                      color: hexDe(paleta.perigo),
+                    }}
+                  >
+                    {t('comum.parar')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </Cartao>
+          ) : (
+            <Cartao>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'flex-start',
+                  gap: espaco.sm,
+                }}
+              >
+                <View style={{ flex: 1 }}>
+                  <Rotulo>{t('painel.emEspera')}</Rotulo>
+                  <Text
+                    style={{
+                      fontSize: 17,
+                      fontWeight: '700',
+                      color: hexDe(paleta.tinta),
+                      marginTop: 5,
+                    }}
+                  >
+                    {ligada ? t('inicio.pronta') : t('inicio.semLigacao')}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      color: hexDe(paleta.tintaSoft),
+                      marginTop: 3,
+                    }}
+                  >
+                    {ligada ? t('painel.prontaMsg') : t('painel.semLigacaoMsg')}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate('AddEditPrinter', {
+                      printerId: printer.id,
+                    })
+                  }
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: 12,
+                    backgroundColor: hexDe(paleta.fundoBaixo),
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  accessibilityLabel={t('comum.editar')}
+                >
+                  <Ionicons
+                    name="create-outline"
+                    size={17}
+                    color={hexDe(paleta.tintaSoft)}
+                  />
+                </TouchableOpacity>
+              </View>
+
+              <Rotulo style={{ marginTop: espaco.md, marginBottom: espaco.sm }}>
+                {t('painel.preAquecer')}
+              </Rotulo>
+              <View style={{ flexDirection: 'row', gap: espaco.sm }}>
+                {PRESETS.map(p => (
                   <TouchableOpacity
-                    key={mm}
-                    disabled={centro}
-                    onPress={() => moverZOffset(mm)}
+                    key={p.nome}
+                    disabled={!ligada}
+                    onPress={() => preAquecer(p.bico, p.mesa)}
                     style={{
                       flex: 1,
-                      height: 42,
                       borderRadius: raioToken.interno,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: centro
-                        ? hexDe(paleta.acento) + '22'
-                        : hexDe(paleta.fundoBaixo),
+                      backgroundColor: hexDe(paleta.fundoBaixo),
                       borderWidth: 1,
-                      borderColor: centro
-                        ? hexDe(paleta.acento) + '77'
-                        : hexDe(paleta.linha),
+                      borderColor: hexDe(paleta.linha),
+                      paddingVertical: 11,
+                      alignItems: 'center',
+                      opacity: ligada ? 1 : 0.4,
                     }}
                   >
                     <Text
                       style={{
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: '700',
-                        fontFamily: fonteNumeros,
-                        color: centro
-                          ? hexDe(paleta.acentoTexto)
-                          : hexDe(paleta.tinta),
+                        color: hexDe(paleta.tinta),
                       }}
                     >
-                      {centro
-                        ? `${(printer.status?.ZOffset ?? 0).toFixed(2)} mm`
-                        : `${mm > 0 ? '+' : ''}${mm.toFixed(2)}`}
+                      {p.nome}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 10,
+                        color: hexDe(paleta.tintaSoft),
+                        marginTop: 2,
+                      }}
+                    >
+                      {`${p.bico}° · ${p.mesa}°`}
                     </Text>
                   </TouchableOpacity>
-                );
-              })}
+                ))}
+              </View>
+            </Cartao>
+          )}
+
+          {/* térmica */}
+          <Cartao>
+            <CartaoTemperaturas
+              atual={{
+                bico: printer.status?.TempOfNozzle ?? 0,
+                mesa: printer.status?.TempOfHotbed ?? 0,
+              }}
+              disp={disp}
+              onAplicar={aplicarTemperaturas}
+              onArrefecer={arrefecer}
+            />
+          </Cartao>
+
+          {/* velocidade e ventoinhas */}
+          <Cartao>
+            <CartaoVentilacao
+              ventoinhas={{
+                model: ventoinhas.ModelFan ?? 0,
+                side: ventoinhas.AuxiliaryFan ?? 0,
+                chamber: ventoinhas.BoxFan ?? 0,
+              }}
+              velocidade={velocidade}
+              disp={disp}
+              onVentoinha={definirVentoinha}
+              onVelocidade={definirVelocidade}
+            />
+          </Cartao>
+
+          {/* eixos: babystep a imprimir, D-Pad em espera */}
+          <Cartao>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Rotulo style={{ flex: 1 }}>{t('controlos.movimento')}</Rotulo>
+              {aImprimir && (
+                <View
+                  style={{
+                    backgroundColor: hexDe(paleta.aviso) + '22',
+                    borderRadius: 7,
+                    paddingHorizontal: 7,
+                    paddingVertical: 3,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 10,
+                      fontWeight: '700',
+                      color: hexDe(paleta.aviso),
+                    }}
+                  >
+                    {t('painel.xyBloqueados')}
+                  </Text>
+                </View>
+              )}
             </View>
-          </>
-        ) : (
-          <CartaoMovimento
-            posicao={posicao}
-            passo={passo}
-            onPasso={escolherPasso}
-            disp={disp}
-            aEnviar={aEnviar}
-            resultado={resultado}
-            onMover={mover}
-            onHome={fazerHome}
-          />
-        )}
-      </Cartao>
+
+            {aImprimir ? (
+              <>
+                <Text
+                  style={{
+                    fontSize: 11,
+                    color: hexDe(paleta.tintaSoft),
+                    marginTop: 6,
+                  }}
+                >
+                  {t('painel.babystepMsg')}
+                </Text>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    gap: espaco.sm,
+                    marginTop: espaco.md,
+                  }}
+                >
+                  {[-0.02, 0, 0.02].map((mm, i) => {
+                    const centro = i === 1;
+                    return (
+                      <TouchableOpacity
+                        key={mm}
+                        disabled={centro}
+                        onPress={() => moverZOffset(mm)}
+                        style={{
+                          flex: 1,
+                          height: 42,
+                          borderRadius: raioToken.interno,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: centro
+                            ? hexDe(paleta.acento) + '22'
+                            : hexDe(paleta.fundoBaixo),
+                          borderWidth: 1,
+                          borderColor: centro
+                            ? hexDe(paleta.acento) + '77'
+                            : hexDe(paleta.linha),
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 13,
+                            fontWeight: '700',
+                            fontFamily: fonteNumeros,
+                            color: centro
+                              ? hexDe(paleta.acentoTexto)
+                              : hexDe(paleta.tinta),
+                          }}
+                        >
+                          {centro
+                            ? `${(printer.status?.ZOffset ?? 0).toFixed(2)} mm`
+                            : `${mm > 0 ? '+' : ''}${mm.toFixed(2)}`}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </>
+            ) : (
+              <CartaoMovimento
+                posicao={posicao}
+                passo={passo}
+                onPasso={escolherPasso}
+                disp={disp}
+                aEnviar={aEnviar}
+                resultado={resultado}
+                onMover={mover}
+                onHome={fazerHome}
+              />
+            )}
+          </Cartao>
+        </View>
+      </View>
     </ScrollView>
   );
 };
