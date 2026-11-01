@@ -3,9 +3,9 @@
  *
  * A versão 1 só levava impressoras e preferências; a versão 2 acrescenta o
  * inventário de filamento; a versão 3 acrescenta o registo de ficheiros
- * (favoritos, reimpressões, última impressão, etiquetas). O import aceita
- * todas: um backup antigo entra sem erro e simplesmente não traz o que não
- * tinha.
+ * (favoritos, reimpressões, última impressão, etiquetas); a versão 4
+ * acrescenta a fila de impressão. O import aceita todas: um backup antigo
+ * entra sem erro e simplesmente não traz o que não tinha.
  */
 import {
   EstadoFilamentos,
@@ -14,8 +14,10 @@ import {
 } from './filamentos/armazenamento';
 import { EstadoFicheiros } from './ficheiros/modelo';
 import { lerRegistos } from './ficheiros/armazenamento';
+import { ItemFila } from './fila/modelo';
+import { lerItens } from './fila/armazenamento';
 
-export const VERSAO_BACKUP = 3;
+export const VERSAO_BACKUP = 4;
 
 export interface BackupImpressora {
   printerName: string;
@@ -36,6 +38,10 @@ export interface BackupFicheiros {
   registos: unknown[];
 }
 
+export interface BackupFila {
+  itens: unknown[];
+}
+
 export interface Backup {
   versao: number;
   criadoEm: string;
@@ -43,6 +49,7 @@ export interface Backup {
   preferencias: Record<string, unknown>;
   filamentos?: BackupFilamentos;
   ficheiros?: BackupFicheiros;
+  fila?: BackupFila;
 }
 
 export const montarBackup = (dados: {
@@ -50,6 +57,7 @@ export const montarBackup = (dados: {
   preferencias: Record<string, unknown>;
   filamentos?: EstadoFilamentos;
   ficheiros?: EstadoFicheiros;
+  fila?: ItemFila[];
   criadoEm?: string;
 }): Backup => ({
   versao: VERSAO_BACKUP,
@@ -70,6 +78,7 @@ export const montarBackup = (dados: {
   ...(dados.ficheiros
     ? { ficheiros: { registos: dados.ficheiros.registos } }
     : {}),
+  ...(dados.fila ? { fila: { itens: dados.fila } } : {}),
 });
 
 /**
@@ -134,6 +143,9 @@ export const lerBackup = (texto: string): Backup => {
             registos: lerRegistos((bruto.ficheiros as any).registos),
           },
         }
+      : {}),
+    ...(bruto.fila && typeof bruto.fila === 'object'
+      ? { fila: { itens: lerItens((bruto.fila as any).itens) } }
       : {}),
   };
 };
@@ -209,4 +221,30 @@ export const importarFicheiros = (
     estado: { versao: actual.versao, registos: Array.from(mapa.values()) },
     novos,
   };
+};
+
+/**
+ * Junta a fila do backup à actual. O backup ganha em conflito de id (é um
+ * restauro) e os itens novos entram no fim, pela ordem em que foram guardados.
+ */
+export const importarFila = (
+  actual: ItemFila[],
+  backup: Backup
+): { fila: ItemFila[]; novos: number } => {
+  if (!backup.fila) return { fila: actual, novos: 0 };
+  const importados = lerItens(backup.fila.itens);
+  const porId = new Map(actual.map(item => [item.id, item]));
+  let novos = 0;
+  const fila = [...actual];
+  importados.forEach(item => {
+    if (porId.has(item.id)) {
+      const indice = fila.findIndex(actualItem => actualItem.id === item.id);
+      if (indice >= 0) fila[indice] = item;
+      return;
+    }
+    novos += 1;
+    fila.push(item);
+    porId.set(item.id, item);
+  });
+  return { fila, novos };
 };

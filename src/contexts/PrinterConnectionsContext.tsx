@@ -31,7 +31,16 @@ import {
   stopPrintCommand,
 } from '../utils/commands';
 import * as Notifications from 'expo-notifications';
-import { ItemFila, carregarFila, gravarFila } from '../utils/fila';
+import {
+  ItemFila,
+  aguardarAck,
+  criarItem,
+  iniciarEnvio,
+  proximoDaFila,
+  registarAck,
+  semResposta,
+} from '../utils/fila';
+import { carregarFila, gravarFila } from '../utils/fila/armazenamento';
 import { notify } from '../utils/notifications';
 import { mensagemDoErro } from '../utils/errors';
 import { lerTimelapse } from '../utils/timelapse';
@@ -41,7 +50,18 @@ import { buildPrintMonitorStatus } from '../utils/printMonitorStatus';
 import { createPrintMonitorService } from '../utils/printMonitorService';
 import { guardarArranque } from '../utils/ficheiros/armazenamento';
 
-interface PrinterConnectionsContextType {
+/** O que a app precisa de saber para pôr um ficheiro na fila. */
+export interface ItemNovaFila {
+  printerId: string;
+  name: string;
+  label: string;
+  opcoes: { nivelar: boolean; lado: 0 | 1 };
+  tamanho?: number;
+  duracaoSeg?: number;
+  miniatura?: string;
+}
+
+export interface PrinterConnectionsContextType {
   printers: Printer[];
   addPrinter: (
     printerName: string,
@@ -63,9 +83,10 @@ interface PrinterConnectionsContextType {
   fila: ItemFila[];
   filaAuto: boolean;
   pendentesMesaLimpa: Record<string, ItemFila>;
-  adicionarAFila: (item: ItemFila) => void;
+  adicionarAFila: (item: ItemNovaFila) => ItemFila;
   removerDaFila: (id: string) => void;
   limparFila: () => void;
+  substituirFila: (itens: ItemFila[]) => void;
   definirFilaAuto: (ligada: boolean) => void;
   confirmarMesaLimpa: (printerId: string) => Promise<boolean>;
   cancelarMesaLimpa: (printerId: string) => void;
@@ -1290,11 +1311,34 @@ export const PrinterConnectionsProvider = ({
       .catch(() => undefined);
   }, []);
 
-  const adicionarAFila = useCallback((item: ItemFila) => {
+  /** Substitui um item no estado e no armazenamento (transições da máquina). */
+  const substituirItem = useCallback((item: ItemFila) => {
+    const nova = filaRef.current.map(actual =>
+      actual.id === item.id ? item : actual
+    );
+    filaRef.current = nova;
+    setFila(nova);
+    gravarFila(nova);
+  }, []);
+
+  const adicionarAFila = useCallback((dados: ItemNovaFila): ItemFila => {
+    const agora = Date.now();
+    const item = criarItem({
+      id: `fila-${agora}-${Math.random().toString(36).slice(2, 8)}`,
+      printerId: dados.printerId,
+      name: dados.name,
+      label: dados.label,
+      agora,
+      opcoes: dados.opcoes,
+      tamanho: dados.tamanho,
+      duracaoSeg: dados.duracaoSeg,
+      miniatura: dados.miniatura,
+    });
     const nova = [...filaRef.current, item];
     filaRef.current = nova;
     setFila(nova);
     gravarFila(nova);
+    return item;
   }, []);
 
   const removerDaFila = useCallback((id: string) => {
@@ -1310,6 +1354,12 @@ export const PrinterConnectionsProvider = ({
     gravarFila([]);
   }, []);
 
+  const substituirFila = useCallback((itens: ItemFila[]) => {
+    filaRef.current = itens;
+    setFila(itens);
+    gravarFila(itens);
+  }, []);
+
   const definirFilaAuto = useCallback((ligada: boolean) => {
     setFilaAuto(ligada);
     AsyncStorage.setItem('filaAuto', ligada ? '1' : '0').catch(() => undefined);
@@ -1323,8 +1373,17 @@ export const PrinterConnectionsProvider = ({
   // esta pausa o mesmo fim de trabalho podia arrancar dois itens da fila.
   const ultimoArranqueRef = useRef<Record<string, number>>({});
 
+  /**
+   * Arranca um item. A máquina de estados decide o que pode acontecer:
+   *
+   * - a item só entra em «a enviar» a partir de «pendente»;
+   * - a resposta só conta se for da tentativa em curso (Ack tardio é ignorado);
+   * - uma recusa explícita volta a «pendente» (até 3 vezes) e depois «falhou»;
+   * - uma resposta que não chega **não** repete o comando: fica bloqueado, à
+   *   espera de reconciliação (repetir podia arrancar duas vezes).
+   */
   const executarArranque = useCallback(
-    async (printer: Printer, proximo: ItemFila): Promise<boolean> => {
+    async (printer: Printer, alvo: ItemFila): Promise<boolean> => {
       if (aArrancarRef.current[printer.id]) return false;
       if (Date.now() - (ultimoArranqueRef.current[printer.id] ?? 0) < 120_000)
         return false;
@@ -1332,54 +1391,85 @@ export const PrinterConnectionsProvider = ({
       aArrancarRef.current[printer.id] = true;
       try {
         const timelapse = await lerTimelapse(printer.id).catch(() => false);
-        const jobId = `fila-${Date.now()}-${Math.random()
-          .toString(36)
-          .slice(2, 8)}`;
-        const comando = startPrintCommand(
-          proximo.name,
-          {
-            nivelar: false,
-            lado: 0,
-            timelapse: timelapse ? 1 : 0,
-          },
-          { id: jobId }
-        );
+        let item = filaRef.current.find(i => i.id === alvo.id) ?? alvo;
+
         for (let tentativa = 1; tentativa <= 4; tentativa++) {
+          const tentativaId = `t-${Date.now()}-${Math.random()
+            .toString(36)
+            .slice(2, 8)}`;
+          const inicio = iniciarEnvio(item, tentativaId, Date.now());
+          if (!inicio.ok) return false;
+          item = inicio.item;
+          substituirItem(item);
+
+          const comando = startPrintCommand(
+            item.name,
+            {
+              nivelar: item.opcoes.nivelar,
+              lado: item.opcoes.lado,
+              slotMap: item.opcoes.slotMap ?? [],
+              timelapse: timelapse ? 1 : 0,
+            },
+            { id: `fila-${tentativaId}` }
+          );
+
+          item = aguardarAck(item, tentativaId, Date.now());
+          substituirItem(item);
+
+          let resposta: any;
           try {
-            const resposta = await request(printer.id, comando, 15000);
-            const ack = ackDaResposta(resposta) ?? 0;
-            if (ack === 0) {
-              ultimoArranqueRef.current[printer.id] = Date.now();
-              // O item da fila também conta como impressão deste ficheiro.
-              guardarArranque(
-                { printerId: printer.id, nome: proximo.name },
-                comando.Id || jobId
-              ).catch(() => undefined);
-              removerDaFila(proximo.id);
-              cancelarMesaLimpa(printer.id);
-              notify(
-                'A arrancar o próximo',
-                `${printer.printerName} começou ${proximo.label}.`,
-                { printerId: printer.id }
-              );
-              return true;
-            }
-            log(
-              'fila: a máquina recusou',
-              descreverAck(ack, 'imprimir').mensagem,
-              'tentativa',
-              tentativa
-            );
+            resposta = await request(printer.id, comando, 15000);
           } catch (erro) {
-            log('fila: tentativa falhou', tentativa, erro);
+            item = semResposta(item, Date.now());
+            substituirItem(item);
+            log('fila: sem resposta da impressora', erro);
+            notify(
+              'Não arrancou',
+              `${item.label}: a impressora não respondeu. Ficou bloqueado até verificares.`,
+              { printerId: printer.id }
+            );
+            return false;
           }
+
+          const ack = ackDaResposta(resposta) ?? 0;
+          const resultado = registarAck(item, tentativaId, ack, Date.now());
+          if (!resultado.aplicado) return false;
+          item = resultado.item;
+
+          if (item.estado === 'aImprimir') {
+            ultimoArranqueRef.current[printer.id] = Date.now();
+            // O item da fila também conta como impressão deste ficheiro.
+            guardarArranque(
+              { printerId: printer.id, nome: item.name },
+              comando.Id || `fila-${tentativaId}`
+            ).catch(() => undefined);
+            // Por agora sai da fila ao arrancar; a Fase 4 mantém-no até
+            // reconciliar com o estado real.
+            removerDaFila(item.id);
+            cancelarMesaLimpa(printer.id);
+            notify(
+              'A arrancar o próximo',
+              `${printer.printerName} começou ${item.label}.`,
+              { printerId: printer.id }
+            );
+            return true;
+          }
+
+          substituirItem(item);
+          if (item.estado === 'falhou') break;
+          log(
+            'fila: a máquina recusou',
+            descreverAck(ack, 'imprimir').mensagem,
+            'tentativa',
+            tentativa
+          );
           if (tentativa < 4) {
             await new Promise(resolver => setTimeout(resolver, 6000));
           }
         }
         notify(
           'Não arrancou',
-          `${proximo.label}: a máquina não aceitou. O trabalho fica na fila.`,
+          `${item.label}: a máquina não aceitou. O trabalho fica na fila.`,
           { printerId: printer.id }
         );
         return false;
@@ -1387,13 +1477,17 @@ export const PrinterConnectionsProvider = ({
         aArrancarRef.current[printer.id] = false;
       }
     },
-    [request, removerDaFila, cancelarMesaLimpa]
+    [request, removerDaFila, cancelarMesaLimpa, substituirItem]
   );
 
   const confirmarMesaLimpa = useCallback(
     async (printerId: string): Promise<boolean> => {
       const printer = printersRef.current.find(p => p.id === printerId);
-      const proximo = pendentesMesaLimpa[printerId];
+      const pendente = pendentesMesaLimpa[printerId];
+      // O item guardado no pedido é uma fotografia: usar o estado atual.
+      const proximo = pendente
+        ? filaRef.current.find(i => i.id === pendente.id)
+        : undefined;
       if (!printer || !proximo) return false;
       return executarArranque(printer, proximo);
     },
@@ -1403,9 +1497,7 @@ export const PrinterConnectionsProvider = ({
   const arrancarProximo = useCallback(
     async (printer: Printer | undefined): Promise<boolean> => {
       if (!printer || !filaAuto) return false;
-      const proximo = filaRef.current.find(
-        item => item.printerId === printer.id
-      );
+      const proximo = proximoDaFila(filaRef.current, printer.id);
       if (!proximo) return false;
 
       setPendentesMesaLimpa(prev => ({ ...prev, [printer.id]: proximo }));
@@ -1597,6 +1689,7 @@ export const PrinterConnectionsProvider = ({
         adicionarAFila,
         removerDaFila,
         limparFila,
+        substituirFila,
         definirFilaAuto,
         confirmarMesaLimpa,
         cancelarMesaLimpa,
