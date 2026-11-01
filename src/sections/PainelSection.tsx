@@ -28,11 +28,13 @@ import { getPrintStatus, Printer } from '../types';
 import { htmlDoVideo } from '../utils/cameraStream';
 import { CartaoMovimento } from '../screens/controlos/CartaoMovimento';
 import { CartaoVentilacao } from '../screens/controlos/CartaoVentilacao';
+import { CartaoTemperaturas } from '../screens/controlos/CartaoTemperaturas';
 import {
   LIMITE_ESTADO_ANTIGO_MS,
   controlosDisponiveis,
 } from '../utils/controlos/capacidades';
 import { estadoDeInfo } from '../utils/controlos/estado';
+import { Preset } from '../utils/controlos/temperaturas';
 import {
   CHAVE_PASSO,
   PassoMm,
@@ -418,6 +420,44 @@ export const PainelSection = ({
       )
     );
   };
+
+  const aplicarTemperaturas = (preset: Preset, material: string) => {
+    Alert.alert(
+      t('controlos.confirmarTemperaturas', { material }),
+      t('controlos.confirmarTemperaturasMsg', {
+        bico: String(preset.bico),
+        mesa: String(preset.mesa),
+      }),
+      [
+        { text: t('comum.cancelar'), style: 'cancel' },
+        {
+          text: t('comum.confirmar'),
+          onPress: () =>
+            enviar(
+              temperatureCommand(
+                { nozzle: preset.bico, bed: preset.mesa },
+                { id: printer?.id }
+              )
+            ),
+        },
+      ]
+    );
+  };
+
+  const arrefecer = () =>
+    Alert.alert(t('controlos.arrefecer'), t('controlos.arrefecerMsg'), [
+      { text: t('comum.cancelar'), style: 'cancel' },
+      {
+        text: t('comum.confirmar'),
+        onPress: () =>
+          enviar(
+            temperatureCommand(
+              { nozzle: 0, bed: 0, chamber: 0 },
+              { id: printer?.id }
+            )
+          ),
+      },
+    ]);
 
   const definirVelocidade = (pct: number) =>
     enviar(printSpeedCommand(pct, { id: printer?.id }));
@@ -910,75 +950,15 @@ export const PainelSection = ({
 
       {/* térmica */}
       <Cartao>
-        <Rotulo style={{ marginBottom: espaco.sm }}>
-          {t('painel.temperaturas')}
-        </Rotulo>
-        <View style={{ flexDirection: 'row', gap: espaco.sm }}>
-          {[
-            {
-              rotulo: t('comum.bico'),
-              valor: printer.status?.TempOfNozzle ?? 0,
-              alvo: printer.status?.TempTargetNozzle ?? 0,
-              cor: hexDe(paleta.aviso),
-            },
-            {
-              rotulo: t('comum.mesa'),
-              valor: printer.status?.TempOfHotbed ?? 0,
-              alvo: printer.status?.TempTargetHotbed ?? 0,
-              cor: hexDe(paleta.acento),
-            },
-            {
-              rotulo: t('comum.camara'),
-              valor: printer.status?.TempOfBox ?? 0,
-              alvo: printer.status?.TempTargetBox ?? 0,
-              cor: hexDe(paleta.ok),
-            },
-          ].map(item => (
-            <View
-              key={item.rotulo}
-              style={{
-                flex: 1,
-                backgroundColor: hexDe(paleta.fundoBaixo),
-                borderRadius: raioToken.interno,
-                paddingVertical: espaco.sm,
-                alignItems: 'center',
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 10,
-                  color: hexDe(paleta.tintaSoft),
-                  textTransform: 'uppercase',
-                  letterSpacing: 0.5,
-                }}
-              >
-                {item.rotulo}
-              </Text>
-              <Text
-                style={{
-                  fontSize: 20,
-                  fontWeight: '700',
-                  color: item.cor,
-                  fontFamily: fonteNumeros,
-                  marginTop: 3,
-                }}
-              >
-                {`${Math.round(item.valor)}°`}
-              </Text>
-              <Text
-                style={{
-                  fontSize: 10,
-                  color: hexDe(paleta.tintaSoft),
-                  fontFamily: fonteNumeros,
-                }}
-              >
-                {item.alvo > 0
-                  ? `/ ${Math.round(item.alvo)}°`
-                  : t('painel.ambiente')}
-              </Text>
-            </View>
-          ))}
-        </View>
+        <CartaoTemperaturas
+          atual={{
+            bico: printer.status?.TempOfNozzle ?? 0,
+            mesa: printer.status?.TempOfHotbed ?? 0,
+          }}
+          disp={disp}
+          onAplicar={aplicarTemperaturas}
+          onArrefecer={arrefecer}
+        />
       </Cartao>
 
       {/* velocidade e ventoinhas só com trabalho a correr */}
