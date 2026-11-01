@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="390" height="888" viewBox="0 0 390 888">
+  <title>Ficheiros — camadas</title>
+  <style>
+    text { font-family: "Helvetica Neue", Arial, sans-serif; fill: #111; }
+    .t { font-size: 13px; font-weight: 700; }
+    .d { font-size: 11px; fill: #444; }
+    .s { font-size: 9px; fill: #666; letter-spacing: .6px; }
+    .n { font-size: 12px; font-weight: 700; fill: #fff; }
+    .b { fill: none; stroke: #555; stroke-width: 1.2; stroke-dasharray: 5 4; }
+  </style>
+<rect x="0" y="44" width="390" height="844" fill="#fff" stroke="#bbb"/>
+<text x="14" y="24" class="t">ATALAIA · FICHEIROS · PRÉ-VISUALIZAÇÃO DE CAMADAS</text>
+<text x="14" y="38" class="d">no tablet a vista é maior; os blocos são os mesmos</text>
+<rect x="12" y="56" width="366" height="62" rx="10" class="b"/><circle cx="26" cy="70" r="9" fill="#111"/><text x="26" y="74" text-anchor="middle" class="n">1</text><text x="42" y="74" class="s">CABEÇALHO</text><text x="26" y="102" class="d">← Detalhe · peça-do-polvo-v3.gcode</text>
+<rect x="12" y="128" width="366" height="372" rx="10" class="b"/><circle cx="26" cy="142" r="9" fill="#111"/><text x="26" y="146" text-anchor="middle" class="n">2</text><text x="42" y="146" class="s">DESENHO DA CAMADA</text><rect x="26" y="152" width="338" height="340" rx="8" fill="#f7f7f7" stroke="#555" stroke-width="1" stroke-dasharray="4 4"/><path d="M120 420 L150 320 L200 270 L250 320 L280 400 L200 450 Z" fill="none" stroke="#888" stroke-width="1.2"/><text x="195" y="180" text-anchor="middle" class="s">VISTA DE CIMA · SÓ EXTRUSÃO</text>
+<rect x="12" y="512" width="366" height="70" rx="10" class="b"/><circle cx="26" cy="526" r="9" fill="#111"/><text x="26" y="530" text-anchor="middle" class="n">3</text><text x="42" y="530" class="s">SLIDER DE CAMADAS</text><line x1="26" y1="560" x2="364" y2="560" stroke="#555"/><circle cx="180" cy="560" r="7" fill="#555"/><text x="26" y="546" class="d">Camada 12 / 120</text><text x="300" y="546" class="s">SLIDER</text>
+<rect x="12" y="594" width="366" height="76" rx="10" class="b"/><circle cx="26" cy="608" r="9" fill="#111"/><text x="26" y="612" text-anchor="middle" class="n">4</text><text x="42" y="612" class="s">BOTÕES DE CAMADA</text><rect x="26" y="620" width="120" height="40" rx="8" fill="none" stroke="#555" stroke-width="1.2"/><text x="86.0" y="644.0" text-anchor="middle" class="d">‹ Anterior</text><rect x="244" y="620" width="120" height="40" rx="8" fill="none" stroke="#555" stroke-width="1.2"/><text x="304.0" y="644.0" text-anchor="middle" class="d">Seguinte ›</text>
+<rect x="12" y="682" width="366" height="58" rx="10" class="b"/><circle cx="26" cy="696" r="9" fill="#111"/><text x="26" y="700" text-anchor="middle" class="n">5</text><text x="42" y="700" class="s">INFORMAÇÃO DA CAMADA</text><text x="26" y="714" class="d">Camada 12: 0,18 mm · 2 mudanças de cor</text><text x="26" y="732" class="s">PARSING FORA DA UI · AMOSTRAGEM &gt; 6 MB</text>
+<rect x="12" y="746" width="366" height="44" rx="10" class="b"/><circle cx="26" cy="760" r="9" fill="#111"/><text x="26" y="764" text-anchor="middle" class="n">6</text><text x="42" y="764" class="s">LIMITE HONESTO</text><text x="26" y="778" class="d">Só na impressora (&gt; 6 MB): mostra a miniatura e explica.</text>
+<rect x="12" y="792" width="366" height="42" rx="10" class="b"/><circle cx="26" cy="806" r="9" fill="#111"/><text x="26" y="810" text-anchor="middle" class="n">7</text><text x="42" y="810" class="s">RESINA</text><text x="46" y="818" class="d">.ctb / .goo: só o que o formato der.</text>
+</svg>
