@@ -373,7 +373,15 @@ export const InicioScreen = ({ navigation }: any) => {
               backgroundColor: '#0A0F18',
             }}
           >
-            <View style={{ aspectRatio: duasColunas ? 16 / 9 : 16 / 10 }}>
+            <View
+              style={
+                duasColunas
+                  ? // No tablet o herói esticava até ~700 dp de altura e a
+                    // miniatura ficava desproporcionada: limita-se a altura.
+                    { height: Math.min(360, Math.max(240, height * 0.34)) }
+                  : { aspectRatio: 16 / 10 }
+              }
+            >
               <View
                 style={{
                   position: 'absolute',
@@ -390,7 +398,9 @@ export const InicioScreen = ({ navigation }: any) => {
               {imagem && (
                 <Image
                   source={{ uri: imagem }}
-                  resizeMode="cover"
+                  // No tablet a faixa é muito larga: «cover» cortava a peça e
+                  // ampliava-a até ficar pixelizada. «contain» mostra-a toda.
+                  resizeMode={duasColunas ? 'contain' : 'cover'}
                   style={{
                     position: 'absolute',
                     top: 0,
@@ -409,7 +419,11 @@ export const InicioScreen = ({ navigation }: any) => {
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  backgroundColor: imagem ? 'rgba(5,8,15,0.28)' : 'transparent',
+                  backgroundColor: imagem
+                    ? duasColunas
+                      ? 'rgba(5,8,15,0.12)'
+                      : 'rgba(5,8,15,0.28)'
+                    : 'transparent',
                 }}
               />
               <View

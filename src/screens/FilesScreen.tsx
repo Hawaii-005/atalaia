@@ -1279,7 +1279,8 @@ export const FilesScreen = ({
           onPress={handleUpload}
           disabled={!!ocupado}
           activeOpacity={0.85}
-          className={`absolute right-5 bottom-7 ${BT_ACENTO} px-4 py-3 rounded-full flex-row items-center`}
+          style={{ right: duasColunas ? 420 : 20, bottom: 28 }}
+          className={`absolute ${BT_ACENTO} px-4 py-3 rounded-full flex-row items-center`}
         >
           <Ionicons
             name="cloud-upload-outline"
