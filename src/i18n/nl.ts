@@ -190,6 +190,25 @@ const nl = {
   'files.custo': 'Kosten',
   'files.filamentos': 'Filamenten',
   'files.impressoes': 'Printen',
+  'camadas.ver': 'Lagen bekijken',
+  'camadas.aCarregar': 'G-code wordt gelezen…',
+  'camadas.contagem': 'Laag {n} van {total}',
+  'camadas.altura': 'Hoogte',
+  'camadas.cor': 'Kleur',
+  'camadas.total': 'Lagen',
+  'camadas.anterior': 'Vorige',
+  'camadas.seguinte': 'Volgende',
+  'camadas.semCopia':
+    'Geen lokale kopie van dit bestand. De printer levert alleen de G-code van bestanden die al een voorbeeld hebben; de rest toont de miniatuur.',
+  'camadas.grande':
+    'Dit bestand is groter dan 6 MB. De lagen worden niet geladen om de app niet te vertragen.',
+  'camadas.ocupada':
+    'De printer is aan het printen en levert dan geen bestanden. Probeer opnieuw als de opdracht klaar is.',
+  'camadas.erro': 'De G-code van dit bestand kon niet worden gelezen.',
+  'camadas.truncado':
+    'Gedeeltelijke weergave: het bestand heeft meer bewegingen dan de app bewaart.',
+  'camadas.comCores': 'Dit bestand wisselt {n} keer van kleur.',
+  'camadas.tentar': 'Opnieuw proberen',
   'files.imprimirTitulo': 'Printen',
   'files.imprimirMsg': 'Printen van {nome} starten?',
   'files.naoArrancou': 'Niet gestart',

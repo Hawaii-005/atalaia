@@ -191,6 +191,25 @@ export default {
   'files.custo': 'Custo',
   'files.filamentos': 'Filamentos',
   'files.impressoes': 'Impressões',
+  'camadas.ver': 'Ver camadas',
+  'camadas.aCarregar': 'A ler o G-code…',
+  'camadas.contagem': 'Camada {n} de {total}',
+  'camadas.altura': 'Altura',
+  'camadas.cor': 'Cor',
+  'camadas.total': 'Camadas',
+  'camadas.anterior': 'Anterior',
+  'camadas.seguinte': 'Seguinte',
+  'camadas.semCopia':
+    'Sem cópia local deste ficheiro. A impressora só serve o G-code dos ficheiros que já pré-visualizou; nos restantes fica a miniatura.',
+  'camadas.grande':
+    'Este ficheiro tem mais de 6 MB. As camadas não são geradas para não arrastar a app.',
+  'camadas.ocupada':
+    'A impressora está ocupada (a imprimir) e não serve ficheiros enquanto isso. Tenta quando o trabalho terminar.',
+  'camadas.erro': 'Não foi possível ler o G-code deste ficheiro.',
+  'camadas.truncado':
+    'Vista parcial: o ficheiro tem mais traços do que a app guarda.',
+  'camadas.comCores': 'Este ficheiro muda de cor {n} vezes.',
+  'camadas.tentar': 'Tentar de novo',
   'files.imprimirTitulo': 'Imprimir',
   'files.imprimirMsg': 'Começar a imprimir {nome}?',
   'files.naoArrancou': 'Não arrancou',

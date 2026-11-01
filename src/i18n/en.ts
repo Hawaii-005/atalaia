@@ -193,6 +193,25 @@ const en = {
   'files.custo': 'Cost',
   'files.filamentos': 'Filaments',
   'files.impressoes': 'Prints',
+  'camadas.ver': 'View layers',
+  'camadas.aCarregar': 'Reading the G-code…',
+  'camadas.contagem': 'Layer {n} of {total}',
+  'camadas.altura': 'Height',
+  'camadas.cor': 'Color',
+  'camadas.total': 'Layers',
+  'camadas.anterior': 'Previous',
+  'camadas.seguinte': 'Next',
+  'camadas.semCopia':
+    'No local copy of this file. The printer only serves the G-code of files it has already previewed; the rest show the thumbnail.',
+  'camadas.grande':
+    'This file is larger than 6 MB. Layers are not generated so the app stays responsive.',
+  'camadas.ocupada':
+    'The printer is busy printing and does not serve files while it runs. Try again when the job finishes.',
+  'camadas.erro': 'Could not read the G-code of this file.',
+  'camadas.truncado':
+    'Partial view: the file has more moves than the app keeps.',
+  'camadas.comCores': 'This file changes color {n} times.',
+  'camadas.tentar': 'Try again',
   'files.imprimirTitulo': 'Print',
   'files.imprimirMsg': 'Start printing {nome}?',
   'files.naoArrancou': "Didn't start",

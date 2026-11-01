@@ -70,6 +70,7 @@ import {
   formatSize,
   formatTempo,
 } from './tipos';
+import { Camadas } from './Camadas';
 
 export const DetalheFicheiro = ({
   file,
@@ -111,6 +112,7 @@ export const DetalheFicheiro = ({
 }) => {
   useIdioma();
   const { tema } = useTheme();
+  const [aVerCamadas, setAVerCamadas] = useState(false);
   const size = file.FileSize ?? file.totalSize ?? file.usedSize ?? 0;
   const { preview, filamentos, consumo, loading } = useGcodePreview(
     size && size < PREVIEW_LIMIT ? printerIp : undefined,
@@ -379,6 +381,21 @@ export const DetalheFicheiro = ({
               />
             </View>
           )}
+          <TouchableOpacity
+            onPress={() => setAVerCamadas(true)}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            className="mt-2 h-11 rounded-xl border border-line flex-row items-center justify-center"
+          >
+            <Ionicons
+              name="layers-outline"
+              size={16}
+              color={hexDe(tema.paleta.acentoTexto)}
+            />
+            <Text className={`ml-2 text-[12px] font-semibold ${TX_ACENTO}`}>
+              {t('camadas.ver')}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Resumo em três células */}
@@ -681,18 +698,45 @@ export const DetalheFicheiro = ({
     </View>
   );
 
+  const modalCamadas = aVerCamadas ? (
+    <Modal
+      animationType="slide"
+      visible
+      onRequestClose={() => setAVerCamadas(false)}
+    >
+      <SafeAreaView
+        style={{ flex: 1, backgroundColor: hexDe(tema.paleta.fundo) }}
+      >
+        <Camadas
+          printerIp={printerIp}
+          nome={file.name}
+          mini={mini}
+          onClose={() => setAVerCamadas(false)}
+        />
+      </SafeAreaView>
+    </Modal>
+  ) : null;
+
   if (painel) {
-    return <View style={{ flex: 1 }}>{corpo}</View>;
+    return (
+      <View style={{ flex: 1 }}>
+        {corpo}
+        {modalCamadas}
+      </View>
+    );
   }
 
   return (
-    <Modal transparent animationType="slide" visible onRequestClose={onClose}>
-      <View
-        className="flex-1 justify-end"
-        style={{ backgroundColor: 'rgba(0,0,0,0.55)' }}
-      >
-        {corpo}
-      </View>
-    </Modal>
+    <>
+      <Modal transparent animationType="slide" visible onRequestClose={onClose}>
+        <View
+          className="flex-1 justify-end"
+          style={{ backgroundColor: 'rgba(0,0,0,0.55)' }}
+        >
+          {corpo}
+        </View>
+      </Modal>
+      {modalCamadas}
+    </>
   );
 };

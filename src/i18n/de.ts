@@ -190,6 +190,25 @@ const de = {
   'files.custo': 'Kosten',
   'files.filamentos': 'Filamente',
   'files.impressoes': 'Drucke',
+  'camadas.ver': 'Schichten ansehen',
+  'camadas.aCarregar': 'G-code wird gelesen…',
+  'camadas.contagem': 'Schicht {n} von {total}',
+  'camadas.altura': 'Höhe',
+  'camadas.cor': 'Farbe',
+  'camadas.total': 'Schichten',
+  'camadas.anterior': 'Zurück',
+  'camadas.seguinte': 'Weiter',
+  'camadas.semCopia':
+    'Keine lokale Kopie dieser Datei. Der Drucker liefert den G-code nur für Dateien, die er schon vorgeschaut hat; bei den übrigen erscheint das Vorschaubild.',
+  'camadas.grande':
+    'Diese Datei ist größer als 6 MB. Die Schichten werden nicht geladen, damit die App flüssig bleibt.',
+  'camadas.ocupada':
+    'Der Drucker druckt gerade und liefert währenddessen keine Dateien. Versuche es nach dem Auftrag erneut.',
+  'camadas.erro': 'Der G-code dieser Datei konnte nicht gelesen werden.',
+  'camadas.truncado':
+    'Teilansicht: Die Datei hat mehr Bewegungen, als die App speichert.',
+  'camadas.comCores': 'Diese Datei wechselt {n}-mal die Farbe.',
+  'camadas.tentar': 'Erneut versuchen',
   'files.imprimirTitulo': 'Drucken',
   'files.imprimirMsg': 'Druck von {nome} starten?',
   'files.naoArrancou': 'Nicht gestartet',

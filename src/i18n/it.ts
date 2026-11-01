@@ -190,6 +190,25 @@ const it = {
   'files.custo': 'Costo',
   'files.filamentos': 'Filamenti',
   'files.impressoes': 'Stampe',
+  'camadas.ver': 'Vedi layer',
+  'camadas.aCarregar': 'Lettura del G-code…',
+  'camadas.contagem': 'Layer {n} di {total}',
+  'camadas.altura': 'Altezza',
+  'camadas.cor': 'Colore',
+  'camadas.total': 'Layer',
+  'camadas.anterior': 'Precedente',
+  'camadas.seguinte': 'Successivo',
+  'camadas.semCopia':
+    'Nessuna copia locale di questo file. La stampante serve il G-code solo dei file già previsualizzati; per gli altri compare la miniatura.',
+  'camadas.grande':
+    "Questo file supera i 6 MB. I layer non vengono generati per non rallentare l'app.",
+  'camadas.ocupada':
+    'La stampante è occupata a stampare e non serve file nel frattempo. Riprova a lavoro finito.',
+  'camadas.erro': 'Impossibile leggere il G-code di questo file.',
+  'camadas.truncado':
+    "Vista parziale: il file ha più movimenti di quanti ne conservi l'app.",
+  'camadas.comCores': 'Questo file cambia colore {n} volte.',
+  'camadas.tentar': 'Riprova',
   'files.imprimirTitulo': 'Stampa',
   'files.imprimirMsg': 'Avviare la stampa di {nome}?',
   'files.naoArrancou': 'Non avviata',
