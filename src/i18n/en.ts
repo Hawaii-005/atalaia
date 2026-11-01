@@ -372,6 +372,51 @@ const en = {
   'settings.concluido': 'Done',
   'settings.boasVindasReiniciado': 'The welcome flow has been reset.',
   'settings.erroBoasVindas': 'The welcome flow could not be reset.',
+  'settings.pesquisa': 'Search settings',
+  'settings.limparPesquisa': 'Clear search',
+  'settings.semResultados': 'No setting matches the search.',
+  'settings.seccaoFila': 'Queue and printing',
+  'settings.seccaoFilamentos': 'Filaments',
+  'settings.seccaoDados': 'Security and data',
+  'settings.descSecaoImpressoras': 'Add, edit and alternate address',
+  'settings.descSecaoAparencia': 'Theme, language and refresh rate',
+  'settings.descSecaoFila': 'Auto start, alerts and mobile data',
+  'settings.descSecaoFilamentos': 'Spool warning, energy and inventory',
+  'settings.descSecaoDados': 'Backup, diagnostics and maintenance',
+  'settings.descSecaoSobre': 'Version, licence and support',
+  'settings.ajudaImpressoras':
+    'Tap a printer to edit its name, IP and alternate address.',
+  'settings.ajudaAdicionarImpressora':
+    'Looks for the printer on the local network or lets you type the IP.',
+  'settings.enderecoAlternativo': 'Alternate address (Tailscale)',
+  'settings.enderecoAlternativoDesc':
+    'IP on the tailnet, used when the local network is out of reach. Set it when editing the printer.',
+  'settings.ajudaTema': 'Changes the app colours. The change is immediate.',
+  'settings.ajudaIntervalo':
+    'How often the app asks the printer for its status. Shorter intervals use more battery and network.',
+  'settings.pausaFila': 'Pause between starts',
+  'settings.pausaFilaDesc':
+    'Fixed wait between two queue jobs, so the machine can leave its previous state.',
+  'settings.pausaFilaValor': '2 min',
+  'settings.mesaLimpa': 'Confirm clean plate',
+  'settings.mesaLimpaDesc':
+    'Before starting the next job the app asks you to confirm the plate is clear.',
+  'settings.ajudaTesteNotificacao':
+    'Sends an alert now, to confirm notifications are allowed.',
+  'settings.limiteTitulo': 'Low spool warning',
+  'settings.limiteDesc':
+    'Remaining filament percentage that triggers the warning (1 to 50%).',
+  'settings.kwhTitulo': 'Electricity price',
+  'settings.kwhDesc': 'Used to estimate the energy cost of a job.',
+  'settings.potenciaTitulo': 'Printer power',
+  'settings.potenciaDesc':
+    'Average draw in watts. Used in the energy cost estimate.',
+  'settings.exportarDiagnostico': 'Export diagnostics',
+  'settings.exportarDiagnosticoDesc':
+    'Report with version, printers and recent errors, with IPs masked.',
+  'settings.timelapseExperimental': 'Time-lapse (experimental)',
+  'settings.timelapseExperimentalDesc':
+    'Enables experimental time-lapse recording (Cmd 323).',
   'settings.avisoComunidade':
     'Atalaia is an independent, community-built app for Elegoo printers. Not affiliated with, endorsed, or recommended by Elegoo in any way.',
 

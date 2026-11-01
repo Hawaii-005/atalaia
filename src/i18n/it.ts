@@ -368,6 +368,51 @@ const it = {
     'La presentazione iniziale è stata reimpostata.',
   'settings.erroBoasVindas':
     'Impossibile reimpostare la presentazione iniziale.',
+  'settings.pesquisa': 'Cerca impostazioni',
+  'settings.limparPesquisa': 'Cancella ricerca',
+  'settings.semResultados': 'Nessuna impostazione corrisponde alla ricerca.',
+  'settings.seccaoFila': 'Coda e stampa',
+  'settings.seccaoFilamentos': 'Filamenti',
+  'settings.seccaoDados': 'Sicurezza e dati',
+  'settings.descSecaoImpressoras': 'Aggiungi, modifica e indirizzo alternativo',
+  'settings.descSecaoAparencia': 'Tema, lingua e frequenza di aggiornamento',
+  'settings.descSecaoFila': 'Avvio automatico, avvisi e dati mobili',
+  'settings.descSecaoFilamentos': 'Avviso bobina, energia e inventario',
+  'settings.descSecaoDados': 'Backup, diagnostica e manutenzione',
+  'settings.descSecaoSobre': 'Versione, licenza e supporto',
+  'settings.ajudaImpressoras':
+    'Tocca una stampante per modificare nome, IP e indirizzo alternativo.',
+  'settings.ajudaAdicionarImpressora':
+    'Cerca la stampante sulla rete locale o digita l’IP.',
+  'settings.enderecoAlternativo': 'Indirizzo alternativo (Tailscale)',
+  'settings.enderecoAlternativoDesc':
+    'IP nella tailnet, usato quando la rete locale non è raggiungibile. Si imposta modificando la stampante.',
+  'settings.ajudaTema': 'Cambia i colori dell’app. La modifica è immediata.',
+  'settings.ajudaIntervalo':
+    'Ogni quanto l’app chiede lo stato alla stampante. Intervalli brevi consumano più batteria e rete.',
+  'settings.pausaFila': 'Pausa tra gli avvii',
+  'settings.pausaFilaDesc':
+    'Attesa fissa tra due lavori in coda, per far uscire la macchina dallo stato precedente.',
+  'settings.pausaFilaValor': '2 min',
+  'settings.mesaLimpa': 'Conferma piano pulito',
+  'settings.mesaLimpaDesc':
+    'Prima di avviare il lavoro successivo l’app chiede di confermare che il piano sia libero.',
+  'settings.ajudaTesteNotificacao':
+    'Invia un avviso ora, per verificare che le notifiche siano consentite.',
+  'settings.limiteTitulo': 'Avviso bobina quasi finita',
+  'settings.limiteDesc':
+    'Percentuale di filamento rimasto che fa scattare l’avviso (da 1 a 50%).',
+  'settings.kwhTitulo': 'Prezzo dell’elettricità',
+  'settings.kwhDesc': 'Usato per stimare il costo energetico di un lavoro.',
+  'settings.potenciaTitulo': 'Potenza della stampante',
+  'settings.potenciaDesc':
+    'Consumo medio in watt. Usato nel calcolo del costo energetico.',
+  'settings.exportarDiagnostico': 'Esporta diagnostica',
+  'settings.exportarDiagnosticoDesc':
+    'Rapporto con versione, stampanti ed errori recenti, con IP mascherati.',
+  'settings.timelapseExperimental': 'Time-lapse (sperimentale)',
+  'settings.timelapseExperimentalDesc':
+    'Attiva la registrazione sperimentale di time-lapse (Cmd 323).',
   'settings.avisoComunidade':
     'Atalaia è un’app indipendente creata dalla comunità per le stampanti Elegoo. Non è in alcun modo affiliata, approvata o consigliata da Elegoo.',
   'stats.title': 'Statistiche',

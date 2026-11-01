@@ -369,6 +369,52 @@ const fr = {
     'Le parcours de bienvenue a été réinitialisé.',
   'settings.erroBoasVindas':
     'Impossible de réinitialiser le parcours de bienvenue.',
+  'settings.pesquisa': 'Rechercher un réglage',
+  'settings.limparPesquisa': 'Effacer la recherche',
+  'settings.semResultados': 'Aucun réglage ne correspond à la recherche.',
+  'settings.seccaoFila': 'File et impression',
+  'settings.seccaoFilamentos': 'Filaments',
+  'settings.seccaoDados': 'Sécurité et données',
+  'settings.descSecaoImpressoras': 'Ajouter, modifier et adresse alternative',
+  'settings.descSecaoAparencia': 'Thème, langue et fréquence de mise à jour',
+  'settings.descSecaoFila': 'Démarrage auto, alertes et données mobiles',
+  'settings.descSecaoFilamentos': 'Alerte de bobine, énergie et inventaire',
+  'settings.descSecaoDados': 'Sauvegarde, diagnostic et maintenance',
+  'settings.descSecaoSobre': 'Version, licence et assistance',
+  'settings.ajudaImpressoras':
+    'Touchez une imprimante pour modifier le nom, l’IP et l’adresse alternative.',
+  'settings.ajudaAdicionarImpressora':
+    'Cherche l’imprimante sur le réseau local ou saisissez l’IP.',
+  'settings.enderecoAlternativo': 'Adresse alternative (Tailscale)',
+  'settings.enderecoAlternativoDesc':
+    'IP sur le tailnet, quand le réseau local est hors de portée. Se règle en modifiant l’imprimante.',
+  'settings.ajudaTema':
+    'Change les couleurs de l’application. Le changement est immédiat.',
+  'settings.ajudaIntervalo':
+    'Fréquence à laquelle l’app demande l’état à l’imprimante. Des intervalles courts consomment plus de batterie et de réseau.',
+  'settings.pausaFila': 'Pause entre les démarrages',
+  'settings.pausaFilaDesc':
+    'Attente fixe entre deux travaux de la file, pour que la machine quitte son état précédent.',
+  'settings.pausaFilaValor': '2 min',
+  'settings.mesaLimpa': 'Confirmer plateau propre',
+  'settings.mesaLimpaDesc':
+    'Avant de lancer le travail suivant, l’app demande de confirmer que le plateau est libre.',
+  'settings.ajudaTesteNotificacao':
+    'Envoie une alerte maintenant, pour vérifier que les notifications sont autorisées.',
+  'settings.limiteTitulo': 'Alerte de bobine presque vide',
+  'settings.limiteDesc':
+    'Pourcentage de filament restant qui déclenche l’alerte (1 à 50 %).',
+  'settings.kwhTitulo': 'Prix de l’électricité',
+  'settings.kwhDesc': 'Sert à estimer le coût énergétique d’un travail.',
+  'settings.potenciaTitulo': 'Puissance de l’imprimante',
+  'settings.potenciaDesc':
+    'Consommation moyenne en watts. Utilisée dans le calcul du coût énergétique.',
+  'settings.exportarDiagnostico': 'Exporter le diagnostic',
+  'settings.exportarDiagnosticoDesc':
+    'Rapport avec version, imprimantes et erreurs récentes, IP masquées.',
+  'settings.timelapseExperimental': 'Time-lapse (expérimental)',
+  'settings.timelapseExperimentalDesc':
+    'Active l’enregistrement expérimental de time-lapse (Cmd 323).',
   'settings.avisoComunidade':
     'Atalaia est une application indépendante créée par la communauté pour les imprimantes Elegoo. Elle n’est en aucun cas affiliée à Elegoo, ni approuvée ou recommandée par cette marque.',
   'stats.title': 'Statistiques',

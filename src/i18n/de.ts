@@ -371,6 +371,54 @@ const de = {
   'settings.boasVindasReiniciado': 'Die Einführung wurde zurückgesetzt.',
   'settings.erroBoasVindas':
     'Die Einführung konnte nicht zurückgesetzt werden.',
+  'settings.pesquisa': 'Einstellungen durchsuchen',
+  'settings.limparPesquisa': 'Suche löschen',
+  'settings.semResultados': 'Keine Einstellung passt zur Suche.',
+  'settings.seccaoFila': 'Warteschlange und Druck',
+  'settings.seccaoFilamentos': 'Filamente',
+  'settings.seccaoDados': 'Sicherheit und Daten',
+  'settings.descSecaoImpressoras':
+    'Hinzufügen, bearbeiten und alternative Adresse',
+  'settings.descSecaoAparencia': 'Design, Sprache und Aktualisierungsrate',
+  'settings.descSecaoFila': 'Autostart, Hinweise und mobile Daten',
+  'settings.descSecaoFilamentos': 'Spulenwarnung, Energie und Bestand',
+  'settings.descSecaoDados': 'Sicherung, Diagnose und Wartung',
+  'settings.descSecaoSobre': 'Version, Lizenz und Support',
+  'settings.ajudaImpressoras':
+    'Tippe einen Drucker an, um Name, IP und alternative Adresse zu ändern.',
+  'settings.ajudaAdicionarImpressora':
+    'Sucht den Drucker im lokalen Netzwerk oder du tippst die IP ein.',
+  'settings.enderecoAlternativo': 'Alternative Adresse (Tailscale)',
+  'settings.enderecoAlternativoDesc':
+    'IP im Tailnet, wenn das lokale Netz nicht erreichbar ist. Wird beim Bearbeiten des Druckers gesetzt.',
+  'settings.ajudaTema':
+    'Ändert die Farben der App. Die Änderung ist sofort sichtbar.',
+  'settings.ajudaIntervalo':
+    'Wie oft die App den Status abfragt. Kürzere Abstände brauchen mehr Akku und Netzwerk.',
+  'settings.pausaFila': 'Pause zwischen Starts',
+  'settings.pausaFilaDesc':
+    'Feste Wartezeit zwischen zwei Aufträgen, damit die Maschine den vorherigen Zustand verlässt.',
+  'settings.pausaFilaValor': '2 Min.',
+  'settings.mesaLimpa': 'Saubere Platte bestätigen',
+  'settings.mesaLimpaDesc':
+    'Vor dem nächsten Auftrag fragt die App, ob die Platte frei ist.',
+  'settings.ajudaTesteNotificacao':
+    'Sendet jetzt einen Hinweis, um zu prüfen, ob Benachrichtigungen erlaubt sind.',
+  'settings.limiteTitulo': 'Warnung bei fast leerer Spule',
+  'settings.limiteDesc':
+    'Restprozentsatz, ab dem die Warnung erscheint (1 bis 50 %).',
+  'settings.kwhTitulo': 'Strompreis',
+  'settings.kwhDesc':
+    'Wird für die Energiekostenschätzung eines Auftrags verwendet.',
+  'settings.potenciaTitulo': 'Leistung des Druckers',
+  'settings.potenciaDesc':
+    'Durchschnittliche Leistungsaufnahme in Watt. Wird für die Energiekosten verwendet.',
+  'settings.exportarDiagnostico': 'Diagnose exportieren',
+  'settings.exportarDiagnosticoDesc':
+    'Bericht mit Version, Druckern und letzten Fehlern, IPs maskiert.',
+  'settings.timelapseExperimental': 'Time-lapse (experimentell)',
+  'settings.timelapseExperimentalDesc':
+    'Aktiviert die experimentelle Time-lapse-Aufnahme (Cmd 323).',
   'settings.avisoComunidade':
     'Atalaia ist eine unabhängige, von der Community entwickelte App für Elegoo-Drucker. Sie ist in keiner Weise mit Elegoo verbunden und wird von Elegoo weder unterstützt noch empfohlen.',
   'stats.title': 'Statistik',

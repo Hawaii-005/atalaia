@@ -371,6 +371,53 @@ const nl = {
   'settings.boasVindasReiniciado': 'De introductie is opnieuw ingesteld.',
   'settings.erroBoasVindas':
     'De introductie kon niet opnieuw worden ingesteld.',
+  'settings.pesquisa': 'Instellingen zoeken',
+  'settings.limparPesquisa': 'Zoekopdracht wissen',
+  'settings.semResultados': 'Geen instelling komt overeen met de zoekopdracht.',
+  'settings.seccaoFila': 'Wachtrij en printen',
+  'settings.seccaoFilamentos': 'Filamenten',
+  'settings.seccaoDados': 'Beveiliging en gegevens',
+  'settings.descSecaoImpressoras': 'Toevoegen, bewerken en alternatief adres',
+  'settings.descSecaoAparencia': 'Thema, taal en verversingstempo',
+  'settings.descSecaoFila': 'Automatisch starten, meldingen en mobiele data',
+  'settings.descSecaoFilamentos': 'Spoelwaarschuwing, energie en voorraad',
+  'settings.descSecaoDados': 'Back-up, diagnose en onderhoud',
+  'settings.descSecaoSobre': 'Versie, licentie en ondersteuning',
+  'settings.ajudaImpressoras':
+    'Tik op een printer om de naam, het IP en het alternatieve adres te wijzigen.',
+  'settings.ajudaAdicionarImpressora':
+    'Zoekt de printer op het lokale netwerk of laat je het IP typen.',
+  'settings.enderecoAlternativo': 'Alternatief adres (Tailscale)',
+  'settings.enderecoAlternativoDesc':
+    'IP in de tailnet, voor als het lokale netwerk niet bereikbaar is. Stel het in bij het bewerken van de printer.',
+  'settings.ajudaTema':
+    'Wijzigt de kleuren van de app. De wijziging is direct zichtbaar.',
+  'settings.ajudaIntervalo':
+    'Hoe vaak de app de status opvraagt. Kortere intervallen kosten meer batterij en netwerk.',
+  'settings.pausaFila': 'Pauze tussen starts',
+  'settings.pausaFilaDesc':
+    'Vaste wachttijd tussen twee wachtrijtaken, zodat de machine de vorige status verlaat.',
+  'settings.pausaFilaValor': '2 min',
+  'settings.mesaLimpa': 'Schoon bed bevestigen',
+  'settings.mesaLimpaDesc':
+    'Voordat de volgende taak start, vraagt de app te bevestigen dat het bed vrij is.',
+  'settings.ajudaTesteNotificacao':
+    'Stuurt nu een melding, om te controleren of meldingen zijn toegestaan.',
+  'settings.limiteTitulo': 'Waarschuwing bij bijna lege spoel',
+  'settings.limiteDesc':
+    'Percentage resterend filament dat de waarschuwing activeert (1 tot 50%).',
+  'settings.kwhTitulo': 'Stroomprijs',
+  'settings.kwhDesc':
+    'Wordt gebruikt om de energiekosten van een taak te schatten.',
+  'settings.potenciaTitulo': 'Vermogen van de printer',
+  'settings.potenciaDesc':
+    'Gemiddeld verbruik in watt. Wordt gebruikt bij de energiekostenberekening.',
+  'settings.exportarDiagnostico': 'Diagnose exporteren',
+  'settings.exportarDiagnosticoDesc':
+    'Rapport met versie, printers en recente fouten, met gemaskeerde IP’s.',
+  'settings.timelapseExperimental': 'Time-lapse (experimenteel)',
+  'settings.timelapseExperimentalDesc':
+    'Schakelt experimentele time-lapse-opname in (Cmd 323).',
   'settings.avisoComunidade':
     'Atalaia is een onafhankelijke app voor Elegoo-printers, gemaakt door de gemeenschap. De app is op geen enkele manier verbonden met, goedgekeurd of aanbevolen door Elegoo.',
   'stats.title': 'Statistieken',

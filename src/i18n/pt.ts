@@ -373,6 +373,51 @@ export default {
   'settings.boasVindasReiniciado': 'O fluxo de boas-vindas foi reiniciado.',
   'settings.erroBoasVindas':
     'Não foi possível reiniciar o fluxo de boas-vindas.',
+  'settings.pesquisa': 'Procurar definições',
+  'settings.limparPesquisa': 'Limpar pesquisa',
+  'settings.semResultados': 'Nenhuma definição corresponde à pesquisa.',
+  'settings.seccaoFila': 'Fila e impressão',
+  'settings.seccaoFilamentos': 'Filamentos',
+  'settings.seccaoDados': 'Segurança e dados',
+  'settings.descSecaoImpressoras': 'Adicionar, editar e endereço alternativo',
+  'settings.descSecaoAparencia': 'Tema, idioma e ritmo de atualização',
+  'settings.descSecaoFila': 'Arranque automático, avisos e dados móveis',
+  'settings.descSecaoFilamentos': 'Aviso de bobina, energia e inventário',
+  'settings.descSecaoDados': 'Cópia de segurança, diagnóstico e manutenção',
+  'settings.descSecaoSobre': 'Versão, licença e apoio',
+  'settings.ajudaImpressoras':
+    'Toque numa impressora para editar o nome, o IP e o endereço alternativo.',
+  'settings.ajudaAdicionarImpressora':
+    'Procura a impressora na rede local ou escreve o IP à mão.',
+  'settings.enderecoAlternativo': 'Endereço alternativo (Tailscale)',
+  'settings.enderecoAlternativoDesc':
+    'IP na tailnet, usado quando a rede local não chega. Configura-se ao editar a impressora.',
+  'settings.ajudaTema': 'Muda as cores da aplicação. A alteração é imediata.',
+  'settings.ajudaIntervalo':
+    'Com que frequência a app pede o estado à impressora. Menos segundos gastam mais bateria e rede.',
+  'settings.pausaFila': 'Pausa entre arranques',
+  'settings.pausaFilaDesc':
+    'Espera fixa entre dois trabalhos da fila, para a máquina sair do estado anterior.',
+  'settings.pausaFilaValor': '2 min',
+  'settings.mesaLimpa': 'Confirmar mesa limpa',
+  'settings.mesaLimpaDesc':
+    'Antes de arrancar o próximo trabalho, a app pede confirmação de que a mesa está livre.',
+  'settings.ajudaTesteNotificacao':
+    'Envia um aviso agora, para confirmar que as notificações estão permitidas.',
+  'settings.limiteTitulo': 'Aviso de bobina quase no fim',
+  'settings.limiteDesc':
+    'Percentagem de filamento restante que dispara o aviso (1 a 50%).',
+  'settings.kwhTitulo': 'Preço da eletricidade',
+  'settings.kwhDesc': 'Usado para estimar o custo energético de um trabalho.',
+  'settings.potenciaTitulo': 'Potência da impressora',
+  'settings.potenciaDesc':
+    'Consumo médio em watts. Usado no cálculo do custo energético.',
+  'settings.exportarDiagnostico': 'Exportar diagnóstico',
+  'settings.exportarDiagnosticoDesc':
+    'Relatório com versão, impressoras e erros recentes, com os IPs mascarados.',
+  'settings.timelapseExperimental': 'Time-lapse (experimental)',
+  'settings.timelapseExperimentalDesc':
+    'Ativa o suporte experimental a gravações time-lapse (Cmd 323).',
   'settings.avisoComunidade':
     'A Atalaia é uma aplicação independente, criada pela comunidade, para impressoras Elegoo. Sem qualquer afiliação, apoio ou recomendação da Elegoo.',
 
