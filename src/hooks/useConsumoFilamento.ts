@@ -19,6 +19,7 @@ export const useConsumoFilamento = () => {
       const info = pr.status?.PrintInfo;
       const fase = getPrintStatus(info?.Status ?? 0);
       const nome = info?.Filename;
+      const taskId = info?.TaskId;
       const antes = anteriores.current[pr.id];
 
       if (
@@ -27,7 +28,9 @@ export const useConsumoFilamento = () => {
         antes.fase === 'printing' &&
         fase === 'completed'
       ) {
-        registarConsumo(pr.id, pr.ipAddress, nome).catch(() => undefined);
+        registarConsumo(pr.id, pr.ipAddress, nome, null, taskId).catch(
+          () => undefined
+        );
       }
 
       anteriores.current[pr.id] = { fase, nome };
