@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="740" viewBox="0 0 1180 740">
+  <title>Fila — tablet</title>
+  <style>
+    text { font-family: "Helvetica Neue", Arial, sans-serif; fill: #111; }
+    .t { font-size: 15px; font-weight: 700; }
+    .p { font-size: 12px; font-weight: 700; }
+    .d { font-size: 11px; fill: #444; }
+    .s { font-size: 9px; fill: #666; letter-spacing: .6px; }
+    .n { font-size: 12px; font-weight: 700; fill: #fff; }
+    .b { fill: none; stroke: #555; stroke-width: 1.2; stroke-dasharray: 5 4; }
+    .ff { fill: #f2f2f2; stroke: #555; stroke-width: 1; }
+    .sk { fill: #e6e6e6; }
+  </style>
+<rect x="0" y="0" width="1180" height="740" fill="#fff" stroke="#bbb"/>
+<text x="16" y="22" class="t">ATALAIA · FILA · TABLET 1180×740 (PAISAGEM)</text>
+<text x="16" y="37" class="d">lista à esquerda, detalhe à direita · texto e valores são marcadores visuais</text>
+<rect x="16" y="52" width="1148" height="74" rx="10" class="b"/><circle cx="30" cy="66" r="9" fill="#111"/><text x="30" y="70" text-anchor="middle" class="n">1</text><text x="46" y="70" class="s">CABEÇALHO DA FILA</text>
+<text x="34" y="92" style="font-size:16px;font-weight:700">Fila</text>
+<text x="34" y="110" class="d">Centauri Carbon · 3 itens</text>
+<rect x="300" y="76" width="150" height="30" rx="8" fill="none" stroke="#555" stroke-width="1.2"/><text x="375.0" y="95.0" text-anchor="middle" style="font-size:11px;fill:#333">MODO: MANUAL ⌄</text>
+<rect x="462" y="76" width="92" height="30" rx="8" fill="none" stroke="#555" stroke-width="1.2"/><text x="508.0" y="95.0" text-anchor="middle" style="font-size:11px;fill:#333">PAUSAR</text>
+<text x="700" y="96" class="d">2h 05m conhecidas</text>
+<rect x="16" y="134" width="1148" height="48" rx="10" class="b"/><circle cx="30" cy="148" r="9" fill="#111"/><text x="30" y="152" text-anchor="middle" class="n">2</text><text x="46" y="152" class="s">FAIXA DE ESTADO DO ARRANQUE</text>
+<text x="34" y="164" class="d">A app tem de estar aberta para arrancar o próximo item.</text>
+<text x="640" y="164" class="s">SE ESTIVER FECHADA, O ITEM FICA «À ESPERA»</text>
+<rect x="16" y="190" width="600" height="56" rx="10" class="b"/><circle cx="30" cy="204" r="9" fill="#111"/><text x="30" y="208" text-anchor="middle" class="n">7</text><text x="46" y="208" class="s">SELETOR DE IMPRESSORA</text>
+<rect x="34" y="218" width="130" height="20" rx="10.0" fill="none" stroke="#555" stroke-width="1" stroke-dasharray="3 3"/><text x="99.0" y="231.0" text-anchor="middle" class="s">CENTAURI</text>
+<rect x="172" y="218" width="130" height="20" rx="10.0" fill="none" stroke="#555" stroke-width="1" stroke-dasharray="3 3"/><text x="237.0" y="231.0" text-anchor="middle" class="s">SATURN 3</text>
+<text x="316" y="232" class="s">FILAS SEPARADAS</text>
+<rect x="16" y="254" width="600" height="350" rx="10" class="b"/><circle cx="30" cy="268" r="9" fill="#111"/><text x="30" y="272" text-anchor="middle" class="n">3</text><text x="46" y="272" class="s">LISTA DA FILA</text>
+<text x="34" y="282" class="s">POSIÇÃO · ITEM · ESTADO · DURAÇÃO · INÍCIO/FIM</text>
+<rect x="30" y="294" width="572" height="68" rx="10" fill="#fff" stroke="#bbb"/>
+<text x="44" y="314" class="s">1</text>
+<rect x="60" y="304" width="48" height="48" rx="8" fill="#f2f2f2" stroke="#555" stroke-width="1" stroke-dasharray="4 4"/><text x="84.0" y="331.0" text-anchor="middle" class="s"></text>
+<text x="122" y="316" class="p">peca_1.gcode</text>
+<rect x="122" y="322" width="70" height="18" rx="9" fill="#f2f2f2" stroke="#555" stroke-width="1" stroke-dasharray="3 3"/><text x="157.0" y="334.5" text-anchor="middle" class="s">PENDENTE</text>
+<text x="250" y="336" class="s">45m · 14:10 → 14:55</text>
+<circle cx="556" cy="318" r="1.6" fill="#555"/><circle cx="556" cy="324" r="1.6" fill="#555"/><circle cx="556" cy="330" r="1.6" fill="#555"/><circle cx="561" cy="318" r="1.6" fill="#555"/><circle cx="561" cy="324" r="1.6" fill="#555"/><circle cx="561" cy="330" r="1.6" fill="#555"/>
+<text x="470" y="350" class="s">↑ ↓ ⋯</text>
+<rect x="30" y="368" width="572" height="68" rx="10" fill="#fff" stroke="#bbb"/>
+<text x="44" y="388" class="s">2</text>
+<rect x="60" y="378" width="48" height="48" rx="8" fill="#f2f2f2" stroke="#555" stroke-width="1" stroke-dasharray="4 4"/><text x="84.0" y="405.0" text-anchor="middle" class="s"></text>
+<text x="122" y="390" class="p">peca_2.gcode</text>
+<rect x="122" y="396" width="70" height="18" rx="9" fill="#f2f2f2" stroke="#555" stroke-width="1" stroke-dasharray="3 3"/><text x="157.0" y="408.5" text-anchor="middle" class="s">PENDENTE</text>
+<text x="250" y="410" class="s">45m · 14:10 → 14:55</text>
+<circle cx="556" cy="392" r="1.6" fill="#555"/><circle cx="556" cy="398" r="1.6" fill="#555"/><circle cx="556" cy="404" r="1.6" fill="#555"/><circle cx="561" cy="392" r="1.6" fill="#555"/><circle cx="561" cy="398" r="1.6" fill="#555"/><circle cx="561" cy="404" r="1.6" fill="#555"/>
+<text x="470" y="424" class="s">↑ ↓ ⋯</text>
+<rect x="30" y="442" width="572" height="68" rx="10" fill="#fff" stroke="#bbb"/>
+<text x="44" y="462" class="s">3</text>
+<rect x="60" y="452" width="48" height="48" rx="8" fill="#f2f2f2" stroke="#555" stroke-width="1" stroke-dasharray="4 4"/><text x="84.0" y="479.0" text-anchor="middle" class="s"></text>
+<text x="122" y="464" class="p">peca_3.gcode</text>
+<rect x="122" y="470" width="84" height="18" rx="9" fill="#f2f2f2" stroke="#555" stroke-width="1" stroke-dasharray="3 3"/><text x="164.0" y="482.5" text-anchor="middle" class="s">A IMPRIMIR</text>
+<text x="250" y="484" class="s">45m · 14:10 → 14:55</text>
+<circle cx="556" cy="466" r="1.6" fill="#555"/><circle cx="556" cy="472" r="1.6" fill="#555"/><circle cx="556" cy="478" r="1.6" fill="#555"/><circle cx="561" cy="466" r="1.6" fill="#555"/><circle cx="561" cy="472" r="1.6" fill="#555"/><circle cx="561" cy="478" r="1.6" fill="#555"/>
+<text x="470" y="498" class="s">↑ ↓ ⋯</text>
+<rect x="30" y="516" width="572" height="68" rx="10" fill="#fff" stroke="#bbb"/>
+<text x="44" y="536" class="s">4</text>
+<rect x="60" y="526" width="48" height="48" rx="8" fill="#f2f2f2" stroke="#555" stroke-width="1" stroke-dasharray="4 4"/><text x="84.0" y="553.0" text-anchor="middle" class="s"></text>
+<text x="122" y="538" class="p">peca_4.gcode</text>
+<rect x="122" y="544" width="77" height="18" rx="9" fill="#f2f2f2" stroke="#555" stroke-width="1" stroke-dasharray="3 3"/><text x="160.5" y="556.5" text-anchor="middle" class="s">BLOQUEADO</text>
+<text x="250" y="558" class="s">— · bloqueado</text>
+<circle cx="556" cy="540" r="1.6" fill="#555"/><circle cx="556" cy="546" r="1.6" fill="#555"/><circle cx="556" cy="552" r="1.6" fill="#555"/><circle cx="561" cy="540" r="1.6" fill="#555"/><circle cx="561" cy="546" r="1.6" fill="#555"/><circle cx="561" cy="552" r="1.6" fill="#555"/>
+<text x="470" y="572" class="s">↑ ↓ ⋯</text>
+<text x="34" y="600" class="s">A IMPRIMIR NÃO ARRASTA · PEDE CONFIRMAÇÃO PARA REMOVER</text>
+<rect x="16" y="612" width="600" height="72" rx="10" class="b"/><circle cx="30" cy="626" r="9" fill="#111"/><text x="30" y="630" text-anchor="middle" class="n">4</text><text x="46" y="630" class="s">AÇÕES DO ITEM · ALTERNATIVA AO ARRASTAR</text>
+<rect x="32" y="640" width="78" height="32" rx="8" fill="none" stroke="#555" stroke-width="1.2"/><text x="71.0" y="660.0" text-anchor="middle" style="font-size:11px;fill:#333">↑ Subir</text>
+<rect x="118" y="640" width="86" height="32" rx="8" fill="none" stroke="#555" stroke-width="1.2"/><text x="161.0" y="660.0" text-anchor="middle" style="font-size:11px;fill:#333">↓ Descer</text>
+<rect x="212" y="640" width="78" height="32" rx="8" fill="none" stroke="#555" stroke-width="1.2"/><text x="251.0" y="660.0" text-anchor="middle" style="font-size:11px;fill:#333">Topo</text>
+<rect x="298" y="640" width="92" height="32" rx="8" fill="none" stroke="#555" stroke-width="1.2"/><text x="344.0" y="660.0" text-anchor="middle" style="font-size:11px;fill:#333">Duplicar</text>
+<rect x="398" y="640" width="86" height="32" rx="8" fill="none" stroke="#555" stroke-width="1.2"/><text x="441.0" y="660.0" text-anchor="middle" style="font-size:11px;fill:#333">Remover</text>
+<rect x="632" y="190" width="532" height="494" rx="10" class="b"/><circle cx="646" cy="204" r="9" fill="#111"/><text x="646" y="208" text-anchor="middle" class="n">5</text><text x="662" y="208" class="s">DETALHE DO ITEM</text>
+<text x="650" y="222" style="font-size:15px;font-weight:700">peca_1.gcode</text>
+<rect x="1080" y="202" width="68" height="26" rx="8" fill="none" stroke="#555" stroke-width="1.2"/><text x="1114.0" y="219.0" text-anchor="middle" style="font-size:11px;fill:#333">Fechar</text>
+<rect x="650" y="236" width="96" height="96" rx="8" fill="#f2f2f2" stroke="#555" stroke-width="1" stroke-dasharray="4 4"/><text x="698.0" y="287.0" text-anchor="middle" class="s">MINI</text>
+<text x="762" y="252" class="s">CENTAURI CARBON</text>
+<text x="762" y="270" class="d">tamanho — · camadas —</text>
+<text x="762" y="288" class="s">MINIATURA DEPENDE DO FICHEIRO NA IMPRESSORA</text>
+<rect x="650" y="346" width="70" height="18" rx="9" fill="#f2f2f2" stroke="#555" stroke-width="1" stroke-dasharray="3 3"/><text x="685.0" y="358.5" text-anchor="middle" class="s">PENDENTE</text>
+<text x="650" y="388" class="s">MOTIVO DE BLOQUEIO (QUANDO HÁ)</text>
+<text x="650" y="406" class="d">—</text>
+<text x="650" y="440" class="s">ESTIMATIVAS</text>
+<text x="650" y="460" class="d">Duração 45m · início 14:10 · fim 14:55</text>
+<text x="650" y="478" class="s">DURAÇÃO VEM DO NOME; SEM SUFIXO → «—»</text>
+<text x="650" y="512" class="s">POSIÇÃO</text>
+<text x="650" y="532" class="d">2 de 3 · pode subir, descer ou ir ao topo</text>
+<text x="650" y="566" class="s">AÇÕES</text>
+<rect x="650" y="578" width="150" height="36" rx="8" fill="#e6e6e6" stroke="#555" stroke-width="1.2"/><text x="725.0" y="600.0" text-anchor="middle" style="font-size:11px;fill:#333">ARRANCAR AGORA</text>
+<rect x="810" y="578" width="100" height="36" rx="8" fill="none" stroke="#555" stroke-width="1.2"/><text x="860.0" y="600.0" text-anchor="middle" style="font-size:11px;fill:#333">Duplicar</text>
+<rect x="918" y="578" width="100" height="36" rx="8" fill="none" stroke="#555" stroke-width="1.2"/><text x="968.0" y="600.0" text-anchor="middle" style="font-size:11px;fill:#333">Remover</text>
+<text x="650" y="640" class="s">ARRANCAR SÓ COM IMPRESSORA OCIOSA E LIGADA</text>
+<text x="650" y="660" class="s">«PAUSAR FILA» NÃO PÁRA A IMPRESSÃO EM CURSO</text>
+<rect x="16" y="690" width="1148" height="44" rx="10" class="b"/><circle cx="30" cy="704" r="9" fill="#111"/><text x="30" y="708" text-anchor="middle" class="n">6</text><text x="46" y="708" class="s">RODAPÉ</text>
+<text x="34" y="724" class="d">Adicionar vem de Ficheiros › Pôr na fila (fim ou topo). A fila é por impressora.</text>
+</svg>

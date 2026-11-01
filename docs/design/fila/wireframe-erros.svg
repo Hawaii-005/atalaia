@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="740" viewBox="0 0 1180 740">
+  <title>Fila — erros e recuperação</title>
+  <style>
+    text { font-family: "Helvetica Neue", Arial, sans-serif; fill: #111; }
+    .t { font-size: 15px; font-weight: 700; }
+    .p { font-size: 12px; font-weight: 700; }
+    .d { font-size: 11px; fill: #444; }
+    .s { font-size: 9px; fill: #666; letter-spacing: .6px; }
+    .n { font-size: 12px; font-weight: 700; fill: #fff; }
+    .b { fill: none; stroke: #555; stroke-width: 1.2; stroke-dasharray: 5 4; }
+    .ff { fill: #f2f2f2; stroke: #555; stroke-width: 1; }
+    .sk { fill: #e6e6e6; }
+  </style>
+<rect x="0" y="0" width="1180" height="740" fill="#fff" stroke="#bbb"/>
+<text x="16" y="22" class="t">ATALAIA · FILA · ERROS E RECUPERAÇÃO</text>
+<text x="16" y="37" class="d">cada cartão é um estado real que a app tem de saber mostrar</text>
+<rect x="16" y="56" width="372" height="196" rx="10" class="b"/><circle cx="30" cy="70" r="9" fill="#111"/><text x="30" y="74" text-anchor="middle" class="n">1</text><text x="46" y="74" class="s">ACK RECUSADO</text>
+<text x="34" y="86" class="p">A impressora recusou</text>
+<text x="34" y="106" class="d">peca_1.gcode · código 5</text>
+<text x="34" y="124" class="d">«Ficheiro não existe na máquina»</text>
+<text x="34" y="146" class="s">O ITEM NÃO SAI DA FILA</text>
+<rect x="34" y="160" width="130" height="34" rx="8" fill="none" stroke="#555" stroke-width="1.2"/><text x="99.0" y="181.0" text-anchor="middle" style="font-size:11px;fill:#333">Tentar de novo</text>
+<rect x="174" y="160" width="110" height="34" rx="8" fill="none" stroke="#555" stroke-width="1.2"/><text x="229.0" y="181.0" text-anchor="middle" style="font-size:11px;fill:#333">Ver motivo</text>
+<rect x="404" y="56" width="372" height="196" rx="10" class="b"/><circle cx="418" cy="70" r="9" fill="#111"/><text x="418" y="74" text-anchor="middle" class="n">2</text><text x="434" y="74" class="s">SEM LIGAÇÃO A MEIO</text>
+<text x="422" y="86" class="p">Perdeste a ligação</text>
+<text x="422" y="106" class="d">O envio parou a meio.</text>
+<text x="422" y="124" class="d">Nada foi arrancado.</text>
+<text x="422" y="146" class="s">ESTADO DO ITEM: «A ENVIAR» → «À ESPERA»</text>
+<rect x="422" y="160" width="150" height="34" rx="8" fill="none" stroke="#555" stroke-width="1.2"/><text x="497.0" y="181.0" text-anchor="middle" style="font-size:11px;fill:#333">Ligar e verificar</text>
+<rect x="792" y="56" width="372" height="196" rx="10" class="b"/><circle cx="806" cy="70" r="9" fill="#111"/><text x="806" y="74" text-anchor="middle" class="n">3</text><text x="822" y="74" class="s">ESTADO DESCONHECIDO</text>
+<text x="810" y="86" class="p">Não sei o que se passa</text>
+<text x="810" y="106" class="d">A app foi fechada a meio.</text>
+<text x="810" y="124" class="d">Não mostro «a imprimir» sem prova.</text>
+<rect x="810" y="140" width="110" height="32" rx="8" fill="none" stroke="#555" stroke-width="1.2"/><text x="865.0" y="160.0" text-anchor="middle" style="font-size:11px;fill:#333">Verificar</text>
+<rect x="928" y="140" width="110" height="32" rx="8" fill="none" stroke="#555" stroke-width="1.2"/><text x="983.0" y="160.0" text-anchor="middle" style="font-size:11px;fill:#333">Concluído</text>
+<rect x="1046" y="140" width="100" height="32" rx="8" fill="none" stroke="#555" stroke-width="1.2"/><text x="1096.0" y="160.0" text-anchor="middle" style="font-size:11px;fill:#333">Repor</text>
+<rect x="16" y="268" width="560" height="260" rx="10" class="b"/><circle cx="30" cy="282" r="9" fill="#111"/><text x="30" y="286" text-anchor="middle" class="n">4</text><text x="46" y="286" class="s">BLOQUEIOS ANTES DE ARRANCAR</text>
+<text x="34" y="300" class="s">MOTIVO · SEMPRE VISÍVEL</text>
+<rect x="34" y="318" width="524" height="28" rx="6" fill="#fff" stroke="#ccc"/>
+<text x="44" y="336" class="d">Impressora não está ociosa (a imprimir ou em pausa)</text>
+<rect x="34" y="354" width="524" height="28" rx="6" fill="#fff" stroke="#ccc"/>
+<text x="44" y="372" class="d">Sem ligação, ou último estado com mais de 45 s</text>
+<rect x="34" y="390" width="524" height="28" rx="6" fill="#fff" stroke="#ccc"/>
+<text x="44" y="408" class="d">Impressão anterior falhou ou foi cancelada</text>
+<rect x="34" y="426" width="524" height="28" rx="6" fill="#fff" stroke="#ccc"/>
+<text x="44" y="444" class="d">Tipo de ficheiro não serve nesta impressora</text>
+<rect x="34" y="462" width="524" height="28" rx="6" fill="#fff" stroke="#ccc"/>
+<text x="44" y="480" class="d">Filamento insuficiente ou cor em falta (aviso)</text>
+<rect x="592" y="268" width="572" height="120" rx="10" class="b"/><circle cx="606" cy="282" r="9" fill="#111"/><text x="606" y="286" text-anchor="middle" class="n">5</text><text x="622" y="286" class="s">FILA PAUSADA</text>
+<text x="610" y="298" class="p">Fila pausada</text>
+<text x="610" y="318" class="d">Nenhum item novo arranca.</text>
+<text x="610" y="336" class="d">A impressão em curso continua.</text>
+<rect x="610" y="348" width="120" height="30" rx="8" fill="none" stroke="#555" stroke-width="1.2"/><text x="670.0" y="367.0" text-anchor="middle" style="font-size:11px;fill:#333">Retomar fila</text>
+<rect x="592" y="404" width="572" height="124" rx="10" class="b"/><circle cx="606" cy="418" r="9" fill="#111"/><text x="606" y="422" text-anchor="middle" class="n">6</text><text x="622" y="422" class="s">DOIS TOQUES EM «ARRANCAR»</text>
+<text x="610" y="434" class="p">A arrancar…</text>
+<text x="610" y="454" class="d">O botão desativa e mostra progresso.</text>
+<text x="610" y="472" class="d">O mesmo item não sai duas vezes.</text>
+<text x="610" y="494" class="s">TRAVA POR ID + MARCA «ARRANQUE TENTADO»</text>
+<rect x="16" y="544" width="1148" height="60" rx="10" class="b"/><circle cx="30" cy="558" r="9" fill="#111"/><text x="30" y="562" text-anchor="middle" class="n">7</text><text x="46" y="562" class="s">REGRA COMUM</text>
+<text x="34" y="574" class="d">Nenhum erro descarta um item em silêncio: ou volta a «pendente», ou fica «falhou» com o motivo.</text>
+<text x="34" y="592" class="s">O PROTOCOLO SDCP NÃO MUDA</text>
+<rect x="16" y="616" width="1148" height="108" rx="10" class="b"/><circle cx="30" cy="630" r="9" fill="#111"/><text x="30" y="634" text-anchor="middle" class="n">8</text><text x="46" y="634" class="s">AO REABRIR A APP</text>
+<text x="34" y="646" class="d">1. Lê a fila guardada · 2. Pede o estado real à impressora · 3. Compara antes de mostrar.</text>
+<text x="34" y="668" class="d">Se a impressora estiver a imprimir um ficheiro da fila, esse item passa a «a imprimir» e nunca é reenviado.</text>
+<text x="34" y="690" class="d">Se não for possível saber, fica «estado desconhecido» com ações seguras.</text>
+<text x="34" y="712" class="s">SEM LER O ESTADO REAL, NADA É MARCADO COMO CONCLUÍDO</text>
+</svg>
