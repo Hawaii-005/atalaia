@@ -246,7 +246,13 @@ const descobrirComVarredura = async (
 
   for (let i = 0; i < hosts.length; i += CONCURRENCY) {
     const batch = hosts.slice(i, i + CONCURRENCY);
-    const results = await Promise.all(batch.map(ip => probePrinter(ip)));
+    const results = await Promise.all(
+      batch.map(async ip => {
+        const sdcp = await probePrinter(ip);
+        if (sdcp) return sdcp;
+        return await probeMoonraker(ip);
+      })
+    );
     results.forEach(result => {
       if (result) {
         found.push(result);
@@ -263,11 +269,12 @@ const descobrirComVarredura = async (
  * Sonda Moonraker (:7125) via HTTP rápido e WebSocket.
  */
 export const probeMoonraker = async (
-  ip: string
+  ip: string,
+  timeoutMs = 1200
 ): Promise<DiscoveredPrinter | null> => {
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 1200);
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
     const res = await fetch(`http://${ip}:7125/server/info`, {
       signal: controller.signal,
     });
@@ -309,7 +316,7 @@ export const probeMoonraker = async (
       resolve(result);
     };
 
-    timer = setTimeout(() => finish(null), 1500);
+    timer = setTimeout(() => finish(null), timeoutMs);
 
     try {
       socket = new WebSocket(`ws://${ip}:7125/websocket`);
