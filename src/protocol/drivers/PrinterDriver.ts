@@ -1,4 +1,5 @@
 import { PrinterKind, SdcpCommand, SdcpResponse, EstadoLogico } from '../types';
+import { Capabilities, FirmwareFlavor } from '../../types';
 
 export interface PrinterDriverOptions {
   id: string;
@@ -27,6 +28,8 @@ export interface PrinterDriver {
   readonly name: string;
   readonly ipAddress: string;
   readonly kind: PrinterKind;
+  readonly firmware: FirmwareFlavor;
+  readonly capabilities: Capabilities;
 
   connect(): Promise<void>;
   disconnect(): Promise<void>;

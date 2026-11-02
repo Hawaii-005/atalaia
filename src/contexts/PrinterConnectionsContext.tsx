@@ -83,7 +83,11 @@ export interface PrinterConnectionsContextType {
     ipAddress: string,
     mainboardId?: string,
     alternateIp?: string,
-    extras?: { kind?: Printer['kind']; sdcpId?: string }
+    extras?: {
+      kind?: Printer['kind'];
+      sdcpId?: string;
+      firmware?: Printer['firmware'];
+    }
   ) => void;
   removePrinter: (id: string) => void;
   reconnectAll: () => void;
@@ -237,6 +241,7 @@ export const PrinterConnectionsProvider = ({
           const loadedPrinters = savedPrinters.map(
             (p: Omit<Printer, 'connectionStatus'>) => ({
               ...p,
+              firmware: p.firmware ?? 'sdcp',
               connectionStatus: 'disconnected' as ConnectionStatus,
             })
           );
@@ -358,6 +363,7 @@ export const PrinterConnectionsProvider = ({
             alternateIp,
             mainboardId,
             kind,
+            firmware,
             sdcpId,
           }) => ({
             id,
@@ -366,6 +372,7 @@ export const PrinterConnectionsProvider = ({
             alternateIp,
             mainboardId,
             kind,
+            firmware: firmware ?? 'sdcp',
             sdcpId,
           })
         );
@@ -1040,7 +1047,11 @@ export const PrinterConnectionsProvider = ({
     ipAddress: string,
     mainboardId?: string,
     alternateIp?: string,
-    extras?: { kind?: Printer['kind']; sdcpId?: string }
+    extras?: {
+      kind?: Printer['kind'];
+      sdcpId?: string;
+      firmware?: Printer['firmware'];
+    }
   ) => {
     const newPrinter: Printer = {
       id: generateId(),
@@ -1050,6 +1061,7 @@ export const PrinterConnectionsProvider = ({
       connectionStatus: 'connecting',
       mainboardId,
       kind: extras?.kind ?? 'fdm',
+      firmware: extras?.firmware ?? 'sdcp',
       sdcpId: extras?.sdcpId,
     };
 

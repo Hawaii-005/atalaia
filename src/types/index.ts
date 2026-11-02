@@ -162,11 +162,35 @@ export interface PrinterStatus {
 /** 'fdm' = Centauri (WebSocket SDCP) · 'resin' = Saturn/Mars (SDCP V1 MQTT). */
 export type PrinterKind = 'fdm' | 'resin';
 
+/** Sabor do firmware da impressora: 'sdcp' (original/stock) ou 'moonraker' (COSMOS/Klipper). */
+export type FirmwareFlavor = 'sdcp' | 'moonraker';
+
+export interface Capabilities {
+  telemetria: boolean;
+  temperaturas: boolean;
+  camara: boolean;
+  ficheiros: boolean;
+  miniaturas: boolean;
+  uploadFicheiro: boolean;
+  controloImpressao: boolean;
+  movimentoEixos: boolean;
+  home: boolean;
+  luz: boolean;
+  ventoinhas: boolean;
+  velocidade: boolean;
+  babyStepping: boolean;
+  canvasAfc: boolean;
+  consolaGcode: boolean;
+  macrosFilamento: boolean;
+  timelapseSdcp: boolean;
+}
+
 export interface Printer {
   id: string;
   printerName: string;
   ipAddress: string;
   kind?: PrinterKind;
+  firmware?: FirmwareFlavor;
   /** Id da sessão UDP da impressora de resina (campo `Id` do SDCP V1). */
   sdcpId?: string;
   connectionStatus: ConnectionStatus;

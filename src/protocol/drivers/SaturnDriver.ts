@@ -4,6 +4,8 @@ import {
   PrinterDriverStatus,
 } from './PrinterDriver';
 import { PrinterKind, SdcpCommand, SdcpResponse } from '../types';
+import { Capabilities, FirmwareFlavor } from '../../types';
+import { CAPABILITIES_SDCP_RESIN } from '../capabilities';
 import { calcularEstadoLogico } from '../stateMachine';
 
 export class SaturnDriver implements PrinterDriver {
@@ -11,6 +13,8 @@ export class SaturnDriver implements PrinterDriver {
   readonly name: string;
   readonly ipAddress: string;
   readonly kind: PrinterKind = 'resin';
+  readonly firmware: FirmwareFlavor = 'sdcp';
+  readonly capabilities: Capabilities = CAPABILITIES_SDCP_RESIN;
 
   private connected: boolean = false;
   private listeners: Set<(status: PrinterDriverStatus) => void> = new Set();
