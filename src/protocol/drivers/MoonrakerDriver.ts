@@ -1,0 +1,377 @@
+import {
+  PrinterDriver,
+  PrinterDriverOptions,
+  PrinterDriverStatus,
+} from './PrinterDriver';
+import { SdcpCommand, SdcpResponse, PrinterKind } from '../types';
+import { Capabilities, FirmwareFlavor } from '../../types';
+import { CAPABILITIES_MOONRAKER_COSMOS } from '../capabilities';
+
+export interface MoonrakerKlipperStatus {
+  print_stats?: {
+    state?: string;
+    filename?: string;
+    total_duration?: number;
+    print_duration?: number;
+  };
+  display_status?: {
+    progress?: number;
+    current_layer?: number;
+    total_layers?: number;
+  };
+  extruder?: {
+    temperature?: number;
+    target?: number;
+  };
+  heater_bed?: {
+    temperature?: number;
+    target?: number;
+  };
+  webhooks?: {
+    state?: string;
+    state_message?: string;
+  };
+}
+
+export class MoonrakerDriver implements PrinterDriver {
+  readonly id: string;
+  readonly name: string;
+  readonly ipAddress: string;
+  readonly kind: PrinterKind = 'fdm';
+  readonly firmware: FirmwareFlavor = 'moonraker';
+  readonly capabilities: Capabilities = CAPABILITIES_MOONRAKER_COSMOS;
+
+  private socket: WebSocket | null = null;
+  private listeners: Set<(status: PrinterDriverStatus) => void> = new Set();
+  private pendingRequests: Map<
+    string | number,
+    {
+      resolve: (val: any) => void;
+      reject: (err: any) => void;
+      timer: ReturnType<typeof setTimeout>;
+    }
+  > = new Map();
+  private requestIdCounter = 1;
+  private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+  private reconnectAttempt = 0;
+  private isExplicitlyClosed = false;
+
+  private status: PrinterDriverStatus = {
+    connected: false,
+    estadoLogico: 'idle',
+    rawStatus: 0,
+    progress: 0,
+  };
+
+  constructor(options: PrinterDriverOptions) {
+    this.id = options.id;
+    this.name = options.name;
+    this.ipAddress = options.ipAddress;
+  }
+
+  async connect(): Promise<void> {
+    this.isExplicitlyClosed = false;
+    this.clearReconnectTimer();
+
+    return new Promise((resolve, reject) => {
+      let isSettled = false;
+      const connectionTimer = setTimeout(() => {
+        if (!isSettled) {
+          isSettled = true;
+          this.disconnect();
+          reject(new Error('Timeout de ligação ao Moonraker'));
+        }
+      }, 7000);
+
+      try {
+        const url = `ws://${this.ipAddress}:7125/websocket`;
+        this.socket = new WebSocket(url);
+
+        this.socket.onopen = () => {
+          if (!isSettled) {
+            isSettled = true;
+            clearTimeout(connectionTimer);
+          }
+          this.reconnectAttempt = 0;
+          this.updateStatus({ connected: true });
+          this.subscribeKlipperObjects().catch(() => {});
+          resolve();
+        };
+
+        this.socket.onmessage = (event: WebSocketMessageEvent) => {
+          this.handleIncomingMessage(event.data);
+        };
+
+        this.socket.onerror = () => {
+          if (!isSettled) {
+            isSettled = true;
+            clearTimeout(connectionTimer);
+            reject(new Error('Erro de ligação WebSocket Moonraker'));
+          }
+        };
+
+        this.socket.onclose = () => {
+          this.cleanupSocket();
+          this.updateStatus({ connected: false });
+          if (!isSettled) {
+            isSettled = true;
+            clearTimeout(connectionTimer);
+            reject(new Error('Ligação WebSocket terminada pelo servidor'));
+          } else if (!this.isExplicitlyClosed) {
+            this.scheduleReconnect();
+          }
+        };
+      } catch (err) {
+        if (!isSettled) {
+          isSettled = true;
+          clearTimeout(connectionTimer);
+        }
+        this.updateStatus({ connected: false });
+        reject(err);
+      }
+    });
+  }
+
+  async disconnect(): Promise<void> {
+    this.isExplicitlyClosed = true;
+    this.clearReconnectTimer();
+    this.cleanupSocket();
+    this.updateStatus({ connected: false });
+  }
+
+  getStatus(): PrinterDriverStatus {
+    return { ...this.status };
+  }
+
+  onStatusChange(listener: (status: PrinterDriverStatus) => void): () => void {
+    this.listeners.add(listener);
+    listener(this.getStatus());
+    return () => {
+      this.listeners.delete(listener);
+    };
+  }
+
+  async sendJsonRpc<T = any>(
+    method: string,
+    params: any = {},
+    timeoutMs: number = 5000
+  ): Promise<T> {
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+      throw new Error('Moonraker não está ligado');
+    }
+
+    const id = ++this.requestIdCounter;
+    const payload = {
+      jsonrpc: '2.0',
+      method,
+      params,
+      id,
+    };
+
+    return new Promise<T>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this.pendingRequests.delete(id);
+        reject(new Error(`Timeout no comando Moonraker (${method})`));
+      }, timeoutMs);
+
+      this.pendingRequests.set(id, { resolve, reject, timer });
+
+      try {
+        this.socket?.send(JSON.stringify(payload));
+      } catch (err) {
+        clearTimeout(timer);
+        this.pendingRequests.delete(id);
+        reject(err);
+      }
+    });
+  }
+
+  async sendCommand<T>(
+    command: SdcpCommand<T>,
+    _timeoutMs?: number
+  ): Promise<SdcpResponse<T>> {
+    // Compatibilidade com a interface agnóstica PrinterDriver
+    return {
+      Id: this.id,
+      Data: {
+        Cmd: command.Data.Cmd,
+        Data: {} as T,
+        Ack: 0,
+      },
+    };
+  }
+
+  private async subscribeKlipperObjects(): Promise<void> {
+    try {
+      const response = await this.sendJsonRpc('printer.objects.subscribe', {
+        objects: {
+          print_stats: null,
+          display_status: null,
+          extruder: null,
+          heater_bed: null,
+          webhooks: null,
+        },
+      });
+
+      if (response?.status) {
+        this.processKlipperStatusUpdate(response.status);
+      }
+    } catch {
+      // Falha ao subscrever tratada silenciosamente
+    }
+  }
+
+  private handleIncomingMessage(rawData: any): void {
+    try {
+      const message = JSON.parse(String(rawData));
+      if (!message || typeof message !== 'object') return;
+
+      // Resposta a RPC com ID pendente
+      if (message.id !== undefined && this.pendingRequests.has(message.id)) {
+        const handler = this.pendingRequests.get(message.id)!;
+        clearTimeout(handler.timer);
+        this.pendingRequests.delete(message.id);
+
+        if (message.error) {
+          handler.reject(
+            new Error(message.error.message || 'Erro JSON-RPC Moonraker')
+          );
+        } else {
+          handler.resolve(message.result);
+        }
+        return;
+      }
+
+      // Notificações de telemetria do Klipper
+      if (
+        message.method === 'notify_status_update' &&
+        Array.isArray(message.params)
+      ) {
+        const statusPayload = message.params[0];
+        if (statusPayload) {
+          this.processKlipperStatusUpdate(statusPayload);
+        }
+      }
+    } catch {
+      // Mensagens malformadas ignoradas em segurança
+    }
+  }
+
+  processKlipperStatusUpdate(klipperStatus: MoonrakerKlipperStatus): void {
+    const next: Partial<PrinterDriverStatus> = {};
+
+    // Mapeamento explícito de estados do Klipper para EstadoLogico
+    if (
+      klipperStatus.webhooks?.state === 'shutdown' ||
+      klipperStatus.webhooks?.state === 'error'
+    ) {
+      next.estadoLogico = 'error';
+    } else if (klipperStatus.print_stats?.state) {
+      const state = klipperStatus.print_stats.state.toLowerCase();
+      switch (state) {
+        case 'printing':
+          next.estadoLogico = 'printing';
+          break;
+        case 'paused':
+          next.estadoLogico = 'paused';
+          break;
+        case 'complete':
+          next.estadoLogico = 'completed';
+          break;
+        case 'cancelled':
+        case 'canceled':
+          next.estadoLogico = 'idle';
+          break;
+        case 'standby':
+        default:
+          next.estadoLogico = 'idle';
+          break;
+      }
+    }
+
+    if (klipperStatus.print_stats?.filename !== undefined) {
+      next.filename = klipperStatus.print_stats.filename;
+    }
+
+    if (klipperStatus.display_status?.progress !== undefined) {
+      next.progress = Math.min(
+        100,
+        Math.max(0, Math.round(klipperStatus.display_status.progress * 100))
+      );
+    }
+
+    if (klipperStatus.display_status?.current_layer !== undefined) {
+      next.currentLayer = klipperStatus.display_status.current_layer;
+    }
+
+    if (klipperStatus.display_status?.total_layers !== undefined) {
+      next.totalLayer = klipperStatus.display_status.total_layers;
+    }
+
+    if (klipperStatus.extruder?.temperature !== undefined) {
+      next.tempNozzle =
+        Math.round(klipperStatus.extruder.temperature * 10) / 10;
+    }
+    if (klipperStatus.extruder?.target !== undefined) {
+      next.targetNozzle = Math.round(klipperStatus.extruder.target);
+    }
+
+    if (klipperStatus.heater_bed?.temperature !== undefined) {
+      next.tempBed = Math.round(klipperStatus.heater_bed.temperature * 10) / 10;
+    }
+    if (klipperStatus.heater_bed?.target !== undefined) {
+      next.targetBed = Math.round(klipperStatus.heater_bed.target);
+    }
+
+    this.updateStatus(next);
+  }
+
+  private updateStatus(patch: Partial<PrinterDriverStatus>): void {
+    this.status = { ...this.status, ...patch };
+    for (const listener of this.listeners) {
+      try {
+        listener(this.getStatus());
+      } catch {}
+    }
+  }
+
+  private cleanupSocket(): void {
+    for (const [id, req] of this.pendingRequests.entries()) {
+      clearTimeout(req.timer);
+      req.reject(new Error('Ligação terminada'));
+      this.pendingRequests.delete(id);
+    }
+    if (this.socket) {
+      try {
+        this.socket.onopen = null;
+        this.socket.onmessage = null;
+        this.socket.onerror = null;
+        this.socket.onclose = null;
+        this.socket.close();
+      } catch {}
+      this.socket = null;
+    }
+  }
+
+  private scheduleReconnect(): void {
+    this.clearReconnectTimer();
+    this.reconnectAttempt++;
+    // Recuo progressivo: 1s, 2s, 5s, 10s máx
+    const delay = Math.min(
+      1000 * Math.pow(1.8, this.reconnectAttempt - 1),
+      10000
+    );
+    this.reconnectTimeout = setTimeout(() => {
+      if (!this.isExplicitlyClosed) {
+        this.connect().catch(() => {});
+      }
+    }, delay);
+  }
+
+  private clearReconnectTimer(): void {
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
+  }
+}
