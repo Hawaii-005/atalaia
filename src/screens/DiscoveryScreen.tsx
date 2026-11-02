@@ -132,6 +132,10 @@ export const DiscoveryScreen = ({ navigation }: any) => {
         title={t('discovery.title')}
         subtitle={subnet ? `${subnet}.0/24` : t('discovery.redeLocal')}
         onBack={() => navigation.goBack()}
+        rightAction={{
+          icon: 'add',
+          onPress: () => navigation.navigate('AddEditPrinter'),
+        }}
       />
 
       <ScrollView

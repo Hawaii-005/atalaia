@@ -6,6 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../components/Header';
@@ -137,9 +138,16 @@ export const AddEditPrinterScreen = () => {
       }
       let finalFlavor: FirmwareFlavor = 'sdcp';
       if (formData.firmware === 'auto') {
-        const det = await detectarTipoFirmware(formData.ipAddress.trim());
-        if (det?.flavor) {
-          finalFlavor = det.flavor;
+        try {
+          const det = await detectarTipoFirmware(
+            formData.ipAddress.trim(),
+            2000
+          );
+          if (det?.flavor) {
+            finalFlavor = det.flavor;
+          }
+        } catch {
+          // Se falhar o auto, mantém o padrão
         }
       } else {
         finalFlavor = formData.firmware;
@@ -154,10 +162,18 @@ export const AddEditPrinterScreen = () => {
       );
       navigation.goBack();
     } catch (validationErrors: any) {
+      console.warn('Erro ao guardar impressora:', validationErrors);
       const newErrors: FormErrors = {};
-      validationErrors.inner?.forEach((error: any) => {
-        newErrors[error.path as keyof FormErrors] = error.message;
-      });
+      if (validationErrors?.inner && Array.isArray(validationErrors.inner)) {
+        validationErrors.inner.forEach((error: any) => {
+          newErrors[error.path as keyof FormErrors] = error.message;
+        });
+      } else {
+        Alert.alert(
+          t('comum.erro'),
+          validationErrors?.message || 'Falha ao validar os campos'
+        );
+      }
       setErrors(newErrors);
     } finally {
       setIsSubmitting(false);
@@ -361,10 +377,10 @@ export const AddEditPrinterScreen = () => {
 
         <TouchableOpacity
           onPress={handleSubmit}
-          disabled={isSubmitting}
+          disabled={!canSave || isSubmitting}
           activeOpacity={0.85}
           className={`mt-4 rounded-xl2 py-4 items-center ${
-            canSave && !isSubmitting ? 'bg-brand' : 'bg-line'
+            canSave && !isSubmitting ? 'bg-brand' : 'bg-line opacity-50'
           }`}
         >
           <Text className="text-[15px] font-semibold text-white">

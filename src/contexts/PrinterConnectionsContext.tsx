@@ -1143,10 +1143,30 @@ export const PrinterConnectionsProvider = ({
       sdcpId: extras?.sdcpId,
     };
 
-    // Verificar ANTES de ligar: se o IP já existe, a lista não muda e ficaria
-    // um WebSocket/timer/watchdog a vigiar uma impressora que não está lá.
-    if (printersRef.current.some(p => p.ipAddress === ipAddress)) {
-      log('printer already exists', ipAddress);
+    // Se o IP já existe, atualiza as definições em vez de descartar silenciosamente
+    const jaExiste = printersRef.current.find(p => p.ipAddress === ipAddress);
+    if (jaExiste) {
+      log('printer already exists, updating', ipAddress);
+      setPrinters(prevPrinters => {
+        const updated = prevPrinters.map(p =>
+          p.id === jaExiste.id
+            ? {
+                ...p,
+                printerName,
+                alternateIp: alternateIp?.trim() || undefined,
+                firmware: extras?.firmware ?? p.firmware ?? 'sdcp',
+              }
+            : p
+        );
+        printersRef.current = updated;
+        return updated;
+      });
+      connectToPrinter({
+        ...jaExiste,
+        printerName,
+        alternateIp: alternateIp?.trim() || undefined,
+        firmware: extras?.firmware ?? jaExiste.firmware ?? 'sdcp',
+      });
       return;
     }
 
