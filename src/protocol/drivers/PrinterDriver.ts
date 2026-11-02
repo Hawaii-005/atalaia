@@ -21,6 +21,10 @@ export interface PrinterDriverStatus {
   targetNozzle?: number;
   tempBed?: number;
   targetBed?: number;
+  fanSpeed?: number;
+  lightOn?: boolean;
+  zOffset?: number;
+  position?: [number, number, number];
 }
 
 export interface PrinterDriver {

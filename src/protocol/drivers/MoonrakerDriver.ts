@@ -31,6 +31,24 @@ export interface MoonrakerKlipperStatus {
     state?: string;
     state_message?: string;
   };
+  fan?: {
+    speed?: number;
+  };
+  output_pin?: {
+    value?: number;
+  };
+  'output_pin caselight'?: {
+    value?: number;
+  };
+  gcode_move?: {
+    gcode_position?: [number, number, number, number];
+    homing_origin?: [number, number, number, number];
+    speed_factor?: number;
+  };
+  toolhead?: {
+    position?: [number, number, number, number];
+    homed_axes?: string;
+  };
 }
 
 export class MoonrakerDriver implements PrinterDriver {
@@ -153,6 +171,11 @@ export class MoonrakerDriver implements PrinterDriver {
       statusCode = 8;
     else statusCode = 0;
 
+    const coordStr = s.position
+      ? `X:${s.position[0].toFixed(2)} Y:${s.position[1].toFixed(2)} Z:${s.position[2].toFixed(2)}`
+      : '';
+    const fanVal = s.fanSpeed ?? 0;
+
     return {
       CurrentStatus: [statusCode === 0 ? 0 : 1],
       TimeLapseStatus: 0,
@@ -163,10 +186,17 @@ export class MoonrakerDriver implements PrinterDriver {
       TempTargetHotbed: s.targetBed ?? 0,
       TempTargetNozzle: s.targetNozzle ?? 0,
       TempTargetBox: 0,
-      CurrenCoord: '',
-      CurrentFanSpeed: { ModelFan: 0, AuxiliaryFan: 0, BoxFan: 0 },
-      ZOffset: 0,
-      LightStatus: { SecondLight: 0, RgbLight: [0, 0, 0] },
+      CurrenCoord: coordStr,
+      CurrentFanSpeed: {
+        ModelFan: fanVal,
+        AuxiliaryFan: 0,
+        BoxFan: 0,
+      },
+      ZOffset: s.zOffset ?? 0,
+      LightStatus: {
+        SecondLight: s.lightOn ? 1 : 0,
+        RgbLight: [0, 0, 0],
+      },
       PrintInfo: {
         Status: statusCode,
         CurrentLayer: s.currentLayer ?? 0,
@@ -291,6 +321,71 @@ export class MoonrakerDriver implements PrinterDriver {
           }
           break;
         }
+        case 401: {
+          // Jog / Mover eixos: { Axis: 'X'|'Y'|'Z', Step: mm }
+          const axis = String(data?.Axis || '').toUpperCase();
+          const step = Number(data?.Step || 0);
+          if (axis && step) {
+            const feedrate = axis === 'Z' ? 600 : 3000;
+            // Modo relativo -> mover -> voltar a absoluto
+            const script = `G91\nG1 ${axis}${step} F${feedrate}\nG90`;
+            await this.sendJsonRpc('printer.gcode.script', { script });
+          }
+          break;
+        }
+        case 402: {
+          // Home eixos: { Axis: 'XYZ'|'X'|'Y'|'Z' }
+          const axis = String(data?.Axis || '').toUpperCase();
+          let gcode = 'G28';
+          if (axis === 'X' || axis === 'Y' || axis === 'Z') {
+            gcode = `G28 ${axis}`;
+          }
+          await this.sendJsonRpc('printer.gcode.script', { script: gcode });
+          break;
+        }
+        case 403: {
+          // Luz, Velocidade, Ventoinhas ou Temperaturas
+          const gcodes: string[] = [];
+
+          // Luz interna (caselight pin ou macro M355)
+          if (data?.LightStatus?.SecondLight !== undefined) {
+            const on = data.LightStatus.SecondLight === 1;
+            gcodes.push(`SET_PIN PIN=caselight VALUE=${on ? 1 : 0}`);
+          }
+
+          // Velocidade de impressão (%)
+          if (data?.PrintSpeedPct !== undefined) {
+            const pct = Number(data.PrintSpeedPct);
+            if (pct >= 1 && pct <= 500) {
+              gcodes.push(`M220 S${pct}`);
+            }
+          }
+
+          // Ventoinha do modelo (ModelFan: 0..100)
+          if (data?.TargetFanSpeed?.ModelFan !== undefined) {
+            const pwm = Math.round(
+              (Number(data.TargetFanSpeed.ModelFan) / 100) * 255
+            );
+            gcodes.push(`M106 S${pwm}`);
+          }
+
+          // Temperaturas: bocal ou mesa
+          if (data?.TempTargetNozzle !== undefined) {
+            const temp = Number(data.TempTargetNozzle);
+            gcodes.push(`M104 S${temp}`);
+          }
+          if (data?.TempTargetHotbed !== undefined) {
+            const temp = Number(data.TempTargetHotbed);
+            gcodes.push(`M140 S${temp}`);
+          }
+
+          if (gcodes.length > 0) {
+            await this.sendJsonRpc('printer.gcode.script', {
+              script: gcodes.join('\n'),
+            });
+          }
+          break;
+        }
         default:
           break;
       }
@@ -326,6 +421,10 @@ export class MoonrakerDriver implements PrinterDriver {
           extruder: null,
           heater_bed: null,
           webhooks: null,
+          fan: null,
+          'output_pin caselight': null,
+          gcode_move: null,
+          toolhead: null,
         },
       });
 
@@ -437,6 +536,32 @@ export class MoonrakerDriver implements PrinterDriver {
     }
     if (klipperStatus.heater_bed?.target !== undefined) {
       next.targetBed = Math.round(klipperStatus.heater_bed.target);
+    }
+
+    if (klipperStatus.fan?.speed !== undefined) {
+      next.fanSpeed = Math.round(klipperStatus.fan.speed * 100);
+    }
+
+    const lightPin =
+      klipperStatus['output_pin caselight']?.value ??
+      klipperStatus.output_pin?.value;
+    if (lightPin !== undefined) {
+      next.lightOn = lightPin > 0;
+    }
+
+    if (klipperStatus.gcode_move?.homing_origin?.[2] !== undefined) {
+      next.zOffset = klipperStatus.gcode_move.homing_origin[2];
+    }
+
+    const pos =
+      klipperStatus.gcode_move?.gcode_position ??
+      klipperStatus.toolhead?.position;
+    if (pos && Array.isArray(pos) && pos.length >= 3) {
+      next.position = [
+        Math.round(pos[0] * 100) / 100,
+        Math.round(pos[1] * 100) / 100,
+        Math.round(pos[2] * 100) / 100,
+      ];
     }
 
     this.updateStatus(next);

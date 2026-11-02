@@ -396,5 +396,194 @@ describe('MoonrakerDriver (Fase 2 - Leitura e Telemetria)', () => {
 
       await driver.disconnect();
     });
+
+    it('despacha comandos de movimento jog (Cmd 401) e home (Cmd 402)', async () => {
+      const driver = new MoonrakerDriver({
+        id: 'cosmos-1',
+        name: 'Centauri Cosmos',
+        ipAddress: '192.168.1.150',
+      });
+      await driver.connect();
+      const mockWs = MockWebSocket.instances[0];
+
+      // Cmd 401: Jog X +10
+      const jogPromise = driver.sendCommand({
+        Id: 'test-jog',
+        Data: {
+          Cmd: 401,
+          Data: { Axis: 'X', Step: 10 },
+        },
+      });
+      await new Promise(r => setTimeout(r, 10));
+      const jogMsg = mockWs.sentMessages
+        .map(m => JSON.parse(m))
+        .find(
+          m =>
+            m.method === 'printer.gcode.script' &&
+            m.params?.script?.includes('G1 X10')
+        );
+      expect(jogMsg).toBeDefined();
+      expect(jogMsg.params.script).toBe('G91\nG1 X10 F3000\nG90');
+      mockWs.triggerMessage({ jsonrpc: '2.0', id: jogMsg.id, result: 'ok' });
+      await jogPromise;
+
+      // Cmd 402: Home Z
+      const homeZPromise = driver.sendCommand({
+        Id: 'test-home-z',
+        Data: {
+          Cmd: 402,
+          Data: { Axis: 'Z' },
+        },
+      });
+      await new Promise(r => setTimeout(r, 10));
+      const homeZMsg = mockWs.sentMessages
+        .map(m => JSON.parse(m))
+        .find(
+          m =>
+            m.method === 'printer.gcode.script' && m.params?.script === 'G28 Z'
+        );
+      expect(homeZMsg).toBeDefined();
+      mockWs.triggerMessage({ jsonrpc: '2.0', id: homeZMsg.id, result: 'ok' });
+      await homeZPromise;
+
+      // Cmd 402: Home XYZ
+      const homeAllPromise = driver.sendCommand({
+        Id: 'test-home-all',
+        Data: {
+          Cmd: 402,
+          Data: { Axis: 'XYZ' },
+        },
+      });
+      await new Promise(r => setTimeout(r, 10));
+      const homeAllMsg = mockWs.sentMessages
+        .map(m => JSON.parse(m))
+        .find(
+          m => m.method === 'printer.gcode.script' && m.params?.script === 'G28'
+        );
+      expect(homeAllMsg).toBeDefined();
+      mockWs.triggerMessage({
+        jsonrpc: '2.0',
+        id: homeAllMsg.id,
+        result: 'ok',
+      });
+      await homeAllPromise;
+
+      await driver.disconnect();
+    });
+
+    it('despacha comandos de luz, velocidade, ventoinha e temperaturas (Cmd 403)', async () => {
+      const driver = new MoonrakerDriver({
+        id: 'cosmos-1',
+        name: 'Centauri Cosmos',
+        ipAddress: '192.168.1.150',
+      });
+      await driver.connect();
+      const mockWs = MockWebSocket.instances[0];
+
+      // Luz ON
+      const lightPromise = driver.sendCommand({
+        Id: 'test-light',
+        Data: {
+          Cmd: 403,
+          Data: { LightStatus: { SecondLight: 1 } },
+        },
+      });
+      await new Promise(r => setTimeout(r, 10));
+      const lightMsg = mockWs.sentMessages
+        .map(m => JSON.parse(m))
+        .find(
+          m =>
+            m.method === 'printer.gcode.script' &&
+            m.params?.script?.includes('SET_PIN PIN=caselight VALUE=1')
+        );
+      expect(lightMsg).toBeDefined();
+      mockWs.triggerMessage({ jsonrpc: '2.0', id: lightMsg.id, result: 'ok' });
+      await lightPromise;
+
+      // Velocidade 120%
+      const speedPromise = driver.sendCommand({
+        Id: 'test-speed',
+        Data: {
+          Cmd: 403,
+          Data: { PrintSpeedPct: 120 },
+        },
+      });
+      await new Promise(r => setTimeout(r, 10));
+      const speedMsg = mockWs.sentMessages
+        .map(m => JSON.parse(m))
+        .find(
+          m =>
+            m.method === 'printer.gcode.script' &&
+            m.params?.script?.includes('M220 S120')
+        );
+      expect(speedMsg).toBeDefined();
+      mockWs.triggerMessage({ jsonrpc: '2.0', id: speedMsg.id, result: 'ok' });
+      await speedPromise;
+
+      // Ventoinha e Temperaturas em lote
+      const fanTempPromise = driver.sendCommand({
+        Id: 'test-fan-temp',
+        Data: {
+          Cmd: 403,
+          Data: {
+            TargetFanSpeed: { ModelFan: 100 },
+            TempTargetNozzle: 215,
+            TempTargetHotbed: 60,
+          },
+        },
+      });
+      await new Promise(r => setTimeout(r, 10));
+      const fanTempMsg = mockWs.sentMessages
+        .map(m => JSON.parse(m))
+        .find(
+          m =>
+            m.method === 'printer.gcode.script' &&
+            m.params?.script?.includes('M106 S255') &&
+            m.params?.script?.includes('M104 S215') &&
+            m.params?.script?.includes('M140 S60')
+        );
+      expect(fanTempMsg).toBeDefined();
+      mockWs.triggerMessage({
+        jsonrpc: '2.0',
+        id: fanTempMsg.id,
+        result: 'ok',
+      });
+      await fanTempPromise;
+
+      await driver.disconnect();
+    });
+
+    it('processa telemetria estendida: ventoinha, luz, z-offset e coordenadas', async () => {
+      const driver = new MoonrakerDriver({
+        id: 'cosmos-1',
+        name: 'Centauri Cosmos',
+        ipAddress: '192.168.1.150',
+      });
+      await driver.connect();
+
+      driver.processKlipperStatusUpdate({
+        fan: { speed: 0.8 },
+        'output_pin caselight': { value: 1.0 },
+        gcode_move: {
+          gcode_position: [120.5, 80.25, 15.0, 0],
+          homing_origin: [0, 0, -0.05, 0],
+          speed_factor: 1.0,
+        },
+      });
+
+      const st = driver.getStatus();
+      expect(st.fanSpeed).toBe(80);
+      expect(st.lightOn).toBe(true);
+      expect(st.zOffset).toBe(-0.05);
+      expect(st.position).toEqual([120.5, 80.25, 15.0]);
+
+      const appStatus = driver.getAppPrinterStatus();
+      expect(appStatus.CurrentFanSpeed.ModelFan).toBe(80);
+      expect(appStatus.LightStatus.SecondLight).toBe(1);
+      expect(appStatus.ZOffset).toBe(-0.05);
+      expect(appStatus.CurrenCoord).toBe('X:120.50 Y:80.25 Z:15.00');
+
+      await driver.disconnect();
+    });
   });
 });
