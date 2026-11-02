@@ -90,8 +90,9 @@ const SnapshotAoVivo = ({
     return () => clearInterval(id);
   }, [activo, falhou]);
   if (falhou) return null;
+  const ipSemPorta = host.split(':')[0];
   const snapshotUri = isMoonraker
-    ? `http://${host}:7125/webcam/?action=snapshot&t=${tick}`
+    ? `http://${ipSemPorta}:8080/snapshot?t=${tick}`
     : `http://${host}:3031/snapshot?t=${tick}`;
   return (
     <Image

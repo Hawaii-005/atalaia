@@ -266,32 +266,37 @@ const descobrirComVarredura = async (
 };
 
 /**
- * Sonda Moonraker (:7125) via HTTP rápido e WebSocket.
+ * Sonda Moonraker via HTTP rápido (/server/info na porta 80 ou 7125) e WebSocket.
  */
 export const probeMoonraker = async (
   ip: string,
   timeoutMs = 1200
 ): Promise<DiscoveredPrinter | null> => {
-  try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    const res = await fetch(`http://${ip}:7125/server/info`, {
-      signal: controller.signal,
-    });
-    clearTimeout(timer);
-    if (res.ok) {
-      const data = await res.json();
-      if (data?.result) {
-        return {
-          ip,
-          name: 'Centauri Carbon (COSMOS)',
-          firmware: 'COSMOS Klipper',
-          kind: 'fdm',
-          firmwareFlavor: 'moonraker',
-        };
+  // Testar porta 80 (padrão COSMOS) e 7125 (padrão Moonraker)
+  const portas = ['', ':7125'];
+
+  for (const porta of portas) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      const res = await fetch(`http://${ip}${porta}/server/info`, {
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.result) {
+          return {
+            ip: `${ip}${porta}`,
+            name: 'Centauri Carbon (COSMOS)',
+            firmware: 'COSMOS Klipper',
+            kind: 'fdm',
+            firmwareFlavor: 'moonraker',
+          };
+        }
       }
-    }
-  } catch {}
+    } catch {}
+  }
 
   return new Promise(resolve => {
     let settled = false;
@@ -319,7 +324,7 @@ export const probeMoonraker = async (
     timer = setTimeout(() => finish(null), timeoutMs);
 
     try {
-      socket = new WebSocket(`ws://${ip}:7125/websocket`);
+      socket = new WebSocket(`ws://${ip}/websocket`);
       socket.onopen = () => {
         socket?.send(
           JSON.stringify({

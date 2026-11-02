@@ -70,7 +70,7 @@ describe('MoonrakerDriver (Fase 2 - Leitura e Telemetria)', () => {
     expect(status.estadoLogico).toBe('idle');
   });
 
-  it('estabelece ligação WebSocket na porta 7125 e envia printer.objects.subscribe', async () => {
+  it('estabelece ligação WebSocket e envia printer.objects.subscribe', async () => {
     const driver = new MoonrakerDriver({
       id: 'cosmos-1',
       name: 'Centauri Cosmos',
@@ -81,7 +81,7 @@ describe('MoonrakerDriver (Fase 2 - Leitura e Telemetria)', () => {
 
     expect(MockWebSocket.instances.length).toBe(1);
     const mockWs = MockWebSocket.instances[0];
-    expect(mockWs.url).toBe('ws://192.168.1.150:7125/websocket');
+    expect(mockWs.url).toBe('ws://192.168.1.150/websocket');
 
     // Aguarda microtask para envio do subscribe
     await new Promise(r => setTimeout(r, 10));

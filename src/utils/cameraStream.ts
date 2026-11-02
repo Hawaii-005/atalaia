@@ -13,8 +13,9 @@ export const htmlDoVideo = (
   isMoonraker = false
 ): string => {
   if (!host) return '';
+  const ipSemPorta = host.split(':')[0];
   const url = isMoonraker
-    ? `http://${host}:7125/webcam/?action=stream`
+    ? `http://${ipSemPorta}:8080/stream`
     : `http://${host}:3031/video`;
   // O recorte redondo é feito na página, não na vista nativa: um WebView dentro
   // de um pai com `overflow: hidden` + borderRadius fica preto no Android.

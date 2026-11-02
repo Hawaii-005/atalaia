@@ -16,7 +16,7 @@ describe('Deteção e Descoberta de Firmware', () => {
     (global as any).WebSocket = originalWebSocket;
   });
 
-  it('deteta Moonraker quando HTTP 7125 responde /server/info com sucesso', async () => {
+  it('deteta Moonraker quando HTTP responde /server/info com sucesso', async () => {
     (global as any).fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({

@@ -102,7 +102,11 @@ export class MoonrakerDriver implements PrinterDriver {
       }, 7000);
 
       try {
-        const url = `ws://${this.ipAddress}:7125/websocket`;
+        // Suporta tanto a porta padrão do Moonraker (:7125) como proxy reverso na porta 80 (COSMOS oficial)
+        const hostComPorta = this.ipAddress.includes(':')
+          ? this.ipAddress
+          : `${this.ipAddress}`;
+        const url = `ws://${hostComPorta}/websocket`;
         this.socket = new WebSocket(url);
 
         this.socket.onopen = () => {

@@ -56,10 +56,10 @@ export const uploadGcode = async (
     throw new Error('Ficheiro vazio');
   }
 
-  // Se for Moonraker / Klipper (COSMOS), utiliza o endpoint multipart padrão na porta 7125
+  // Se for Moonraker / Klipper (COSMOS), utiliza o endpoint multipart padrão
   if (isMoonraker) {
-    const ipSemPorta = printerIp.replace(/:\d+$/, '');
-    const urlMoonraker = `http://${ipSemPorta}:7125/server/files/upload`;
+    const hostFormatado = printerIp;
+    const urlMoonraker = `http://${hostFormatado}/server/files/upload`;
     const form = new FormData();
     form.append('root', 'gcodes');
     form.append('file', {
