@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 740" width="1180" height="740" style="background:#ffffff; font-family:sans-serif; color:#222222;">
+  <!-- Screen boundary -->
+  <rect x="0" y="0" width="1180" height="740" fill="#f8f9fa" stroke="#cccccc" stroke-width="2"/>
+  
+  <!-- Header -->
+  <rect x="0" y="0" width="1180" height="65" fill="#ffffff" stroke="#dddddd" stroke-width="1"/>
+  <text x="30" y="42" font-size="20" font-weight="bold" fill="#333333">[1] ADICIONAR / EDITAR IMPRESSORA (VISTA TABLET)</text>
+  
+  <!-- Left Column: Form Elements (width 540) -->
+  <!-- Block 2: Nome -->
+  <rect x="30" y="90" width="540" height="70" fill="#ffffff" stroke="#999999" stroke-width="1" stroke-dasharray="4"/>
+  <text x="45" y="115" font-size="13" fill="#666666">[2] NOME DA IMPRESSORA</text>
+  <text x="45" y="142" font-size="16" fill="#111111">Centauri Carbon Sala</text>
+
+  <!-- Block 3: Endereço IP -->
+  <rect x="30" y="180" width="540" height="70" fill="#ffffff" stroke="#999999" stroke-width="1" stroke-dasharray="4"/>
+  <text x="45" y="205" font-size="13" fill="#666666">[3] ENDEREÇO IP (LAN)</text>
+  <text x="45" y="232" font-size="16" fill="#111111">192.168.1.150</text>
+
+  <!-- Block 4: IP Alternativo -->
+  <rect x="30" y="270" width="540" height="70" fill="#ffffff" stroke="#999999" stroke-width="1" stroke-dasharray="4"/>
+  <text x="45" y="295" font-size="13" fill="#666666">[4] ENDEREÇO ALTERNATIVO (TAILSCALE - OPCIONAL)</text>
+  <text x="45" y="322" font-size="16" fill="#888888">100.x.y.z</text>
+
+  <!-- Block 5: Seletor de Firmware -->
+  <rect x="30" y="360" width="540" height="135" fill="#ffffff" stroke="#666666" stroke-width="1.5" stroke-dasharray="4"/>
+  <text x="45" y="388" font-size="13" font-weight="bold" fill="#333333">[5] SELETOR DE FIRMWARE / PROTOCOLO</text>
+  
+  <!-- Radio Options -->
+  <circle cx="55" cy="415" r="7" fill="#333333"/>
+  <text x="75" y="420" font-size="14" font-weight="bold" fill="#111111">Detetar automaticamente (Recomendado)</text>
+
+  <circle cx="55" cy="445" r="7" fill="none" stroke="#666666" stroke-width="1.5"/>
+  <text x="75" y="450" font-size="14" fill="#444444">Original Elegoo (SDCP :3030)</text>
+
+  <circle cx="55" cy="475" r="7" fill="none" stroke="#666666" stroke-width="1.5"/>
+  <text x="75" y="480" font-size="14" fill="#444444">COSMOS / Klipper (Moonraker :7125)</text>
+
+  <!-- Block 6: Botão Testar Ligação -->
+  <rect x="30" y="520" width="540" height="52" rx="8" fill="#e9ecef" stroke="#666666" stroke-width="1"/>
+  <text x="210" y="552" font-size="15" font-weight="bold" fill="#222222">[6] TESTAR LIGAÇÃO</text>
+
+  <!-- Right Column: Results & Capabilities (width 540, x=610) -->
+  <!-- Block 7: Resultado do Teste -->
+  <rect x="610" y="90" width="540" height="250" rx="8" fill="#ffffff" stroke="#444444" stroke-width="1.5" stroke-dasharray="5"/>
+  <text x="635" y="125" font-size="15" font-weight="bold" fill="#222222">[7] RESULTADO DO TESTE DE LIGAÇÃO</text>
+  <text x="635" y="160" font-size="16" fill="#2b8a3e">✔ Ligado com sucesso via Moonraker (:7125)</text>
+  
+  <text x="635" y="195" font-size="14" fill="#555555">• Servidor: Moonraker v0.8.0 / Klippy v0.12.0</text>
+  <text x="635" y="225" font-size="14" fill="#555555">• Latência: 12 ms (LAN Directa)</text>
+  <text x="635" y="255" font-size="14" fill="#555555">• Modo de Acesso: Confiado (Trusted Local Client)</text>
+  <text x="635" y="285" font-size="14" fill="#555555">• Endereço Alternativo: 100.x.y.z verificado</text>
+
+  <!-- Block 8: Painel de Capacidades e Avisos -->
+  <rect x="610" y="360" width="540" height="212" rx="8" fill="#fff9db" stroke="#f08c00" stroke-width="1.5" stroke-dasharray="3"/>
+  <text x="635" y="395" font-size="15" font-weight="bold" fill="#b06200">[8] CAPACIDADES & REGRAS DE COMPORTAMENTO</text>
+  <text x="635" y="425" font-size="13" fill="#794400">✔ Suportado: Telemetria, Temperaturas, Controlo de Impressão, Movimento G91/G90</text>
+  <text x="635" y="450" font-size="13" fill="#794400">✔ Suportado: Baby-stepping ao vivo, Ficheiros e Miniaturas Klipper</text>
+  <text x="635" y="475" font-size="13" fill="#794400">⚠ Depende de Add-on: Multi-material Canvas (requer extensão AFC no COSMOS)</text>
+  <text x="635" y="500" font-size="13" fill="#c92a2a">✖ Indisponível no COSMOS: Gravação direta de Timelapse SDCP nativo</text>
+  <text x="635" y="525" font-size="12" fill="#555555">Nota: Os botões de funcionalidades não suportadas ficam ocultos ou desativados com aviso explicativo.</text>
+
+  <!-- Bottom Bar: Actions -->
+  <rect x="30" y="640" width="250" height="52" rx="8" fill="#ffffff" stroke="#999999" stroke-width="1"/>
+  <text x="110" y="672" font-size="15" fill="#555555">CANCELAR</text>
+
+  <rect x="900" y="640" width="250" height="52" rx="8" fill="#222222"/>
+  <text x="965" y="672" font-size="15" font-weight="bold" fill="#ffffff">[9] GUARDAR ALTERAÇÕES</text>
+</svg>
