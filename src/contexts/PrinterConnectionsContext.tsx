@@ -98,6 +98,10 @@ export interface PrinterConnectionsContextType {
     timeoutMs?: number
   ) => Promise<any>;
   updatePrinterIp: (id: string, ipAddress: string) => void;
+  updatePrinterFirmwareFlavor: (
+    id: string,
+    firmware: Printer['firmware']
+  ) => void;
   statusIntervalMs: number;
   fila: ItemFila[];
   filaAuto: boolean;
@@ -1177,6 +1181,43 @@ export const PrinterConnectionsProvider = ({
     connectToPrinter(updatedPrinter);
   };
 
+  const updatePrinterFirmwareFlavor = (
+    id: string,
+    firmware: Printer['firmware']
+  ) => {
+    const printer = printersRef.current.find(p => p.id === id);
+    if (!printer || printer.firmware === firmware) return;
+
+    const existingSocket = webSocketsRef.current[id];
+    if (existingSocket) {
+      clearReconnectTimer(id);
+      markIntentionalClose(id);
+      try {
+        existingSocket.close();
+      } catch {}
+      delete webSocketsRef.current[id];
+    }
+    stopStatusTimer(id);
+
+    const updatedPrinter: Printer = {
+      ...printer,
+      firmware: firmware ?? 'sdcp',
+      activeIp: undefined,
+      connectionStatus: 'connecting',
+      videoUrl: undefined,
+    };
+
+    setPrinters(prevPrinters => {
+      const updatedPrinters = prevPrinters.map(p =>
+        p.id === id ? updatedPrinter : p
+      );
+      printersRef.current = updatedPrinters;
+      return updatedPrinters;
+    });
+
+    connectToPrinter(updatedPrinter);
+  };
+
   const request = useCallback(
     (printerId: string, command: SdcpCommand<unknown>, timeoutMs = 8000) =>
       new Promise<any>((resolve, reject) => {
@@ -1853,6 +1894,7 @@ export const PrinterConnectionsProvider = ({
         sendCommand,
         request,
         updatePrinterIp,
+        updatePrinterFirmwareFlavor,
         statusIntervalMs,
         setStatusInterval: updateStatusInterval,
         carregarParaSaturno,

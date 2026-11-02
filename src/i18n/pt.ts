@@ -644,6 +644,17 @@ export default {
   'addPrinter.nomeMaximo': 'Menos de 50 caracteres',
   'addPrinter.ipObrigatorio': 'O endereço IP é obrigatório',
   'addPrinter.aGuardar': 'A guardar…',
+  'addPrinter.firmware': 'Firmware da impressora',
+  'addPrinter.firmwareAuto': 'Detetar automaticamente (Recomendado)',
+  'addPrinter.firmwareSdcp': 'Original Elegoo (SDCP :3030)',
+  'addPrinter.firmwareMoonraker': 'COSMOS / Klipper (Moonraker :7125)',
+  'addPrinter.testarLigacao': 'Testar ligação',
+  'addPrinter.aTestar': 'A testar ligação…',
+  'addPrinter.testeSucessoSdcp': 'Ligado com sucesso via SDCP (:3030)',
+  'addPrinter.testeSucessoMoonraker':
+    'Ligado com sucesso via Moonraker (:7125)',
+  'addPrinter.testeFalhou':
+    'Não foi possível ligar à impressora neste endereço',
   'addPrinter.guardar': 'Guardar impressora',
   'addPrinter.analisarRede': 'Analisar a rede',
 

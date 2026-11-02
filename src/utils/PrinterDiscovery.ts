@@ -3,6 +3,7 @@ import * as Network from 'expo-network';
 import { Buffer } from 'buffer';
 import dgram from 'react-native-udp';
 import { getDiscoveryAddress } from './printerDiscoverySafety';
+import { FirmwareFlavor } from '../types';
 
 export interface DiscoveredPrinter {
   ip: string;
@@ -11,6 +12,8 @@ export interface DiscoveredPrinter {
   mainboardId?: string;
   /** 'fdm' = WebSocket SDCP (:3030); 'resin' = SDCP V1 sobre MQTT (UDP :3000). */
   kind: 'fdm' | 'resin';
+  /** 'sdcp' = original/stock · 'moonraker' = COSMOS/Klipper */
+  firmwareFlavor?: FirmwareFlavor;
   /** Identificador da sessão UDP, necessário para o MQTT da resina. */
   sdcpId?: string;
 }
@@ -22,7 +25,10 @@ const CONCURRENCY = 48;
  * Asks the printer for its attributes (SDCP Cmd 1) over the local websocket.
  * A successful attributes reply means this IP really is an Elegoo printer.
  */
-const probePrinter = (ip: string): Promise<DiscoveredPrinter | null> =>
+export const probePrinter = (
+  ip: string,
+  timeoutMs = PROBE_TIMEOUT
+): Promise<DiscoveredPrinter | null> =>
   new Promise(resolve => {
     let settled = false;
     let socket: WebSocket | null = null;
@@ -35,14 +41,20 @@ const probePrinter = (ip: string): Promise<DiscoveredPrinter | null> =>
       const current = socket;
       socket = null;
       try {
-        current?.close();
+        if (current) {
+          current.onopen = null;
+          current.onmessage = null;
+          current.onerror = null;
+          current.onclose = null;
+          current.close();
+        }
       } catch {
         // ignore
       }
       resolve(result);
     };
 
-    timer = setTimeout(() => finish(null), PROBE_TIMEOUT);
+    timer = setTimeout(() => finish(null), timeoutMs);
 
     try {
       socket = new WebSocket(`ws://${ip}:3030/websocket`);
@@ -72,6 +84,7 @@ const probePrinter = (ip: string): Promise<DiscoveredPrinter | null> =>
               firmware: attrs.FirmwareVersion,
               mainboardId: attrs.MainboardID,
               kind: 'fdm',
+              firmwareFlavor: 'sdcp',
             });
           }
         } catch {
@@ -141,6 +154,7 @@ const udpDiscovery = (subnet: string | null): Promise<DiscoveredPrinter[]> =>
             // SDCP V1 é a família das resinas (Saturn/Mars): falam MQTT, não
             // WebSocket. A Centauri Carbon anuncia V3.
             kind: protocolo.startsWith('V1') ? 'resin' : 'fdm',
+            firmwareFlavor: 'sdcp',
             sdcpId: payload?.Id,
           });
         } catch {
@@ -243,4 +257,113 @@ const descobrirComVarredura = async (
   }
 
   return found;
+};
+
+/**
+ * Sonda Moonraker (:7125) via HTTP rápido e WebSocket.
+ */
+export const probeMoonraker = async (
+  ip: string
+): Promise<DiscoveredPrinter | null> => {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 1200);
+    const res = await fetch(`http://${ip}:7125/server/info`, {
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.result) {
+        return {
+          ip,
+          name: 'Centauri Carbon (COSMOS)',
+          firmware: 'COSMOS Klipper',
+          kind: 'fdm',
+          firmwareFlavor: 'moonraker',
+        };
+      }
+    }
+  } catch {}
+
+  return new Promise(resolve => {
+    let settled = false;
+    let socket: WebSocket | null = null;
+    let timer: ReturnType<typeof setTimeout>;
+
+    const finish = (result: DiscoveredPrinter | null) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      const cur = socket;
+      socket = null;
+      try {
+        if (cur) {
+          cur.onopen = null;
+          cur.onmessage = null;
+          cur.onerror = null;
+          cur.onclose = null;
+          cur.close();
+        }
+      } catch {}
+      resolve(result);
+    };
+
+    timer = setTimeout(() => finish(null), 1500);
+
+    try {
+      socket = new WebSocket(`ws://${ip}:7125/websocket`);
+      socket.onopen = () => {
+        socket?.send(
+          JSON.stringify({
+            jsonrpc: '2.0',
+            method: 'server.info',
+            id: 'probe-mr',
+          })
+        );
+      };
+      socket.onmessage = event => {
+        try {
+          const payload = JSON.parse(String(event.data));
+          if (payload?.id === 'probe-mr' && payload.result) {
+            finish({
+              ip,
+              name: 'Centauri Carbon (COSMOS)',
+              firmware: 'COSMOS Klipper',
+              kind: 'fdm',
+              firmwareFlavor: 'moonraker',
+            });
+          }
+        } catch {}
+      };
+      socket.onerror = () => finish(null);
+      socket.onclose = () => finish(null);
+    } catch {
+      finish(null);
+    }
+  });
+};
+
+/**
+ * Proba um IP em ambos os protocolos para determinar automaticamente o firmware.
+ */
+export const detectarTipoFirmware = async (
+  ip: string,
+  timeoutMs = 1500
+): Promise<{
+  flavor: FirmwareFlavor;
+  printer: DiscoveredPrinter | null;
+} | null> => {
+  const [sdcpRes, mrRes] = await Promise.all([
+    probePrinter(ip, timeoutMs),
+    probeMoonraker(ip),
+  ]);
+
+  if (mrRes) {
+    return { flavor: 'moonraker', printer: mrRes };
+  }
+  if (sdcpRes) {
+    return { flavor: 'sdcp', printer: sdcpRes };
+  }
+  return null;
 };

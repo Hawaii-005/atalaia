@@ -102,6 +102,7 @@ export const DiscoveryScreen = ({ navigation }: any) => {
     }
     addPrinter(device.name, device.ip, device.mainboardId, undefined, {
       kind: device.kind,
+      firmware: device.firmwareFlavor ?? 'sdcp',
       sdcpId: device.sdcpId,
     });
     Alert.alert(

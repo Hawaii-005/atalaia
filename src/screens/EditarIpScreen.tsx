@@ -23,10 +23,14 @@ export const EditarIpScreen = ({ route, navigation }: any) => {
   useIdioma();
   const { tema } = useTheme();
   const paleta = tema.paleta;
-  const { printers, updatePrinterIp } = usePrinterConnections();
+  const { printers, updatePrinterIp, updatePrinterFirmwareFlavor } =
+    usePrinterConnections();
 
   const printer = printers.find(p => p.id === route?.params?.printerId);
   const [ip, setIp] = useState(printer?.ipAddress ?? '');
+  const [firmware, setFirmware] = useState<'sdcp' | 'moonraker'>(
+    printer?.firmware ?? 'sdcp'
+  );
   const [erro, setErro] = useState<string | null>(null);
 
   const valido =
@@ -43,6 +47,9 @@ export const EditarIpScreen = ({ route, navigation }: any) => {
       return;
     }
     updatePrinterIp(printer.id, ip.trim());
+    if (printer.firmware !== firmware) {
+      updatePrinterFirmwareFlavor(printer.id, firmware);
+    }
     navigation.goBack();
   };
 
@@ -137,6 +144,82 @@ export const EditarIpScreen = ({ route, navigation }: any) => {
             >
               {erro}
             </Text>
+          )}
+
+          {printer?.kind !== 'resin' && (
+            <View
+              style={{
+                marginTop: 18,
+                padding: 14,
+                borderRadius: 14,
+                backgroundColor: hexDe(paleta.cartao),
+                borderWidth: 1,
+                borderColor: hexDe(paleta.linha),
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: '600',
+                  color: hexDe(paleta.tintaSoft),
+                  marginBottom: 10,
+                  letterSpacing: 0.5,
+                }}
+              >
+                {t('addPrinter.firmware')}
+              </Text>
+
+              {[
+                { id: 'sdcp', label: t('addPrinter.firmwareSdcp') },
+                { id: 'moonraker', label: t('addPrinter.firmwareMoonraker') },
+              ].map(opt => (
+                <TouchableOpacity
+                  key={opt.id}
+                  onPress={() => setFirmware(opt.id as any)}
+                  activeOpacity={0.7}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingVertical: 8,
+                    minHeight: 48,
+                  }}
+                >
+                  <View
+                    style={{
+                      height: 20,
+                      width: 20,
+                      borderRadius: 10,
+                      borderWidth: 1,
+                      borderColor: hexDe(paleta.linha),
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginRight: 10,
+                      backgroundColor: hexDe(paleta.fundo),
+                    }}
+                  >
+                    {firmware === opt.id && (
+                      <View
+                        style={{
+                          height: 10,
+                          width: 10,
+                          borderRadius: 5,
+                          backgroundColor: hexDe(paleta.acento),
+                        }}
+                      />
+                    )}
+                  </View>
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontWeight: '500',
+                      color: hexDe(paleta.tinta),
+                    }}
+                  >
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           )}
 
           <Text
