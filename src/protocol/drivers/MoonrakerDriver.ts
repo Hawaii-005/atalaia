@@ -4,7 +4,7 @@ import {
   PrinterDriverStatus,
 } from './PrinterDriver';
 import { SdcpCommand, SdcpResponse, PrinterKind } from '../types';
-import { Capabilities, FirmwareFlavor } from '../../types';
+import { Capabilities, FirmwareFlavor, PrinterStatus } from '../../types';
 import { CAPABILITIES_MOONRAKER_COSMOS } from '../capabilities';
 
 export interface MoonrakerKlipperStatus {
@@ -143,6 +143,45 @@ export class MoonrakerDriver implements PrinterDriver {
     return { ...this.status };
   }
 
+  getAppPrinterStatus(): PrinterStatus {
+    const s = this.status;
+    let statusCode = 0;
+    if (s.estadoLogico === 'printing') statusCode = 6;
+    else if (s.estadoLogico === 'paused') statusCode = 20;
+    else if (s.estadoLogico === 'completed') statusCode = 9;
+    else if (s.estadoLogico === 'stopped' || s.estadoLogico === 'error')
+      statusCode = 8;
+    else statusCode = 0;
+
+    return {
+      CurrentStatus: [statusCode === 0 ? 0 : 1],
+      TimeLapseStatus: 0,
+      PlatFormType: 0,
+      TempOfHotbed: s.tempBed ?? 0,
+      TempOfNozzle: s.tempNozzle ?? 0,
+      TempOfBox: 0,
+      TempTargetHotbed: s.targetBed ?? 0,
+      TempTargetNozzle: s.targetNozzle ?? 0,
+      TempTargetBox: 0,
+      CurrenCoord: '',
+      CurrentFanSpeed: { ModelFan: 0, AuxiliaryFan: 0, BoxFan: 0 },
+      ZOffset: 0,
+      LightStatus: { SecondLight: 0, RgbLight: [0, 0, 0] },
+      PrintInfo: {
+        Status: statusCode,
+        CurrentLayer: s.currentLayer ?? 0,
+        TotalLayer: s.totalLayer ?? 0,
+        CurrentTicks: 0,
+        TotalTicks: 0,
+        Filename: s.filename ?? '',
+        TaskId: '',
+        PrintSpeedPct: 100,
+        Progress: Math.max(0, Math.min(100, Math.round(s.progress))),
+        ErrorNumber: 0,
+      },
+    };
+  }
+
   onStatusChange(listener: (status: PrinterDriverStatus) => void): () => void {
     this.listeners.add(listener);
     listener(this.getStatus());
@@ -190,6 +229,83 @@ export class MoonrakerDriver implements PrinterDriver {
     command: SdcpCommand<T>,
     _timeoutMs?: number
   ): Promise<SdcpResponse<T>> {
+    const cmd = command.Data.Cmd;
+    const data = command.Data.Data as any;
+
+    try {
+      switch (cmd) {
+        case 128: {
+          // Iniciar impressão
+          const filename = data?.Filename || data?.filename || data?.name || '';
+          await this.sendJsonRpc('printer.print.start', {
+            filename: filename.startsWith('/') ? filename.slice(1) : filename,
+          });
+          break;
+        }
+        case 129: {
+          // Pausar impressão
+          await this.sendJsonRpc('printer.print.pause');
+          break;
+        }
+        case 130: {
+          // Cancelar/parar impressão
+          await this.sendJsonRpc('printer.print.cancel');
+          break;
+        }
+        case 131: {
+          // Retomar impressão
+          await this.sendJsonRpc('printer.print.resume');
+          break;
+        }
+        case 258: {
+          // Listar ficheiros
+          const result = await this.sendJsonRpc('server.files.list', {
+            root: 'gcodes',
+          });
+          const fileList = Array.isArray(result)
+            ? result.map((f: any) => ({
+                name: f.path || f.filename,
+                size: f.size || 0,
+                modified: f.modified || Date.now(),
+              }))
+            : [];
+          return {
+            Id: this.id,
+            Data: {
+              Cmd: cmd,
+              Data: { FileList: fileList } as unknown as T,
+              Ack: 0,
+            },
+          };
+        }
+        case 259: {
+          // Eliminar ficheiros
+          const files: string[] = data?.FileList || [];
+          for (const f of files) {
+            const cleanName = f.startsWith('/') ? f.slice(1) : f;
+            await this.sendJsonRpc('server.files.delete_file', {
+              path: cleanName.startsWith('gcodes/')
+                ? cleanName
+                : `gcodes/${cleanName}`,
+            });
+          }
+          break;
+        }
+        default:
+          break;
+      }
+    } catch (err: any) {
+      return {
+        Id: this.id,
+        Data: {
+          Cmd: cmd,
+          Data: {} as T,
+          Ack: 1,
+          Description: err?.message || 'Erro ao executar comando Moonraker',
+        },
+      };
+    }
+
     // Compatibilidade com a interface agnóstica PrinterDriver
     return {
       Id: this.id,

@@ -248,4 +248,153 @@ describe('MoonrakerDriver (Fase 2 - Leitura e Telemetria)', () => {
 
     await driver.disconnect();
   });
+
+  describe('Fase 4 - Escrita e Operações (Comandos de Impressão e Ficheiros)', () => {
+    it('despacha comando de iniciar impressão (Cmd 128) via printer.print.start', async () => {
+      const driver = new MoonrakerDriver({
+        id: 'cosmos-1',
+        name: 'Centauri Cosmos',
+        ipAddress: '192.168.1.150',
+      });
+      await driver.connect();
+      const mockWs = MockWebSocket.instances[0];
+
+      const sendPromise = driver.sendCommand({
+        Id: 'test-start',
+        Data: {
+          Cmd: 128,
+          Data: { Filename: 'teste_peça.gcode' },
+        },
+      });
+
+      // Aguarda tick do envio
+      await new Promise(r => setTimeout(r, 10));
+      const rpcMsg = mockWs.sentMessages
+        .map(m => JSON.parse(m))
+        .find(m => m.method === 'printer.print.start');
+
+      expect(rpcMsg).toBeDefined();
+      expect(rpcMsg.params).toEqual({ filename: 'teste_peça.gcode' });
+
+      // Simula resposta RPC
+      mockWs.triggerMessage({
+        jsonrpc: '2.0',
+        id: rpcMsg.id,
+        result: 'ok',
+      });
+
+      const res = await sendPromise;
+      expect(res.Data.Ack).toBe(0);
+      expect(res.Data.Cmd).toBe(128);
+      await driver.disconnect();
+    });
+
+    it('despacha comandos de pausa (129), cancelamento (130) e retoma (131)', async () => {
+      const driver = new MoonrakerDriver({
+        id: 'cosmos-1',
+        name: 'Centauri Cosmos',
+        ipAddress: '192.168.1.150',
+      });
+      await driver.connect();
+      const mockWs = MockWebSocket.instances[0];
+
+      // Cmd 129: Pausar
+      const pausePromise = driver.sendCommand({
+        Id: 'test-pause',
+        Data: { Cmd: 129, Data: {} },
+      });
+      await new Promise(r => setTimeout(r, 10));
+      const pauseMsg = mockWs.sentMessages
+        .map(m => JSON.parse(m))
+        .find(m => m.method === 'printer.print.pause');
+      expect(pauseMsg).toBeDefined();
+      mockWs.triggerMessage({ jsonrpc: '2.0', id: pauseMsg.id, result: 'ok' });
+      await pausePromise;
+
+      // Cmd 130: Cancelar
+      const cancelPromise = driver.sendCommand({
+        Id: 'test-cancel',
+        Data: { Cmd: 130, Data: {} },
+      });
+      await new Promise(r => setTimeout(r, 10));
+      const cancelMsg = mockWs.sentMessages
+        .map(m => JSON.parse(m))
+        .find(m => m.method === 'printer.print.cancel');
+      expect(cancelMsg).toBeDefined();
+      mockWs.triggerMessage({ jsonrpc: '2.0', id: cancelMsg.id, result: 'ok' });
+      await cancelPromise;
+
+      // Cmd 131: Retomar
+      const resumePromise = driver.sendCommand({
+        Id: 'test-resume',
+        Data: { Cmd: 131, Data: {} },
+      });
+      await new Promise(r => setTimeout(r, 10));
+      const resumeMsg = mockWs.sentMessages
+        .map(m => JSON.parse(m))
+        .find(m => m.method === 'printer.print.resume');
+      expect(resumeMsg).toBeDefined();
+      mockWs.triggerMessage({ jsonrpc: '2.0', id: resumeMsg.id, result: 'ok' });
+      await resumePromise;
+
+      await driver.disconnect();
+    });
+
+    it('despacha listagem (Cmd 258) e eliminação de ficheiros (Cmd 259)', async () => {
+      const driver = new MoonrakerDriver({
+        id: 'cosmos-1',
+        name: 'Centauri Cosmos',
+        ipAddress: '192.168.1.150',
+      });
+      await driver.connect();
+      const mockWs = MockWebSocket.instances[0];
+
+      // Cmd 258: Listar ficheiros
+      const listPromise = driver.sendCommand({
+        Id: 'test-list',
+        Data: { Cmd: 258, Data: {} },
+      });
+      await new Promise(r => setTimeout(r, 10));
+      const listMsg = mockWs.sentMessages
+        .map(m => JSON.parse(m))
+        .find(m => m.method === 'server.files.list');
+      expect(listMsg).toBeDefined();
+      mockWs.triggerMessage({
+        jsonrpc: '2.0',
+        id: listMsg.id,
+        result: [
+          { path: 'caixa.gcode', size: 10240, modified: 1700000000 },
+          { path: 'suporte.gcode', size: 20480, modified: 1700000500 },
+        ],
+      });
+      const listRes = await listPromise;
+      expect(listRes.Data.Ack).toBe(0);
+      expect((listRes.Data.Data as any).FileList).toHaveLength(2);
+      expect((listRes.Data.Data as any).FileList[0].name).toBe('caixa.gcode');
+
+      // Cmd 259: Eliminar ficheiro
+      const delPromise = driver.sendCommand({
+        Id: 'test-del',
+        Data: {
+          Cmd: 259,
+          Data: { FileList: ['caixa.gcode'] },
+        },
+      });
+      await new Promise(r => setTimeout(r, 10));
+      const delMsg = mockWs.sentMessages
+        .map(m => JSON.parse(m))
+        .find(m => m.method === 'server.files.delete_file');
+      expect(delMsg).toBeDefined();
+      expect(delMsg.params).toEqual({ path: 'gcodes/caixa.gcode' });
+      mockWs.triggerMessage({
+        jsonrpc: '2.0',
+        id: delMsg.id,
+        result: 'caixa.gcode',
+      });
+      const delRes = await delPromise;
+      expect(delRes.Data.Ack).toBe(0);
+
+      await driver.disconnect();
+    });
+  });
 });

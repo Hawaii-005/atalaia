@@ -521,7 +521,13 @@ export const FilesScreen = ({
         destino
       );
       if (descarga.status !== 200) throw new Error('descarga');
-      await uploadGcode(enderecoDe(printer), destino, nomeFinal);
+      await uploadGcode(
+        enderecoDe(printer),
+        destino,
+        nomeFinal,
+        undefined,
+        printer.firmware === 'moonraker'
+      );
       await request(printer.id, deleteFilesCommand([aRenomear.name]), 12000);
       setARenomear(null);
       await load();
@@ -632,7 +638,8 @@ export const FilesScreen = ({
             setOcupado(
               `${t('files.aEnviar')} ${Math.round((enviado / total) * 100)}%`
             );
-          }
+          },
+          printer.firmware === 'moonraker'
         );
         await load();
         Alert.alert(

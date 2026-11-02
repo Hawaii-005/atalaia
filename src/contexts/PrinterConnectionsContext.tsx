@@ -13,6 +13,7 @@ import { descobrirSoUdp, discoverPrinters } from '../utils/PrinterDiscovery';
 import { AppState, NativeModules, AppStateStatus, Alert } from 'react-native';
 import { Printer, ConnectionStatus, PrinterStatus } from '../types';
 import { LigacaoSaturno } from '../saturn/ligacao';
+import { MoonrakerDriver } from '../protocol/drivers/MoonrakerDriver';
 import { redeSaturno } from '../saturn/rede';
 import { estadoParaApp } from '../saturn/estadoApp';
 import { inquirirSaturno } from '../saturn/descoberta';
@@ -192,6 +193,7 @@ export const PrinterConnectionsProvider = ({
   const webSocketsRef = useRef<{ [key: string]: WebSocket }>({});
   // Impressoras de resina: falam SDCP V1 sobre MQTT, não WebSocket.
   const saturnoRef = useRef<{ [key: string]: LigacaoSaturno }>({});
+  const moonrakerRef = useRef<{ [key: string]: MoonrakerDriver }>({});
   const vigiasSaturnoRef = useRef<{
     [key: string]: ReturnType<typeof setInterval>;
   }>({});
@@ -790,9 +792,81 @@ export const PrinterConnectionsProvider = ({
     }
   };
 
+  const ligarMoonraker = async (printer: Printer) => {
+    const anterior = moonrakerRef.current[printer.id];
+    if (anterior) {
+      delete moonrakerRef.current[printer.id];
+      anterior.disconnect().catch(() => undefined);
+    }
+
+    clearReconnectTimer(printer.id);
+    if (timeoutsLigacaoRef.current[printer.id]) {
+      clearTimeout(timeoutsLigacaoRef.current[printer.id]);
+      delete timeoutsLigacaoRef.current[printer.id];
+    }
+    intentionalCloseRef.current[printer.id] = false;
+    updatePrinterStatus(printer.id, 'connecting');
+
+    const alvo = printer.activeIp ?? printer.ipAddress;
+    const driver = new MoonrakerDriver({
+      id: printer.id,
+      name: printer.printerName,
+      ipAddress: alvo,
+    });
+    moonrakerRef.current[printer.id] = driver;
+
+    driver.onStatusChange(() => {
+      lastMessageRef.current[printer.id] = Date.now();
+      const st = driver.getAppPrinterStatus();
+      updatePrinterData(printer.id, st);
+    });
+
+    try {
+      await driver.connect();
+      log(`Connected to Moonraker printer: ${printer.printerName} (${alvo})`);
+      setPrinters(prev => {
+        const lista = prev.map(p =>
+          p.id === printer.id ? { ...p, activeIp: alvo } : p
+        );
+        printersRef.current = lista;
+        return lista;
+      });
+      updatePrinterStatus(printer.id, 'connected');
+      delete reconnectAttemptsRef.current[printer.id];
+      clearReconnectAttempt(printer.id);
+    } catch (erro) {
+      log('moonraker: falhou a ligação', erro);
+      updatePrinterStatus(printer.id, 'disconnected');
+      delete moonrakerRef.current[printer.id];
+      if (printer.alternateIp && alvo !== printer.alternateIp) {
+        const comAlternativo: Printer = {
+          ...printer,
+          activeIp: printer.alternateIp,
+        };
+        setPrinters(prev => {
+          const lista = prev.map(p =>
+            p.id === printer.id ? comAlternativo : p
+          );
+          printersRef.current = lista;
+          return lista;
+        });
+        connectToPrinter(comAlternativo);
+        return;
+      }
+      const actual = printersRef.current.find(p => p.id === printer.id);
+      if (actual && !intentionalCloseRef.current[printer.id]) {
+        scheduleReconnect(actual);
+      }
+    }
+  };
+
   const connectToPrinter = (printer: Printer) => {
     if (printer.kind === 'resin') {
       ligarSaturno(printer);
+      return;
+    }
+    if (printer.firmware === 'moonraker') {
+      ligarMoonraker(printer);
       return;
     }
     // If a websocket for this printer already exists, close it before creating a new one.
@@ -1092,6 +1166,11 @@ export const PrinterConnectionsProvider = ({
       delete saturnoRef.current[id];
       ligacaoResina.desligar().catch(() => undefined);
     }
+    const driverMoonraker = moonrakerRef.current[id];
+    if (driverMoonraker) {
+      delete moonrakerRef.current[id];
+      driverMoonraker.disconnect().catch(() => undefined);
+    }
     const vigiaResina = vigiasSaturnoRef.current[id];
     if (vigiaResina) {
       clearInterval(vigiaResina);
@@ -1270,6 +1349,31 @@ export const PrinterConnectionsProvider = ({
               return;
           }
           promessa.then(resolve).catch(reject);
+          return;
+        }
+
+        // Moonraker / Klipper (COSMOS): despacha comandos via driver Moonraker
+        if (printer?.firmware === 'moonraker') {
+          const driver = moonrakerRef.current[printerId];
+          if (!driver || !driver.getStatus().connected) {
+            reject(new PrinterOfflineError());
+            return;
+          }
+          driver
+            .sendCommand(command, timeoutMs)
+            .then(res => {
+              if (res.Data.Ack !== 0) {
+                reject(
+                  new Error(
+                    (res.Data as any).Description ||
+                      'Erro ao executar comando Moonraker'
+                  )
+                );
+              } else {
+                resolve(res.Data.Data);
+              }
+            })
+            .catch(reject);
           return;
         }
 

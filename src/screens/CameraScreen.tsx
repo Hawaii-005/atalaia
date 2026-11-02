@@ -74,10 +74,12 @@ const CONNECTION_LABEL: Record<ConnectionStatus, string> = {
 const SnapshotAoVivo = ({
   host,
   activo,
+  isMoonraker = false,
   onFalhar,
 }: {
   host: string;
   activo: boolean;
+  isMoonraker?: boolean;
   onFalhar: () => void;
 }) => {
   const [tick, setTick] = useState(0);
@@ -88,9 +90,12 @@ const SnapshotAoVivo = ({
     return () => clearInterval(id);
   }, [activo, falhou]);
   if (falhou) return null;
+  const snapshotUri = isMoonraker
+    ? `http://${host}:7125/webcam/?action=snapshot&t=${tick}`
+    : `http://${host}:3031/snapshot?t=${tick}`;
   return (
     <Image
-      source={{ uri: `http://${host}:3031/snapshot?t=${tick}` }}
+      source={{ uri: snapshotUri }}
       style={{ flex: 1, backgroundColor: '#000' }}
       resizeMode="cover"
       onError={() => {
@@ -192,7 +197,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
   // connection. sendCommand changes identity on every context render, so
   // without the guard this would re-send on every status tick.
   useEffect(() => {
-    if (!printerId || !isConnected) {
+    if (!printerId || !isConnected || printer?.firmware === 'moonraker') {
       return;
     }
     const requestKey = `${printerId}:${videoHost}`;
@@ -228,21 +233,23 @@ export const CameraScreen = ({ navigation, route }: any) => {
     if (!printerId) {
       return;
     }
-    lastVideoRequestRef.current = `${printerId}:${videoHost}`;
-    sendCommand(printerId, {
-      Id: `${printerName}-video-${Date.now()}`,
-      Data: {
-        Cmd: 386,
-        Data: { Enable: 1 },
-        RequestID: `enable-video-${Date.now()}`,
-        MainboardID: '',
-        TimeStamp: Date.now(),
-        From: 1,
-      },
-    });
+    if (printer?.firmware !== 'moonraker') {
+      lastVideoRequestRef.current = `${printerId}:${videoHost}`;
+      sendCommand(printerId, {
+        Id: `${printerName}-video-${Date.now()}`,
+        Data: {
+          Cmd: 386,
+          Data: { Enable: 1 },
+          RequestID: `enable-video-${Date.now()}`,
+          MainboardID: '',
+          TimeStamp: Date.now(),
+          From: 1,
+        },
+      });
+    }
     setReloadKey(key => key + 1);
     webViewRef.current?.reload();
-  }, [printerId, printerName, sendCommand, videoHost]);
+  }, [printerId, printerName, sendCommand, videoHost, printer?.firmware]);
 
   const handlePrintControl = useCallback(async () => {
     if (!printer) return;
@@ -336,7 +343,8 @@ export const CameraScreen = ({ navigation, route }: any) => {
         (enviado, total) => {
           // Bloco aceite pela impressora: actualiza a barra e a percentagem.
           setUploadPercent(Math.round((enviado / total) * 100));
-        }
+        },
+        printer.firmware === 'moonraker'
       );
       Alert.alert(
         t('camera.enviado'),
@@ -369,11 +377,15 @@ export const CameraScreen = ({ navigation, route }: any) => {
     });
   }, [printer, isConnected, lightOn, sendCommand]);
 
-  const streamHtml = useMemo(() => htmlDoVideo(videoHost ?? ''), [videoHost]);
+  const isMoonraker = printer?.firmware === 'moonraker';
+  const streamHtml = useMemo(
+    () => htmlDoVideo(videoHost ?? '', 'cover', false, isMoonraker),
+    [videoHost, isMoonraker]
+  );
 
   const fullscreenHtml = useMemo(
-    () => htmlDoVideo(videoHost ?? '', 'contain'),
-    [videoHost]
+    () => htmlDoVideo(videoHost ?? '', 'contain', false, isMoonraker),
+    [videoHost, isMoonraker]
   );
 
   const progress = printer?.status?.PrintInfo?.Progress ?? 0;
@@ -508,6 +520,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
                 <SnapshotAoVivo
                   host={videoHost ?? ''}
                   activo={emFoco}
+                  isMoonraker={isMoonraker}
                   onFalhar={() => setSnapshotFalhou(true)}
                 />
               ) : (
@@ -886,6 +899,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
             <SnapshotAoVivo
               host={videoHost ?? ''}
               activo={emFoco}
+              isMoonraker={isMoonraker}
               onFalhar={() => setSnapshotFalhou(true)}
             />
           ) : (
