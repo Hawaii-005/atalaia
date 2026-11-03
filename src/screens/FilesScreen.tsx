@@ -99,6 +99,7 @@ interface PrinterFile {
   totalSize?: number;
   CreateTime?: number;
   TotalLayers?: number;
+  thumbnailUrl?: string;
 }
 
 const PREVIEW_LIMIT = 15 * 1024 * 1024;
@@ -162,7 +163,8 @@ const FileRow = ({
   const size = file.FileSize ?? file.totalSize ?? file.usedSize ?? 0;
   const label = file.name.split('/').pop() ?? file.name;
   // O `?r=` evita que o <Image> reaproveite o 404 em cache do mesmo URL.
-  const urlBase = urlMiniatura(printerIp, file.name, isMoonraker);
+  const urlBase =
+    file.thumbnailUrl || urlMiniatura(printerIp, file.name, isMoonraker);
   const urlComToken = recarga ? `${urlBase}?r=${recarga}` : urlBase;
   const [mini, setMini] = useState<string | null>(urlComToken);
   const pediuEmbutida = useRef(false);
@@ -180,10 +182,11 @@ const FileRow = ({
     };
   }, []);
 
-  // A impressora só serve /thumbnail dos ficheiros que já pré-visualizou; nos
-  // restantes (404) a imagem vem do cabeçalho do próprio .gcode. Sem isto a
-  // lista mostrava o cubo e parecia que "só algumas miniaturas carregam".
   const falhouMiniaturaLista = async () => {
+    if (isMoonraker) {
+      if (vivo.current) setMini(null);
+      return;
+    }
     if (pediuEmbutida.current) {
       if (vivo.current) setMini(null);
       return;

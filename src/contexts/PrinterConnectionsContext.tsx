@@ -1896,9 +1896,9 @@ export const PrinterConnectionsProvider = ({
       );
     }
     const alvoResina = printersRef.current.find(p => p.id === printerId);
-    if (alvoResina?.kind === 'resin') {
+    if (alvoResina?.kind === 'resin' || alvoResina?.firmware === 'moonraker') {
       request(printerId, command).catch(erro =>
-        log('saturno: comando recusado', erro)
+        log('comando via request recusado:', erro)
       );
       return;
     }

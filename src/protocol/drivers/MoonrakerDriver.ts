@@ -305,11 +305,22 @@ export class MoonrakerDriver implements PrinterDriver {
             root: 'gcodes',
           });
           const fileList = Array.isArray(result)
-            ? result.map((f: any) => ({
-                name: f.path || f.filename,
-                size: f.size || 0,
-                modified: f.modified || Date.now(),
-              }))
+            ? result.map((f: any) => {
+                const thumbs = f.thumbnails;
+                const thumbPath =
+                  Array.isArray(thumbs) && thumbs.length > 0
+                    ? thumbs[thumbs.length - 1].relative_path
+                    : undefined;
+                const cleanHost = this.ipAddress.split(':')[0];
+                return {
+                  name: f.path || f.filename,
+                  FileSize: f.size || 0,
+                  CreateTime: f.modified || Date.now(),
+                  thumbnailUrl: thumbPath
+                    ? `http://${cleanHost}/server/files/gcodes/${encodeURI(thumbPath)}`
+                    : undefined,
+                };
+              })
             : [];
           return {
             Id: this.id,

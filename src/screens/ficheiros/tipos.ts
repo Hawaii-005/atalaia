@@ -7,6 +7,7 @@ export interface PrinterFile {
   totalSize?: number;
   CreateTime?: number;
   TotalLayers?: number;
+  thumbnailUrl?: string;
 }
 
 export const PREVIEW_LIMIT = 15 * 1024 * 1024;

@@ -5,6 +5,7 @@ import {
   pausePrintCommand,
   resumePrintCommand,
   stopPrintCommand,
+  lightCommand,
 } from '../utils/commands';
 import React, {
   useCallback,
@@ -53,7 +54,6 @@ import {
   TX_PERIGO,
 } from '../theme/botoes';
 
-const LIGHT_COMMAND = 403;
 const CAIXA_ANEL = 44;
 const RAIO_ANEL = 18;
 const TRACO_ANEL = 5;
@@ -365,17 +365,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
     const next = !lightOn;
     setLightOn(next);
     setLastLightPress(Date.now());
-    sendCommand(printer.id, {
-      Id: `${printer.printerName}-light-${Date.now()}`,
-      Data: {
-        Cmd: LIGHT_COMMAND,
-        Data: { LightStatus: { SecondLight: next ? 1 : 0 } },
-        RequestID: `light-toggle-${Date.now()}`,
-        MainboardID: '',
-        TimeStamp: Date.now(),
-        From: 1,
-      },
-    });
+    sendCommand(printer.id, lightCommand(next, { id: printer.id }));
   }, [printer, isConnected, lightOn, sendCommand]);
 
   const isMoonraker = printer?.firmware === 'moonraker';

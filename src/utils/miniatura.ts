@@ -22,12 +22,13 @@ import { log } from './log';
 const baseDoNome = (nome: string) => nome.split('/').pop() ?? nome;
 
 export const urlMiniatura = (ip: string, nome: string, isMoonraker = false) => {
-  const base = encodeURIComponent(baseDoNome(nome));
+  const base = baseDoNome(nome);
   if (isMoonraker) {
     const ipSemPorta = ip.split(':')[0];
-    return `http://${ipSemPorta}/server/files/gcodes/.thumbs/${base}-144x144.png`;
+    const semExtensao = base.replace(/\.[^/.]+$/, '');
+    return `http://${ipSemPorta}/server/files/gcodes/.thumbs/${encodeURIComponent(semExtensao)}-144x144.png`;
   }
-  return `http://${ip}/thumbnail/${base}.png`;
+  return `http://${ip}/thumbnail/${encodeURIComponent(base)}.png`;
 };
 
 export const urlGcode = (ip: string, nome: string) => {
