@@ -357,15 +357,21 @@ describe('MoonrakerDriver (Fase 2 - Leitura e Telemetria)', () => {
       await new Promise(r => setTimeout(r, 10));
       const listMsg = mockWs.sentMessages
         .map(m => JSON.parse(m))
-        .find(m => m.method === 'server.files.list');
+        .find(
+          m =>
+            m.method === 'server.files.get_directory' ||
+            m.method === 'server.files.list'
+        );
       expect(listMsg).toBeDefined();
       mockWs.triggerMessage({
         jsonrpc: '2.0',
         id: listMsg.id,
-        result: [
-          { path: 'caixa.gcode', size: 10240, modified: 1700000000 },
-          { path: 'suporte.gcode', size: 20480, modified: 1700000500 },
-        ],
+        result: {
+          files: [
+            { filename: 'caixa.gcode', size: 10240, modified: 1700000000 },
+            { filename: 'suporte.gcode', size: 20480, modified: 1700000500 },
+          ],
+        },
       });
       const listRes = await listPromise;
       expect(listRes.Data.Ack).toBe(0);

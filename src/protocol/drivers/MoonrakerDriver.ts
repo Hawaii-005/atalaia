@@ -300,28 +300,56 @@ export class MoonrakerDriver implements PrinterDriver {
           break;
         }
         case 258: {
-          // Listar ficheiros
-          const result = await this.sendJsonRpc('server.files.list', {
-            root: 'gcodes',
-          });
-          const fileList = Array.isArray(result)
-            ? result.map((f: any) => {
-                const thumbs = f.thumbnails;
-                const thumbPath =
-                  Array.isArray(thumbs) && thumbs.length > 0
-                    ? thumbs[thumbs.length - 1].relative_path
-                    : undefined;
-                const cleanHost = this.ipAddress.split(':')[0];
-                return {
-                  name: f.path || f.filename,
-                  FileSize: f.size || 0,
-                  CreateTime: f.modified || Date.now(),
-                  thumbnailUrl: thumbPath
-                    ? `http://${cleanHost}/server/files/gcodes/${encodeURI(thumbPath)}`
-                    : undefined,
-                };
-              })
-            : [];
+          // Listar ficheiros de gcodes com metadados e miniaturas (como o Mobileraker faz com get_directory)
+          let fileList: any[] = [];
+          try {
+            const dirResult = await this.sendJsonRpc(
+              'server.files.get_directory',
+              {
+                path: 'gcodes',
+                extended: true,
+              }
+            );
+            const files = dirResult?.files || [];
+            const cleanHost = this.ipAddress.split(':')[0];
+            fileList = files.map((f: any) => {
+              const thumbs = f.thumbnails;
+              const thumbPath =
+                Array.isArray(thumbs) && thumbs.length > 0
+                  ? thumbs[thumbs.length - 1].relative_path
+                  : undefined;
+              return {
+                name: f.filename || f.path,
+                FileSize: f.size || 0,
+                CreateTime: f.modified || Date.now(),
+                thumbnailUrl: thumbPath
+                  ? `http://${cleanHost}/server/files/gcodes/${encodeURI(thumbPath)}`
+                  : undefined,
+              };
+            });
+          } catch {
+            const result = await this.sendJsonRpc('server.files.list', {
+              root: 'gcodes',
+            });
+            const cleanHost = this.ipAddress.split(':')[0];
+            fileList = Array.isArray(result)
+              ? result.map((f: any) => {
+                  const thumbs = f.thumbnails;
+                  const thumbPath =
+                    Array.isArray(thumbs) && thumbs.length > 0
+                      ? thumbs[thumbs.length - 1].relative_path
+                      : undefined;
+                  return {
+                    name: f.path || f.filename,
+                    FileSize: f.size || 0,
+                    CreateTime: f.modified || Date.now(),
+                    thumbnailUrl: thumbPath
+                      ? `http://${cleanHost}/server/files/gcodes/${encodeURI(thumbPath)}`
+                      : undefined,
+                  };
+                })
+              : [];
+          }
           return {
             Id: this.id,
             Data: {

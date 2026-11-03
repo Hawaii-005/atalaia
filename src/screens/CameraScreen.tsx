@@ -188,7 +188,9 @@ export const CameraScreen = ({ navigation, route }: any) => {
     );
   }, [comCamera, selectedId]);
 
-  const isConnected = printer?.connectionStatus === 'connected';
+  const isConnected =
+    printer?.connectionStatus === 'connected' ||
+    (printer?.firmware === 'moonraker' && !!printer?.status);
   const videoHost = printer ? enderecoDe(printer) : undefined;
   const printerId = printer?.id;
   const printerName = printer?.printerName;

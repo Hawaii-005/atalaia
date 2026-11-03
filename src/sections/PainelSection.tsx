@@ -189,7 +189,9 @@ export const PainelSection = ({
   const navigation = useNavigation<any>();
   const emFoco = useIsFocused();
 
-  const ligada = printer?.connectionStatus === 'connected';
+  const ligada =
+    printer?.connectionStatus === 'connected' ||
+    (printer?.firmware === 'moonraker' && !!printer?.status);
   const info = printer?.status?.PrintInfo;
   const statusBase = getPrintStatus(info?.Status ?? 0);
   const temFicheiro = !!info?.Filename;
@@ -516,7 +518,7 @@ export const PainelSection = ({
       >
         <View style={{ flex: 1, gap: espaco.md }}>
           {/* câmara */}
-          {emFoco && ligada && (
+          {emFoco && (
             <TouchableOpacity
               activeOpacity={0.92}
               onPress={onAbrirCamara}
@@ -530,7 +532,12 @@ export const PainelSection = ({
               <WebView
                 key={`cam-${printer.id}`}
                 source={{
-                  html: htmlDoVideo(enderecoDe(printer), 'cover', false),
+                  html: htmlDoVideo(
+                    enderecoDe(printer),
+                    'cover',
+                    false,
+                    printer.firmware === 'moonraker'
+                  ),
                   baseUrl: `http://${enderecoDe(printer)}`,
                 }}
                 style={{ flex: 1, backgroundColor: '#000' }}
