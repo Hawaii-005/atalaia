@@ -22,6 +22,8 @@ export interface PrinterDriverStatus {
   tempBed?: number;
   targetBed?: number;
   fanSpeed?: number;
+  fanAux?: number;
+  fanBox?: number;
   lightOn?: boolean;
   zOffset?: number;
   position?: [number, number, number];

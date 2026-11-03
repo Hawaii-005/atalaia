@@ -201,8 +201,8 @@ export class MoonrakerDriver implements PrinterDriver {
       CurrenCoord: coordStr,
       CurrentFanSpeed: {
         ModelFan: fanVal,
-        AuxiliaryFan: 0,
-        BoxFan: 0,
+        AuxiliaryFan: s.fanAux ?? 0,
+        BoxFan: s.fanBox ?? 0,
       },
       ZOffset: s.zOffset ?? 0,
       LightStatus: {
@@ -448,12 +448,20 @@ export class MoonrakerDriver implements PrinterDriver {
             }
           }
 
-          // Ventoinha do modelo (ModelFan: 0..100)
+          // Ventoinhas: ModelFan (part cooling), AuxiliaryFan (aux_fan), BoxFan (case_fan)
           if (data?.TargetFanSpeed?.ModelFan !== undefined) {
             const pwm = Math.round(
               (Number(data.TargetFanSpeed.ModelFan) / 100) * 255
             );
             gcodes.push(`M106 S${pwm}`);
+          }
+          if (data?.TargetFanSpeed?.AuxiliaryFan !== undefined) {
+            const spd = Number(data.TargetFanSpeed.AuxiliaryFan) / 100;
+            gcodes.push(`SET_FAN_SPEED FAN=aux_fan SPEED=${spd}`);
+          }
+          if (data?.TargetFanSpeed?.BoxFan !== undefined) {
+            const spd = Number(data.TargetFanSpeed.BoxFan) / 100;
+            gcodes.push(`SET_FAN_SPEED FAN=case_fan SPEED=${spd}`);
           }
 
           // Temperaturas: bocal ou mesa
@@ -509,6 +517,8 @@ export class MoonrakerDriver implements PrinterDriver {
           heater_bed: null,
           webhooks: null,
           fan: null,
+          'fan_generic aux_fan': null,
+          'fan_generic case_fan': null,
           'output_pin caselight': null,
           'led case': null,
           AFC: null,
@@ -633,6 +643,16 @@ export class MoonrakerDriver implements PrinterDriver {
 
     if (klipperStatus.fan?.speed !== undefined) {
       next.fanSpeed = Math.round(klipperStatus.fan.speed * 100);
+    }
+    if (klipperStatus['fan_generic aux_fan']?.speed !== undefined) {
+      next.fanAux = Math.round(
+        klipperStatus['fan_generic aux_fan'].speed * 100
+      );
+    }
+    if (klipperStatus['fan_generic case_fan']?.speed !== undefined) {
+      next.fanBox = Math.round(
+        klipperStatus['fan_generic case_fan'].speed * 100
+      );
     }
 
     const lightPin =
