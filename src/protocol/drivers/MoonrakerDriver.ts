@@ -40,6 +40,14 @@ export interface MoonrakerKlipperStatus {
   'output_pin caselight'?: {
     value?: number;
   };
+  'led case'?: {
+    color_data?: number[][];
+  };
+  AFC?: {
+    current_load?: string | null;
+    lanes?: string[];
+  };
+  [key: string]: any;
   gcode_move?: {
     gcode_position?: [number, number, number, number];
     homing_origin?: [number, number, number, number];
@@ -325,6 +333,78 @@ export class MoonrakerDriver implements PrinterDriver {
           }
           break;
         }
+        case 324: {
+          // Slots do Canvas via módulo AFC (Klipper)
+          const afcQuery = await this.sendJsonRpc('printer.objects.query', {
+            objects: {
+              AFC: null,
+              'AFC_lane CANVAS_1': null,
+              'AFC_lane CANVAS_2': null,
+              'AFC_lane CANVAS_3': null,
+              'AFC_lane CANVAS_4': null,
+            },
+          });
+
+          const status = afcQuery?.status || {};
+          const afc = status.AFC;
+          const trays = [1, 2, 3, 4].map(idx => {
+            const laneKey = `AFC_lane CANVAS_${idx}`;
+            const lane = status[laneKey];
+            if (!lane) {
+              return {
+                tray_id: idx - 1,
+                brand: '',
+                filament_type: '',
+                filament_name: '',
+                filament_code: '',
+                filament_color: '#000000',
+                min_nozzle_temp: 190,
+                max_nozzle_temp: 230,
+                status: 0,
+              };
+            }
+            return {
+              tray_id: idx - 1,
+              brand: lane.spool_vendor || 'Generic',
+              filament_type: lane.material || 'PLA',
+              filament_name: lane.filament_name || `Slot ${idx}`,
+              filament_code: lane.name || `CANVAS_${idx}`,
+              filament_color: lane.color || '#E91E63',
+              min_nozzle_temp:
+                lane.extruder_temp > 0 ? lane.extruder_temp : 190,
+              max_nozzle_temp:
+                lane.extruder_temp > 0 ? lane.extruder_temp + 30 : 230,
+              status: lane.load ? 1 : 0,
+            };
+          });
+
+          const canvasSlots = {
+            active_canvas_id: 0,
+            active_tray_id: afc?.current_load
+              ? Math.max(
+                  0,
+                  parseInt(afc.current_load.replace(/\D/g, ''), 10) - 1
+                )
+              : 0,
+            auto_refill: 0,
+            canvas_list: [
+              {
+                canvas_id: 0,
+                connected: 1,
+                tray_list: trays,
+              },
+            ],
+          };
+
+          return {
+            Id: this.id,
+            Data: {
+              Cmd: cmd,
+              Data: canvasSlots as unknown as T,
+              Ack: 0,
+            },
+          };
+        }
         case 401: {
           // Jog / Mover eixos: { Axis: 'X'|'Y'|'Z', Step: mm }
           const axis = String(data?.Axis || '').toUpperCase();
@@ -354,7 +434,10 @@ export class MoonrakerDriver implements PrinterDriver {
           // Luz interna (caselight pin ou macro M355)
           if (data?.LightStatus?.SecondLight !== undefined) {
             const on = data.LightStatus.SecondLight === 1;
-            gcodes.push(`SET_PIN PIN=caselight VALUE=${on ? 1 : 0}`);
+            // No COSMOS na Centauri Carbon o LED interno é 'led case'
+            gcodes.push(
+              `SET_LED LED="case" WHITE=${on ? '1.0' : '0.0'} SYNC=0 TRANSMIT=1`
+            );
           }
 
           // Velocidade de impressão (%)
@@ -427,6 +510,12 @@ export class MoonrakerDriver implements PrinterDriver {
           webhooks: null,
           fan: null,
           'output_pin caselight': null,
+          'led case': null,
+          AFC: null,
+          'AFC_lane CANVAS_1': null,
+          'AFC_lane CANVAS_2': null,
+          'AFC_lane CANVAS_3': null,
+          'AFC_lane CANVAS_4': null,
           gcode_move: null,
           toolhead: null,
         },
@@ -549,7 +638,13 @@ export class MoonrakerDriver implements PrinterDriver {
     const lightPin =
       klipperStatus['output_pin caselight']?.value ??
       klipperStatus.output_pin?.value;
-    if (lightPin !== undefined) {
+    const ledCase = klipperStatus['led case']?.color_data?.[0];
+    if (ledCase && Array.isArray(ledCase)) {
+      // White (4º elemento) ou R/G/B > 0
+      const w = ledCase[3] ?? 0;
+      const rgb = (ledCase[0] ?? 0) + (ledCase[1] ?? 0) + (ledCase[2] ?? 0);
+      next.lightOn = w > 0 || rgb > 0;
+    } else if (lightPin !== undefined) {
       next.lightOn = lightPin > 0;
     }
 

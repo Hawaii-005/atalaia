@@ -141,6 +141,7 @@ const FileRow = ({
   largura,
   denso = false,
   onToggleFavorito,
+  isMoonraker = false,
 }: {
   file: PrinterFile;
   printerIp: string;
@@ -155,12 +156,13 @@ const FileRow = ({
   /** Cartões estreitos (6 ou 8 colunas): uma linha de nome, letra menor. */
   denso?: boolean;
   onToggleFavorito?: () => void;
+  isMoonraker?: boolean;
 }) => {
   const { tema } = useTheme();
   const size = file.FileSize ?? file.totalSize ?? file.usedSize ?? 0;
   const label = file.name.split('/').pop() ?? file.name;
   // O `?r=` evita que o <Image> reaproveite o 404 em cache do mesmo URL.
-  const urlBase = urlMiniatura(printerIp, file.name);
+  const urlBase = urlMiniatura(printerIp, file.name, isMoonraker);
   const urlComToken = recarga ? `${urlBase}?r=${recarga}` : urlBase;
   const [mini, setMini] = useState<string | null>(urlComToken);
   const pediuEmbutida = useRef(false);
@@ -1264,6 +1266,7 @@ export const FilesScreen = ({
                   favorito={ehFavorito(item.name)}
                   onToggleFavorito={() => alternarFavoritoDoFicheiro(item)}
                   onOpen={() => setSelecionado(item)}
+                  isMoonraker={printer.firmware === 'moonraker'}
                 />
               )}
             />

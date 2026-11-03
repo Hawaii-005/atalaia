@@ -490,11 +490,11 @@ describe('MoonrakerDriver (Fase 2 - Leitura e Telemetria)', () => {
       });
       await new Promise(r => setTimeout(r, 10));
       const lightMsg = mockWs.sentMessages
-        .map(m => JSON.parse(m))
+        .map(s => JSON.parse(s))
         .find(
           m =>
             m.method === 'printer.gcode.script' &&
-            m.params?.script?.includes('SET_PIN PIN=caselight VALUE=1')
+            m.params?.script?.includes('SET_LED LED="case" WHITE=1.0')
         );
       expect(lightMsg).toBeDefined();
       mockWs.triggerMessage({ jsonrpc: '2.0', id: lightMsg.id, result: 'ok' });

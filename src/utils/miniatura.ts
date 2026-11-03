@@ -21,8 +21,14 @@ import { log } from './log';
 
 const baseDoNome = (nome: string) => nome.split('/').pop() ?? nome;
 
-export const urlMiniatura = (ip: string, nome: string) =>
-  `http://${ip}/thumbnail/${encodeURIComponent(baseDoNome(nome))}.png`;
+export const urlMiniatura = (ip: string, nome: string, isMoonraker = false) => {
+  const base = encodeURIComponent(baseDoNome(nome));
+  if (isMoonraker) {
+    const ipSemPorta = ip.split(':')[0];
+    return `http://${ipSemPorta}/server/files/gcodes/.thumbs/${base}-144x144.png`;
+  }
+  return `http://${ip}/thumbnail/${base}.png`;
+};
 
 export const urlGcode = (ip: string, nome: string) => {
   const limpo = nome.replace(/^\/?(local\/)?\/?/, '').replace(/^\//, '');
