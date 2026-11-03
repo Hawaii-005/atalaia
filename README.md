@@ -6,9 +6,13 @@
 
 **[Descarregar o APK](https://github.com/Hawaii-005/atalaia/releases/latest)** · [Releases](https://github.com/Hawaii-005/atalaia/releases) · [Problemas](https://github.com/Hawaii-005/atalaia/issues)
 
-**A tua impressora, à vista.** Aplicação Android para controlar e vigiar as tuas **Elegoo** — a **Centauri Carbon** (filamento) e a **Saturn 3 Ultra** (resina) — a partir da rede onde estão — sem conta, sem nuvem, sem servidor pelo meio.
+**A tua impressora, à vista.** Aplicação Android para controlar e vigiar as tuas **Elegoo** — a **Centauri Carbon** (filamento) e a **Saturn 3 Ultra** (resina) — quer estejam com o **firmware Stock (SDCP)** ou com o **COSMOS (Klipper/Moonraker)**, a partir da rede onde estão — sem conta, sem nuvem, sem servidor pelo meio.
 
-A impressora fala SDCP por WebSocket (`ws://<ip>:3030/websocket`) e a câmara serve MJPEG em `http://<ip>:3031/video`. A app liga-se directamente a esses dois endereços. Nada sai da tua rede, excepto quando escolhes a ligação remota por Tailscale.
+A impressora pode comunicar por:
+- **Stock SDCP:** WebSocket (`ws://<ip>:3030/websocket`) e câmara MJPEG em `http://<ip>:3031/video`.
+- **COSMOS (Klipper/Moonraker):** WebSocket JSON-RPC (`ws://<ip>/websocket`), API HTTP na porta 80 e câmara MJPEG em `http://<ip>:8080/stream` (snapshots em `:8080/snapshot`).
+
+A app deteta automaticamente o firmware e adapta as chamadas sem qualquer complicação. Nada sai da tua rede, excepto quando escolhes a ligação remota por Tailscale.
 
 Este projecto começou como fork do [CC-Tool](https://github.com/WalkerFrederick/CC-Tool) e foi muito além do original: mudou de nome, de identidade e de âmbito. Não tem qualquer afiliação, apoio ou recomendação da Elegoo.
 
@@ -192,9 +196,13 @@ MIT — ver [LICENSE](LICENSE).
 
 **[Download the APK](https://github.com/Hawaii-005/atalaia/releases/latest)** · [Releases](https://github.com/Hawaii-005/atalaia/releases) · [Issues](https://github.com/Hawaii-005/atalaia/issues)
 
-**Your printer, in sight.** An Android app to control and watch your **Elegoo** printers — the **Centauri Carbon** (filament) and the **Saturn 3 Ultra** (resin) — from the network they live on — no account, no cloud, no server in between.
+**Your printer, in sight.** An Android app to control and watch your **Elegoo** printers — the **Centauri Carbon** (filament) and the **Saturn 3 Ultra** (resin) — running either **Stock SDCP** or **COSMOS (Klipper/Moonraker)** firmware, from the network they live on — no account, no cloud, no server in between.
 
-The printer speaks SDCP over WebSocket (`ws://<ip>:3030/websocket`) and the camera serves MJPEG at `http://<ip>:3031/video`. The app talks to those two addresses directly. Nothing leaves your network, except when you choose the remote connection over Tailscale.
+The printer speaks either:
+- **Stock SDCP:** WebSocket (`ws://<ip>:3030/websocket`) and MJPEG camera at `http://<ip>:3031/video`.
+- **COSMOS (Klipper/Moonraker):** WebSocket JSON-RPC (`ws://<ip>/websocket`), HTTP API on port 80 and MJPEG camera at `http://<ip>:8080/stream` (snapshots at `:8080/snapshot`).
+
+The app automatically detects the firmware and handles requests accordingly. Nothing leaves your network, except when you choose the remote connection over Tailscale.
 
 This project started as a fork of [CC-Tool](https://github.com/WalkerFrederick/CC-Tool) and went well past the original: new name, new identity, new scope. Not affiliated with, endorsed or recommended by Elegoo in any way.
 
