@@ -1,4 +1,5 @@
 import { PrinterKind, SdcpCommand, SdcpResponse, EstadoLogico } from '../types';
+import { Capabilities, FirmwareFlavor } from '../../types';
 
 export interface PrinterDriverOptions {
   id: string;
@@ -20,6 +21,12 @@ export interface PrinterDriverStatus {
   targetNozzle?: number;
   tempBed?: number;
   targetBed?: number;
+  fanSpeed?: number;
+  fanAux?: number;
+  fanBox?: number;
+  lightOn?: boolean;
+  zOffset?: number;
+  position?: [number, number, number];
 }
 
 export interface PrinterDriver {
@@ -27,6 +34,8 @@ export interface PrinterDriver {
   readonly name: string;
   readonly ipAddress: string;
   readonly kind: PrinterKind;
+  readonly firmware: FirmwareFlavor;
+  readonly capabilities: Capabilities;
 
   connect(): Promise<void>;
   disconnect(): Promise<void>;

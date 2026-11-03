@@ -9,10 +9,14 @@
 export const htmlDoVideo = (
   host: string,
   ajuste: 'cover' | 'contain' = 'cover',
-  circular = false
+  circular = false,
+  isMoonraker = false
 ): string => {
   if (!host) return '';
-  const url = `http://${host}:3031/video`;
+  const ipSemPorta = host.split(':')[0];
+  const url = isMoonraker
+    ? `http://${ipSemPorta}:8080/stream`
+    : `http://${host}:3031/video`;
   // O recorte redondo é feito na página, não na vista nativa: um WebView dentro
   // de um pai com `overflow: hidden` + borderRadius fica preto no Android.
   const estiloCorpo = circular

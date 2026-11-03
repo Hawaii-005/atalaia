@@ -13,6 +13,7 @@ import { descobrirSoUdp, discoverPrinters } from '../utils/PrinterDiscovery';
 import { AppState, NativeModules, AppStateStatus, Alert } from 'react-native';
 import { Printer, ConnectionStatus, PrinterStatus } from '../types';
 import { LigacaoSaturno } from '../saturn/ligacao';
+import { MoonrakerDriver } from '../protocol/drivers/MoonrakerDriver';
 import { redeSaturno } from '../saturn/rede';
 import { estadoParaApp } from '../saturn/estadoApp';
 import { inquirirSaturno } from '../saturn/descoberta';
@@ -83,7 +84,11 @@ export interface PrinterConnectionsContextType {
     ipAddress: string,
     mainboardId?: string,
     alternateIp?: string,
-    extras?: { kind?: Printer['kind']; sdcpId?: string }
+    extras?: {
+      kind?: Printer['kind'];
+      sdcpId?: string;
+      firmware?: Printer['firmware'];
+    }
   ) => void;
   removePrinter: (id: string) => void;
   reconnectAll: () => void;
@@ -94,6 +99,10 @@ export interface PrinterConnectionsContextType {
     timeoutMs?: number
   ) => Promise<any>;
   updatePrinterIp: (id: string, ipAddress: string) => void;
+  updatePrinterFirmwareFlavor: (
+    id: string,
+    firmware: Printer['firmware']
+  ) => void;
   statusIntervalMs: number;
   fila: ItemFila[];
   filaAuto: boolean;
@@ -184,6 +193,7 @@ export const PrinterConnectionsProvider = ({
   const webSocketsRef = useRef<{ [key: string]: WebSocket }>({});
   // Impressoras de resina: falam SDCP V1 sobre MQTT, não WebSocket.
   const saturnoRef = useRef<{ [key: string]: LigacaoSaturno }>({});
+  const moonrakerRef = useRef<{ [key: string]: MoonrakerDriver }>({});
   const vigiasSaturnoRef = useRef<{
     [key: string]: ReturnType<typeof setInterval>;
   }>({});
@@ -237,6 +247,7 @@ export const PrinterConnectionsProvider = ({
           const loadedPrinters = savedPrinters.map(
             (p: Omit<Printer, 'connectionStatus'>) => ({
               ...p,
+              firmware: p.firmware ?? 'sdcp',
               connectionStatus: 'disconnected' as ConnectionStatus,
             })
           );
@@ -358,6 +369,7 @@ export const PrinterConnectionsProvider = ({
             alternateIp,
             mainboardId,
             kind,
+            firmware,
             sdcpId,
           }) => ({
             id,
@@ -366,6 +378,7 @@ export const PrinterConnectionsProvider = ({
             alternateIp,
             mainboardId,
             kind,
+            firmware: firmware ?? 'sdcp',
             sdcpId,
           })
         );
@@ -779,9 +792,81 @@ export const PrinterConnectionsProvider = ({
     }
   };
 
+  const ligarMoonraker = async (printer: Printer) => {
+    const anterior = moonrakerRef.current[printer.id];
+    if (anterior) {
+      delete moonrakerRef.current[printer.id];
+      anterior.disconnect().catch(() => undefined);
+    }
+
+    clearReconnectTimer(printer.id);
+    if (timeoutsLigacaoRef.current[printer.id]) {
+      clearTimeout(timeoutsLigacaoRef.current[printer.id]);
+      delete timeoutsLigacaoRef.current[printer.id];
+    }
+    intentionalCloseRef.current[printer.id] = false;
+    updatePrinterStatus(printer.id, 'connecting');
+
+    const alvo = printer.activeIp ?? printer.ipAddress;
+    const driver = new MoonrakerDriver({
+      id: printer.id,
+      name: printer.printerName,
+      ipAddress: alvo,
+    });
+    moonrakerRef.current[printer.id] = driver;
+
+    driver.onStatusChange(() => {
+      lastMessageRef.current[printer.id] = Date.now();
+      const st = driver.getAppPrinterStatus();
+      updatePrinterData(printer.id, st);
+    });
+
+    try {
+      await driver.connect();
+      log(`Connected to Moonraker printer: ${printer.printerName} (${alvo})`);
+      setPrinters(prev => {
+        const lista = prev.map(p =>
+          p.id === printer.id ? { ...p, activeIp: alvo } : p
+        );
+        printersRef.current = lista;
+        return lista;
+      });
+      updatePrinterStatus(printer.id, 'connected');
+      delete reconnectAttemptsRef.current[printer.id];
+      clearReconnectAttempt(printer.id);
+    } catch (erro) {
+      log('moonraker: falhou a ligação', erro);
+      updatePrinterStatus(printer.id, 'disconnected');
+      delete moonrakerRef.current[printer.id];
+      if (printer.alternateIp && alvo !== printer.alternateIp) {
+        const comAlternativo: Printer = {
+          ...printer,
+          activeIp: printer.alternateIp,
+        };
+        setPrinters(prev => {
+          const lista = prev.map(p =>
+            p.id === printer.id ? comAlternativo : p
+          );
+          printersRef.current = lista;
+          return lista;
+        });
+        connectToPrinter(comAlternativo);
+        return;
+      }
+      const actual = printersRef.current.find(p => p.id === printer.id);
+      if (actual && !intentionalCloseRef.current[printer.id]) {
+        scheduleReconnect(actual);
+      }
+    }
+  };
+
   const connectToPrinter = (printer: Printer) => {
     if (printer.kind === 'resin') {
       ligarSaturno(printer);
+      return;
+    }
+    if (printer.firmware === 'moonraker') {
+      ligarMoonraker(printer);
       return;
     }
     // If a websocket for this printer already exists, close it before creating a new one.
@@ -1040,7 +1125,11 @@ export const PrinterConnectionsProvider = ({
     ipAddress: string,
     mainboardId?: string,
     alternateIp?: string,
-    extras?: { kind?: Printer['kind']; sdcpId?: string }
+    extras?: {
+      kind?: Printer['kind'];
+      sdcpId?: string;
+      firmware?: Printer['firmware'];
+    }
   ) => {
     const newPrinter: Printer = {
       id: generateId(),
@@ -1050,13 +1139,34 @@ export const PrinterConnectionsProvider = ({
       connectionStatus: 'connecting',
       mainboardId,
       kind: extras?.kind ?? 'fdm',
+      firmware: extras?.firmware ?? 'sdcp',
       sdcpId: extras?.sdcpId,
     };
 
-    // Verificar ANTES de ligar: se o IP já existe, a lista não muda e ficaria
-    // um WebSocket/timer/watchdog a vigiar uma impressora que não está lá.
-    if (printersRef.current.some(p => p.ipAddress === ipAddress)) {
-      log('printer already exists', ipAddress);
+    // Se o IP já existe, atualiza as definições em vez de descartar silenciosamente
+    const jaExiste = printersRef.current.find(p => p.ipAddress === ipAddress);
+    if (jaExiste) {
+      log('printer already exists, updating', ipAddress);
+      setPrinters(prevPrinters => {
+        const updated = prevPrinters.map(p =>
+          p.id === jaExiste.id
+            ? {
+                ...p,
+                printerName,
+                alternateIp: alternateIp?.trim() || undefined,
+                firmware: extras?.firmware ?? p.firmware ?? 'sdcp',
+              }
+            : p
+        );
+        printersRef.current = updated;
+        return updated;
+      });
+      connectToPrinter({
+        ...jaExiste,
+        printerName,
+        alternateIp: alternateIp?.trim() || undefined,
+        firmware: extras?.firmware ?? jaExiste.firmware ?? 'sdcp',
+      });
       return;
     }
 
@@ -1075,6 +1185,11 @@ export const PrinterConnectionsProvider = ({
     if (ligacaoResina) {
       delete saturnoRef.current[id];
       ligacaoResina.desligar().catch(() => undefined);
+    }
+    const driverMoonraker = moonrakerRef.current[id];
+    if (driverMoonraker) {
+      delete moonrakerRef.current[id];
+      driverMoonraker.disconnect().catch(() => undefined);
     }
     const vigiaResina = vigiasSaturnoRef.current[id];
     if (vigiaResina) {
@@ -1165,6 +1280,43 @@ export const PrinterConnectionsProvider = ({
     connectToPrinter(updatedPrinter);
   };
 
+  const updatePrinterFirmwareFlavor = (
+    id: string,
+    firmware: Printer['firmware']
+  ) => {
+    const printer = printersRef.current.find(p => p.id === id);
+    if (!printer || printer.firmware === firmware) return;
+
+    const existingSocket = webSocketsRef.current[id];
+    if (existingSocket) {
+      clearReconnectTimer(id);
+      markIntentionalClose(id);
+      try {
+        existingSocket.close();
+      } catch {}
+      delete webSocketsRef.current[id];
+    }
+    stopStatusTimer(id);
+
+    const updatedPrinter: Printer = {
+      ...printer,
+      firmware: firmware ?? 'sdcp',
+      activeIp: undefined,
+      connectionStatus: 'connecting',
+      videoUrl: undefined,
+    };
+
+    setPrinters(prevPrinters => {
+      const updatedPrinters = prevPrinters.map(p =>
+        p.id === id ? updatedPrinter : p
+      );
+      printersRef.current = updatedPrinters;
+      return updatedPrinters;
+    });
+
+    connectToPrinter(updatedPrinter);
+  };
+
   const request = useCallback(
     (printerId: string, command: SdcpCommand<unknown>, timeoutMs = 8000) =>
       new Promise<any>((resolve, reject) => {
@@ -1217,6 +1369,31 @@ export const PrinterConnectionsProvider = ({
               return;
           }
           promessa.then(resolve).catch(reject);
+          return;
+        }
+
+        // Moonraker / Klipper (COSMOS): despacha comandos via driver Moonraker
+        if (printer?.firmware === 'moonraker') {
+          const driver = moonrakerRef.current[printerId];
+          if (!driver || !driver.getStatus().connected) {
+            reject(new PrinterOfflineError());
+            return;
+          }
+          driver
+            .sendCommand(command, timeoutMs)
+            .then(res => {
+              if (res.Data.Ack !== 0) {
+                reject(
+                  new Error(
+                    (res.Data as any).Description ||
+                      'Erro ao executar comando Moonraker'
+                  )
+                );
+              } else {
+                resolve(res.Data.Data);
+              }
+            })
+            .catch(reject);
           return;
         }
 
@@ -1719,9 +1896,9 @@ export const PrinterConnectionsProvider = ({
       );
     }
     const alvoResina = printersRef.current.find(p => p.id === printerId);
-    if (alvoResina?.kind === 'resin') {
+    if (alvoResina?.kind === 'resin' || alvoResina?.firmware === 'moonraker') {
       request(printerId, command).catch(erro =>
-        log('saturno: comando recusado', erro)
+        log('comando via request recusado:', erro)
       );
       return;
     }
@@ -1841,6 +2018,7 @@ export const PrinterConnectionsProvider = ({
         sendCommand,
         request,
         updatePrinterIp,
+        updatePrinterFirmwareFlavor,
         statusIntervalMs,
         setStatusInterval: updateStatusInterval,
         carregarParaSaturno,

@@ -102,6 +102,7 @@ export const DiscoveryScreen = ({ navigation }: any) => {
     }
     addPrinter(device.name, device.ip, device.mainboardId, undefined, {
       kind: device.kind,
+      firmware: device.firmwareFlavor ?? 'sdcp',
       sdcpId: device.sdcpId,
     });
     Alert.alert(
@@ -131,6 +132,10 @@ export const DiscoveryScreen = ({ navigation }: any) => {
         title={t('discovery.title')}
         subtitle={subnet ? `${subnet}.0/24` : t('discovery.redeLocal')}
         onBack={() => navigation.goBack()}
+        rightAction={{
+          icon: 'add',
+          onPress: () => navigation.navigate('AddEditPrinter'),
+        }}
       />
 
       <ScrollView

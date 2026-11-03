@@ -32,6 +32,7 @@ export interface SdcpResponseData<T = unknown> {
   RequestID?: string;
   MainboardID?: string;
   TimeStamp?: number;
+  Description?: string;
 }
 
 export interface SdcpResponse<T = unknown> {

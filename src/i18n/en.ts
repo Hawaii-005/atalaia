@@ -639,6 +639,16 @@ const en = {
   'addPrinter.nomeMaximo': 'Fewer than 50 characters',
   'addPrinter.ipObrigatorio': 'The IP address is required',
   'addPrinter.aGuardar': 'Saving…',
+  'addPrinter.firmware': 'Printer firmware',
+  'addPrinter.firmwareAuto': 'Detect automatically (Recommended)',
+  'addPrinter.firmwareSdcp': 'Original Elegoo (SDCP :3030)',
+  'addPrinter.firmwareMoonraker': 'COSMOS / Klipper (Moonraker)',
+  'addPrinter.testarLigacao': 'Test connection',
+  'addPrinter.aTestar': 'Testing connection…',
+  'addPrinter.testeSucessoSdcp': 'Connected successfully via SDCP (:3030)',
+  'addPrinter.testeSucessoMoonraker':
+    'Connected successfully via Moonraker (COSMOS)',
+  'addPrinter.testeFalhou': 'Could not connect to printer at this address',
   'addPrinter.guardar': 'Save printer',
   'addPrinter.analisarRede': 'Scan the network',
 

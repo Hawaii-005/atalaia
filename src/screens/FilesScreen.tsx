@@ -99,6 +99,7 @@ interface PrinterFile {
   totalSize?: number;
   CreateTime?: number;
   TotalLayers?: number;
+  thumbnailUrl?: string;
 }
 
 const PREVIEW_LIMIT = 15 * 1024 * 1024;
@@ -141,6 +142,7 @@ const FileRow = ({
   largura,
   denso = false,
   onToggleFavorito,
+  isMoonraker = false,
 }: {
   file: PrinterFile;
   printerIp: string;
@@ -155,12 +157,14 @@ const FileRow = ({
   /** Cartões estreitos (6 ou 8 colunas): uma linha de nome, letra menor. */
   denso?: boolean;
   onToggleFavorito?: () => void;
+  isMoonraker?: boolean;
 }) => {
   const { tema } = useTheme();
   const size = file.FileSize ?? file.totalSize ?? file.usedSize ?? 0;
   const label = file.name.split('/').pop() ?? file.name;
   // O `?r=` evita que o <Image> reaproveite o 404 em cache do mesmo URL.
-  const urlBase = urlMiniatura(printerIp, file.name);
+  const urlBase =
+    file.thumbnailUrl || urlMiniatura(printerIp, file.name, isMoonraker);
   const urlComToken = recarga ? `${urlBase}?r=${recarga}` : urlBase;
   const [mini, setMini] = useState<string | null>(urlComToken);
   const pediuEmbutida = useRef(false);
@@ -178,10 +182,11 @@ const FileRow = ({
     };
   }, []);
 
-  // A impressora só serve /thumbnail dos ficheiros que já pré-visualizou; nos
-  // restantes (404) a imagem vem do cabeçalho do próprio .gcode. Sem isto a
-  // lista mostrava o cubo e parecia que "só algumas miniaturas carregam".
   const falhouMiniaturaLista = async () => {
+    if (isMoonraker) {
+      if (vivo.current) setMini(null);
+      return;
+    }
     if (pediuEmbutida.current) {
       if (vivo.current) setMini(null);
       return;
@@ -521,7 +526,13 @@ export const FilesScreen = ({
         destino
       );
       if (descarga.status !== 200) throw new Error('descarga');
-      await uploadGcode(enderecoDe(printer), destino, nomeFinal);
+      await uploadGcode(
+        enderecoDe(printer),
+        destino,
+        nomeFinal,
+        undefined,
+        printer.firmware === 'moonraker'
+      );
       await request(printer.id, deleteFilesCommand([aRenomear.name]), 12000);
       setARenomear(null);
       await load();
@@ -632,7 +643,8 @@ export const FilesScreen = ({
             setOcupado(
               `${t('files.aEnviar')} ${Math.round((enviado / total) * 100)}%`
             );
-          }
+          },
+          printer.firmware === 'moonraker'
         );
         await load();
         Alert.alert(
@@ -1257,6 +1269,7 @@ export const FilesScreen = ({
                   favorito={ehFavorito(item.name)}
                   onToggleFavorito={() => alternarFavoritoDoFicheiro(item)}
                   onOpen={() => setSelecionado(item)}
+                  isMoonraker={printer.firmware === 'moonraker'}
                 />
               )}
             />

@@ -5,6 +5,8 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../components/Header';
@@ -17,17 +19,21 @@ import { eTailscale } from '../utils/rede';
 import { t, useIdioma } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
+import { detectarTipoFirmware } from '../utils/PrinterDiscovery';
+import { FirmwareFlavor } from '../types';
 
 interface FormData {
   printerName: string;
   ipAddress: string;
   alternateIp: string;
+  firmware: 'auto' | 'sdcp' | 'moonraker';
 }
 
 interface FormErrors {
   printerName?: string;
   ipAddress?: string;
   alternateIp?: string;
+  firmware?: string;
 }
 
 const validationSchema = () =>
@@ -49,10 +55,63 @@ export const AddEditPrinterScreen = () => {
     printerName: '',
     ipAddress: '',
     alternateIp: '',
+    firmware: 'auto',
   });
+  const [testResult, setTestResult] = useState<{
+    status: 'success' | 'error';
+    msg: string;
+    details?: string;
+  } | null>(null);
+  const [isTesting, setIsTesting] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [focused, setFocused] = useState<keyof FormData | null>(null);
+
+  const handleTestConnection = async () => {
+    const ip = formData.ipAddress.trim();
+    if (!ip) {
+      setErrors(prev => ({
+        ...prev,
+        ipAddress: t('addPrinter.ipObrigatorio'),
+      }));
+      return;
+    }
+
+    setIsTesting(true);
+    setTestResult(null);
+
+    const startTime = Date.now();
+    try {
+      const res = await detectarTipoFirmware(ip);
+      const latency = Date.now() - startTime;
+      if (res?.flavor === 'moonraker') {
+        setTestResult({
+          status: 'success',
+          msg: t('addPrinter.testeSucessoMoonraker'),
+          details: `Latência: ${latency}ms · Servidor: Moonraker JSON-RPC`,
+        });
+      } else if (res?.flavor === 'sdcp') {
+        setTestResult({
+          status: 'success',
+          msg: t('addPrinter.testeSucessoSdcp'),
+          details: `Latência: ${latency}ms · Protocolo: SDCP Elegoo`,
+        });
+      } else {
+        setTestResult({
+          status: 'error',
+          msg: t('addPrinter.testeFalhou'),
+          details: `Tempo esgotado ou endereço inacessível (${latency}ms)`,
+        });
+      }
+    } catch {
+      setTestResult({
+        status: 'error',
+        msg: t('addPrinter.testeFalhou'),
+      });
+    } finally {
+      setIsTesting(false);
+    }
+  };
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -77,18 +136,44 @@ export const AddEditPrinterScreen = () => {
           return;
         }
       }
+      let finalFlavor: FirmwareFlavor = 'sdcp';
+      if (formData.firmware === 'auto') {
+        try {
+          const det = await detectarTipoFirmware(
+            formData.ipAddress.trim(),
+            2000
+          );
+          if (det?.flavor) {
+            finalFlavor = det.flavor;
+          }
+        } catch {
+          // Se falhar o auto, mantém o padrão
+        }
+      } else {
+        finalFlavor = formData.firmware;
+      }
+
       addPrinter(
         formData.printerName.trim(),
         formData.ipAddress.trim(),
         undefined,
-        formData.alternateIp.trim() || undefined
+        formData.alternateIp.trim() || undefined,
+        { firmware: finalFlavor }
       );
       navigation.goBack();
     } catch (validationErrors: any) {
+      console.warn('Erro ao guardar impressora:', validationErrors);
       const newErrors: FormErrors = {};
-      validationErrors.inner?.forEach((error: any) => {
-        newErrors[error.path as keyof FormErrors] = error.message;
-      });
+      if (validationErrors?.inner && Array.isArray(validationErrors.inner)) {
+        validationErrors.inner.forEach((error: any) => {
+          newErrors[error.path as keyof FormErrors] = error.message;
+        });
+      } else {
+        Alert.alert(
+          t('comum.erro'),
+          validationErrors?.message || 'Falha ao validar os campos'
+        );
+      }
       setErrors(newErrors);
     } finally {
       setIsSubmitting(false);
@@ -204,12 +289,98 @@ export const AddEditPrinterScreen = () => {
           </Text>
         </View>
 
+        {/* Bloco 5: Seletor de Firmware */}
+        <View className="mt-5 rounded-xl2 border border-line bg-cartao p-4">
+          <Text className="text-[10px] tracking-widest font-semibold text-ink-soft mb-3">
+            {t('addPrinter.firmware')}
+          </Text>
+
+          {[
+            { id: 'auto', label: t('addPrinter.firmwareAuto') },
+            { id: 'sdcp', label: t('addPrinter.firmwareSdcp') },
+            { id: 'moonraker', label: t('addPrinter.firmwareMoonraker') },
+          ].map(opt => (
+            <TouchableOpacity
+              key={opt.id}
+              onPress={() =>
+                setFormData(prev => ({
+                  ...prev,
+                  firmware: opt.id as any,
+                }))
+              }
+              activeOpacity={0.7}
+              className="flex-row items-center py-2.5"
+              style={{ minHeight: 48 }}
+            >
+              <View className="h-5 w-5 rounded-full border border-line items-center justify-center mr-3 bg-fundo">
+                {formData.firmware === opt.id && (
+                  <View className="h-2.5 w-2.5 rounded-full bg-brand" />
+                )}
+              </View>
+              <Text className="text-[13px] text-ink font-medium">
+                {opt.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Bloco 6: Botão Testar Ligação */}
+        <TouchableOpacity
+          onPress={handleTestConnection}
+          disabled={isTesting || !formData.ipAddress.trim()}
+          activeOpacity={0.7}
+          className="mt-4 rounded-xl border border-line bg-cartao py-3.5 items-center flex-row justify-center"
+          style={{ minHeight: 48 }}
+        >
+          {isTesting ? (
+            <>
+              <ActivityIndicator
+                size="small"
+                color={hexDe(tema.paleta.acento)}
+              />
+              <Text className="ml-2 text-[14px] font-semibold text-ink-soft">
+                {t('addPrinter.aTestar')}
+              </Text>
+            </>
+          ) : (
+            <Text className="text-[14px] font-semibold text-brand-texto">
+              {t('addPrinter.testarLigacao')}
+            </Text>
+          )}
+        </TouchableOpacity>
+
+        {/* Bloco 7: Resultado do Teste */}
+        {testResult && (
+          <View
+            className={`mt-3 rounded-xl p-3 border ${
+              testResult.status === 'success'
+                ? 'border-state-success/40 bg-state-success/10'
+                : 'border-state-danger/40 bg-state-danger/10'
+            }`}
+          >
+            <Text
+              className={`text-[13px] font-semibold ${
+                testResult.status === 'success'
+                  ? 'text-state-success'
+                  : 'text-state-danger'
+              }`}
+            >
+              {testResult.msg}
+            </Text>
+            {testResult.details && (
+              <Text className="mt-1 text-[11px] text-ink-muted">
+                {testResult.details}
+              </Text>
+            )}
+          </View>
+        )}
+
         <TouchableOpacity
           onPress={handleSubmit}
-          disabled={isSubmitting}
+          disabled={!canSave || isSubmitting}
           activeOpacity={0.85}
           className={`mt-4 rounded-xl2 py-4 items-center ${
-            canSave && !isSubmitting ? 'bg-brand' : 'bg-line'
+            canSave && !isSubmitting ? 'bg-brand' : 'bg-line opacity-50'
           }`}
         >
           <Text className="text-[15px] font-semibold text-white">

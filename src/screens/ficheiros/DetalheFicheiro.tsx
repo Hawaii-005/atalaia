@@ -119,7 +119,9 @@ export const DetalheFicheiro = ({
     file.name
   );
   const label = file.name.split('/').pop() ?? file.name;
-  const { request } = usePrinterConnections();
+  const { request, printers } = usePrinterConnections();
+  const printer = printers.find(p => p.id === printerId);
+  const isMoonraker = printer?.firmware === 'moonraker';
   const [detalhe, setDetalhe] = useState<any>(null);
   const [slots, setSlots] = useState<Record<number, number>>({});
   const [trays, setTrays] = useState<any[]>([]);
@@ -207,7 +209,7 @@ export const DetalheFicheiro = ({
     return tray ? Number(tray.status) !== 1 : false;
   };
   const [mini, setMini] = useState<string | null>(
-    urlMiniatura(printerIp, file.name)
+    file.thumbnailUrl || urlMiniatura(printerIp, file.name, isMoonraker)
   );
   const vivoRef = useRef(true);
   const pediuEmbutida = useRef(false);
@@ -220,13 +222,17 @@ export const DetalheFicheiro = ({
   }, []);
 
   const falhouMiniatura = async () => {
+    if (isMoonraker) {
+      if (vivoRef.current) setMini(null);
+      return;
+    }
     if (!pediuEmbutida.current) {
       pediuEmbutida.current = true;
       const embutida = await extrairMiniaturaEmbutida(printerIp, file.name);
       if (vivoRef.current) setMini(embutida);
-      return;
+    } else if (vivoRef.current) {
+      setMini(null);
     }
-    if (vivoRef.current) setMini(null);
   };
   useEffect(() => {
     let vivo = true;

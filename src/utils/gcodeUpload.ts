@@ -47,12 +47,43 @@ export const uploadGcode = async (
   printerIp: string,
   uri: string,
   filename: string,
-  onProgresso?: (enviado: number, total: number) => void
+  onProgresso?: (enviado: number, total: number) => void,
+  isMoonraker = false
 ): Promise<void> => {
   const info = await FileSystem.getInfoAsync(uri, { size: true });
   const total = (info as { size?: number }).size ?? 0;
   if (!total) {
     throw new Error('Ficheiro vazio');
+  }
+
+  // Se for Moonraker / Klipper (COSMOS), utiliza o endpoint multipart padrão
+  if (isMoonraker) {
+    const hostFormatado = printerIp;
+    const urlMoonraker = `http://${hostFormatado}/server/files/upload`;
+    const form = new FormData();
+    form.append('root', 'gcodes');
+    form.append('file', {
+      uri,
+      name: filename,
+      type: 'application/octet-stream',
+    } as unknown as Blob);
+
+    const controller = new AbortController();
+    const relogio = setTimeout(() => controller.abort(), 120000);
+    try {
+      const response = await fetch(urlMoonraker, {
+        method: 'POST',
+        body: form,
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        throw new Error(`Erro HTTP Moonraker upload: ${response.status}`);
+      }
+      onProgresso?.(total, total);
+      return;
+    } finally {
+      clearTimeout(relogio);
+    }
   }
 
   // The printer verifies the whole-file MD5 before accepting the transfer.

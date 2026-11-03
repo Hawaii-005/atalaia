@@ -326,7 +326,7 @@ export const EstadoSection = ({
         paddingBottom: 32,
       }}
     >
-      {emFoco && ligada && !resina && (
+      {emFoco && !resina && (
         <TouchableOpacity
           activeOpacity={0.9}
           onPress={onAbrirCamara}
@@ -340,7 +340,12 @@ export const EstadoSection = ({
           <WebView
             key={`cam-${printer.id}`}
             source={{
-              html: htmlDoVideo(enderecoDe(printer), 'cover', false),
+              html: htmlDoVideo(
+                enderecoDe(printer),
+                'cover',
+                false,
+                printer.firmware === 'moonraker'
+              ),
               baseUrl: `http://${enderecoDe(printer)}`,
             }}
             style={{ flex: 1, backgroundColor: '#000' }}

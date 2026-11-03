@@ -4,6 +4,8 @@ import {
   PrinterDriverStatus,
 } from './PrinterDriver';
 import { PrinterKind, SdcpCommand, SdcpResponse } from '../types';
+import { Capabilities, FirmwareFlavor } from '../../types';
+import { CAPABILITIES_SDCP_FDM } from '../capabilities';
 import { calcularEstadoLogico } from '../stateMachine';
 import { parseEValidarSdcp } from '../schemas';
 
@@ -12,6 +14,8 @@ export class CentauriDriver implements PrinterDriver {
   readonly name: string;
   readonly ipAddress: string;
   readonly kind: PrinterKind = 'fdm';
+  readonly firmware: FirmwareFlavor = 'sdcp';
+  readonly capabilities: Capabilities = CAPABILITIES_SDCP_FDM;
 
   private socket: WebSocket | null = null;
   private listeners: Set<(status: PrinterDriverStatus) => void> = new Set();
