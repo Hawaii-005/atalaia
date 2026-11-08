@@ -17,7 +17,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
-import { canvasSlotsCommand, CanvasTray } from '../utils/commands';
+import {
+  canvasSlotsCommand,
+  setLaneWeightCommand,
+  CanvasTray,
+} from '../utils/commands';
 import { t, useIdioma } from '../i18n';
 import { EstadoVazio } from '../ui/EstadoVazio';
 import { useLayout } from '../hooks/useLayout';
@@ -154,10 +158,10 @@ export const FilamentosScreen = ({
 
   const vistas = useMemo(
     () =>
-      slots && fdm
-        ? construirVistaSlots(slots, bobinas, fdm.id, limite, ativo)
+      slots && fdmId
+        ? construirVistaSlots(slots, bobinas, fdmId, limite, ativo)
         : [],
-    [slots, bobinas, fdm, limite, ativo]
+    [slots, bobinas, fdmId, limite, ativo]
   );
 
   const vistaAberta =
@@ -165,7 +169,18 @@ export const FilamentosScreen = ({
 
   const guardar = async (bobinaId: string, dados: DadosBobina) => {
     await actualizarRolo(bobinaId, dados);
+    if (fdm && aberto !== null) {
+      try {
+        await request(
+          fdm.id,
+          setLaneWeightCommand(aberto + 1, dados.restante, { id: fdm.id })
+        );
+      } catch {
+        // silencioso
+      }
+    }
     await recarregarInventario();
+    await ler();
   };
 
   const associar = async (bobinaId: string) => {
@@ -196,6 +211,37 @@ export const FilamentosScreen = ({
       canvasSlot: vista.trayId,
     });
     await recarregarInventario();
+  };
+
+  const criarEGuardar = async (dados: DadosBobina) => {
+    if (!fdm || !vistaAberta) return;
+    const vista = vistaAberta;
+    await adicionarRolo({
+      printerId: fdm.id,
+      nome: dados.nome || `Slot ${vista.rotulo}`,
+      marca: dados.marca || vista.marca || '',
+      material: vista.material || 'PLA',
+      cor: vista.cor ?? '#808080',
+      pesoInicial: dados.pesoInicial,
+      restante: dados.restante,
+      preco: dados.preco,
+      notas: dados.notas,
+      canvasSlot: vista.trayId,
+    });
+    if (fdm) {
+      try {
+        await request(
+          fdm.id,
+          setLaneWeightCommand(vista.trayId + 1, dados.restante, {
+            id: fdm.id,
+          })
+        );
+      } catch {
+        // silencioso
+      }
+    }
+    await recarregarInventario();
+    await ler();
   };
 
   const mudarLimite = (valor: number) => {
@@ -319,13 +365,19 @@ export const FilamentosScreen = ({
         </View>
 
         <View style={{ alignItems: 'flex-end', gap: 2 }}>
-          {vista.bobina ? (
+          {vista.bobina || vista.restanteG !== undefined ? (
             <>
               <Text style={{ fontSize: 16, fontWeight: '800', color: tinta }}>
-                {vista.percentagem}%
+                {vista.percentagem !== undefined
+                  ? `${vista.percentagem}%`
+                  : vista.bobina
+                    ? `${percentagemRestante(vista.bobina)}%`
+                    : '—'}
               </Text>
               <Text style={{ fontSize: 11, color: tintaSoft }}>
-                {t('filamentos.restante', { g: String(vista.restanteG) })}
+                {t('filamentos.restante', {
+                  g: String(vista.restanteG ?? vista.bobina?.restante ?? '—'),
+                })}
               </Text>
             </>
           ) : (
@@ -581,6 +633,7 @@ export const FilamentosScreen = ({
         onAssociar={associar}
         onDesassociar={desassociar}
         onCriarComCanvas={criarComCanvas}
+        onCriarEGuardar={criarEGuardar}
         onLimite={mudarLimite}
       />
     </View>

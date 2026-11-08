@@ -30,6 +30,7 @@ import { htmlDoVideo } from '../utils/cameraStream';
 import { CartaoMovimento } from '../screens/controlos/CartaoMovimento';
 import { CartaoVentilacao } from '../screens/controlos/CartaoVentilacao';
 import { CartaoTemperaturas } from '../screens/controlos/CartaoTemperaturas';
+import { ConsolaModal } from '../components/ConsolaModal';
 import { SecaoResina } from '../screens/controlos/SecaoResina';
 import {
   LIMITE_ESTADO_ANTIGO_MS,
@@ -49,6 +50,7 @@ import {
   executarComando,
 } from '../utils/controlos/resultado';
 import { enderecoDe } from '../utils/rede';
+import { urlMiniatura } from '../utils/miniatura';
 import {
   ackDaResposta,
   fanCommand,
@@ -215,6 +217,21 @@ export const PainelSection = ({
     (info?.TotalTicks ?? 0) - (info?.CurrentTicks ?? 0)
   );
 
+  const [falhaMiniatura, setFalhaMiniatura] = useState(false);
+  const miniatura =
+    info?.thumbnailUrl ||
+    (info?.Filename && !resina && printer
+      ? urlMiniatura(
+          enderecoDe(printer),
+          info.Filename,
+          printer.firmware === 'moonraker'
+        )
+      : null);
+
+  useEffect(() => {
+    setFalhaMiniatura(false);
+  }, [printer?.id, info?.Filename, info?.thumbnailUrl]);
+
   // A pausa não muda o código de estado: o sinal é o CurrentTicks parar. Só se
   // mostra «Retomar» depois de duas leituras iguais e 45 s parados.
   const ticksRef = useRef({ valor: -1, desde: Date.now(), iguais: 0 });
@@ -239,6 +256,7 @@ export const PainelSection = ({
 
   const [passo, setPasso] = useState<PassoMm>(10);
   const [aEnviar, setAEnviar] = useState(false);
+  const [consolaAberta, setConsolaAberta] = useState(false);
   const [resultado, setResultado] = useState<ResultadoComando | null>(null);
   // Só para o estado «antigo» envelhecer no ecrã sem depender de pacotes novos.
   const [agora, setAgora] = useState(Date.now());
@@ -653,6 +671,22 @@ export const PainelSection = ({
                   progresso={progresso}
                   cor={hexDe(paleta.acento)}
                   trilho={hexDe(paleta.linha)}
+                  imagem={
+                    miniatura && !falhaMiniatura ? (
+                      <Image
+                        source={{ uri: miniatura }}
+                        onError={() => setFalhaMiniatura(true)}
+                        style={{
+                          width: 76,
+                          height: 76,
+                          borderRadius: 38,
+                          opacity: 0.35,
+                          position: 'absolute',
+                        }}
+                        resizeMode="cover"
+                      />
+                    ) : undefined
+                  }
                 >
                   <Text
                     style={{
@@ -815,6 +849,26 @@ export const PainelSection = ({
                     {t('comum.parar')}
                   </Text>
                 </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setConsolaAberta(true)}
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: raioToken.botao,
+                    borderWidth: 1.5,
+                    borderColor: hexDe(paleta.linha),
+                    backgroundColor: hexDe(paleta.fundoBaixo),
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  accessibilityLabel="Consola G-Code"
+                >
+                  <Ionicons
+                    name="terminal-outline"
+                    size={18}
+                    color={hexDe(paleta.tinta)}
+                  />
+                </TouchableOpacity>
               </View>
             </Cartao>
           ) : (
@@ -848,6 +902,25 @@ export const PainelSection = ({
                     {ligada ? t('painel.prontaMsg') : t('painel.semLigacaoMsg')}
                   </Text>
                 </View>
+                <TouchableOpacity
+                  onPress={() => setConsolaAberta(true)}
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: 12,
+                    backgroundColor: hexDe(paleta.fundoBaixo),
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: 6,
+                  }}
+                  accessibilityLabel="Consola G-Code"
+                >
+                  <Ionicons
+                    name="terminal-outline"
+                    size={17}
+                    color={hexDe(paleta.acentoTexto)}
+                  />
+                </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() =>
                     navigation.navigate('AddEditPrinter', {
@@ -951,8 +1024,8 @@ export const PainelSection = ({
                     marginTop: espaco.md,
                   }}
                 >
-                  {[-0.02, 0, 0.02].map((mm, i) => {
-                    const centro = i === 1;
+                  {[-0.05, -0.01, 0, 0.01, 0.05].map((mm, i) => {
+                    const centro = i === 2;
                     return (
                       <TouchableOpacity
                         key={mm}
@@ -1007,6 +1080,11 @@ export const PainelSection = ({
           </Cartao>
         </ColunaControlos>
       </View>
+      <ConsolaModal
+        visivel={consolaAberta}
+        printer={printer}
+        onFechar={() => setConsolaAberta(false)}
+      />
     </PaginaControlos>
   );
 };

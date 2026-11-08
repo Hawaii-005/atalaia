@@ -16,7 +16,8 @@ import { urlGcode } from './miniatura';
 export const descarregarGcode = async (
   ip: string,
   nome: string,
-  aoProgresso?: (fracao: number) => void
+  aoProgresso?: (fracao: number) => void,
+  isMoonraker = false
 ): Promise<{ uri: string; bytes: number }> => {
   const limpo = nome.split('/').pop() ?? nome;
   // Pasta própria para o nome que o menu de partilha mostra ser só o do ficheiro.
@@ -27,7 +28,7 @@ export const descarregarGcode = async (
   const destino = `${pasta}${limpo}`;
 
   const tarefa = FileSystem.createDownloadResumable(
-    urlGcode(ip, limpo),
+    urlGcode(ip, limpo, isMoonraker),
     destino,
     {},
     progresso => {

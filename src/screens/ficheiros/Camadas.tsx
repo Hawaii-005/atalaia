@@ -12,6 +12,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import { t } from '../../i18n';
 import { useTheme } from '../../contexts/ThemeContext';
+import { urlGcode } from '../../utils/miniatura';
 import { hexDe } from '../../theme/temas';
 import {
   CamadasGcode,
@@ -31,9 +32,8 @@ type Estado =
   | 'erro'
   | 'ocupada';
 
-const urlDoFicheiro = (ip: string, nome: string) => {
-  const limpo = nome.replace(/^\/?(local\/)?\/?/, '').replace(/^\//, '');
-  return `http://${ip}:3030/local/${encodeURIComponent(limpo)}`;
+const urlDoFicheiro = (ip: string, nome: string, isMoonraker = false) => {
+  return urlGcode(ip, nome, isMoonraker);
 };
 
 /** Barra de camadas: arrastar e tocar. Feita à mão para não trazer dependência. */
@@ -123,12 +123,14 @@ export const Camadas = ({
   printerIp,
   nome,
   mini,
+  isMoonraker = false,
   onClose,
 }: {
   printerIp: string;
   nome: string;
   /** Miniatura já conhecida, mostrada enquanto o G-code é lido. */
   mini?: string | null;
+  isMoonraker?: boolean;
   onClose: () => void;
 }) => {
   const { tema } = useTheme();
@@ -148,7 +150,7 @@ export const Camadas = ({
   const carregar = useCallback(async () => {
     setEstado('aCarregar');
     try {
-      const resposta = await fetch(urlDoFicheiro(printerIp, nome));
+      const resposta = await fetch(urlDoFicheiro(printerIp, nome, isMoonraker));
       if (!resposta.ok) {
         const motivo = (await resposta.text().catch(() => '')).toLowerCase();
         // Enquanto imprime, o servidor do firmware responde «device busy» e

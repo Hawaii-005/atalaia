@@ -58,6 +58,7 @@ export interface PrintInfo {
   Progress: number;
   /** Só a resina preenche: 0 = sem erro, 4 = ficheiro inválido/corrompido. */
   ErrorNumber?: number;
+  thumbnailUrl?: string;
 }
 
 export type PrintStatus =

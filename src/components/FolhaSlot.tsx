@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -42,6 +42,7 @@ interface Props {
   onAssociar: (bobinaId: string) => Promise<void>;
   onDesassociar: (bobinaId: string) => Promise<void>;
   onCriarComCanvas: () => Promise<void>;
+  onCriarEGuardar?: (dados: DadosBobina) => Promise<void>;
   onLimite: (limite: number) => void;
 }
 
@@ -69,6 +70,7 @@ export const FolhaSlot = ({
   onAssociar,
   onDesassociar,
   onCriarComCanvas,
+  onCriarEGuardar,
   onLimite,
 }: Props) => {
   useIdioma();
@@ -84,16 +86,34 @@ export const FolhaSlot = ({
   const [restante, setRestante] = useState('');
   const [notas, setNotas] = useState('');
   const [ocupado, setOcupado] = useState(false);
+  const slotAbertoRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!aberta || !vista) return;
-    setNome(bobina?.nome ?? '');
-    setMarca(bobina?.marca ?? '');
-    setPreco(bobina ? String(bobina.preco).replace('.', ',') : '');
-    setPesoInicial(bobina ? String(bobina.pesoInicial) : '');
-    setRestante(bobina ? String(bobina.restante) : '');
-    setNotas(bobina?.notas ?? '');
-  }, [aberta, vista, bobina]);
+    if (!aberta || !vista) {
+      slotAbertoRef.current = null;
+      return;
+    }
+    if (slotAbertoRef.current !== vista.trayId) {
+      slotAbertoRef.current = vista.trayId;
+      setNome(
+        bobina?.nome ??
+          (vista.nome ||
+            [vista.marca, vista.material].filter(Boolean).join(' ') ||
+            `Slot ${vista.rotulo}`)
+      );
+      setMarca(bobina?.marca ?? (vista.marca || ''));
+      setPreco(bobina ? String(bobina.preco).replace('.', ',') : '');
+      setPesoInicial(bobina ? String(bobina.pesoInicial) : '1000');
+      setRestante(
+        bobina
+          ? String(bobina.restante)
+          : vista.restanteG !== undefined
+            ? String(vista.restanteG)
+            : '1000'
+      );
+      setNotas(bobina?.notas ?? '');
+    }
+  }, [aberta, vista?.trayId]);
 
   if (!vista) return null;
 
@@ -120,16 +140,26 @@ export const FolhaSlot = ({
 
   const guardar = () =>
     comErro(async () => {
-      if (!bobina) return;
-      const inicial = numero(pesoInicial, bobina.pesoInicial);
-      await onGuardar(bobina.id, {
-        nome: nome.trim() || bobina.nome,
-        marca: marca.trim(),
-        preco: numero(preco, bobina.preco),
+      const rest = numero(restante, bobina?.restante ?? 1000);
+      let inicial = numero(pesoInicial, bobina?.pesoInicial ?? 1000);
+      if (rest > inicial) inicial = rest;
+      const prc = numero(preco, bobina?.preco ?? 0);
+      const dados: DadosBobina = {
+        nome:
+          nome.trim() || bobina?.nome || vista.nome || `Slot ${vista.rotulo}`,
+        marca: marca.trim() || bobina?.marca || vista.marca || '',
+        preco: prc,
         pesoInicial: inicial,
-        restante: Math.min(numero(restante, inicial), inicial),
+        restante: rest,
         notas: notas.trim(),
-      });
+      };
+      if (bobina) {
+        await onGuardar(bobina.id, dados);
+      } else if (onCriarEGuardar) {
+        await onCriarEGuardar(dados);
+      } else {
+        await onCriarComCanvas();
+      }
       onFechar();
     });
 
@@ -353,215 +383,181 @@ export const FolhaSlot = ({
           {t('filamentos.locais').toUpperCase()}
         </Text>
 
-        {bobina ? (
-          <>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                marginBottom: 10,
-              }}
-            >
-              <Text style={{ fontSize: 13, color: tintaSoft }}>
-                {t('filamentos.restante', { g: String(bobina.restante) })}
-              </Text>
-              <Text style={{ fontSize: 13, fontWeight: '700', color: tinta }}>
-                {euros(vista.valorRestante ?? 0)}
-              </Text>
-            </View>
-
-            {campo({ rotulo: t('inv.nome'), valor: nome, aoMudar: setNome })}
-            {campo({
-              rotulo: t('filamentos.marca'),
-              valor: marca,
-              aoMudar: setMarca,
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            marginBottom: 10,
+          }}
+        >
+          <Text style={{ fontSize: 13, color: tintaSoft }}>
+            {t('filamentos.restante', {
+              g: String(restante || (bobina ? bobina.restante : '1000')),
             })}
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              <View style={{ flex: 1 }}>
-                {campo({
-                  rotulo: t('inv.preco'),
-                  valor: preco,
-                  aoMudar: setPreco,
-                  teclado: 'decimal-pad',
-                })}
-              </View>
-              <View style={{ flex: 1 }}>
-                {campo({
-                  rotulo: t('inv.peso'),
-                  valor: pesoInicial,
-                  aoMudar: setPesoInicial,
-                  teclado: 'numeric',
-                })}
-              </View>
-            </View>
+          </Text>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: tinta }}>
+            {euros(
+              vista.valorRestante ??
+                Math.round(
+                  (numero(preco, 0) / Math.max(1, numero(pesoInicial, 1000))) *
+                    numero(restante, 1000) *
+                    100
+                ) / 100
+            )}
+          </Text>
+        </View>
+
+        {campo({ rotulo: t('inv.nome'), valor: nome, aoMudar: setNome })}
+        {campo({
+          rotulo: t('filamentos.marca'),
+          valor: marca,
+          aoMudar: setMarca,
+        })}
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <View style={{ flex: 1 }}>
             {campo({
-              rotulo: t('filamentos.pesoRestante'),
-              valor: restante,
-              aoMudar: setRestante,
+              rotulo: t('inv.preco'),
+              valor: preco,
+              aoMudar: setPreco,
               teclado: 'decimal-pad',
             })}
+          </View>
+          <View style={{ flex: 1 }}>
             {campo({
-              rotulo: t('filamentos.notas'),
-              valor: notas,
-              aoMudar: setNotas,
-              multilinha: true,
+              rotulo: t('inv.peso'),
+              valor: pesoInicial,
+              aoMudar: setPesoInicial,
+              teclado: 'numeric',
             })}
+          </View>
+        </View>
+        {campo({
+          rotulo: t('filamentos.pesoRestante'),
+          valor: restante,
+          aoMudar: setRestante,
+          teclado: 'decimal-pad',
+        })}
+        {campo({
+          rotulo: t('filamentos.notas'),
+          valor: notas,
+          aoMudar: setNotas,
+          multilinha: true,
+        })}
 
-            <TouchableOpacity
-              onPress={guardar}
-              disabled={ocupado}
-              style={{
-                height: 46,
-                borderRadius: 14,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: hexDe(p.acento),
-                opacity: ocupado ? 0.6 : 1,
-                marginTop: 4,
-              }}
-            >
-              {ocupado ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text
-                  style={{ fontSize: 15, fontWeight: '700', color: '#fff' }}
-                >
-                  {t('inv.guardar')}
-                </Text>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() =>
-                comErro(() => onDesassociar(bobina.id)).then(
-                  ok => ok && onFechar()
-                )
-              }
-              disabled={ocupado}
-              style={{
-                height: 42,
-                borderRadius: 14,
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderWidth: 1,
-                borderColor: hexDe(p.linha),
-                marginTop: 10,
-              }}
-            >
-              <Text style={{ fontSize: 14, color: tintaSoft }}>
-                {t('filamentos.desassociar')}
-              </Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <>
-            <Text
-              style={{
-                fontSize: 13,
-                color: tintaSoft,
-                lineHeight: 19,
-                marginBottom: 12,
-              }}
-            >
-              {t('filamentos.slotVazioNota')}
+        <TouchableOpacity
+          onPress={guardar}
+          disabled={ocupado}
+          style={{
+            height: 46,
+            borderRadius: 14,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: hexDe(p.acento),
+            opacity: ocupado ? 0.6 : 1,
+            marginTop: 4,
+          }}
+        >
+          {ocupado ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={{ fontSize: 15, fontWeight: '700', color: '#fff' }}>
+              {t('inv.guardar')}
             </Text>
+          )}
+        </TouchableOpacity>
 
-            {vista.material || vista.cor ? (
-              <TouchableOpacity
-                onPress={() =>
-                  comErro(onCriarComCanvas).then(ok => ok && onFechar())
-                }
-                disabled={ocupado}
-                style={{
-                  height: 46,
-                  borderRadius: 14,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: hexDe(p.acento),
-                  marginBottom: 14,
-                }}
-              >
-                <Text
-                  style={{ fontSize: 15, fontWeight: '700', color: '#fff' }}
-                >
-                  {t('filamentos.criarComCanvas')}
-                </Text>
-              </TouchableOpacity>
-            ) : null}
-
+        {bobina ? (
+          <TouchableOpacity
+            onPress={() =>
+              comErro(() => onDesassociar(bobina.id)).then(
+                ok => ok && onFechar()
+              )
+            }
+            disabled={ocupado}
+            style={{
+              height: 42,
+              borderRadius: 14,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderWidth: 1,
+              borderColor: hexDe(p.linha),
+              marginTop: 10,
+            }}
+          >
+            <Text style={{ fontSize: 14, color: tintaSoft }}>
+              {t('filamentos.desassociar')}
+            </Text>
+          </TouchableOpacity>
+        ) : outras.length > 0 ? (
+          <>
             <Text
               style={{
                 fontSize: 12,
                 fontWeight: '800',
                 color: tintaSoft,
+                marginTop: 20,
                 marginBottom: 8,
               }}
             >
               {t('filamentos.associar')}
             </Text>
 
-            {outras.length === 0 ? (
-              <Text style={{ fontSize: 13, color: tintaSoft }}>
-                {t('filamentos.semInventario')}
-              </Text>
-            ) : (
-              outras.map(item => (
-                <TouchableOpacity
-                  key={item.id}
-                  onPress={() =>
-                    comErro(() => onAssociar(item.id)).then(
-                      ok => ok && onFechar()
-                    )
-                  }
-                  disabled={ocupado}
+            {outras.map(item => (
+              <TouchableOpacity
+                key={item.id}
+                onPress={() =>
+                  comErro(() => onAssociar(item.id)).then(
+                    ok => ok && onFechar()
+                  )
+                }
+                disabled={ocupado}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: 10,
+                  borderRadius: 12,
+                  backgroundColor: cartaoFundo,
+                  borderWidth: 1,
+                  borderColor: hexDe(p.linha),
+                  marginBottom: 8,
+                }}
+              >
+                <View
                   style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 10,
-                    padding: 10,
-                    borderRadius: 12,
-                    backgroundColor: cartaoFundo,
-                    borderWidth: 1,
-                    borderColor: hexDe(p.linha),
-                    marginBottom: 8,
+                    width: 14,
+                    height: 14,
+                    borderRadius: 7,
+                    backgroundColor: corHex(item.cor, hexDe(p.linha)),
                   }}
-                >
-                  <View
+                />
+                <View style={{ flex: 1 }}>
+                  <Text
                     style={{
-                      width: 14,
-                      height: 14,
-                      borderRadius: 7,
-                      backgroundColor: corHex(item.cor, hexDe(p.linha)),
+                      fontSize: 14,
+                      fontWeight: '600',
+                      color: tinta,
                     }}
-                  />
-                  <View style={{ flex: 1 }}>
-                    <Text
-                      style={{
-                        fontSize: 14,
-                        fontWeight: '600',
-                        color: tinta,
-                      }}
-                    >
-                      {item.nome}
-                    </Text>
-                    <Text style={{ fontSize: 11, color: tintaSoft }}>
-                      {item.material} · {percentagemRestante(item)}% ·{' '}
-                      {item.restante} g
-                      {item.canvasSlot !== undefined
-                        ? ` · A${item.canvasSlot + 1}`
-                        : ''}
-                    </Text>
-                  </View>
-                  <Ionicons
-                    name="add-circle-outline"
-                    size={20}
-                    color={hexDe(p.acento)}
-                  />
-                </TouchableOpacity>
-              ))
-            )}
+                  >
+                    {item.nome}
+                  </Text>
+                  <Text style={{ fontSize: 11, color: tintaSoft }}>
+                    {item.material} · {percentagemRestante(item)}% ·{' '}
+                    {item.restante} g
+                    {item.canvasSlot !== undefined
+                      ? ` · A${item.canvasSlot + 1}`
+                      : ''}
+                  </Text>
+                </View>
+                <Ionicons
+                  name="add-circle-outline"
+                  size={20}
+                  color={hexDe(p.acento)}
+                />
+              </TouchableOpacity>
+            ))}
           </>
-        )}
+        ) : null}
 
         <View
           style={{

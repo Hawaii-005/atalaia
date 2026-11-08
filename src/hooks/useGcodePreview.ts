@@ -7,6 +7,7 @@ import {
   consumoDoGcode,
   filamentosDoCabecalho,
 } from '../utils/gcodeCores';
+import { urlGcode } from '../utils/miniatura';
 
 export interface GcodePreview {
   path: string;
@@ -157,14 +158,18 @@ const comVez = async <T>(tarefa: () => Promise<T>): Promise<T> => {
   }
 };
 
-const buildLocalUrl = (printerIp: string, filename: string) => {
-  const clean = filename.replace(/^\/?(local\/)?\/?/, '').replace(/^\//, '');
-  return `http://${printerIp}:3030/local/${encodeURIComponent(clean)}`;
+const buildLocalUrl = (
+  printerIp: string,
+  filename: string,
+  isMoonraker = false
+) => {
+  return urlGcode(printerIp, filename, isMoonraker);
 };
 
 export const useGcodePreview = (
   printerIp?: string,
-  filename?: string
+  filename?: string,
+  isMoonraker = false
 ): {
   preview: GcodePreview | null;
   filamentos: FilamentoDoFicheiro[];
@@ -188,8 +193,8 @@ export const useGcodePreview = (
 
   const url = useMemo(() => {
     if (!printerIp || !filename) return '';
-    return buildLocalUrl(printerIp, filename);
-  }, [printerIp, filename]);
+    return buildLocalUrl(printerIp, filename, isMoonraker);
+  }, [printerIp, filename, isMoonraker]);
 
   const load = useCallback(
     async (cancelado: { atual: boolean }) => {

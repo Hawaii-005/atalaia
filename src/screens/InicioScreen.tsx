@@ -71,6 +71,7 @@ export const InicioScreen = ({ navigation }: any) => {
     pendentes: [],
   });
   const [escolhidaId, setEscolhidaId] = useState<string | undefined>(undefined);
+  const [falhaImagem, setFalhaImagem] = useState(false);
 
   useEffect(() => {
     loadHistory()
@@ -101,6 +102,10 @@ export const InicioScreen = ({ navigation }: any) => {
     [printers, escolhidaId]
   );
   const outras = printers.filter(p => p.id !== escolhida?.id);
+
+  useEffect(() => {
+    setFalhaImagem(false);
+  }, [escolhida?.id, escolhida?.status?.PrintInfo?.Filename]);
 
   const cartao = {
     backgroundColor: hexDe(paleta.cartao),
@@ -222,9 +227,14 @@ export const InicioScreen = ({ navigation }: any) => {
   const rolo = roloActivo(inventario.rolos, escolhida.id);
   const garrafa = garrafaActiva(inventario.garrafas, escolhida.id);
   const imagem =
-    info?.Filename && !resina
-      ? urlMiniatura(escolhida.ipAddress, info.Filename)
-      : null;
+    info?.thumbnailUrl ||
+    (info?.Filename && !resina
+      ? urlMiniatura(
+          escolhida.ipAddress,
+          info.Filename,
+          escolhida.firmware === 'moonraker'
+        )
+      : null);
 
   const historicoDaMaquina = historico
     .filter(r => !r.printerName || r.printerName === escolhida.printerName)
@@ -395,9 +405,10 @@ export const InicioScreen = ({ navigation }: any) => {
               >
                 <View style={{ flex: 1, backgroundColor: '#0A0F18' }} />
               </View>
-              {imagem && (
+              {imagem && !falhaImagem && (
                 <Image
                   source={{ uri: imagem }}
+                  onError={() => setFalhaImagem(true)}
                   // No tablet a faixa é muito larga: «cover» cortava a peça e
                   // ampliava-a até ficar pixelizada. «contain» mostra-a toda.
                   resizeMode={duasColunas ? 'contain' : 'cover'}
@@ -419,11 +430,12 @@ export const InicioScreen = ({ navigation }: any) => {
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  backgroundColor: imagem
-                    ? duasColunas
-                      ? 'rgba(5,8,15,0.12)'
-                      : 'rgba(5,8,15,0.28)'
-                    : 'transparent',
+                  backgroundColor:
+                    imagem && !falhaImagem
+                      ? duasColunas
+                        ? 'rgba(5,8,15,0.12)'
+                        : 'rgba(5,8,15,0.28)'
+                      : 'transparent',
                 }}
               />
               <View
@@ -462,7 +474,7 @@ export const InicioScreen = ({ navigation }: any) => {
                 </Text>
               </View>
 
-              {!imagem && (
+              {(!imagem || falhaImagem) && (
                 <View
                   style={{
                     position: 'absolute',
@@ -601,6 +613,11 @@ export const InicioScreen = ({ navigation }: any) => {
                   name={isResumable(info?.Status ?? 0) ? 'play' : 'pause'}
                   size={13}
                   color={hexDe(paleta.tinta)}
+                  style={
+                    isResumable(info?.Status ?? 0)
+                      ? { marginLeft: 1 }
+                      : undefined
+                  }
                 />
                 <Text
                   style={{

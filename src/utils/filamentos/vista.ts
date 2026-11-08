@@ -148,9 +148,22 @@ export const construirVistaSlots = (
     };
 
     if (!bobina) {
+      const pesoAfc =
+        typeof tray?.weight === 'number' && tray.weight > 0
+          ? Math.round(tray.weight)
+          : undefined;
+      const pesoInicialAfc =
+        typeof tray?.initial_weight === 'number' && tray.initial_weight > 0
+          ? Math.round(tray.initial_weight)
+          : 1000;
       vista.push({
         ...base,
         estado: material || marca || cor ? 'semBobina' : 'vazio',
+        restanteG: pesoAfc,
+        percentagem:
+          pesoAfc !== undefined
+            ? Math.round((pesoAfc / pesoInicialAfc) * 100)
+            : undefined,
       });
       continue;
     }

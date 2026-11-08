@@ -289,6 +289,67 @@ describe('MoonrakerDriver (Fase 2 - Leitura e Telemetria)', () => {
       await driver.disconnect();
     });
 
+    it('aplica mapeamento AFC SET_MAP quando slot_map é fornecido no Cmd 128', async () => {
+      const driver = new MoonrakerDriver({
+        id: 'cosmos-1',
+        name: 'Centauri Cosmos',
+        ipAddress: '192.168.1.150',
+      });
+      await driver.connect();
+      const mockWs = MockWebSocket.instances[0];
+
+      const sendPromise = driver.sendCommand({
+        Id: 'test-start-afc',
+        Data: {
+          Cmd: 128,
+          Data: {
+            Filename: 'teste_multicolor.gcode',
+            slot_map: [
+              { t: 0, tray_id: 1 },
+              { t: 1, tray_id: 0 },
+            ],
+          },
+        },
+      });
+
+      await new Promise(r => setTimeout(r, 10));
+
+      // Deve ter despachado gcode script SET_MAP
+      const gcodeMsg = mockWs.sentMessages
+        .map(m => JSON.parse(m))
+        .find(m => m.method === 'printer.gcode.script');
+
+      expect(gcodeMsg).toBeDefined();
+      expect(gcodeMsg.params.script).toContain('SET_MAP LANE=CANVAS_2 MAP=T0');
+      expect(gcodeMsg.params.script).toContain('SET_MAP LANE=CANVAS_1 MAP=T1');
+
+      // Responde ao gcode script
+      mockWs.triggerMessage({
+        jsonrpc: '2.0',
+        id: gcodeMsg.id,
+        result: 'ok',
+      });
+
+      await new Promise(r => setTimeout(r, 10));
+
+      const printMsg = mockWs.sentMessages
+        .map(m => JSON.parse(m))
+        .find(m => m.method === 'printer.print.start');
+
+      expect(printMsg).toBeDefined();
+      expect(printMsg.params.filename).toBe('teste_multicolor.gcode');
+
+      mockWs.triggerMessage({
+        jsonrpc: '2.0',
+        id: printMsg.id,
+        result: 'ok',
+      });
+
+      const res = await sendPromise;
+      expect(res.Data.Ack).toBe(0);
+      await driver.disconnect();
+    });
+
     it('despacha comandos de pausa (129), cancelamento (130) e retoma (131)', async () => {
       const driver = new MoonrakerDriver({
         id: 'cosmos-1',
@@ -588,6 +649,251 @@ describe('MoonrakerDriver (Fase 2 - Leitura e Telemetria)', () => {
       expect(appStatus.LightStatus.SecondLight).toBe(1);
       expect(appStatus.ZOffset).toBe(-0.05);
       expect(appStatus.CurrenCoord).toBe('X:120.50 Y:80.25 Z:15.00');
+
+      await driver.disconnect();
+    });
+
+    it('calcula camadas, tempo decorrido/total e miniatura a partir da telemetria e metadados', () => {
+      const driver = new MoonrakerDriver({
+        id: 'cosmos-1',
+        name: 'Centauri Cosmos',
+        ipAddress: '192.168.1.150',
+      });
+
+      // 1. Atualização com print_stats.info (padrão OrcaSlicer/Elegoo)
+      driver.processKlipperStatusUpdate({
+        print_stats: {
+          state: 'printing',
+          filename: 'teste.gcode',
+          print_duration: 1800,
+          total_duration: 1920,
+          info: { current_layer: 40, total_layer: 200 },
+        },
+        display_status: { progress: 0.2 },
+      });
+
+      let st = driver.getAppPrinterStatus();
+      expect(st.PrintInfo.CurrentLayer).toBe(40);
+      expect(st.PrintInfo.TotalLayer).toBe(200);
+      expect(st.PrintInfo.CurrentTicks).toBe(1800);
+      // Sem estimated_time definido nos metadados, total é calculado com base no progresso (1800 / 0.2 = 9000)
+      expect(st.PrintInfo.TotalTicks).toBe(9000);
+
+      // 2. Fallback de interpolação da camada quando print_stats.info não tem current_layer
+      driver.processKlipperStatusUpdate({
+        print_stats: {
+          state: 'printing',
+          filename: 'teste.gcode',
+          print_duration: 1800,
+          info: { current_layer: null, total_layer: 100 },
+        },
+        display_status: { progress: 0.5 },
+      });
+
+      st = driver.getAppPrinterStatus();
+      expect(st.PrintInfo.TotalLayer).toBe(100);
+      // 50% de 100 camadas = camada 50
+      expect(st.PrintInfo.CurrentLayer).toBe(50);
+    });
+
+    it('responde ao Cmd 260 (detalhes do ficheiro) mapeando metadados do Moonraker para o formato SDCP', async () => {
+      const driver = new MoonrakerDriver({
+        id: 'cosmos-1',
+        name: 'Centauri Cosmos',
+        ipAddress: '192.168.1.150',
+      });
+      await driver.connect();
+      expect(MockWebSocket.instances.length).toBe(1);
+      const mockWs = MockWebSocket.instances[0];
+
+      const promise260 = driver.sendCommand({
+        Id: 'test-260',
+        Data: {
+          Cmd: 260,
+          Data: { Url: '/local/peca_teste.gcode' },
+        },
+      });
+
+      await new Promise(r => setTimeout(r, 10));
+
+      // Deve ter chamado server.files.metadata para o ficheiro peca_teste.gcode
+      const metaReq = mockWs.sentMessages
+        .map(m => JSON.parse(m))
+        .find(
+          m =>
+            m.method === 'server.files.metadata' &&
+            m.params?.filename === 'peca_teste.gcode'
+        );
+      expect(metaReq).toBeDefined();
+
+      // Devolve metadados típicos do Moonraker / OrcaSlicer
+      mockWs.triggerMessage({
+        jsonrpc: '2.0',
+        id: metaReq.id,
+        result: {
+          filename: 'peca_teste.gcode',
+          size: 1542000,
+          modified: 1714000000,
+          slicer: 'OrcaSlicer',
+          layer_count: 150,
+          estimated_time: 4200,
+          filament_total: 35.8,
+          filament_weight_total: 42.5,
+          filament_colors: ['#E91E63', '#4CAF50'],
+          filament_type: ['PLA', 'PETG'],
+          filament_name: ['PLA Red', 'PETG Green'],
+          thumbnails: [
+            {
+              relative_path: '.thumbs/peca_teste-300x300.png',
+              width: 300,
+              height: 300,
+            },
+          ],
+        },
+      });
+
+      const res: any = await promise260;
+      expect(res.Data.Cmd).toBe(260);
+      expect(res.Data.Ack).toBe(0);
+      expect(res.Data.Data.FileInfo).toBeDefined();
+      expect(res.Data.Data.FileInfo.TotalLayer).toBe(150);
+      expect(res.Data.Data.FileInfo.EstTime).toBe(4200);
+      expect(res.Data.Data.FileInfo.EstWeight).toBe(42.5);
+      expect(res.Data.Data.FileInfo.Thumbnail).toContain(
+        '.thumbs/peca_teste-300x300.png'
+      );
+      expect(res.Data.Data.FileInfo.ColorMapping).toHaveLength(2);
+      expect(res.Data.Data.FileInfo.ColorMapping[0]).toEqual({
+        color: '#E91E63',
+        tray_id: 0,
+        filament_type: 'PLA',
+        filament_name: 'PLA Red',
+      });
+      expect(res.Data.Data.FileInfo.ColorMapping[1]).toEqual({
+        color: '#4CAF50',
+        tray_id: 1,
+        filament_type: 'PETG',
+        filament_name: 'PETG Green',
+      });
+
+      await driver.disconnect();
+    });
+
+    it('responde ao Cmd 320 e Cmd 321 (histórico de impressão) consultando server.history do Moonraker', async () => {
+      const driver = new MoonrakerDriver({
+        id: 'cosmos-1',
+        name: 'Centauri Cosmos',
+        ipAddress: '192.168.1.150',
+      });
+      await driver.connect();
+      expect(MockWebSocket.instances.length).toBe(1);
+      const mockWs = MockWebSocket.instances[0];
+
+      // 1. Cmd 320: Lista de IDs
+      const promise320 = driver.sendCommand({
+        Id: 'test-320',
+        Data: {
+          Cmd: 320,
+          Data: {},
+        },
+      });
+
+      await new Promise(r => setTimeout(r, 10));
+
+      const histReq = mockWs.sentMessages
+        .map(m => JSON.parse(m))
+        .find(m => m.method === 'server.history.list');
+      expect(histReq).toBeDefined();
+
+      mockWs.triggerMessage({
+        jsonrpc: '2.0',
+        id: histReq.id,
+        result: {
+          jobs: [
+            {
+              job_id: 'job-001',
+              filename: 'boneco.gcode',
+              start_time: 1714000000,
+              end_time: 1714003600,
+              status: 'completed',
+              print_duration: 3500,
+              total_duration: 3600,
+            },
+            {
+              job_id: 'job-002',
+              filename: 'suporte.gcode',
+              start_time: 1714004000,
+              end_time: 1714005000,
+              status: 'cancelled',
+              print_duration: 800,
+              total_duration: 1000,
+            },
+          ],
+        },
+      });
+
+      const res320: any = await promise320;
+      expect(res320.Data.Cmd).toBe(320);
+      expect(res320.Data.Data.HistoryData).toEqual(['job-001', 'job-002']);
+
+      // 2. Cmd 321: Detalhes dos jobs por ID
+      const promise321 = driver.sendCommand({
+        Id: 'test-321',
+        Data: {
+          Cmd: 321,
+          Data: { Id: ['job-001', 'job-002'] },
+        },
+      });
+
+      const res321: any = await promise321;
+      expect(res321.Data.Cmd).toBe(321);
+      expect(res321.Data.Data.HistoryDetailList.length).toBe(2);
+
+      const job1 = res321.Data.Data.HistoryDetailList[0];
+      expect(job1.TaskId).toBe('job-001');
+      expect(job1.TaskName).toBe('boneco.gcode');
+      expect(job1.TaskStatus).toBe(1); // 1 = concluída
+      expect(job1.BeginTime).toBe(1714000000);
+      expect(job1.EndTime).toBe(1714003600);
+
+      const job2 = res321.Data.Data.HistoryDetailList[1];
+      expect(job2.TaskId).toBe('job-002');
+      expect(job2.TaskStatus).toBe(3); // 3 = parada/cancelada
+
+      await driver.disconnect();
+    });
+
+    it('despacha SET_WEIGHT para o Canvas AFC via Cmd 403', async () => {
+      const driver = new MoonrakerDriver({
+        id: 'cosmos-1',
+        name: 'Centauri Cosmos',
+        ipAddress: '192.168.1.150',
+      });
+      await driver.connect();
+      const mockWs = MockWebSocket.instances[0];
+
+      const promise = driver.sendCommand({
+        Id: 'test-weight',
+        Data: {
+          Cmd: 403,
+          Data: {
+            LaneWeight: { Lane: 2, Weight: 250 },
+          },
+        },
+      });
+
+      await new Promise(r => setTimeout(r, 10));
+      const msg = mockWs.sentMessages
+        .map(m => JSON.parse(m))
+        .find(
+          m =>
+            m.method === 'printer.gcode.script' &&
+            m.params?.script?.includes('SET_WEIGHT')
+        );
+      expect(msg).toBeDefined();
+      expect(msg.params.script).toBe('SET_WEIGHT LANE=CANVAS_2 WEIGHT=250');
+      mockWs.triggerMessage({ jsonrpc: '2.0', id: msg.id, result: 'ok' });
+      await promise;
 
       await driver.disconnect();
     });

@@ -13,11 +13,17 @@ export interface MoonrakerKlipperStatus {
     filename?: string;
     total_duration?: number;
     print_duration?: number;
+    info?: {
+      total_layer?: number | null;
+      current_layer?: number | null;
+      [key: string]: any;
+    };
   };
   display_status?: {
     progress?: number;
     current_layer?: number;
     total_layers?: number;
+    message?: string;
   };
   extruder?: {
     temperature?: number;
@@ -81,6 +87,10 @@ export class MoonrakerDriver implements PrinterDriver {
   private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
   private reconnectAttempt = 0;
   private isExplicitlyClosed = false;
+  private lastQueriedFile: string | null = null;
+  private metadataCache: Map<string, any> = new Map();
+  private activeMetadataFetch: string | null = null;
+  private historyJobsCache: Map<string, any> = new Map();
 
   private status: PrinterDriverStatus = {
     connected: false,
@@ -166,6 +176,8 @@ export class MoonrakerDriver implements PrinterDriver {
     this.isExplicitlyClosed = true;
     this.clearReconnectTimer();
     this.cleanupSocket();
+    this.lastQueriedFile = null;
+    this.activeMetadataFetch = null;
     this.updateStatus({ connected: false });
   }
 
@@ -187,6 +199,23 @@ export class MoonrakerDriver implements PrinterDriver {
       ? `X:${s.position[0].toFixed(2)} Y:${s.position[1].toFixed(2)} Z:${s.position[2].toFixed(2)}`
       : '';
     const fanVal = s.fanSpeed ?? 0;
+
+    const currentTicks = Math.round(s.printDuration ?? 0);
+    let totalTicks = 0;
+    if (s.estimatedTime && s.estimatedTime > 0) {
+      totalTicks = Math.max(currentTicks, Math.round(s.estimatedTime));
+    } else if (s.progress > 0 && currentTicks > 0) {
+      totalTicks = Math.round(currentTicks / (s.progress / 100));
+    }
+
+    const totalL = s.totalLayer ?? 0;
+    let currL = s.currentLayer ?? 0;
+    if (currL === 0 && totalL > 0 && s.progress > 0) {
+      currL = Math.min(
+        totalL,
+        Math.max(1, Math.round((s.progress / 100) * totalL))
+      );
+    }
 
     return {
       CurrentStatus: [statusCode === 0 ? 0 : 1],
@@ -211,15 +240,16 @@ export class MoonrakerDriver implements PrinterDriver {
       },
       PrintInfo: {
         Status: statusCode,
-        CurrentLayer: s.currentLayer ?? 0,
-        TotalLayer: s.totalLayer ?? 0,
-        CurrentTicks: 0,
-        TotalTicks: 0,
+        CurrentLayer: currL,
+        TotalLayer: totalL,
+        CurrentTicks: currentTicks,
+        TotalTicks: totalTicks,
         Filename: s.filename ?? '',
         TaskId: '',
         PrintSpeedPct: 100,
         Progress: Math.max(0, Math.min(100, Math.round(s.progress))),
         ErrorNumber: 0,
+        thumbnailUrl: s.thumbnailUrl,
       },
     };
   }
@@ -279,8 +309,44 @@ export class MoonrakerDriver implements PrinterDriver {
         case 128: {
           // Iniciar impressão
           const filename = data?.Filename || data?.filename || data?.name || '';
+          const slotMap: Array<{
+            t?: number;
+            tool?: number;
+            tray_id?: number;
+            trayId?: number;
+          }> = data?.slot_map || data?.slotMap || [];
+          if (Array.isArray(slotMap) && slotMap.length > 0) {
+            const gcodes: string[] = [];
+            for (const s of slotMap) {
+              const trayId = Number(s?.tray_id ?? s?.trayId);
+              const tool = Number(s?.t ?? s?.tool);
+              if (
+                Number.isFinite(trayId) &&
+                trayId >= 0 &&
+                trayId < 4 &&
+                Number.isFinite(tool) &&
+                tool >= 0
+              ) {
+                // No Klipper AFC: SET_MAP LANE=CANVAS_<tray_id + 1> MAP=T<tool>
+                gcodes.push(`SET_MAP LANE=CANVAS_${trayId + 1} MAP=T${tool}`);
+              }
+            }
+            if (gcodes.length > 0) {
+              try {
+                await this.sendJsonRpc('printer.gcode.script', {
+                  script: gcodes.join('\n'),
+                });
+              } catch {
+                // Não interrompe o arranque caso o AFC não esteja ativo
+              }
+            }
+          }
+
+          const cleanFilename = filename
+            .replace(/^\/?(local\/|gcodes\/)?\/?/, '')
+            .replace(/^\//, '');
           await this.sendJsonRpc('printer.print.start', {
-            filename: filename.startsWith('/') ? filename.slice(1) : filename,
+            filename: cleanFilename,
           });
           break;
         }
@@ -363,14 +429,201 @@ export class MoonrakerDriver implements PrinterDriver {
           // Eliminar ficheiros
           const files: string[] = data?.FileList || [];
           for (const f of files) {
-            const cleanName = f.startsWith('/') ? f.slice(1) : f;
+            const cleanName = f
+              .replace(/^\/?(local\/|gcodes\/)?\/?/, '')
+              .replace(/^\//, '');
             await this.sendJsonRpc('server.files.delete_file', {
-              path: cleanName.startsWith('gcodes/')
-                ? cleanName
-                : `gcodes/${cleanName}`,
+              path: `gcodes/${cleanName}`,
             });
           }
           break;
+        }
+        case 260: {
+          // Detalhes do ficheiro: mapeia metadados do Moonraker para o formato esperado pelo Atalaia (FileInfo SDCP)
+          const rawUrl = data?.Url || data?.Filename || data?.filename || '';
+          const filename = rawUrl
+            .replace(/^\/?(local|gcodes|usb)\//, '')
+            .replace(/^\//, '');
+
+          let meta: any = null;
+          try {
+            meta = await this.sendJsonRpc('server.files.metadata', {
+              filename,
+            });
+          } catch {
+            meta = null;
+          }
+
+          const cleanHost = this.ipAddress.replace(':3030', '').split(':')[0];
+          let thumbUrl: string | undefined = undefined;
+          if (Array.isArray(meta?.thumbnails) && meta.thumbnails.length > 0) {
+            const sorted = [...meta.thumbnails].sort(
+              (a, b) =>
+                (b.width || 0) * (b.height || 0) -
+                (a.width || 0) * (a.height || 0)
+            );
+            const thumb = sorted[0]?.relative_path;
+            if (thumb) {
+              thumbUrl = `http://${cleanHost}/server/files/gcodes/${encodeURI(thumb)}`;
+            }
+          }
+
+          const colors: string[] =
+            Array.isArray(meta?.filament_colors) &&
+            meta.filament_colors.length > 0
+              ? meta.filament_colors
+              : Array.isArray(meta?.extruder_colors) &&
+                  meta.extruder_colors.length > 0
+                ? meta.extruder_colors
+                : [];
+
+          let types: string[] = [];
+          if (Array.isArray(meta?.filament_type)) {
+            types = meta.filament_type;
+          } else if (typeof meta?.filament_type === 'string') {
+            try {
+              types = JSON.parse(meta.filament_type);
+            } catch {
+              types = [meta.filament_type];
+            }
+          }
+
+          let names: string[] = [];
+          if (Array.isArray(meta?.filament_name)) {
+            names = meta.filament_name;
+          } else if (typeof meta?.filament_name === 'string') {
+            try {
+              names = JSON.parse(meta.filament_name);
+            } catch {
+              names = [meta.filament_name];
+            }
+          }
+
+          let colorMapping = colors.map((col: string, idx: number) => ({
+            color: col,
+            tray_id: idx,
+            filament_type: types[idx] || '',
+            filament_name: names[idx] || '',
+          }));
+
+          if (
+            colorMapping.length === 0 &&
+            (meta?.filament_total || meta?.estimated_time)
+          ) {
+            colorMapping = [
+              {
+                color: '#FFFFFF',
+                tray_id: 0,
+                filament_type: types[0] || 'PLA',
+                filament_name: names[0] || '',
+              },
+            ];
+          }
+
+          const fileInfo = {
+            TotalLayer: meta?.layer_count ?? 0,
+            EstTime: meta?.estimated_time ?? 0,
+            EstWeight: meta?.filament_weight_total ?? meta?.filament_total ?? 0,
+            Thumbnail: thumbUrl,
+            Slicer: meta?.slicer ?? '',
+            ColorMapping: colorMapping,
+          };
+
+          return {
+            Id: this.id,
+            Data: {
+              Cmd: cmd,
+              Data: { FileInfo: fileInfo } as unknown as T,
+              Ack: 0,
+            },
+          };
+        }
+        case 320: {
+          // Histórico de impressões (lista de IDs de jobs)
+          let jobIds: string[] = [];
+          try {
+            const histRes = await this.sendJsonRpc<any>('server.history.list', {
+              limit: Number(data?.Limit) || 80,
+              start: Number(
+                data?.Page ? (data.Page - 1) * (data.Limit || 80) : 0
+              ),
+            });
+            const jobs = histRes?.jobs || [];
+            for (const j of jobs) {
+              if (j.job_id) {
+                this.historyJobsCache.set(String(j.job_id), j);
+                jobIds.push(String(j.job_id));
+              }
+            }
+          } catch {
+            jobIds = [];
+          }
+
+          return {
+            Id: this.id,
+            Data: {
+              Cmd: cmd,
+              Data: { HistoryData: jobIds } as unknown as T,
+              Ack: 0,
+            },
+          };
+        }
+        case 321: {
+          // Detalhes de histórico por ID
+          const requestedIds: string[] = Array.isArray(data?.Id) ? data.Id : [];
+          const detailList: any[] = [];
+
+          for (const idStr of requestedIds) {
+            let job = this.historyJobsCache.get(String(idStr));
+            if (!job) {
+              try {
+                const singleRes = await this.sendJsonRpc<any>(
+                  'server.history.get_job',
+                  { uid: idStr }
+                );
+                job = singleRes?.job;
+                if (job) {
+                  this.historyJobsCache.set(String(idStr), job);
+                }
+              } catch {}
+            }
+
+            if (job) {
+              const statusStr = String(job.status || '').toLowerCase();
+              let taskStatus = 0;
+              if (statusStr === 'completed') {
+                taskStatus = 1;
+              } else if (statusStr === 'error' || statusStr === 'server_exit') {
+                taskStatus = 2;
+              } else if (
+                statusStr === 'cancelled' ||
+                statusStr === 'canceled'
+              ) {
+                taskStatus = 3;
+              }
+
+              detailList.push({
+                TaskId: String(job.job_id || idStr),
+                TaskName: job.filename || 'Sem Nome',
+                BeginTime: Math.round(Number(job.start_time || 0)),
+                EndTime: Math.round(Number(job.end_time || 0)),
+                TaskStatus: taskStatus,
+                SliceInformation: {
+                  print_time: Math.round(Number(job.print_duration || 0)),
+                  total_layer_numbers: job.metadata?.layer_count,
+                },
+              });
+            }
+          }
+
+          return {
+            Id: this.id,
+            Data: {
+              Cmd: cmd,
+              Data: { HistoryDetailList: detailList } as unknown as T,
+              Ack: 0,
+            },
+          };
         }
         case 324: {
           // Slots do Canvas via módulo AFC (Klipper)
@@ -414,6 +667,15 @@ export class MoonrakerDriver implements PrinterDriver {
               max_nozzle_temp:
                 lane.extruder_temp > 0 ? lane.extruder_temp + 30 : 230,
               status: lane.load ? 1 : 0,
+              weight:
+                typeof lane.weight === 'number' && Number.isFinite(lane.weight)
+                  ? Math.round(lane.weight)
+                  : undefined,
+              initial_weight:
+                typeof lane.initial_weight === 'number' &&
+                Number.isFinite(lane.initial_weight)
+                  ? Math.round(lane.initial_weight)
+                  : 1000,
             };
           });
 
@@ -449,10 +711,18 @@ export class MoonrakerDriver implements PrinterDriver {
           const axis = String(data?.Axis || '').toUpperCase();
           const step = Number(data?.Step || 0);
           if (axis && step) {
-            const feedrate = axis === 'Z' ? 600 : 3000;
-            // Modo relativo -> mover -> voltar a absoluto
-            const script = `G91\nG1 ${axis}${step} F${feedrate}\nG90`;
-            await this.sendJsonRpc('printer.gcode.script', { script });
+            const isPrinting = this.status.estadoLogico === 'printing';
+            if (axis === 'Z' && isPrinting) {
+              const sign = step > 0 ? '+' : '';
+              await this.sendJsonRpc('printer.gcode.script', {
+                script: `SET_GCODE_OFFSET Z_ADJUST=${sign}${step} MOVE=1`,
+              });
+            } else {
+              const feedrate = axis === 'Z' ? 600 : 3000;
+              // Modo relativo -> mover -> voltar a absoluto
+              const script = `G91\nG1 ${axis}${step} F${feedrate}\nG90`;
+              await this.sendJsonRpc('printer.gcode.script', { script });
+            }
           }
           break;
         }
@@ -511,6 +781,18 @@ export class MoonrakerDriver implements PrinterDriver {
           if (data?.TempTargetHotbed !== undefined) {
             const temp = Number(data.TempTargetHotbed);
             gcodes.push(`M140 S${temp}`);
+          }
+
+          // Peso da pista do Canvas AFC: { Lane: number, Weight: number }
+          if (
+            data?.LaneWeight?.Lane !== undefined &&
+            data?.LaneWeight?.Weight !== undefined
+          ) {
+            const laneNum = Number(data.LaneWeight.Lane);
+            const peso = Number(data.LaneWeight.Weight);
+            if (laneNum >= 1 && peso >= 0) {
+              gcodes.push(`SET_WEIGHT LANE=CANVAS_${laneNum} WEIGHT=${peso}`);
+            }
           }
 
           if (gcodes.length > 0) {
@@ -647,7 +929,37 @@ export class MoonrakerDriver implements PrinterDriver {
     }
 
     if (klipperStatus.print_stats?.filename !== undefined) {
-      next.filename = klipperStatus.print_stats.filename;
+      const fn = klipperStatus.print_stats.filename;
+      next.filename = fn;
+      if (fn && fn !== this.lastQueriedFile) {
+        this.lastQueriedFile = fn;
+        this.fetchFileMetadata(fn).catch(() => {});
+      }
+    }
+
+    if (klipperStatus.print_stats?.print_duration !== undefined) {
+      next.printDuration = klipperStatus.print_stats.print_duration;
+    }
+
+    if (klipperStatus.print_stats?.total_duration !== undefined) {
+      next.totalDuration = klipperStatus.print_stats.total_duration;
+    }
+
+    // Camadas via print_stats.info (OrcaSlicer / Elegoo / PrusaSlicer)
+    const infoLayers = klipperStatus.print_stats?.info;
+    if (
+      infoLayers?.current_layer !== undefined &&
+      infoLayers.current_layer !== null
+    ) {
+      next.currentLayer = Number(infoLayers.current_layer);
+    } else if (infoLayers && infoLayers.current_layer === null) {
+      next.currentLayer = undefined;
+    }
+    if (
+      infoLayers?.total_layer !== undefined &&
+      infoLayers.total_layer !== null
+    ) {
+      next.totalLayer = Number(infoLayers.total_layer);
     }
 
     if (klipperStatus.display_status?.progress !== undefined) {
@@ -657,12 +969,24 @@ export class MoonrakerDriver implements PrinterDriver {
       );
     }
 
+    // Camadas via display_status (se presentes)
     if (klipperStatus.display_status?.current_layer !== undefined) {
       next.currentLayer = klipperStatus.display_status.current_layer;
     }
 
     if (klipperStatus.display_status?.total_layers !== undefined) {
       next.totalLayer = klipperStatus.display_status.total_layers;
+    }
+
+    // Camadas via display_status.message (M117)
+    if (klipperStatus.display_status?.message) {
+      const match = klipperStatus.display_status.message.match(
+        /(?:layer\s*)?(\d+)\s*(?:\/|of)\s*(\d+)/i
+      );
+      if (match) {
+        if (!next.currentLayer) next.currentLayer = parseInt(match[1], 10);
+        if (!next.totalLayer) next.totalLayer = parseInt(match[2], 10);
+      }
     }
 
     if (klipperStatus.extruder?.temperature !== undefined) {
@@ -771,6 +1095,57 @@ export class MoonrakerDriver implements PrinterDriver {
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
+    }
+  }
+
+  private async fetchFileMetadata(filename: string): Promise<void> {
+    const clean = filename.startsWith('/') ? filename.slice(1) : filename;
+    if (!clean) return;
+
+    if (this.metadataCache.has(clean)) {
+      this.applyFileMetadata(this.metadataCache.get(clean));
+      return;
+    }
+
+    if (this.activeMetadataFetch === clean) return;
+    this.activeMetadataFetch = clean;
+
+    try {
+      const meta = await this.sendJsonRpc<any>('server.files.metadata', {
+        filename: clean,
+      });
+      if (meta) {
+        this.metadataCache.set(clean, meta);
+        this.applyFileMetadata(meta);
+      }
+    } catch {
+      // Metadados opcionais; continua com telemetria base se Moonraker falhar
+    } finally {
+      this.activeMetadataFetch = null;
+    }
+  }
+
+  private applyFileMetadata(meta: any): void {
+    const patch: Partial<PrinterDriverStatus> = {};
+    if (meta.layer_count !== undefined && meta.layer_count > 0) {
+      patch.totalLayer = meta.layer_count;
+    }
+    if (meta.estimated_time !== undefined && meta.estimated_time > 0) {
+      patch.estimatedTime = meta.estimated_time;
+    }
+    if (Array.isArray(meta.thumbnails) && meta.thumbnails.length > 0) {
+      const sorted = [...meta.thumbnails].sort(
+        (a, b) =>
+          (b.width || 0) * (b.height || 0) - (a.width || 0) * (a.height || 0)
+      );
+      const thumb = sorted[0]?.relative_path;
+      if (thumb) {
+        const cleanHost = this.ipAddress.replace(':3030', '');
+        patch.thumbnailUrl = `http://${cleanHost}/server/files/gcodes/${encodeURI(thumb)}`;
+      }
+    }
+    if (Object.keys(patch).length > 0) {
+      this.updateStatus(patch);
     }
   }
 }

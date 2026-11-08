@@ -27,6 +27,10 @@ export interface PrinterDriverStatus {
   lightOn?: boolean;
   zOffset?: number;
   position?: [number, number, number];
+  printDuration?: number;
+  totalDuration?: number;
+  estimatedTime?: number;
+  thumbnailUrl?: string;
 }
 
 export interface PrinterDriver {

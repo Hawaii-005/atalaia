@@ -192,11 +192,19 @@ export const EstadoSection = ({
     setMiniatura(null);
     tentouEmbutida.current = null;
     if (!printer || !ficheiroEmCurso) return;
-    setMiniatura(urlMiniatura(enderecoDe(printer), ficheiroEmCurso));
-  }, [printer, ficheiroEmCurso]);
+    setMiniatura(
+      info?.thumbnailUrl ||
+        urlMiniatura(
+          enderecoDe(printer),
+          ficheiroEmCurso,
+          printer.firmware === 'moonraker'
+        )
+    );
+  }, [printer, ficheiroEmCurso, info?.thumbnailUrl]);
 
   const semMiniaturaNoServidor = async () => {
-    if (!printer || !ficheiroEmCurso) return;
+    if (!printer || !ficheiroEmCurso || printer.firmware === 'moonraker')
+      return;
     // Segunda falha (já era a PNG embutida): não insiste mais neste ficheiro.
     if (tentouEmbutida.current === ficheiroEmCurso) {
       setMiniatura(null);

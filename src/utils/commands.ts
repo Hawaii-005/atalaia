@@ -507,6 +507,8 @@ export interface CanvasTray {
   min_nozzle_temp: number;
   max_nozzle_temp: number;
   status: number;
+  weight?: number;
+  initial_weight?: number;
 }
 
 export interface CanvasLista {
@@ -552,3 +554,15 @@ export const homeCommand = (
 
 export const canvasSlotsCommand = (opts: Emissao = {}): SdcpCommand<{}> =>
   construir(324, {}, opts, `canvas-${Date.now()}`);
+
+export const setLaneWeightCommand = (
+  lane: number,
+  weight: number,
+  opts: Emissao = {}
+): SdcpCommand<{ LaneWeight: { Lane: number; Weight: number } }> =>
+  construir(
+    403,
+    { LaneWeight: { Lane: lane, Weight: weight } },
+    opts,
+    `afc-weight-${lane}-${Date.now()}`
+  );

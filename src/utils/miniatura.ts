@@ -24,15 +24,21 @@ const baseDoNome = (nome: string) => nome.split('/').pop() ?? nome;
 export const urlMiniatura = (ip: string, nome: string, isMoonraker = false) => {
   const base = baseDoNome(nome);
   if (isMoonraker) {
-    const ipSemPorta = ip.split(':')[0];
+    const ipSemPorta = ip.replace(':3030', '');
     const semExtensao = base.replace(/\.[^/.]+$/, '');
     return `http://${ipSemPorta}/server/files/gcodes/.thumbs/${encodeURIComponent(semExtensao)}-144x144.png`;
   }
   return `http://${ip}/thumbnail/${encodeURIComponent(base)}.png`;
 };
 
-export const urlGcode = (ip: string, nome: string) => {
-  const limpo = nome.replace(/^\/?(local\/)?\/?/, '').replace(/^\//, '');
+export const urlGcode = (ip: string, nome: string, isMoonraker = false) => {
+  const limpo = nome
+    .replace(/^\/?(local\/|gcodes\/)?\/?/, '')
+    .replace(/^\//, '');
+  if (isMoonraker) {
+    const ipSemPorta = ip.replace(':3030', '').split(':')[0];
+    return `http://${ipSemPorta}/server/files/gcodes/${encodeURIComponent(limpo)}`;
+  }
   return `http://${ip}/local/${encodeURIComponent(limpo)}`;
 };
 
@@ -174,12 +180,13 @@ const MAX_USADOS = 40;
 export const ferramentasUsadas = async (
   ip: string,
   nome: string,
-  tamanho?: number
+  tamanho?: number,
+  isMoonraker = false
 ): Promise<Set<number> | null> => {
   const chave = `u|${ip}|${nome}`;
   if (cacheUsados.has(chave)) return cacheUsados.get(chave) ?? null;
   try {
-    const url = urlGcode(ip, nome);
+    const url = urlGcode(ip, nome, isMoonraker);
     let leitura = await lerPrimeirosBytes(url, true);
     if (!leitura.texto && leitura.estado === 416) {
       leitura = await lerPrimeirosBytes(url, false);

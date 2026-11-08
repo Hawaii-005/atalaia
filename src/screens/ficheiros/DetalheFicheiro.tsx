@@ -112,16 +112,17 @@ export const DetalheFicheiro = ({
 }) => {
   useIdioma();
   const { tema } = useTheme();
+  const { request, printers } = usePrinterConnections();
+  const printer = printers.find(p => p.id === printerId);
+  const isMoonraker = printer?.firmware === 'moonraker';
   const [aVerCamadas, setAVerCamadas] = useState(false);
   const size = file.FileSize ?? file.totalSize ?? file.usedSize ?? 0;
   const { preview, filamentos, consumo, loading } = useGcodePreview(
     size && size < PREVIEW_LIMIT ? printerIp : undefined,
-    file.name
+    file.name,
+    isMoonraker
   );
   const label = file.name.split('/').pop() ?? file.name;
-  const { request, printers } = usePrinterConnections();
-  const printer = printers.find(p => p.id === printerId);
-  const isMoonraker = printer?.firmware === 'moonraker';
   const [detalhe, setDetalhe] = useState<any>(null);
   const [slots, setSlots] = useState<Record<number, number>>({});
   const [trays, setTrays] = useState<any[]>([]);
@@ -132,21 +133,29 @@ export const DetalheFicheiro = ({
   useEffect(() => {
     let vivo = true;
     (async () => {
-      const usados = await ferramentasUsadas(printerIp, file.name, size);
+      const usados = await ferramentasUsadas(
+        printerIp,
+        file.name,
+        size,
+        isMoonraker
+      );
       if (vivo && usados) setUsadosGcode(usados);
     })();
     return () => {
       vivo = false;
     };
-  }, [printerIp, file.name, size]);
+  }, [printerIp, file.name, size, isMoonraker]);
 
   // Guardar no telemóvel: descarrega por HTTP e abre o menu do sistema.
   const [aGuardar, setAGuardar] = useState<number | null>(null);
   const guardar = async () => {
     setAGuardar(0);
     try {
-      const { uri } = await descarregarGcode(printerIp, file.name, p =>
-        setAGuardar(p)
+      const { uri } = await descarregarGcode(
+        printerIp,
+        file.name,
+        p => setAGuardar(p),
+        isMoonraker
       );
       setAGuardar(null);
       await partilharFicheiro(uri, file.name.split('/').pop() ?? file.name);
@@ -161,6 +170,9 @@ export const DetalheFicheiro = ({
   const coresVisiveis = useMemo(() => {
     const mapa: any[] = detalhe?.ColorMapping ?? [];
     if (mapa.length === 0) return [] as { cor: any; indice: number }[];
+    if (isMoonraker) {
+      return mapa.map((cor, indice) => ({ cor, indice }));
+    }
     const usados =
       usadosGcode ?? new Set(filamentos.map(filamento => filamento.tool));
     if (usados.size > 0) {
@@ -179,7 +191,7 @@ export const DetalheFicheiro = ({
         vistos.add(chave);
         return true;
       });
-  }, [detalhe, filamentos, usadosGcode]);
+  }, [detalhe, filamentos, usadosGcode, isMoonraker]);
 
   // Cores reais das bobines (Cmd 324): sem isto só se via a cor pedida pelo
   // ficheiro, não a que vai ser impressa.
@@ -678,15 +690,23 @@ export const DetalheFicheiro = ({
           />
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() =>
-            onPrint(
-              (detalhe?.ColorMapping ?? []).map((_: any, i: number) => ({
-                t: i,
-                canvas_id: 0,
-                tray_id: slotValido(slots[i], i),
-              }))
-            )
-          }
+          onPress={() => {
+            const mapping =
+              (detalhe?.ColorMapping ?? []).length > 0
+                ? (detalhe?.ColorMapping ?? []).map((_: any, i: number) => ({
+                    t: i,
+                    canvas_id: 0,
+                    tray_id: slotValido(slots[i], i),
+                  }))
+                : [
+                    {
+                      t: 0,
+                      canvas_id: 0,
+                      tray_id: slotValido(slots[0], 0),
+                    },
+                  ];
+            onPrint(mapping);
+          }}
           className={`flex-1 h-12 ${BT_ACENTO}`}
           activeOpacity={0.8}
         >
@@ -717,6 +737,7 @@ export const DetalheFicheiro = ({
           printerIp={printerIp}
           nome={file.name}
           mini={mini}
+          isMoonraker={isMoonraker}
           onClose={() => setAVerCamadas(false)}
         />
       </SafeAreaView>
