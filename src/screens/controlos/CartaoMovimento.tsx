@@ -26,6 +26,8 @@ type Props = {
   resultado: ResultadoComando | null;
   onMover: (eixo: 'X' | 'Y' | 'Z', sentido: 1 | -1) => void;
   onHome: (eixo: 'XYZ' | 'XY' | 'Z') => void;
+  isMoonraker?: boolean;
+  onExecutarMacro?: (macro: string) => void;
 };
 
 const LADO_TECLA = 56;
@@ -47,6 +49,8 @@ export const CartaoMovimento = ({
   resultado,
   onMover,
   onHome,
+  isMoonraker,
+  onExecutarMacro,
 }: Props) => {
   useIdioma();
   const { tema } = useTheme();
@@ -241,6 +245,41 @@ export const CartaoMovimento = ({
           activo={pode('home')}
         />
       </View>
+
+      {isMoonraker && onExecutarMacro ? (
+        <View style={{ marginTop: 4, gap: 6 }}>
+          <Text
+            style={{
+              fontSize: 11,
+              fontWeight: '700',
+              color: hexDe(p.tintaSoft),
+              letterSpacing: 0.5,
+            }}
+          >
+            {t('controlos.macrosKlipper')}
+          </Text>
+          <View style={estilos.linha}>
+            <BotaoLargo
+              texto={t('controlos.macroCalibrarMesa')}
+              a11y={t('controlos.macroCalibrarMesa')}
+              onPress={() => onExecutarMacro('BED_MESH_CALIBRATE')}
+              activo={!aEnviar}
+            />
+            <BotaoLargo
+              texto={t('controlos.macroPararMotores')}
+              a11y={t('controlos.macroPararMotores')}
+              onPress={() => onExecutarMacro('M84')}
+              activo={!aEnviar}
+            />
+            <BotaoLargo
+              texto={t('controlos.macroReiniciar')}
+              a11y={t('controlos.macroReiniciar')}
+              onPress={() => onExecutarMacro('FIRMWARE_RESTART')}
+              activo={!aEnviar}
+            />
+          </View>
+        </View>
+      ) : null}
 
       {motivo ? (
         <Text style={{ fontSize: 11, color: hexDe(p.tintaSoft) }}>

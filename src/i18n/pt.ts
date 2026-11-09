@@ -834,6 +834,11 @@ export default {
   'controlos.confirmarZ': 'Descer Z {passo}?',
   'controlos.confirmarZMsg': 'Confirma que o bico não vai bater na mesa.',
   'controlos.homeZ': 'Home Z',
+  'controlos.macrosKlipper': 'Ações Klipper / COSMOS',
+  'controlos.macroCalibrarMesa': 'Calibrar Mesa',
+  'controlos.macroPararMotores': 'Parar Motores',
+  'controlos.macroReiniciar': 'Reiniciar',
+  'controlos.macroDescarregar': 'Descarregar',
   'controlos.precisaHome': 'Faz Home antes de mover os eixos.',
   'controlos.confirmarHome': 'Mover até à origem?',
   'controlos.confirmarHomeMsg':

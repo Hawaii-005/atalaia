@@ -6,7 +6,9 @@ import {
   resumePrintCommand,
   stopPrintCommand,
   lightCommand,
+  printSpeedCommand,
 } from '../utils/commands';
+import { PulsingDot } from '../components/PulsingDot';
 import React, {
   useCallback,
   useEffect,
@@ -452,7 +454,7 @@ export const CameraScreen = ({ navigation, route }: any) => {
         </Text>
         {isConnected && (
           <View className="flex-row items-center ml-2 bg-black/40 rounded-full px-2 py-1">
-            <View className="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5" />
+            <PulsingDot cor="#ef4444" tamanho={6} style={{ marginRight: 6 }} />
             <Text className="text-[8px] font-bold tracking-[1.2px] text-ink">
               {t('comum.emDireto').toUpperCase()}
             </Text>
@@ -738,6 +740,33 @@ export const CameraScreen = ({ navigation, route }: any) => {
               </TouchableOpacity>
             )}
           </View>
+
+          {job && isConnected && (
+            <View className="flex-row items-center justify-between mt-3 pt-2.5 border-t border-line">
+              <Text className="text-[11px] font-semibold text-ink-soft">
+                {t('controlos.velocidade')}
+              </Text>
+              <View className="flex-row" style={{ gap: 6 }}>
+                {[50, 100, 125, 150].map(v => (
+                  <TouchableOpacity
+                    key={v}
+                    onPress={() => {
+                      if (printer?.id) {
+                        sendCommand(
+                          printer.id,
+                          printSpeedCommand(v, { id: printer.id })
+                        );
+                      }
+                    }}
+                    className="px-2.5 py-1 rounded-lg border border-line bg-fundo-baixo"
+                    activeOpacity={0.7}
+                  >
+                    <Text className="text-[11px] font-bold text-ink">{v}%</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
         </View>
 
         {/* Térmica */}

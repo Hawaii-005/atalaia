@@ -566,3 +566,12 @@ export const setLaneWeightCommand = (
     opts,
     `afc-weight-${lane}-${Date.now()}`
   );
+
+/** Executar script G-code ou Macro Klipper (Cmd 1025). */
+export const gcodeScriptCommand = (
+  script: string,
+  opts: Emissao = {}
+): SdcpCommand<{ Script: string }> => {
+  const limpo = caminhoValido(script, 'Script G-code');
+  return construir(1025, { Script: limpo.trim() }, opts, `gcode-${Date.now()}`);
+};

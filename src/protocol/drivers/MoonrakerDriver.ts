@@ -802,6 +802,14 @@ export class MoonrakerDriver implements PrinterDriver {
           }
           break;
         }
+        case 1025: {
+          // G-code arbitrário / macro Klipper
+          const script = String(data?.Script || data?.script || '').trim();
+          if (script) {
+            await this.sendJsonRpc('printer.gcode.script', { script });
+          }
+          break;
+        }
         default:
           break;
       }

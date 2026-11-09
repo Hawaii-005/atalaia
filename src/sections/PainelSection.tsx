@@ -31,6 +31,7 @@ import { CartaoMovimento } from '../screens/controlos/CartaoMovimento';
 import { CartaoVentilacao } from '../screens/controlos/CartaoVentilacao';
 import { CartaoTemperaturas } from '../screens/controlos/CartaoTemperaturas';
 import { ConsolaModal } from '../components/ConsolaModal';
+import { PulsingDot } from '../components/PulsingDot';
 import { SecaoResina } from '../screens/controlos/SecaoResina';
 import {
   LIMITE_ESTADO_ANTIGO_MS,
@@ -54,6 +55,7 @@ import { urlMiniatura } from '../utils/miniatura';
 import {
   ackDaResposta,
   fanCommand,
+  gcodeScriptCommand,
   homeCommand,
   jogCommand,
   lightCommand,
@@ -408,6 +410,14 @@ export const PainelSection = ({
     ]);
   };
 
+  const executarMacro = useCallback(
+    (script: string) => {
+      if (!printer) return;
+      executar(gcodeScriptCommand(script, { id: printer.id }));
+    },
+    [executar, printer]
+  );
+
   const alternarPausa = () => {
     if (!printer) return;
     enviar(
@@ -584,15 +594,12 @@ export const PainelSection = ({
                   paddingVertical: 5,
                 }}
               >
-                <View
-                  style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: 3,
-                    backgroundColor: aImprimir
-                      ? hexDe(paleta.perigo)
-                      : hexDe(paleta.tintaSoft),
-                  }}
+                <PulsingDot
+                  tamanho={6}
+                  cor={
+                    aImprimir ? hexDe(paleta.perigo) : hexDe(paleta.tintaSoft)
+                  }
+                  pulsar={aImprimir || ligada}
                 />
                 <Text
                   style={{
@@ -1075,6 +1082,8 @@ export const PainelSection = ({
                 resultado={resultado}
                 onMover={mover}
                 onHome={fazerHome}
+                isMoonraker={printer.firmware === 'moonraker'}
+                onExecutarMacro={executarMacro}
               />
             )}
           </Cartao>

@@ -897,5 +897,38 @@ describe('MoonrakerDriver (Fase 2 - Leitura e Telemetria)', () => {
 
       await driver.disconnect();
     });
+
+    it('despacha script G-code ou Macro Klipper via Cmd 1025', async () => {
+      const driver = new MoonrakerDriver({
+        id: 'cosmos-1',
+        name: 'Centauri Cosmos',
+        ipAddress: '192.168.1.150',
+      });
+      await driver.connect();
+      const mockWs = MockWebSocket.instances[0];
+
+      const promise = driver.sendCommand({
+        Id: 'test-gcode',
+        Data: {
+          Cmd: 1025,
+          Data: { Script: 'BED_MESH_CALIBRATE' },
+        },
+      });
+
+      await new Promise(r => setTimeout(r, 10));
+      const msg = mockWs.sentMessages
+        .map(m => JSON.parse(m))
+        .find(
+          m =>
+            m.method === 'printer.gcode.script' &&
+            m.params?.script === 'BED_MESH_CALIBRATE'
+        );
+      expect(msg).toBeDefined();
+      expect(msg.params.script).toBe('BED_MESH_CALIBRATE');
+      mockWs.triggerMessage({ jsonrpc: '2.0', id: msg.id, result: 'ok' });
+      await promise;
+
+      await driver.disconnect();
+    });
   });
 });

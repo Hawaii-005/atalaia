@@ -822,6 +822,11 @@ const en = {
   'controlos.confirmarZ': 'Lower Z by {passo}?',
   'controlos.confirmarZMsg': 'Confirm the nozzle will not hit the bed.',
   'controlos.homeZ': 'Home Z',
+  'controlos.macrosKlipper': 'Klipper / COSMOS Actions',
+  'controlos.macroCalibrarMesa': 'Bed Mesh',
+  'controlos.macroPararMotores': 'Stop Motors',
+  'controlos.macroReiniciar': 'Restart',
+  'controlos.macroDescarregar': 'Unload',
   'controlos.precisaHome': 'Home the axes before moving.',
   'controlos.confirmarHome': 'Move to origin?',
   'controlos.confirmarHomeMsg':
