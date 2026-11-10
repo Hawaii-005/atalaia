@@ -697,7 +697,15 @@ export const FilesScreen = ({
         setOcupado(null);
       }
     },
-    [printer, load, bedLevel, plateSide, request, navigation]
+    [
+      printer,
+      load,
+      bedLevel,
+      plateSide,
+      request,
+      navigation,
+      listarTodosOsFicheiros,
+    ]
   );
 
   /** Botão ENVIAR G-CODE: escolhe o ficheiro no telefone e manda-o. */

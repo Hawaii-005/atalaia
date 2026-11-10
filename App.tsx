@@ -1,4 +1,3 @@
-import 'react-native-gesture-handler';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import React, { useEffect, useState } from 'react';
 import { Alert, AppState, Platform, View } from 'react-native';

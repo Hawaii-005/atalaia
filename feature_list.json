@@ -1,0 +1,36 @@
+{
+  "features": [
+    {
+      "id": "feat-001",
+      "name": "Baseline & Harness Setup",
+      "description": "Verificar suite de testes, linters e ambiente do Atalaia",
+      "dependencies": [],
+      "status": "passing",
+      "evidence": "npm test passou 51/51 suites e 599/599 testes. audit-harness validado com 100/100."
+    },
+    {
+      "id": "feat-002",
+      "name": "Feedback Táctil & Animações Consistentes",
+      "description": "Aplicar regras better-ui: unificar feedback de toque e suporte a prefers-reduced-motion",
+      "dependencies": ["feat-001"],
+      "status": "passing",
+      "evidence": "OPACIDADE_TOQUE = 0.75 em theme/botoes.ts; PulsingDot com AccessibilityInfo.isReduceMotionEnabled; 599 testes passaram."
+    },
+    {
+      "id": "feat-003",
+      "name": "Higiene de Dependências em React Hooks",
+      "description": "Corrigir os 13 avisos de react-hooks/exhaustive-deps para prevenir fechos obsoletos no WebSocket e navegação",
+      "dependencies": ["feat-001"],
+      "status": "passing",
+      "evidence": "Todos os 13 avisos resolvidos (0 avisos restantes). 51/51 suites e 599/599 testes passaram."
+    },
+    {
+      "id": "feat-004",
+      "name": "Concentricidade Geométrica de Superfícies",
+      "description": "Ajustar raios de borda em cartões aninhados seguindo a regra outer_radius = inner_radius + padding",
+      "dependencies": ["feat-002"],
+      "status": "planned",
+      "evidence": ""
+    }
+  ]
+}

@@ -113,7 +113,7 @@ export const FolhaSlot = ({
       );
       setNotas(bobina?.notas ?? '');
     }
-  }, [aberta, vista?.trayId]);
+  }, [aberta, vista, bobina]);
 
   if (!vista) return null;
 

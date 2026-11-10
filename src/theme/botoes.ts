@@ -15,3 +15,6 @@ export const TX_BASE = 'text-[11px] font-semibold uppercase tracking-[1.2px]';
 export const TX_ACENTO = `${TX_BASE} text-brand-texto`;
 export const TX_PERIGO = `${TX_BASE} text-state-danger`;
 export const TX_NEUTRO = `${TX_BASE} text-ink`;
+
+/** Opacidade padrão para feedback tátil em botões e elementos interativos (better-ui) */
+export const OPACIDADE_TOQUE = 0.75;

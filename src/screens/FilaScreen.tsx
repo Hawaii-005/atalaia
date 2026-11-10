@@ -81,11 +81,6 @@ export const FilaScreen = ({ navigation }: any) => {
   const mesa = printerId ? pendentesMesaLimpa[printerId] : undefined;
   const config = modoDe(modos, printerId ?? '');
   const [modoAberto, setModoAberto] = useState(false);
-  // A contagem começa quando o pedido aparece e não reinicia a cada render.
-  const fimContagem = useMemo(
-    () => Date.now() + config.contagemSeg * 1000,
-    [mesa?.id, config.contagemSeg]
-  );
 
   const limparTudo = () => {
     if (!itens.length) return;

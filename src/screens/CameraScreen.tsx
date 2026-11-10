@@ -221,7 +221,14 @@ export const CameraScreen = ({ navigation, route }: any) => {
         From: 1,
       },
     });
-  }, [printerId, printerName, isConnected, videoHost, sendCommand]);
+  }, [
+    printerId,
+    printerName,
+    isConnected,
+    videoHost,
+    sendCommand,
+    printer?.firmware,
+  ]);
 
   // Keep the switch in sync with the printer, unless the user just tapped it.
   useEffect(() => {

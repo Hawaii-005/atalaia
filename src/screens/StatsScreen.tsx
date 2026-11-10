@@ -78,23 +78,25 @@ export const StatsScreen = ({ navigation }: any) => {
   const [tasks, setTasks] = useState<TaskDetail[]>([]);
   const [local, setLocal] = useState<PrintRecord[]>([]);
 
+  const printerId = printer?.id;
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     const localRecords = await loadHistory();
     setLocal(localRecords);
-    if (!printer) {
+    if (!printerId) {
       setLoading(false);
       return;
     }
     try {
-      const idsPayload = await request(printer.id, printHistoryCommand());
+      const idsPayload = await request(printerId, printHistoryCommand());
       const ids: string[] = idsPayload?.HistoryData ?? [];
       if (ids.length === 0) {
         setTasks([]);
       } else {
         const detail = await request(
-          printer.id,
+          printerId,
           printHistoryDetailCommand(ids.slice(0, 80))
         );
         setTasks(detail?.HistoryDetailList ?? []);
@@ -106,7 +108,7 @@ export const StatsScreen = ({ navigation }: any) => {
     }
     // Depender só do id: o objeto `printer` muda a cada actualização de
     // estado (30 s) e isso recarregava a página inteira.
-  }, [printer?.id, request]);
+  }, [printerId, request]);
 
   const [videoAberto, setVideoAberto] = useState<string | null>(null);
 

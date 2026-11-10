@@ -363,7 +363,7 @@ export const SettingsScreen = () => {
         palavras: ['mit', 'cc-tool', 'creditos'],
       },
     ],
-    [preferencia]
+    []
   );
 
   const filtradas = filtrarEntradas(entradas, consulta);

@@ -178,7 +178,7 @@ export const Camadas = ({
     } catch {
       if (vivo.current) setEstado('erro');
     }
-  }, [nome, printerIp]);
+  }, [nome, printerIp, isMoonraker]);
 
   useEffect(() => {
     void carregar();

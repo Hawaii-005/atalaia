@@ -17,17 +17,19 @@ import { MoonrakerDriver } from '../protocol/drivers/MoonrakerDriver';
 import { redeSaturno } from '../saturn/rede';
 import { estadoParaApp } from '../saturn/estadoApp';
 import { inquirirSaturno } from '../saturn/descoberta';
-import { descreverAck, PrinterRecusouError } from '../utils/errors';
-import { isSdcpCommand, SdcpCommand } from '../utils/commands';
 import {
   CommandValidationError,
+  descreverAck,
   PrinterOfflineError,
+  PrinterRecusouError,
   PrinterTimeoutError,
 } from '../utils/errors';
 import {
   ackDaResposta,
+  isSdcpCommand,
   pausePrintCommand,
   resumePrintCommand,
+  SdcpCommand,
   startPrintCommand,
   stopPrintCommand,
 } from '../utils/commands';
@@ -238,6 +240,7 @@ export const PrinterConnectionsProvider = ({
 
   useEffect(() => {
     const pendingIpChanges = pendingIpChangesRef.current;
+    const intentionalClose = intentionalCloseRef.current;
     const loadPrinters = async () => {
       try {
         const savedPrintersJSON = await AsyncStorage.getItem('printers');
@@ -292,7 +295,7 @@ export const PrinterConnectionsProvider = ({
       });
       pendingRequestsRef.current = {};
       Object.entries(webSocketsRef.current).forEach(([id, ws]) => {
-        intentionalCloseRef.current[id] = true;
+        intentionalClose[id] = true;
         ws.onclose = null;
         ws.onerror = null;
         ws.onmessage = null;
@@ -304,6 +307,8 @@ export const PrinterConnectionsProvider = ({
       });
       webSocketsRef.current = {};
     };
+    // Executa apenas uma vez no arranque da app para inicializar impressoras guardadas.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Handle app state changes (background/foreground)
@@ -356,6 +361,8 @@ export const PrinterConnectionsProvider = ({
         timerPrimeiroPlano.current = null;
       }
     };
+    // Subscreve ao evento de AppState apenas no mount e limpa no unmount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -1993,7 +2000,9 @@ export const PrinterConnectionsProvider = ({
         .filter(printer => printer.connectionStatus === 'connected')
         .forEach(printer => startStatusTimer(printer));
     },
-    [startStatusTimer]
+    // startStatusTimer opera sobre refs e não necessita de recriação do callback
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
   );
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -54,7 +54,7 @@ export const ConsolaModal: React.FC<{
   const ip = printer?.ipAddress;
   const isMoonraker = printer?.firmware === 'moonraker';
 
-  const carregarHistorico = async () => {
+  const carregarHistorico = useCallback(async () => {
     if (!ip || !isMoonraker) return;
     try {
       const res = await fetch(`http://${ip}/server/gcode_store?count=60`);
@@ -78,7 +78,7 @@ export const ConsolaModal: React.FC<{
     } catch {
       // rede em espera
     }
-  };
+  }, [ip, isMoonraker]);
 
   useEffect(() => {
     if (!visivel) {
@@ -90,7 +90,7 @@ export const ConsolaModal: React.FC<{
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [visivel, ip, isMoonraker]);
+  }, [visivel, carregarHistorico]);
 
   const enviarComando = async (cmdTexto?: string) => {
     const txt = (cmdTexto ?? comando).trim();

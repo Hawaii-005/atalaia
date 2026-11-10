@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { Animated, ViewStyle } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { AccessibilityInfo, Animated, ViewStyle } from 'react-native';
 
 interface PulsingDotProps {
   cor: string;
@@ -10,7 +10,8 @@ interface PulsingDotProps {
 
 /**
  * Ponto de estado animado com pulso suave a 60fps usando o driver nativo.
- * poncho: ceiling animation loop; zero bridge overhead.
+ * Respeita preferências do utilizador de redução de movimento (better-ui).
+ * ponytail: static fallback on reduce motion; upgrade to custom timing if user requests bespoke easing.
  */
 export const PulsingDot: React.FC<PulsingDotProps> = ({
   cor,
@@ -19,9 +20,22 @@ export const PulsingDot: React.FC<PulsingDotProps> = ({
   style,
 }) => {
   const opacidade = useRef(new Animated.Value(1)).current;
+  const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
-    if (!pulsar) {
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then(setReduceMotion)
+      .catch(() => {});
+
+    const sub = AccessibilityInfo.addEventListener(
+      'reduceMotionChanged',
+      setReduceMotion
+    );
+    return () => sub?.remove();
+  }, []);
+
+  useEffect(() => {
+    if (!pulsar || reduceMotion) {
       opacidade.setValue(1);
       return;
     }
@@ -43,7 +57,7 @@ export const PulsingDot: React.FC<PulsingDotProps> = ({
 
     anim.start();
     return () => anim.stop();
-  }, [pulsar, opacidade]);
+  }, [pulsar, reduceMotion, opacidade]);
 
   return (
     <Animated.View

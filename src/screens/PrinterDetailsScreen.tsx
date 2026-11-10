@@ -307,7 +307,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
   // hooks muda entre renders e o React rebenta.
   useEffect(() => {
     const id = setInterval(() => {
-      const st = printer?.status?.PrintInfo;
+      const st = info;
       const valor = st?.CurrentTicks ?? 0;
       const emCurso = !!st?.Filename && ![0, 7, 8, 9].includes(st.Status ?? 0);
       if (valor !== ultimosTicks.current.valor) {
@@ -324,10 +324,7 @@ export const PrinterDetailsScreen = ({ navigation }: any) => {
       }
     }, 2000);
     return () => clearInterval(id);
-  }, [
-    printer?.status?.PrintInfo?.CurrentTicks,
-    printer?.status?.PrintInfo?.Status,
-  ]);
+  }, [info]);
 
   if (!printer) {
     return (
