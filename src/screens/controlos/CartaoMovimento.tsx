@@ -291,7 +291,7 @@ export const CartaoMovimento = ({
       {/* Ações de Home específicas */}
       <View style={estilos.linha}>
         <BotaoLargo
-          texto={t('controlos.homeTodos')}
+          texto="Home XYZ"
           a11y={t('controlos.homeTodos')}
           onPress={() => onHome('XYZ')}
           activo={pode('home')}
@@ -303,7 +303,7 @@ export const CartaoMovimento = ({
           activo={pode('home')}
         />
         <BotaoLargo
-          texto={t('controlos.homeZ')}
+          texto="Home Z"
           a11y={t('controlos.homeZ')}
           onPress={() => onHome('Z')}
           activo={pode('home')}
