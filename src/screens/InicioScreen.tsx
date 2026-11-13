@@ -258,7 +258,7 @@ export const InicioScreen = ({ navigation }: any) => {
     },
     {
       icone: 'stats-chart-outline',
-      etiqueta: t('inicio.historico'),
+      etiqueta: t('history.title'),
       aoTocar: () => navigation.navigate('History'),
     },
     {
@@ -623,7 +623,7 @@ export const InicioScreen = ({ navigation }: any) => {
           </View>
 
           {/* telemetria instrumental de precisão */}
-          {ligadaEscolhida && !resina && (
+          {!resina && (
             <View
               style={{
                 ...cartao,
@@ -668,7 +668,9 @@ export const InicioScreen = ({ navigation }: any) => {
                     fontFamily: fonteNumeros,
                   }}
                 >
-                  {`${Math.round(escolhida.status?.TempOfNozzle ?? 0)}°`}
+                  {ligadaEscolhida
+                    ? `${Math.round(escolhida.status?.TempOfNozzle ?? 0)}°`
+                    : '--°'}
                   <Text
                     style={{
                       fontSize: 10.5,
@@ -676,7 +678,7 @@ export const InicioScreen = ({ navigation }: any) => {
                       color: hexDe(paleta.tintaMuted),
                     }}
                   >
-                    {escolhida.status?.TempTargetNozzle
+                    {ligadaEscolhida && escolhida.status?.TempTargetNozzle
                       ? ` / ${Math.round(escolhida.status.TempTargetNozzle)}°`
                       : 'C'}
                   </Text>
@@ -725,7 +727,9 @@ export const InicioScreen = ({ navigation }: any) => {
                     fontFamily: fonteNumeros,
                   }}
                 >
-                  {`${Math.round(escolhida.status?.TempOfHotbed ?? 0)}°`}
+                  {ligadaEscolhida
+                    ? `${Math.round(escolhida.status?.TempOfHotbed ?? 0)}°`
+                    : '--°'}
                   <Text
                     style={{
                       fontSize: 10.5,
@@ -733,7 +737,7 @@ export const InicioScreen = ({ navigation }: any) => {
                       color: hexDe(paleta.tintaMuted),
                     }}
                   >
-                    {escolhida.status?.TempTargetHotbed
+                    {ligadaEscolhida && escolhida.status?.TempTargetHotbed
                       ? ` / ${Math.round(escolhida.status.TempTargetHotbed)}°`
                       : 'C'}
                   </Text>
@@ -782,7 +786,9 @@ export const InicioScreen = ({ navigation }: any) => {
                     fontFamily: fonteNumeros,
                   }}
                 >
-                  {`${Math.round(escolhida.status?.TempOfBox ?? 0)}°C`}
+                  {ligadaEscolhida && (escolhida.status?.TempOfBox ?? 0) > 0
+                    ? `${Math.round(escolhida.status?.TempOfBox ?? 0)}°C`
+                    : '--°C'}
                 </Text>
               </View>
             </View>
@@ -1061,8 +1067,10 @@ export const InicioScreen = ({ navigation }: any) => {
                 />
                 <Text
                   numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.8}
                   style={{
-                    fontSize: 9,
+                    fontSize: 8.5,
                     fontWeight: '800',
                     color: hexDe(paleta.tintaSoft),
                     letterSpacing: 0.5,
