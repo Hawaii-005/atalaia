@@ -109,7 +109,7 @@ export const InicioScreen = ({ navigation }: any) => {
 
   const cartao = {
     backgroundColor: hexDe(paleta.cartao),
-    borderRadius: 18,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: hexDe(paleta.linha),
   } as const;
@@ -278,33 +278,70 @@ export const InicioScreen = ({ navigation }: any) => {
           style={{
             flexDirection: 'row',
             alignItems: 'center',
+            justifyContent: 'space-between',
             paddingHorizontal: 20,
             paddingTop: 8,
           }}
         >
-          <Text
-            style={{
-              flex: 1,
-              fontSize: 26,
-              fontWeight: '700',
-              color: hexDe(paleta.tinta),
-            }}
-          >
-            {t('inicio.titulo')}
-          </Text>
+          <View>
+            <Text
+              style={{
+                fontSize: 22,
+                fontWeight: '800',
+                color: hexDe(paleta.tinta),
+                letterSpacing: 0.5,
+              }}
+            >
+              {t('inicio.titulo')}
+            </Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                marginTop: 2,
+              }}
+            >
+              <View
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: 3,
+                  backgroundColor: ligadaEscolhida
+                    ? hexDe(paleta.ok)
+                    : hexDe(paleta.perigo),
+                }}
+              />
+              <Text
+                style={{
+                  fontSize: 10,
+                  fontWeight: '700',
+                  color: hexDe(paleta.tintaSoft),
+                  fontFamily: fonteNumeros,
+                  letterSpacing: 0.5,
+                }}
+              >
+                {escolhida.firmware === 'moonraker'
+                  ? 'COSMOS · KLIPPER'
+                  : 'SDCP · STOCK'}
+              </Text>
+            </View>
+          </View>
           <TouchableOpacity
             onPress={() => navigation.navigate('AddEditPrinter')}
             accessibilityLabel={t('home.adicionarImpressora')}
             style={{
-              width: 40,
-              height: 40,
-              borderRadius: 20,
+              width: 38,
+              height: 38,
+              borderRadius: 10,
+              borderWidth: 1,
+              borderColor: hexDe(paleta.linha),
               backgroundColor: hexDe(paleta.cartao),
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Ionicons name="add" size={22} color={hexDe(paleta.tinta)} />
+            <Ionicons name="add" size={20} color={hexDe(paleta.tinta)} />
           </TouchableOpacity>
         </View>
 
@@ -532,8 +569,8 @@ export const InicioScreen = ({ navigation }: any) => {
                     <View
                       style={{
                         height: 5,
-                        borderRadius: 3,
-                        backgroundColor: hexDe(paleta.linha),
+                        borderRadius: 2.5,
+                        backgroundColor: 'rgba(255,255,255,0.14)',
                         marginTop: 9,
                         overflow: 'hidden',
                       }}
@@ -547,40 +584,37 @@ export const InicioScreen = ({ navigation }: any) => {
                       />
                     </View>
                     <View
-                      style={{ flexDirection: 'row', gap: 14, marginTop: 9 }}
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'baseline',
+                        marginTop: 8,
+                      }}
                     >
                       <Text
                         style={{
-                          fontSize: 11,
-                          fontWeight: '700',
+                          fontSize: 14,
+                          fontWeight: '800',
                           color: hexDe(paleta.tinta),
                           fontFamily: fonteNumeros,
+                          letterSpacing: 0.5,
                         }}
                       >
                         {`${Math.round(progresso)}%`}
                       </Text>
-                      {!resina && (
-                        <>
-                          <Text
-                            style={{
-                              fontSize: 11,
-                              color: hexDe(paleta.tintaSoft),
-                              fontFamily: fonteNumeros,
-                            }}
-                          >
-                            {`${t('comum.bico')} ${Math.round(escolhida.status?.TempOfNozzle ?? 0)}°`}
-                          </Text>
-                          <Text
-                            style={{
-                              fontSize: 11,
-                              color: hexDe(paleta.tintaSoft),
-                              fontFamily: fonteNumeros,
-                            }}
-                          >
-                            {`${t('comum.mesa')} ${Math.round(escolhida.status?.TempOfHotbed ?? 0)}°`}
-                          </Text>
-                        </>
-                      )}
+                      <Text
+                        style={{
+                          fontSize: 10,
+                          fontWeight: '700',
+                          color: hexDe(paleta.tintaSoft),
+                          fontFamily: fonteNumeros,
+                          letterSpacing: 0.5,
+                        }}
+                      >
+                        {info?.TotalLayer
+                          ? `L ${info?.CurrentLayer ?? 0} / ${info?.TotalLayer}`
+                          : ''}
+                      </Text>
                     </View>
                   </>
                 )}
@@ -588,8 +622,174 @@ export const InicioScreen = ({ navigation }: any) => {
             </View>
           </View>
 
+          {/* telemetria instrumental de precisão */}
+          {ligadaEscolhida && !resina && (
+            <View
+              style={{
+                ...cartao,
+                flexDirection: 'row',
+                paddingVertical: 12,
+                paddingHorizontal: 16,
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              {/* Bico */}
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                    marginBottom: 2,
+                  }}
+                >
+                  <Ionicons
+                    name="flame-outline"
+                    size={12}
+                    color={hexDe(paleta.acentoTexto)}
+                  />
+                  <Text
+                    style={{
+                      fontSize: 10,
+                      fontWeight: '700',
+                      color: hexDe(paleta.tintaSoft),
+                      letterSpacing: 0.5,
+                    }}
+                  >
+                    {t('comum.bico').toUpperCase()}
+                  </Text>
+                </View>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: '700',
+                    color: hexDe(paleta.tinta),
+                    fontFamily: fonteNumeros,
+                  }}
+                >
+                  {`${Math.round(escolhida.status?.TempOfNozzle ?? 0)}°`}
+                  <Text
+                    style={{
+                      fontSize: 10.5,
+                      fontWeight: '400',
+                      color: hexDe(paleta.tintaMuted),
+                    }}
+                  >
+                    {escolhida.status?.TempTargetNozzle
+                      ? ` / ${Math.round(escolhida.status.TempTargetNozzle)}°`
+                      : 'C'}
+                  </Text>
+                </Text>
+              </View>
+
+              <View
+                style={{
+                  width: 1,
+                  height: 26,
+                  backgroundColor: hexDe(paleta.linha),
+                }}
+              />
+
+              {/* Mesa */}
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                    marginBottom: 2,
+                  }}
+                >
+                  <Ionicons
+                    name="grid-outline"
+                    size={12}
+                    color={hexDe(paleta.acentoTexto)}
+                  />
+                  <Text
+                    style={{
+                      fontSize: 10,
+                      fontWeight: '700',
+                      color: hexDe(paleta.tintaSoft),
+                      letterSpacing: 0.5,
+                    }}
+                  >
+                    {t('comum.mesa').toUpperCase()}
+                  </Text>
+                </View>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: '700',
+                    color: hexDe(paleta.tinta),
+                    fontFamily: fonteNumeros,
+                  }}
+                >
+                  {`${Math.round(escolhida.status?.TempOfHotbed ?? 0)}°`}
+                  <Text
+                    style={{
+                      fontSize: 10.5,
+                      fontWeight: '400',
+                      color: hexDe(paleta.tintaMuted),
+                    }}
+                  >
+                    {escolhida.status?.TempTargetHotbed
+                      ? ` / ${Math.round(escolhida.status.TempTargetHotbed)}°`
+                      : 'C'}
+                  </Text>
+                </Text>
+              </View>
+
+              <View
+                style={{
+                  width: 1,
+                  height: 26,
+                  backgroundColor: hexDe(paleta.linha),
+                }}
+              />
+
+              {/* Câmara */}
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                    marginBottom: 2,
+                  }}
+                >
+                  <Ionicons
+                    name="cube-outline"
+                    size={12}
+                    color={hexDe(paleta.acentoTexto)}
+                  />
+                  <Text
+                    style={{
+                      fontSize: 10,
+                      fontWeight: '700',
+                      color: hexDe(paleta.tintaSoft),
+                      letterSpacing: 0.5,
+                    }}
+                  >
+                    {t('comum.camara').toUpperCase()}
+                  </Text>
+                </View>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: '700',
+                    color: hexDe(paleta.tinta),
+                    fontFamily: fonteNumeros,
+                  }}
+                >
+                  {`${Math.round(escolhida.status?.TempOfBox ?? 0)}°C`}
+                </Text>
+              </View>
+            </View>
+          )}
+
           {aCorrer && ligadaEscolhida && (
-            <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
               <TouchableOpacity
                 onPress={() =>
                   acao(
@@ -597,21 +797,23 @@ export const InicioScreen = ({ navigation }: any) => {
                     isResumable(info?.Status ?? 0) ? 'retomar' : 'pausar'
                   )
                 }
-                activeOpacity={0.85}
+                activeOpacity={0.8}
                 style={{
                   flex: 1,
-                  height: 42,
+                  height: 46,
                   borderRadius: 12,
                   backgroundColor: hexDe(paleta.fundoBaixo),
+                  borderWidth: 1,
+                  borderColor: hexDe(paleta.linha),
                   flexDirection: 'row',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: 6,
+                  gap: 8,
                 }}
               >
                 <Ionicons
                   name={isResumable(info?.Status ?? 0) ? 'play' : 'pause'}
-                  size={13}
+                  size={15}
                   color={hexDe(paleta.tinta)}
                   style={
                     isResumable(info?.Status ?? 0)
@@ -622,39 +824,43 @@ export const InicioScreen = ({ navigation }: any) => {
                 <Text
                   style={{
                     fontSize: 12,
-                    fontWeight: '700',
+                    fontWeight: '800',
                     color: hexDe(paleta.tinta),
+                    letterSpacing: 0.5,
                   }}
                 >
-                  {isResumable(info?.Status ?? 0)
+                  {(isResumable(info?.Status ?? 0)
                     ? t('comum.retomar')
-                    : t('comum.pausar')}
+                    : t('comum.pausar')
+                  ).toUpperCase()}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => acao(escolhida, 'parar')}
-                activeOpacity={0.85}
+                activeOpacity={0.8}
                 style={{
                   flex: 1,
-                  height: 42,
+                  height: 46,
                   borderRadius: 12,
-                  borderWidth: 1.4,
+                  borderWidth: 1.5,
                   borderColor: hexDe(paleta.perigo),
+                  backgroundColor: hexDe(paleta.perigo) + '18',
                   flexDirection: 'row',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: 6,
+                  gap: 8,
                 }}
               >
-                <Ionicons name="stop" size={13} color={hexDe(paleta.perigo)} />
+                <Ionicons name="stop" size={15} color={hexDe(paleta.perigo)} />
                 <Text
                   style={{
                     fontSize: 12,
-                    fontWeight: '700',
+                    fontWeight: '800',
                     color: hexDe(paleta.perigo),
+                    letterSpacing: 0.5,
                   }}
                 >
-                  {t('comum.parar')}
+                  {t('comum.parar').toUpperCase()}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -838,14 +1044,14 @@ export const InicioScreen = ({ navigation }: any) => {
               <TouchableOpacity
                 key={a.etiqueta}
                 onPress={a.aoTocar}
-                activeOpacity={0.85}
+                activeOpacity={0.8}
                 style={{
                   ...cartao,
                   flex: 1,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  paddingVertical: 12,
-                  gap: 5,
+                  paddingVertical: 14,
+                  gap: 6,
                 }}
               >
                 <Ionicons
@@ -856,12 +1062,13 @@ export const InicioScreen = ({ navigation }: any) => {
                 <Text
                   numberOfLines={1}
                   style={{
-                    fontSize: 9.5,
-                    fontWeight: '700',
+                    fontSize: 9,
+                    fontWeight: '800',
                     color: hexDe(paleta.tintaSoft),
+                    letterSpacing: 0.5,
                   }}
                 >
-                  {a.etiqueta}
+                  {a.etiqueta.toUpperCase()}
                 </Text>
               </TouchableOpacity>
             ))}
