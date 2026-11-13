@@ -6,9 +6,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { hexDe } from '../../theme/temas';
 import { t, useIdioma } from '../../i18n';
+import { fonteNumeros } from '../../theme/tokensV6';
 import {
   Controlo,
   Disponibilidade,
@@ -30,8 +32,8 @@ type Props = {
   onExecutarMacro?: (macro: string) => void;
 };
 
-const LADO_TECLA = 56;
-const ALTURA_MINIMA = 48;
+const LADO_TECLA = 58;
+const ALTURA_MINIMA = 44;
 
 /** Texto do motivo, para o utilizador perceber porque está desativado. */
 const motivoDe = (d: Disponibilidade): string | null => {
@@ -62,7 +64,8 @@ export const CartaoMovimento = ({
   const motivo = motivoDe(disp.movimento) ?? motivoDe(disp.home);
 
   return (
-    <View style={{ gap: 10 }}>
+    <View style={{ gap: 12 }}>
+      {/* Título e feedback de comando */}
       <View style={estilos.linha}>
         <Text style={[estilos.titulo, { color: hexDe(p.tinta) }]}>
           {t('controlos.movimento')}
@@ -95,23 +98,59 @@ export const CartaoMovimento = ({
         ) : null}
       </View>
 
-      <View style={estilos.linha}>
-        {posicao ? (
-          (['x', 'y', 'z'] as const).map(eixo => (
-            <Text
-              key={eixo}
-              style={[estilos.posicao, { color: hexDe(p.tinta) }]}
-            >
-              {eixo.toUpperCase()} {posicao[eixo]}
-            </Text>
-          ))
-        ) : (
-          <Text style={{ color: hexDe(p.tintaSoft), fontSize: 12 }}>
-            {t('controlos.semPosicao')}
-          </Text>
-        )}
+      {/* Visor digital de coordenadas (DRO) */}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          backgroundColor: '#070A10',
+          borderWidth: 1,
+          borderColor: hexDe(p.linha),
+          borderRadius: 10,
+          paddingVertical: 10,
+          paddingHorizontal: 14,
+        }}
+      >
+        {(['x', 'y', 'z'] as const).map((eixo, idx) => (
+          <React.Fragment key={eixo}>
+            {idx > 0 && (
+              <View
+                style={{
+                  width: 1,
+                  height: 24,
+                  backgroundColor: hexDe(p.linha),
+                }}
+              />
+            )}
+            <View style={{ flex: 1, alignItems: 'center' }}>
+              <Text
+                style={{
+                  fontSize: 9.5,
+                  fontWeight: '800',
+                  color: hexDe(p.acentoTexto),
+                  letterSpacing: 1,
+                  marginBottom: 1,
+                }}
+              >
+                {`EIXO ${eixo.toUpperCase()}`}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontWeight: '700',
+                  color: hexDe(p.tinta),
+                  fontFamily: fonteNumeros,
+                }}
+              >
+                {posicao ? posicao[eixo] : '--'}
+              </Text>
+            </View>
+          </React.Fragment>
+        ))}
       </View>
 
+      {/* Seletor de passo */}
       <View style={estilos.linha}>
         {PASSOS.map(mm => {
           const escolhido = mm === passo;
@@ -124,6 +163,7 @@ export const CartaoMovimento = ({
                 passo: rotuloPasso(mm),
               })}
               accessibilityState={{ selected: escolhido }}
+              activeOpacity={0.8}
               style={[
                 estilos.passo,
                 {
@@ -136,9 +176,10 @@ export const CartaoMovimento = ({
             >
               <Text
                 style={{
-                  fontSize: 13,
-                  fontWeight: '700',
+                  fontSize: 12.5,
+                  fontWeight: '800',
                   color: escolhido ? '#fff' : hexDe(p.tinta),
+                  fontFamily: fonteNumeros,
                 }}
               >
                 {rotuloPasso(mm)}
@@ -148,23 +189,28 @@ export const CartaoMovimento = ({
         })}
       </View>
 
-      <View style={{ alignItems: 'center', gap: 8 }}>
+      {/* Mesa de comando XY */}
+      <View style={{ alignItems: 'center', gap: 6, marginVertical: 4 }}>
         <Tecla
           etiqueta="▲"
+          eixoSub="Y+"
           a11y={t('controlos.moverFrente')}
           onPress={() => onMover('Y', 1)}
           activo={pode('movimento')}
           cor={hexDe(p.tinta)}
+          subCor={hexDe(p.tintaMuted)}
           fundo={hexDe(p.fundoBaixo)}
           linha={hexDe(p.linha)}
         />
         <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
           <Tecla
             etiqueta="◀"
+            eixoSub="X-"
             a11y={t('controlos.moverEsquerda')}
             onPress={() => onMover('X', -1)}
             activo={pode('movimento')}
             cor={hexDe(p.tinta)}
+            subCor={hexDe(p.tintaMuted)}
             fundo={hexDe(p.fundoBaixo)}
             linha={hexDe(p.linha)}
           />
@@ -174,6 +220,7 @@ export const CartaoMovimento = ({
             accessibilityRole="button"
             accessibilityLabel={t('controlos.homeTodos')}
             accessibilityState={{ disabled: !pode('home') }}
+            activeOpacity={0.75}
             style={[
               estilos.centro,
               {
@@ -183,33 +230,49 @@ export const CartaoMovimento = ({
               },
             ]}
           >
+            <Ionicons
+              name="home-outline"
+              size={16}
+              color={hexDe(p.acentoTexto)}
+            />
             <Text
-              style={{ fontSize: 11, fontWeight: '700', color: hexDe(p.tinta) }}
+              style={{
+                fontSize: 9.5,
+                fontWeight: '800',
+                color: hexDe(p.tinta),
+                letterSpacing: 0.5,
+                marginTop: 2,
+              }}
             >
               HOME
             </Text>
           </TouchableOpacity>
           <Tecla
             etiqueta="▶"
+            eixoSub="X+"
             a11y={t('controlos.moverDireita')}
             onPress={() => onMover('X', 1)}
             activo={pode('movimento')}
             cor={hexDe(p.tinta)}
+            subCor={hexDe(p.tintaMuted)}
             fundo={hexDe(p.fundoBaixo)}
             linha={hexDe(p.linha)}
           />
         </View>
         <Tecla
           etiqueta="▼"
+          eixoSub="Y-"
           a11y={t('controlos.moverTras')}
           onPress={() => onMover('Y', -1)}
           activo={pode('movimento')}
           cor={hexDe(p.tinta)}
+          subCor={hexDe(p.tintaMuted)}
           fundo={hexDe(p.fundoBaixo)}
           linha={hexDe(p.linha)}
         />
       </View>
 
+      {/* Controlo do eixo Z */}
       <View style={estilos.linha}>
         <BotaoLargo
           texto="Z ▲"
@@ -225,6 +288,7 @@ export const CartaoMovimento = ({
         />
       </View>
 
+      {/* Ações de Home específicas */}
       <View style={estilos.linha}>
         <BotaoLargo
           texto={t('controlos.homeTodos')}
@@ -246,6 +310,7 @@ export const CartaoMovimento = ({
         />
       </View>
 
+      {/* Macros Klipper para Moonraker */}
       {isMoonraker && onExecutarMacro ? (
         <View style={{ marginTop: 4, gap: 6 }}>
           <Text
@@ -292,18 +357,22 @@ export const CartaoMovimento = ({
 
 const Tecla = ({
   etiqueta,
+  eixoSub,
   a11y,
   onPress,
   activo,
   cor,
+  subCor,
   fundo,
   linha,
 }: {
   etiqueta: string;
+  eixoSub?: string;
   a11y: string;
   onPress: () => void;
   activo: boolean;
   cor: string;
+  subCor: string;
   fundo: string;
   linha: string;
 }) => (
@@ -313,11 +382,12 @@ const Tecla = ({
     accessibilityRole="button"
     accessibilityLabel={a11y}
     accessibilityState={{ disabled: !activo }}
+    activeOpacity={0.75}
     style={{
       width: LADO_TECLA,
       height: LADO_TECLA,
       borderRadius: 12,
-      borderWidth: 1,
+      borderWidth: 1.2,
       borderColor: linha,
       backgroundColor: fundo,
       alignItems: 'center',
@@ -325,7 +395,22 @@ const Tecla = ({
       opacity: activo ? 1 : 0.4,
     }}
   >
-    <Text style={{ fontSize: 18, color: cor }}>{etiqueta}</Text>
+    <Text style={{ fontSize: 18, fontWeight: '700', color: cor }}>
+      {etiqueta}
+    </Text>
+    {eixoSub && (
+      <Text
+        style={{
+          fontSize: 8.5,
+          fontWeight: '800',
+          color: subCor,
+          letterSpacing: 0.5,
+          marginTop: 1,
+        }}
+      >
+        {eixoSub}
+      </Text>
+    )}
   </TouchableOpacity>
 );
 
@@ -349,6 +434,7 @@ const BotaoLargo = ({
       accessibilityRole="button"
       accessibilityLabel={a11y}
       accessibilityState={{ disabled: !activo }}
+      activeOpacity={0.75}
       style={{
         flex: 1,
         minHeight: ALTURA_MINIMA,
@@ -358,10 +444,19 @@ const BotaoLargo = ({
         backgroundColor: hexDe(p.fundoBaixo),
         alignItems: 'center',
         justifyContent: 'center',
+        paddingHorizontal: 8,
         opacity: activo ? 1 : 0.4,
       }}
     >
-      <Text style={{ fontSize: 12, fontWeight: '600', color: hexDe(p.tinta) }}>
+      <Text
+        numberOfLines={1}
+        style={{
+          fontSize: 11.5,
+          fontWeight: '700',
+          color: hexDe(p.tinta),
+          letterSpacing: 0.3,
+        }}
+      >
         {texto}
       </Text>
     </TouchableOpacity>
@@ -370,13 +465,12 @@ const BotaoLargo = ({
 
 const estilos = StyleSheet.create({
   linha: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  titulo: { fontSize: 15, fontWeight: '700', flex: 1 },
+  titulo: { fontSize: 15, fontWeight: '800', letterSpacing: 0.3, flex: 1 },
   resultado: { fontSize: 11, fontWeight: '600' },
-  posicao: { fontSize: 12, fontWeight: '600' },
   passo: {
     flex: 1,
-    minHeight: ALTURA_MINIMA,
-    borderRadius: 10,
+    minHeight: 40,
+    borderRadius: 8,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -384,7 +478,7 @@ const estilos = StyleSheet.create({
   centro: {
     width: LADO_TECLA,
     height: LADO_TECLA,
-    borderRadius: LADO_TECLA / 2,
+    borderRadius: 14,
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
