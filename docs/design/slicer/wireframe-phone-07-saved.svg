@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 844" width="390" height="844" style="background:#ffffff; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <style>
+      .screen-bg { fill: #f8f9fa; stroke: #adb5bd; stroke-width: 2; }
+      .header-bg { fill: #ffffff; stroke: #dee2e6; stroke-width: 1; }
+      .header-title { font-size: 15px; font-weight: 700; fill: #212529; }
+      .solid-box { fill: #ffffff; stroke: #495057; stroke-width: 1.5; }
+      .label-num { font-size: 12px; font-weight: 700; fill: #495057; }
+      .text-title { font-size: 13px; font-weight: 700; fill: #212529; }
+      .text-body { font-size: 12px; fill: #495057; }
+      .text-sub { font-size: 12px; fill: #6c757d; }
+      .btn-primary { fill: #212529; rx: 8px; }
+      .btn-primary-text { font-size: 14px; font-weight: 700; fill: #ffffff; text-anchor: middle; }
+      .btn-secondary { fill: #ffffff; stroke: #495057; stroke-width: 1.5; rx: 8px; }
+      .btn-secondary-text { font-size: 13px; font-weight: 600; fill: #343a40; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <rect width="390" height="844" rx="14" class="screen-bg"/>
+  <rect width="390" height="56" rx="14" class="header-bg"/>
+  <text x="20" y="35" class="header-title">[E6] FICHEIRO GUARDADO</text>
+
+  <!-- [17] Confirmação Local e Mecanismo de Armazenamento Android -->
+  <rect x="15" y="80" width="360" height="420" rx="10" class="solid-box"/>
+  <circle cx="195" cy="135" r="26" fill="#2b8a3e"/>
+  <text x="195" y="144" font-size="22" font-weight="700" fill="#ffffff" text-anchor="middle">✔</text>
+
+  <text x="195" y="188" font-size="16" font-weight="700" fill="#212529" text-anchor="middle">[17] G-CODE GUARDADO COM SUCESSO</text>
+  <text x="195" y="212" class="text-body" text-anchor="middle">O ficheiro G-code gerado está pronto no telemóvel.</text>
+
+  <!-- Caixa de Armazenamento Android (Req 4) -->
+  <rect x="25" y="234" width="340" height="150" rx="6" fill="#f8f9fa" stroke="#dee2e6" stroke-width="1"/>
+  <text x="35" y="256" class="label-num">MECANISMO DE ARMAZENAMENTO ANDROID:</text>
+  <text x="35" y="278" class="text-title">suporte_cabo_cc1.gcode (7.9 MB)</text>
+  
+  <text x="35" y="298" class="text-body">• Opção A (Padrão): Pasta interna da app</text>
+  <text x="45" y="314" class="text-sub">context.getExternalFilesDir(&quot;gcodes&quot;)</text>
+  <text x="45" y="328" class="text-sub">Partilhável de imediato via intent nativa (ACTION_SEND)</text>
+
+  <text x="35" y="350" class="text-body">• Opção B: Pasta escolhida pelo utilizador</text>
+  <text x="45" y="366" class="text-sub">Android Storage Access Framework (SAF / DocumentFile)</text>
+
+  <rect x="25" y="394" width="340" height="90" rx="6" fill="#ffffff" stroke="#ced4da" stroke-width="1"/>
+  <text x="35" y="416" class="label-num">CONFORMIDADE TÉCNICA:</text>
+  <text x="35" y="436" class="text-body">• Formato: Klipper Flavor (OrcaSlicer export)</text>
+  <text x="35" y="454" class="text-body">• Macro: PRINT_START EXTRUDER=... BED=... TOOL=0</text>
+  <text x="35" y="472" class="text-sub">Compatível com COSMOS Moonraker e Klipper CC1</text>
+
+  <!-- [18] Ações Finais (>= 48px) -->
+  <g transform="translate(15, 520)">
+    <!-- Partilhar Ficheiro -->
+    <rect x="0" y="0" width="360" height="52" class="btn-primary"/>
+    <text x="180" y="32" class="btn-primary-text">[18] PARTILHAR FICHEIRO (INTENT ANDROID)</text>
+
+    <!-- Guardar noutra pasta com SAF -->
+    <rect x="0" y="62" width="360" height="52" class="btn-secondary"/>
+    <text x="180" y="94" class="btn-secondary-text">GUARDAR NOUTRA PASTA (SAF)</text>
+
+    <!-- Ver na Lista Local -->
+    <rect x="0" y="124" width="360" height="50" class="btn-secondary"/>
+    <text x="180" y="155" class="btn-secondary-text">VER NA LISTA DE FICHEIROS DO ATALAIA</text>
+
+    <!-- Voltar ao Início -->
+    <rect x="0" y="184" width="360" height="50" class="btn-secondary"/>
+    <text x="180" y="215" class="btn-secondary-text">VOLTAR AO INÍCIO</text>
+  </g>
+</svg>

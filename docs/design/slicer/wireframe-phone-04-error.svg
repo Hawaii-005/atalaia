@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 844" width="390" height="844" style="background:#ffffff; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <style>
+      .screen-bg { fill: #f8f9fa; stroke: #adb5bd; stroke-width: 2; }
+      .header-bg { fill: #ffffff; stroke: #dee2e6; stroke-width: 1; }
+      .header-title { font-size: 15px; font-weight: 700; fill: #212529; }
+      .label-num { font-size: 12px; font-weight: 700; fill: #495057; }
+      .text-title { font-size: 13px; font-weight: 700; fill: #212529; }
+      .text-body { font-size: 12px; fill: #495057; }
+      .text-sub { font-size: 12px; fill: #6c757d; }
+      .btn-primary { fill: #212529; rx: 8px; }
+      .btn-primary-text { font-size: 14px; font-weight: 700; fill: #ffffff; text-anchor: middle; }
+      .btn-secondary { fill: #ffffff; stroke: #495057; stroke-width: 1.5; rx: 8px; }
+      .btn-secondary-text { font-size: 13px; font-weight: 600; fill: #343a40; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <rect width="390" height="844" rx="14" class="screen-bg"/>
+  <rect width="390" height="56" rx="14" class="header-bg"/>
+  <text x="20" y="35" class="header-title">[E3] FALHA NO FATIAMENTO</text>
+
+  <!-- [9] Painel de Erro -->
+  <rect x="15" y="80" width="360" height="490" rx="10" fill="#fff5f5" stroke="#ffc9c9" stroke-width="1.5"/>
+  <circle cx="195" cy="125" r="22" fill="#fa5252"/>
+  <text x="195" y="132" font-size="18" font-weight="700" fill="#ffffff" text-anchor="middle">✕</text>
+  <text x="195" y="172" font-size="15" font-weight="700" fill="#c92a2a" text-anchor="middle">[9] ERRO DO MOTOR NATIVO</text>
+  
+  <text x="30" y="202" class="text-title">Geometria não-manifold detetada</text>
+  <text x="30" y="222" class="text-body">O modelo possui arestas abertas ou normais invertidas</text>
+  <text x="30" y="238" class="text-body">que impedem o fatiamento de camadas.</text>
+
+  <!-- Caixa de Diagnóstico Técnico / Exemplo de Log -->
+  <rect x="25" y="262" width="340" height="150" rx="6" fill="#ffffff" stroke="#dee2e6" stroke-width="1"/>
+  <text x="35" y="284" class="label-num">DIAGNÓSTICO TÉCNICO (EXEMPLO ILUSTRATIVO):</text>
+  <text x="35" y="302" class="text-sub">Depende de: motor libslic3r exportar logs (hoje: exit code)</text>
+  <text x="35" y="326" font-family="monospace" font-size="12" fill="#495057">Exemplo: Model::repair() failed</text>
+  <text x="35" y="344" font-family="monospace" font-size="12" fill="#495057">Exemplo: Intersecting facets in layer 14</text>
+  <text x="35" y="362" font-family="monospace" font-size="12" fill="#495057">Exemplo: Status 2 (Unrecoverable)</text>
+  <text x="35" y="380" font-family="monospace" font-size="12" fill="#6c757d">Limpeza: ficheiro temporário .tmp apagado.</text>
+
+  <!-- Outros Erros Suportados -->
+  <rect x="25" y="424" width="340" height="130" rx="6" fill="#f8f9fa" stroke="#dee2e6" stroke-width="1"/>
+  <text x="35" y="444" class="label-num">OUTROS ERROS TRATADOS:</text>
+  <text x="35" y="464" class="text-body">• Memória esgotada (OOM ao carregar STL grande)</text>
+  <text x="35" y="482" class="text-body">• Modelo fora do volume de impressão útil</text>
+  <text x="35" y="500" class="text-body">• Ficheiro STL truncado ou corrompido</text>
+  <text x="35" y="518" class="text-body">• Espaço insuficiente em disco para o G-code</text>
+  <text x="35" y="538" class="text-sub">Ficheiros temporários são sempre limpos em caso de erro.</text>
+
+  <!-- [10] Ações de Erro -->
+  <g transform="translate(15, 590)">
+    <rect x="0" y="0" width="360" height="52" class="btn-primary"/>
+    <text x="180" y="24" class="btn-primary-text">[10] TENTAR COM AUTO-REPARAÇÃO</text>
+    <text x="180" y="42" font-size="12" fill="#ced4da" text-anchor="middle">(Depende de: libslic3r suportar auto-reparo na v1)</text>
+
+    <rect x="0" y="62" width="360" height="48" class="btn-secondary"/>
+    <text x="180" y="92" class="btn-secondary-text">ESCOLHER OUTRO MODELO</text>
+
+    <rect x="0" y="118" width="360" height="48" class="btn-secondary"/>
+    <text x="180" y="148" class="btn-secondary-text">VOLTAR AO INÍCIO</text>
+  </g>
+</svg>

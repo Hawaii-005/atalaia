@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 844" width="390" height="844" style="background:#ffffff; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <style>
+      .screen-bg { fill: #f8f9fa; stroke: #adb5bd; stroke-width: 2; }
+      .header-bg { fill: #ffffff; stroke: #dee2e6; stroke-width: 1; }
+      .header-title { font-size: 15px; font-weight: 700; fill: #212529; }
+      .solid-box { fill: #ffffff; stroke: #495057; stroke-width: 1.5; }
+      .label-num { font-size: 12px; font-weight: 700; fill: #495057; }
+      .text-title { font-size: 13px; font-weight: 700; fill: #212529; }
+      .text-body { font-size: 12px; fill: #495057; }
+      .text-sub { font-size: 12px; fill: #6c757d; }
+      .btn-primary { fill: #212529; rx: 8px; }
+      .btn-primary-text { font-size: 14px; font-weight: 700; fill: #ffffff; text-anchor: middle; }
+      .btn-secondary { fill: #ffffff; stroke: #495057; stroke-width: 1.5; rx: 8px; }
+      .btn-secondary-text { font-size: 13px; font-weight: 600; fill: #343a40; text-anchor: middle; }
+      .btn-danger { fill: #ffffff; stroke: #c92a2a; stroke-width: 1.5; rx: 8px; }
+      .btn-danger-text { font-size: 13px; font-weight: 700; fill: #c92a2a; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <rect width="390" height="844" rx="14" class="screen-bg"/>
+  <rect width="390" height="56" rx="14" class="header-bg"/>
+  <text x="20" y="35" class="header-title">[E5] UPLOAD PARA O MOONRAKER</text>
+
+  <!-- [15] Painel de Upload -->
+  <rect x="15" y="70" width="360" height="230" rx="10" class="solid-box"/>
+  <text x="25" y="95" class="label-num">[15] ENVIO HTTP MULTIPART</text>
+  <text x="25" y="112" class="text-sub">Destino: POST http://192.168.1.5:80/server/files/upload</text>
+  <text x="25" y="128" class="text-sub">Depende de: porta 80 do Moonraker no COSMOS</text>
+
+  <text x="195" y="172" font-size="36" font-weight="700" fill="#212529" text-anchor="middle">74%</text>
+  
+  <rect x="35" y="190" width="320" height="12" rx="6" fill="#e9ecef"/>
+  <rect x="35" y="190" width="236" height="12" rx="6" fill="#212529"/>
+
+  <text x="195" y="222" class="text-title" text-anchor="middle">A transferir suporte_cabo_cc1.gcode</text>
+  <text x="195" y="240" class="text-sub" text-anchor="middle">5.8 MB de 7.9 MB (1.8 MB/s)</text>
+
+  <!-- Botão Cancelar com Limpeza -->
+  <rect x="35" y="254" width="320" height="48" class="btn-danger"/>
+  <text x="195" y="284" class="btn-danger-text">CANCELAR (LIMPA FICHEIRO PARCIAL)</text>
+
+  <!-- [15B] Estado: Envio Concluído com Sucesso -->
+  <rect x="15" y="312" width="360" height="110" rx="8" fill="#ebfbee" stroke="#40c057" stroke-width="1"/>
+  <text x="25" y="334" font-size="12" font-weight="700" fill="#2b8a3e">ESTADO: ENVIO CONCLUÍDO COM SUCESSO</text>
+  <text x="25" y="354" class="text-body">Ficheiro gravado no Moonraker da Centauri Carbon.</text>
+  <text x="25" y="372" class="text-body">Se acionado com arranque: impressão a iniciar...</text>
+  <text x="25" y="394" class="text-sub">A redirecionar para a vista de câmara/controlos em 3s.</text>
+
+  <!-- [16] Falhas e Bloqueios Adicionais (Req 8) -->
+  <rect x="15" y="434" width="360" height="280" rx="10" fill="#fff9db" stroke="#f08c00" stroke-width="1.5"/>
+  <text x="25" y="458" font-size="12" font-weight="700" fill="#b06200">[16] ERROS E BLOQUEIOS TRATADOS:</text>
+  
+  <!-- Impressora ocupada -->
+  <text x="25" y="482" font-size="12" font-weight="700" fill="#212529">• IMPRESSORA OCUPADA:</text>
+  <text x="25" y="498" class="text-body">A Centauri Carbon está a imprimir. O arranque é</text>
+  <text x="25" y="514" class="text-body">bloqueado; o ficheiro pode ser colocado na fila.</text>
+
+  <!-- Autenticação falhada -->
+  <text x="25" y="538" font-size="12" font-weight="700" fill="#212529">• AUTENTICAÇÃO FALHADA (401/403):</text>
+  <text x="25" y="554" class="text-body">Token da API Moonraker rejeitado. Permite</text>
+  <text x="25" y="570" class="text-body">reintroduzir a chave nas definições da impressora.</text>
+
+  <!-- Espaço insuficiente -->
+  <text x="25" y="594" font-size="12" font-weight="700" fill="#212529">• ESPAÇO INSUFICIENTE NO DESTINO:</text>
+  <text x="25" y="610" class="text-body">Disco eMMC da impressora sem espaço para o G-code.</text>
+  <text x="25" y="626" class="text-sub">Ficheiro parcial é removido no Moonraker.</text>
+
+  <!-- Ações de Recuperação -->
+  <g transform="translate(15, 726)">
+    <rect x="0" y="0" width="174" height="48" class="btn-primary"/>
+    <text x="87" y="30" class="btn-primary-text">TENTAR NOVO</text>
+
+    <rect x="186" y="0" width="174" height="48" class="btn-secondary"/>
+    <text x="273" y="30" class="btn-secondary-text">PÔR NA FILA</text>
+  </g>
+</svg>

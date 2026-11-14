@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 844" width="390" height="844" style="background:#ffffff; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <style>
+      .screen-bg { fill: #f8f9fa; stroke: #adb5bd; stroke-width: 2; }
+      .header-bg { fill: #ffffff; stroke: #dee2e6; stroke-width: 1; }
+      .header-title { font-size: 15px; font-weight: 700; fill: #212529; }
+      .block-box { fill: #ffffff; stroke: #6c757d; stroke-width: 1.5; stroke-dasharray: 4; }
+      .solid-box { fill: #ffffff; stroke: #495057; stroke-width: 1.5; }
+      .label-num { font-size: 12px; font-weight: 700; fill: #495057; }
+      .text-title { font-size: 13px; font-weight: 700; fill: #212529; }
+      .text-body { font-size: 12px; fill: #495057; }
+      .text-sub { font-size: 12px; fill: #6c757d; }
+      .btn-primary { fill: #212529; rx: 8px; }
+      .btn-primary-text { font-size: 14px; font-weight: 700; fill: #ffffff; text-anchor: middle; }
+      .btn-secondary { fill: #ffffff; stroke: #495057; stroke-width: 1.5; rx: 8px; }
+      .btn-secondary-text { font-size: 13px; font-weight: 600; fill: #343a40; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <rect width="390" height="844" rx="14" class="screen-bg"/>
+  <rect width="390" height="56" rx="14" class="header-bg"/>
+  <text x="20" y="35" class="header-title">[E1B] VISOR 3D • VOLUME DE CONSTRUÇÃO</text>
+
+  <!-- [V1] Viewport 3D do Modelo e Volume da Mesa -->
+  <rect x="15" y="68" width="360" height="380" rx="8" class="solid-box"/>
+  <rect x="25" y="78" width="340" height="360" rx="6" fill="#f1f3f5"/>
+  <text x="35" y="100" class="label-num">[V1] VISTA TRIDIMENSIONAL</text>
+
+  <!-- Representação isométrica da mesa 256x256 mm -->
+  <path d="M 60 350 L 195 400 L 330 350 L 195 300 Z" fill="#e9ecef" stroke="#adb5bd" stroke-width="1.5"/>
+  <text x="195" y="380" font-size="12" fill="#868e96" text-anchor="middle">Mesa CC1: 256 × 256 mm</text>
+
+  <!-- Volume da caixa delimitadora Z=260 mm -->
+  <path d="M 60 350 L 60 170 L 195 120 L 330 170 L 330 350" fill="none" stroke="#ced4da" stroke-width="1" stroke-dasharray="3"/>
+  <path d="M 195 400 L 195 220" fill="none" stroke="#ced4da" stroke-width="1" stroke-dasharray="3"/>
+  <path d="M 60 170 L 195 220 L 330 170" fill="none" stroke="#ced4da" stroke-width="1" stroke-dasharray="3"/>
+
+  <!-- Modelo 3D centrado na mesa -->
+  <rect x="155" y="260" width="80" height="90" rx="4" fill="#ffffff" stroke="#212529" stroke-width="2"/>
+  <text x="195" y="310" class="text-title" text-anchor="middle">STL</text>
+
+  <!-- [V2] Estado de Conformidade de Volume -->
+  <g transform="translate(15, 460)">
+    <!-- Estado: CABE NA MESA (Verde/Neutro) -->
+    <rect x="0" y="0" width="360" height="68" rx="8" fill="#ebfbee" stroke="#40c057" stroke-width="1.5"/>
+    <circle cx="28" cy="34" r="14" fill="#40c057"/>
+    <text x="28" y="40" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">✔</text>
+    <text x="54" y="26" font-size="13" font-weight="700" fill="#2b8a3e">ESTADO: CABE NO VOLUME DA MESA</text>
+    <text x="54" y="44" class="text-body">Modelo: 45 × 32 × 68 mm</text>
+    <text x="54" y="58" class="text-sub">Volume útil CC1: 256 × 256 × 260 mm</text>
+  </g>
+
+  <!-- [V3] Estados Alternativos (Ilustração de Regras) -->
+  <g transform="translate(15, 540)">
+    <rect x="0" y="0" width="360" height="116" rx="8" class="block-box"/>
+    <text x="12" y="20" class="label-num">[V2B] OUTROS ESTADOS DE CONFORMIDADE:</text>
+    
+    <!-- Excede -->
+    <text x="12" y="42" font-size="12" font-weight="700" fill="#c92a2a">• EXCEDE:</text>
+    <text x="75" y="42" class="text-body">Dimensões maiores que 256×256×260 mm.</text>
+    <text x="75" y="58" class="text-sub">Bloqueia botão Fatiar com aviso de escala.</text>
+
+    <!-- Desconhecido -->
+    <text x="12" y="82" font-size="12" font-weight="700" fill="#e67700">• DESCONHECIDO:</text>
+    <text x="110" y="82" class="text-body">STL com cabeçalho truncado ou sem</text>
+    <text x="12" y="98" class="text-body">dimensões conhecidas antes da leitura total.</text>
+  </g>
+
+  <!-- [V4] Ações do Visor -->
+  <g transform="translate(15, 670)">
+    <rect x="0" y="0" width="360" height="48" class="btn-secondary"/>
+    <text x="180" y="30" class="btn-secondary-text">CENTRAR / ESCALAR MODELO</text>
+
+    <rect x="0" y="58" width="360" height="52" class="btn-primary"/>
+    <text x="180" y="90" class="btn-primary-text">VOLTAR E FATIAR</text>
+  </g>
+</svg>

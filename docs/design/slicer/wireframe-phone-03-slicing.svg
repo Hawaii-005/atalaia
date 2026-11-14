@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 844" width="390" height="844" style="background:#ffffff; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <style>
+      .screen-bg { fill: #f8f9fa; stroke: #adb5bd; stroke-width: 2; }
+      .header-bg { fill: #ffffff; stroke: #dee2e6; stroke-width: 1; }
+      .header-title { font-size: 15px; font-weight: 700; fill: #212529; }
+      .solid-box { fill: #ffffff; stroke: #495057; stroke-width: 1.5; }
+      .label-num { font-size: 12px; font-weight: 700; fill: #495057; }
+      .text-title { font-size: 13px; font-weight: 700; fill: #212529; }
+      .text-body { font-size: 12px; fill: #495057; }
+      .text-sub { font-size: 12px; fill: #6c757d; }
+      .btn-danger { fill: #ffffff; stroke: #c92a2a; stroke-width: 1.5; rx: 8px; }
+      .btn-danger-text { font-size: 13px; font-weight: 700; fill: #c92a2a; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <rect width="390" height="844" rx="14" class="screen-bg"/>
+  <rect width="390" height="56" rx="14" class="header-bg"/>
+  <text x="20" y="35" class="header-title">[E2] FATIAMENTO EM CURSO</text>
+
+  <!-- [7] Caixa de Progresso -->
+  <rect x="15" y="100" width="360" height="340" rx="10" class="solid-box"/>
+  <text x="25" y="130" class="label-num">[7] MOTOR NATIVO LIBSLIC3R</text>
+  <text x="25" y="148" class="text-sub">Depende de: thread NDK e callbacks do motor</text>
+  
+  <text x="195" y="210" font-size="42" font-weight="700" fill="#212529" text-anchor="middle">58%</text>
+  
+  <!-- Barra de progresso -->
+  <rect x="35" y="236" width="320" height="14" rx="7" fill="#e9ecef"/>
+  <rect x="35" y="236" width="185" height="14" rx="7" fill="#212529"/>
+
+  <text x="195" y="280" class="text-title" text-anchor="middle">A gerar perímetros e preenchimento...</text>
+  <text x="195" y="304" class="text-body" text-anchor="middle">Passo 4 de 7: Gerar infill Gyroid</text>
+  <text x="195" y="326" class="text-sub" text-anchor="middle">Tempo decorrido: 00:08 • Memória estimada: 140 MB</text>
+
+  <!-- [8] Botão Cancelar -->
+  <rect x="35" y="356" width="320" height="52" class="btn-danger"/>
+  <text x="195" y="388" class="btn-danger-text">[8] CANCELAR FATIAMENTO</text>
+
+  <!-- [Aviso de Primeiro Plano] -->
+  <rect x="15" y="460" width="360" height="150" rx="8" fill="#fff9db" stroke="#f08c00" stroke-width="1.5"/>
+  <text x="25" y="488" font-size="12" font-weight="700" fill="#e67700">AVISO: MANTER APLICAÇÃO EM PRIMEIRO PLANO</text>
+  <text x="25" y="512" class="text-body">O fatiamento corre localmente no processador ARM.</text>
+  <text x="25" y="530" class="text-body">Se a aplicação for suspensa pelo sistema operativo,</text>
+  <text x="25" y="548" class="text-body">o motor de fatiamento pode ser terminado e o</text>
+  <text x="25" y="566" class="text-body">processo precisará de ser reiniciado.</text>
+  <text x="25" y="592" class="text-sub">Ficheiros parciais são limpos automaticamente se cancelado.</text>
+</svg>

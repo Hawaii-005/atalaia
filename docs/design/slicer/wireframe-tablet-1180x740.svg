@@ -7,9 +7,9 @@
       .block-box { fill: #ffffff; stroke: #6c757d; stroke-width: 1.5; stroke-dasharray: 4; }
       .solid-box { fill: #ffffff; stroke: #495057; stroke-width: 1.5; }
       .label-num { font-size: 12px; font-weight: 700; fill: #495057; }
-      .text-title { font-size: 14px; font-weight: 700; fill: #212529; }
+      .text-title { font-size: 13px; font-weight: 700; fill: #212529; }
       .text-body { font-size: 12px; fill: #495057; }
-      .text-sub { font-size: 12px; fill: #868e96; }
+      .text-sub { font-size: 12px; fill: #6c757d; }
       .btn-primary { fill: #212529; rx: 8px; }
       .btn-primary-text { font-size: 14px; font-weight: 700; fill: #ffffff; text-anchor: middle; }
       .btn-secondary { fill: #ffffff; stroke: #495057; stroke-width: 1.5; rx: 8px; }
@@ -22,94 +22,110 @@
   <rect width="1180" height="740" rx="14" class="screen-bg"/>
   <rect width="1180" height="60" rx="14" class="header-bg"/>
   <text x="24" y="36" class="header-title">[E-TABLET] FATIADOR 3D INTEGRADO • ELEGOO CENTAURI CARBON (COSMOS)</text>
-  <rect x="1040" y="14" width="116" height="32" rx="6" fill="#e9ecef" stroke="#ced4da" stroke-width="1"/>
-  <text x="1098" y="35" class="label-num" text-anchor="middle">MODO LOW-FI</text>
+  <rect x="1020" y="14" width="136" height="32" rx="6" fill="#e9ecef" stroke="#ced4da" stroke-width="1"/>
+  <text x="1088" y="35" class="label-num" text-anchor="middle">VISTA MASTER-DETAIL</text>
 
-  <!-- Left Column: 3D Preview / Layer Slice Viewport (Width: 540) -->
+  <!-- Painel Esquerdo: Visualização 3D e Volume de Construção (Width: 540) -->
   <g transform="translate(24, 76)">
     <rect width="540" height="634" rx="12" class="solid-box"/>
-    <text x="20" y="32" class="label-num">[T1] ÁREA DE VISUALIZAÇÃO 3D / CAMADAS 2D</text>
+    <text x="20" y="32" class="label-num">[T1] VISUALIZADOR 3D DO MODELO E VOLUME DA MESA</text>
 
-    <!-- Canvas viewport box -->
-    <rect x="20" y="46" width="500" height="420" rx="8" fill="#f1f3f5" stroke="#ced4da" stroke-width="1"/>
-    <!-- Simulated 3D Bed -->
-    <path d="M 60 360 L 250 420 L 440 360 L 250 300 Z" fill="#e9ecef" stroke="#adb5bd" stroke-width="1.5"/>
-    <!-- Wireframe bounding box of model -->
-    <rect x="200" y="180" width="100" height="150" fill="#ffffff" stroke="#495057" stroke-width="2" stroke-dasharray="3" opacity="0.9"/>
-    <text x="250" y="260" font-size="12" font-weight="700" fill="#212529" text-anchor="middle">suporte_cabo_cc1.stl</text>
-    <text x="250" y="278" class="text-sub" text-anchor="middle">45 × 32 × 68 mm</text>
+    <!-- Canvas do visor 3D -->
+    <rect x="20" y="46" width="500" height="360" rx="8" fill="#f1f3f5" stroke="#ced4da" stroke-width="1"/>
+    
+    <!-- Mesa CC1 isométrica 256x256 mm -->
+    <path d="M 70 320 L 250 370 L 430 320 L 250 270 Z" fill="#e9ecef" stroke="#adb5bd" stroke-width="1.5"/>
+    <text x="250" y="345" font-size="12" fill="#868e96" text-anchor="middle">Mesa CC1: 256 × 256 mm</text>
 
-    <!-- Inspection slider / meta -->
-    <rect x="20" y="480" width="500" height="48" rx="6" fill="#ffffff" stroke="#ced4da" stroke-width="1"/>
-    <text x="32" y="508" class="text-title">Camada pré-fatiamento: — / —</text>
-    <text x="310" y="508" class="text-sub">Inspeção 2D ativa após fatiar</text>
+    <!-- Volume delimitador Z=260 mm -->
+    <path d="M 70 320 L 70 160 L 250 110 L 430 160 L 430 320" fill="none" stroke="#ced4da" stroke-width="1" stroke-dasharray="3"/>
+    <path d="M 250 370 L 250 210" fill="none" stroke="#ced4da" stroke-width="1" stroke-dasharray="3"/>
+    <path d="M 70 160 L 250 210 L 430 160" fill="none" stroke="#ced4da" stroke-width="1" stroke-dasharray="3"/>
 
-    <!-- Model management -->
-    <rect x="20" y="544" width="500" height="70" rx="8" class="solid-box"/>
-    <text x="32" y="570" class="label-num">FICHEIRO CARREGADO:</text>
-    <text x="32" y="592" class="text-title">suporte_cabo_cc1.stl (14.2 MB • 182,410 triângulos)</text>
-    <rect x="380" y="556" width="128" height="46" class="btn-secondary"/>
-    <text x="444" y="584" class="btn-secondary-text">TROCAR STL</text>
+    <!-- Modelo 3D centrado -->
+    <rect x="205" y="230" width="90" height="100" fill="#ffffff" stroke="#212529" stroke-width="2"/>
+    <text x="250" y="285" font-size="13" font-weight="700" fill="#212529" text-anchor="middle">STL 3D</text>
+
+    <!-- Estado de Conformidade de Volume (Cabe/Excede/Desconhecido) -->
+    <g transform="translate(20, 418)">
+      <rect width="500" height="54" rx="6" fill="#ebfbee" stroke="#40c057" stroke-width="1.5"/>
+      <circle cx="28" cy="27" r="12" fill="#40c057"/>
+      <text x="28" y="32" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">✔</text>
+      <text x="50" y="22" font-size="12" font-weight="700" fill="#2b8a3e">ESTADO: CABE NO VOLUME DA MESA</text>
+      <text x="50" y="42" class="text-body">Modelo: 45 × 32 × 68 mm • Limite CC1: 256 × 256 × 260 mm</text>
+    </g>
+
+    <!-- Slider de Inspeção / Camadas (ativo pós-fatiamento) -->
+    <rect x="20" y="482" width="500" height="48" rx="6" fill="#ffffff" stroke="#ced4da" stroke-width="1"/>
+    <text x="32" y="510" class="text-title">Camada: — / — (Inspeção 2D disponível após fatiar)</text>
+    <text x="380" y="510" class="text-sub">Transição suave para camadas</text>
+
+    <!-- Gestão do Ficheiro -->
+    <rect x="20" y="540" width="500" height="74" rx="8" class="solid-box"/>
+    <text x="32" y="566" class="label-num">FICHEIRO CARREGADO NO TABLET:</text>
+    <text x="32" y="588" class="text-title">suporte_cabo_cc1.stl (14.2 MB • 182,410 triângulos)</text>
+    <text x="32" y="604" class="text-sub">Formato: STL binário mono-cor</text>
+    <rect x="375" y="554" width="135" height="48" class="btn-secondary"/>
+    <text x="442" y="583" class="btn-secondary-text">TROCAR STL</text>
   </g>
 
-  <!-- Right Column: Controls, Profile, Canvas Slot, Slicing (Width: 570) -->
+  <!-- Painel Direito: Configuração, Perfis, Ações e Modais (Width: 570) -->
   <g transform="translate(586, 76)">
     <rect width="570" height="634" rx="12" class="solid-box"/>
 
-    <!-- [T2] Profile Selection -->
-    <text x="24" y="32" class="label-num">[T2] SELETOR DE PERFIL (3 PERFIS DISPONÍVEIS)</text>
-    <g transform="translate(24, 42)">
+    <!-- [T2] Seletor de Perfil (>= 48px cada) -->
+    <text x="24" y="30" class="label-num">[T2] SELETOR DE PERFIL DE MÁQUINA (3 PERFIS DISPONÍVEIS)</text>
+    <g transform="translate(24, 38)">
       <!-- Cosmos AFC -->
-      <rect x="0" y="0" width="168" height="58" rx="6" fill="#e9ecef" stroke="#212529" stroke-width="1.5"/>
+      <rect x="0" y="0" width="168" height="52" rx="6" fill="#e9ecef" stroke="#212529" stroke-width="1.5"/>
       <circle cx="16" cy="18" r="5" fill="#212529"/>
       <text x="28" y="22" font-size="12" font-weight="700" fill="#212529">Cosmos AFC</text>
-      <text x="10" y="42" font-size="12" fill="#495057">Klipper + Canvas (T0..3)</text>
+      <text x="10" y="40" font-size="12" fill="#495057">Klipper + Canvas (T0..3)</text>
 
       <!-- Cosmos Mono -->
-      <rect x="178" y="0" width="168" height="58" rx="6" fill="#ffffff" stroke="#ced4da" stroke-width="1"/>
+      <rect x="178" y="0" width="168" height="52" rx="6" fill="#ffffff" stroke="#ced4da" stroke-width="1"/>
       <circle cx="194" cy="18" r="5" fill="none" stroke="#6c757d" stroke-width="1.5"/>
       <text x="206" y="22" font-size="12" font-weight="700" fill="#495057">Cosmos Mono</text>
-      <text x="188" y="42" font-size="12" fill="#868e96">Klipper mono-cor</text>
+      <text x="188" y="40" font-size="12" fill="#6c757d">Klipper mono-cor</text>
 
       <!-- OpenCentauri -->
-      <rect x="356" y="0" width="166" height="58" rx="6" fill="#ffffff" stroke="#ced4da" stroke-width="1"/>
+      <rect x="356" y="0" width="166" height="52" rx="6" fill="#ffffff" stroke="#ced4da" stroke-width="1"/>
       <circle cx="372" cy="18" r="5" fill="none" stroke="#6c757d" stroke-width="1.5"/>
       <text x="384" y="22" font-size="12" font-weight="700" fill="#495057">OpenCentauri</text>
-      <text x="366" y="42" font-size="12" fill="#868e96">Variante comunitária</text>
+      <text x="366" y="40" font-size="12" fill="#6c757d">Variante comunitária</text>
     </g>
 
-    <!-- [T3] Canvas Slot Selector -->
-    <text x="24" y="126" class="label-num">[T3] RANHURA CANVAS AFC (Depende de: Cosmos AFC selecionado)</text>
-    <g transform="translate(24, 136)">
+    <!-- [T3] Ranhura Canvas AFC -->
+    <text x="24" y="116" class="label-num">[T3] RANHURA CANVAS AFC (Depende de: Cosmos AFC selecionado)</text>
+    <g transform="translate(24, 126)">
       <!-- T0 -->
-      <rect x="0" y="0" width="124" height="54" rx="6" fill="#212529" stroke="#212529" stroke-width="1.5"/>
-      <circle cx="18" cy="18" r="6" fill="#ffffff"/>
+      <rect x="0" y="0" width="124" height="50" rx="6" fill="#212529" stroke="#212529" stroke-width="1.5"/>
+      <circle cx="18" cy="18" r="5" fill="#ffffff"/>
       <text x="30" y="22" font-size="12" font-weight="700" fill="#ffffff">T0 (Ativo)</text>
-      <text x="12" y="42" font-size="12" fill="#e9ecef">Preto (PLA)</text>
+      <text x="12" y="38" font-size="12" fill="#e9ecef">Preto (PLA)</text>
 
       <!-- T1 -->
-      <rect x="134" y="0" width="124" height="54" rx="6" fill="#ffffff" stroke="#ced4da" stroke-width="1"/>
-      <circle cx="152" cy="18" r="6" fill="#dee2e6"/>
+      <rect x="134" y="0" width="124" height="50" rx="6" fill="#ffffff" stroke="#ced4da" stroke-width="1"/>
+      <circle cx="152" cy="18" r="5" fill="#dee2e6"/>
       <text x="164" y="22" font-size="12" font-weight="700" fill="#495057">T1</text>
-      <text x="146" y="42" font-size="12" fill="#6c757d">Branco (PLA)</text>
+      <text x="146" y="38" font-size="12" fill="#6c757d">Branco (PLA)</text>
 
       <!-- T2 -->
-      <rect x="268" y="0" width="124" height="54" rx="6" fill="#ffffff" stroke="#ced4da" stroke-width="1"/>
-      <circle cx="286" cy="18" r="6" fill="#dee2e6"/>
+      <rect x="268" y="0" width="124" height="50" rx="6" fill="#ffffff" stroke="#ced4da" stroke-width="1"/>
+      <circle cx="286" cy="18" r="5" fill="#dee2e6"/>
       <text x="298" y="22" font-size="12" font-weight="700" fill="#495057">T2</text>
-      <text x="280" y="42" font-size="12" fill="#6c757d">Azul (PETG)</text>
+      <text x="280" y="38" font-size="12" fill="#6c757d">Azul (PETG)</text>
 
       <!-- T3 -->
-      <rect x="402" y="0" width="120" height="54" rx="6" fill="#ffffff" stroke="#ced4da" stroke-width="1"/>
-      <circle cx="420" cy="18" r="6" fill="#dee2e6"/>
+      <rect x="402" y="0" width="120" height="50" rx="6" fill="#ffffff" stroke="#ced4da" stroke-width="1"/>
+      <circle cx="420" cy="18" r="5" fill="#dee2e6"/>
       <text x="432" y="22" font-size="12" font-weight="700" fill="#495057">T3</text>
-      <text x="414" y="42" font-size="12" fill="#6c757d">Laranja (ABS)</text>
+      <text x="414" y="38" font-size="12" fill="#6c757d">Laranja (ABS)</text>
     </g>
 
-    <!-- [T4] Print Parameters (Min Touch 48px) -->
-    <text x="24" y="216" class="label-num">[T4] PARÂMETROS BÁSICOS DE FATIAMENTO</text>
-    <g transform="translate(24, 226)">
-      <!-- Layer height -->
+    <!-- [T4] Parâmetros de Impressão -->
+    <text x="24" y="200" class="label-num">[T4] PARÂMETROS BÁSICOS DE IMPRESSÃO</text>
+    <g transform="translate(24, 210)">
       <rect x="0" y="0" width="522" height="48" rx="6" fill="#f1f3f5" stroke="#ced4da" stroke-width="1"/>
       <rect x="180" y="4" width="162" height="40" rx="5" fill="#212529"/>
       <text x="90" y="28" class="text-body" text-anchor="middle">0.12 mm Fina</text>
@@ -117,39 +133,37 @@
       <text x="435" y="28" class="text-body" text-anchor="middle">0.28 mm Rápida</text>
     </g>
 
-    <g transform="translate(24, 286)">
-      <!-- Infill -->
-      <rect x="0" y="0" width="255" height="54" rx="6" fill="#ffffff" stroke="#ced4da" stroke-width="1"/>
-      <text x="16" y="22" class="text-sub">INFILL (Toque)</text>
-      <text x="16" y="42" class="text-title">15% Gyroid</text>
+    <g transform="translate(24, 268)">
+      <rect x="0" y="0" width="255" height="50" rx="6" fill="#ffffff" stroke="#ced4da" stroke-width="1"/>
+      <text x="16" y="20" class="text-sub">INFILL (Toque)</text>
+      <text x="16" y="38" class="text-title">15% Gyroid</text>
       <path d="M 235 24 L 241 28 L 235 32" class="chevron"/>
 
-      <!-- Supports -->
-      <rect x="267" y="0" width="255" height="54" rx="6" fill="#ffffff" stroke="#ced4da" stroke-width="1"/>
-      <text x="283" y="22" class="text-sub">SUPORTES (Toque)</text>
-      <text x="283" y="42" class="text-title">Árvore (Tree - Auto)</text>
+      <rect x="267" y="0" width="255" height="50" rx="6" fill="#ffffff" stroke="#ced4da" stroke-width="1"/>
+      <text x="283" y="20" class="text-sub">SUPORTES (Toque)</text>
+      <text x="283" y="38" class="text-title">Árvore (Tree - Auto)</text>
       <path d="M 502 24 L 508 28 L 502 32" class="chevron"/>
     </g>
 
-    <!-- [T5] Estimation (Showing "—" pre-slice) -->
-    <rect x="24" y="356" width="522" height="74" rx="8" class="solid-box"/>
-    <text x="36" y="380" class="label-num">[T5] ESTIMATIVA (Calculada após fatiamento)</text>
-    <text x="36" y="410" font-size="16" font-weight="700" fill="#495057">Tempo: —</text>
-    <text x="200" y="410" font-size="16" font-weight="700" fill="#495057">Filamento: —</text>
-    <text x="360" y="410" font-size="16" font-weight="700" fill="#495057">Camadas: —</text>
+    <!-- [T5] Estimativa Pré-Fatiamento -->
+    <rect x="24" y="330" width="522" height="66" rx="8" class="solid-box"/>
+    <text x="36" y="352" class="label-num">[T5] ESTIMATIVA (Calculada após fatiamento)</text>
+    <text x="36" y="380" font-size="15" font-weight="700" fill="#495057">Tempo: —</text>
+    <text x="200" y="380" font-size="15" font-weight="700" fill="#495057">Filamento: —</text>
+    <text x="360" y="380" font-size="15" font-weight="700" fill="#495057">Camadas: —</text>
 
-    <!-- [T6] Action Buttons -->
-    <g transform="translate(24, 450)">
-      <!-- Primary Action: FATIAR -->
+    <!-- [T6] Ação Primária: Fatiar -->
+    <g transform="translate(24, 408)">
       <rect x="0" y="0" width="522" height="52" class="btn-primary"/>
       <text x="261" y="32" class="btn-primary-text">[T6] FATIAR</text>
-
-      <!-- Flow note: Result actions -->
-      <rect x="0" y="62" width="522" height="106" rx="8" class="block-box"/>
-      <text x="16" y="86" class="label-num">AÇÕES NO ECRÃ DE RESULTADO (PÓS-FATIAMENTO):</text>
-      <text x="16" y="108" class="text-body">• Enviar e Arrancar (Abre modal de confirmação de Mesa Limpa)</text>
-      <text x="16" y="128" class="text-body">• Enviar e Pôr na Fila Local / Apenas Upload HTTP para Moonraker</text>
-      <text x="16" y="148" class="text-body">• Guardar Ficheiro G-code Local</text>
     </g>
+
+    <!-- Caixa Informativa de Modais e Estados Secundários (Req 8) -->
+    <rect x="24" y="474" width="522" height="142" rx="8" class="block-box"/>
+    <text x="36" y="496" class="label-num">COMPORTAMENTO TABLET E ESTADOS SECUNDÁRIOS:</text>
+    <text x="36" y="516" class="text-body">• O tablet reutiliza todos os estados do telemóvel ([E1B] a [E6]).</text>
+    <text x="36" y="534" class="text-body">• Modais de Confirmação (Mesa Limpa + Bloqueios da Fila), Falhas de Rede,</text>
+    <text x="36" y="552" class="text-body">  Erros de Motor e Gravação surgem em caixa modal sobreposta de 500 px.</text>
+    <text x="36" y="572" class="text-sub">Compatibilidade: layout adaptativo reutiliza componentes React Native partilhados.</text>
   </g>
 </svg>
