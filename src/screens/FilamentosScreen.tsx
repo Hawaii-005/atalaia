@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
+import { fonteNumeros } from '../theme/tokensV6';
 import {
   canvasSlotsCommand,
   setLaneWeightCommand,
@@ -351,14 +352,29 @@ export const FilamentosScreen = ({
             )}
           </View>
 
-          <Text numberOfLines={1} style={{ fontSize: 12, color: tintaSoft }}>
+          <Text
+            numberOfLines={1}
+            style={{
+              fontSize: 11,
+              fontWeight: '600',
+              fontFamily: fonteNumeros,
+              color: tintaSoft,
+            }}
+          >
             {[vista.marca, vista.corNome, vista.cor]
               .filter(Boolean)
               .join(' · ') || t('filamentos.semDadosCanvas')}
           </Text>
 
           {vista.minTemp && vista.maxTemp ? (
-            <Text style={{ fontSize: 11, color: tintaSoft }}>
+            <Text
+              style={{
+                fontSize: 11,
+                fontWeight: '600',
+                fontFamily: fonteNumeros,
+                color: tintaSoft,
+              }}
+            >
               {vista.minTemp}–{vista.maxTemp} °C
             </Text>
           ) : null}
@@ -367,14 +383,28 @@ export const FilamentosScreen = ({
         <View style={{ alignItems: 'flex-end', gap: 2 }}>
           {vista.bobina || vista.restanteG !== undefined ? (
             <>
-              <Text style={{ fontSize: 16, fontWeight: '800', color: tinta }}>
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: '800',
+                  fontFamily: fonteNumeros,
+                  color: tinta,
+                }}
+              >
                 {vista.percentagem !== undefined
                   ? `${vista.percentagem}%`
                   : vista.bobina
                     ? `${percentagemRestante(vista.bobina)}%`
                     : '—'}
               </Text>
-              <Text style={{ fontSize: 11, color: tintaSoft }}>
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: '600',
+                  fontFamily: fonteNumeros,
+                  color: tintaSoft,
+                }}
+              >
                 {t('filamentos.restante', {
                   g: String(vista.restanteG ?? vista.bobina?.restante ?? '—'),
                 })}
