@@ -38,11 +38,25 @@
   <text x="195" y="388" class="btn-danger-text">[8] CANCELAR FATIAMENTO</text>
 
   <!-- [Aviso de Primeiro Plano] -->
-  <rect x="15" y="460" width="360" height="150" rx="8" fill="#fff9db" stroke="#f08c00" stroke-width="1.5"/>
-  <text x="25" y="488" font-size="12" font-weight="700" fill="#e67700">AVISO: MANTER APLICAÇÃO EM PRIMEIRO PLANO</text>
-  <text x="25" y="512" class="text-body">O fatiamento corre localmente no processador ARM.</text>
-  <text x="25" y="530" class="text-body">Se a aplicação for suspensa pelo sistema operativo,</text>
-  <text x="25" y="548" class="text-body">o motor de fatiamento pode ser terminado e o</text>
-  <text x="25" y="566" class="text-body">processo precisará de ser reiniciado.</text>
-  <text x="25" y="592" class="text-sub">Ficheiros parciais são limpos automaticamente se cancelado.</text>
+  <rect x="15" y="460" width="360" height="130" rx="8" fill="#fff9db" stroke="#f08c00" stroke-width="1.5"/>
+  <text x="25" y="484" font-size="12" font-weight="700" fill="#e67700">AVISO: MANTER APLICAÇÃO EM PRIMEIRO PLANO</text>
+  <text x="25" y="504" class="text-body">O fatiamento corre localmente no processador ARM.</text>
+  <text x="25" y="522" class="text-body">Se a aplicação for suspensa pelo sistema operativo,</text>
+  <text x="25" y="540" class="text-body">o motor é interrompido com limpeza de temporários.</text>
+  <text x="25" y="562" class="text-sub">Ficheiros parciais são limpos automaticamente.</text>
+
+  <!-- Modal de Confirmação de Saída / Botão Voltar (Req 3) -->
+  <rect x="15" y="606" width="360" height="216" rx="10" fill="#ffffff" stroke="#212529" stroke-width="2"/>
+  <text x="28" y="632" font-size="13" font-weight="700" fill="#c92a2a">CANCELAR FATIAMENTO EM CURSO?</text>
+  <text x="28" y="654" class="text-body">Carregaste no botão Voltar ou Cancelar.</text>
+  <text x="28" y="672" class="text-body">Se saíres agora, o cálculo de camadas será abortado</text>
+  <text x="28" y="690" class="text-body">e os ficheiros parciais .tmp serão eliminados.</text>
+
+  <!-- Botões do modal -->
+  <rect x="25" y="710" width="150" height="48" rx="6" fill="#ffffff" stroke="#495057" stroke-width="1.5"/>
+  <text x="100" y="739" font-size="13" font-weight="600" fill="#343a40" text-anchor="middle">CONTINUAR</text>
+
+  <rect x="185" y="710" width="180" height="48" class="btn-danger"/>
+  <text x="275" y="739" class="btn-danger-text">SIM, CANCELAR</text>
+  <text x="28" y="784" class="text-sub">Ação segura: nenhum ficheiro corrompido é mantido.</text>
 </svg>

@@ -26,11 +26,11 @@
   <rect x="25" y="78" width="340" height="360" rx="6" fill="#f1f3f5"/>
   <text x="35" y="100" class="label-num">[V1] VISTA TRIDIMENSIONAL</text>
 
-  <!-- Representação isométrica da mesa 256x256 mm -->
+  <!-- Representação isométrica da mesa (dimensões vêm do perfil) -->
   <path d="M 60 350 L 195 400 L 330 350 L 195 300 Z" fill="#e9ecef" stroke="#adb5bd" stroke-width="1.5"/>
-  <text x="195" y="380" font-size="12" fill="#868e96" text-anchor="middle">Mesa CC1: 256 × 256 mm</text>
+  <text x="195" y="380" font-size="12" fill="#868e96" text-anchor="middle">Mesa (exemplo CC1: 256 × 256 mm)</text>
 
-  <!-- Volume da caixa delimitadora Z=260 mm -->
+  <!-- Volume da caixa delimitadora Z (exemplo CC1: 256 mm) -->
   <path d="M 60 350 L 60 170 L 195 120 L 330 170 L 330 350" fill="none" stroke="#ced4da" stroke-width="1" stroke-dasharray="3"/>
   <path d="M 195 400 L 195 220" fill="none" stroke="#ced4da" stroke-width="1" stroke-dasharray="3"/>
   <path d="M 60 170 L 195 220 L 330 170" fill="none" stroke="#ced4da" stroke-width="1" stroke-dasharray="3"/>
@@ -47,7 +47,7 @@
     <text x="28" y="40" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">✔</text>
     <text x="54" y="26" font-size="13" font-weight="700" fill="#2b8a3e">ESTADO: CABE NO VOLUME DA MESA</text>
     <text x="54" y="44" class="text-body">Modelo: 45 × 32 × 68 mm</text>
-    <text x="54" y="58" class="text-sub">Volume útil CC1: 256 × 256 × 260 mm</text>
+    <text x="54" y="58" class="text-sub">Volume útil (do perfil): 256 × 256 × 256 mm</text>
   </g>
 
   <!-- [V3] Estados Alternativos (Ilustração de Regras) -->
@@ -57,7 +57,7 @@
     
     <!-- Excede -->
     <text x="12" y="42" font-size="12" font-weight="700" fill="#c92a2a">• EXCEDE:</text>
-    <text x="75" y="42" class="text-body">Dimensões maiores que 256×256×260 mm.</text>
+    <text x="75" y="42" class="text-body">Dimensões maiores que o volume do perfil.</text>
     <text x="75" y="58" class="text-sub">Bloqueia botão Fatiar com aviso de escala.</text>
 
     <!-- Desconhecido -->

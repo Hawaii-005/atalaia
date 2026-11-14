@@ -41,10 +41,10 @@
   <text x="45" y="366" class="text-sub">Android Storage Access Framework (SAF / DocumentFile)</text>
 
   <rect x="25" y="394" width="340" height="90" rx="6" fill="#ffffff" stroke="#ced4da" stroke-width="1"/>
-  <text x="35" y="416" class="label-num">CONFORMIDADE TÉCNICA:</text>
-  <text x="35" y="436" class="text-body">• Formato: Klipper Flavor (OrcaSlicer export)</text>
-  <text x="35" y="454" class="text-body">• Macro: PRINT_START EXTRUDER=... BED=... TOOL=0</text>
-  <text x="35" y="472" class="text-sub">Compatível com COSMOS Moonraker e Klipper CC1</text>
+  <text x="35" y="416" class="label-num">DADOS DO FICHEIRO:</text>
+  <text x="35" y="436" class="text-body">• Formato: G-code (Klipper flavor)</text>
+  <text x="35" y="454" class="text-body">• Cabeçalho: PRINT_START gerado com perfil selecionado</text>
+  <text x="35" y="472" class="text-sub">Ficheiro pronto para envio posterior ou transferência externa</text>
 
   <!-- [18] Ações Finais (>= 48px) -->
   <g transform="translate(15, 520)">

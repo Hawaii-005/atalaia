@@ -28,9 +28,11 @@
   <text x="35" y="96" font-size="12" font-weight="700" fill="#ffffff">[11] PRÉ-VISUALIZAÇÃO 2D</text>
   <text x="35" y="190" font-size="12" fill="#adb5bd">Camada 142 de 340 (Z = 28.40 mm)</text>
   
-  <!-- Slider de camadas -->
-  <rect x="25" y="208" width="340" height="34" rx="4" fill="#f8f9fa" stroke="#ced4da" stroke-width="1"/>
-  <text x="35" y="230" class="text-sub">Deslizar para inspecionar camadas</text>
+  <!-- Slider de camadas (Touch target de 48px com barra e indicador) -->
+  <rect x="25" y="200" width="340" height="48" rx="6" fill="#f8f9fa" stroke="#ced4da" stroke-width="1"/>
+  <line x1="45" y1="224" x2="345" y2="224" stroke="#adb5bd" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="160" cy="224" r="10" fill="#212529"/>
+  <text x="180" y="228" class="text-title">Camada 142/340</text>
 
   <!-- [12] Métricas Reais e Avisos de Perfil -->
   <rect x="15" y="258" width="360" height="174" rx="8" class="solid-box"/>
@@ -74,25 +76,27 @@
     <text x="180" y="228" class="btn-secondary-text">GUARDAR FICHEIRO G-CODE LOCAL</text>
   </g>
 
-  <!-- [14] Modal: Confirmação de Mesa Limpa + Bloqueios da Fila (Req 2) -->
-  <rect x="15" y="580" width="360" height="248" rx="10" fill="#ffffff" stroke="#212529" stroke-width="2"/>
-  <text x="28" y="604" font-size="13" font-weight="700" fill="#c92a2a">[14] CONFIRMAR ARRANQUE IMEDIATO</text>
+  <!-- [14] Modal: Confirmação de Mesa Limpa + Bloqueios da Fila (Req 2 e 3) -->
+  <rect x="15" y="560" width="360" height="270" rx="10" fill="#ffffff" stroke="#212529" stroke-width="2"/>
+  <text x="28" y="584" font-size="13" font-weight="700" fill="#c92a2a">[14] CONFIRMAR ARRANQUE IMEDIATO</text>
   
-  <text x="28" y="626" class="text-title">Ficheiro: suporte_cabo_cc1.gcode</text>
-  <text x="28" y="644" class="text-body">• Perfil: Cosmos AFC (0.4 nozzle)</text>
-  <text x="28" y="660" class="text-body">• Ranhura Canvas: T0 (Preto / PLA)</text>
-  <text x="28" y="676" class="text-body">• Tempo estimado: 1h 48m (42.6 g)</text>
+  <text x="28" y="604" class="text-title">Ficheiro: suporte_cabo_cc1.gcode</text>
+  <text x="28" y="620" class="text-body">• Perfil: Cosmos AFC (0.4 nozzle)</text>
+  <text x="28" y="636" class="text-body">• Ranhura Canvas: T0 (Preto / PLA)</text>
+  <text x="28" y="652" class="text-body">• Tempo estimado: 1h 48m (42.6 g)</text>
 
-  <!-- Validação de Bloqueios da Fila -->
-  <rect x="25" y="688" width="340" height="66" rx="4" fill="#f8f9fa" stroke="#ced4da" stroke-width="1"/>
-  <text x="35" y="704" font-size="12" font-weight="700" fill="#2b8a3e">✔ Impressora ociosa e ligação ativa (Moonraker)</text>
-  <text x="35" y="720" class="text-sub">✔ Ranhura compatível • Filamento suficiente verificado</text>
-  <text x="35" y="738" font-size="12" font-weight="700" fill="#212529">Confirmação: A mesa de impressão está 100% limpa?</text>
+  <!-- Validação de Bloqueios da Fila: VARIANTE BLOQUEADA (Exemplo: Impressora Ocupada) -->
+  <rect x="25" y="662" width="340" height="92" rx="4" fill="#fff5f5" stroke="#ffc9c9" stroke-width="1.2"/>
+  <text x="35" y="680" font-size="12" font-weight="700" fill="#c92a2a">✕ ARRANQUE BLOQUEADO (REGRAS DA FILA):</text>
+  <text x="35" y="698" class="text-body">• Impressora ocupada: atualmente a imprimir peça_anterior.gcode</text>
+  <text x="35" y="714" class="text-sub">Motivo: arranque imediato só é permitido com máquina ociosa.</text>
+  <text x="35" y="730" font-size="12" font-weight="600" fill="#495057">Solução: Enviar o ficheiro e colocar na Fila de Impressão.</text>
 
-  <!-- Botões do Modal -->
+  <!-- Botões do Modal: Variante Bloqueada (Confirmar desativado / Pôr na fila ativo) -->
   <rect x="25" y="764" width="140" height="52" class="btn-secondary"/>
-  <text x="95" y="796" class="btn-secondary-text">CANCELAR</text>
+  <text x="95" y="796" class="btn-secondary-text">FECHAR</text>
 
+  <!-- Botão Pôr na Fila em vez de Arrancar -->
   <rect x="175" y="764" width="190" height="52" class="btn-primary"/>
-  <text x="270" y="796" class="btn-primary-text">CONFIRMAR E ARRANCAR</text>
+  <text x="270" y="796" class="btn-primary-text">PÔR NA FILA LOCAL</text>
 </svg>

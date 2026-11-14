@@ -52,7 +52,7 @@
   <text x="56" y="317" class="text-sub">Variante comunitária Klipper</text>
 
   <!-- [3] Ranhura Canvas AFC -->
-  <rect x="15" y="336" width="360" height="106" rx="8" class="block-box"/>
+  <rect x="15" y="336" width="360" height="154" rx="8" class="block-box"/>
   <text x="25" y="356" class="label-num">[3] RANHURA CANVAS AFC</text>
   <text x="25" y="372" class="text-sub">Depende de: Perfil Cosmos AFC ativo</text>
   <g transform="translate(25, 380)">
@@ -80,39 +80,40 @@
     <text x="278" y="22" font-size="12" font-weight="700" fill="#495057">T3</text>
     <text x="260" y="40" font-size="12" fill="#6c757d">Laranja</text>
   </g>
-  <text x="25" y="438" class="text-sub">Toque longo ou menu para seleção manual de ranhura</text>
+  <!-- Botão visível Escolher Manualmente (>= 48px) -->
+  <rect x="25" y="436" width="340" height="48" rx="6" fill="#ffffff" stroke="#495057" stroke-width="1.2"/>
+  <text x="195" y="465" font-size="13" font-weight="600" fill="#212529" text-anchor="middle">ESCOLHER MANUALMENTE (T0..T3 / COR)</text>
 
   <!-- [4] Parâmetros de Impressão -->
-  <rect x="15" y="452" width="360" height="152" rx="8" class="solid-box"/>
-  <text x="25" y="472" class="label-num">[4] PARÂMETROS BÁSICOS DE IMPRESSÃO</text>
+  <rect x="15" y="500" width="360" height="152" rx="8" class="solid-box"/>
+  <text x="25" y="520" class="label-num">[4] PARÂMETROS BÁSICOS DE IMPRESSÃO</text>
   
-  <rect x="25" y="482" width="340" height="48" rx="6" fill="#f1f3f5" stroke="#ced4da" stroke-width="1"/>
-  <rect x="135" y="486" width="120" height="40" rx="5" fill="#212529"/>
-  <text x="75" y="510" class="text-body" text-anchor="middle">0.12</text>
-  <text x="195" y="510" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">0.20 Standard</text>
-  <text x="305" y="510" class="text-body" text-anchor="middle">0.28</text>
+  <rect x="25" y="530" width="340" height="48" rx="6" fill="#f1f3f5" stroke="#ced4da" stroke-width="1"/>
+  <rect x="135" y="534" width="120" height="40" rx="5" fill="#212529"/>
+  <text x="75" y="558" class="text-body" text-anchor="middle">0.12</text>
+  <text x="195" y="558" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">0.20 Standard</text>
+  <text x="305" y="558" class="text-body" text-anchor="middle">0.28</text>
 
-  <rect x="25" y="538" width="164" height="52" rx="6" fill="#ffffff" stroke="#ced4da" stroke-width="1"/>
-  <text x="35" y="558" class="text-sub">INFILL (Toque)</text>
-  <text x="35" y="578" class="text-title">15% Gyroid</text>
-  <path d="M 175 562 L 181 566 L 175 570" class="chevron"/>
+  <rect x="25" y="586" width="164" height="52" rx="6" fill="#ffffff" stroke="#ced4da" stroke-width="1"/>
+  <text x="35" y="606" class="text-sub">INFILL (Toque)</text>
+  <text x="35" y="626" class="text-title">15% Gyroid</text>
+  <path d="M 175 610 L 181 614 L 175 618" class="chevron"/>
 
-  <rect x="201" y="538" width="164" height="52" rx="6" fill="#ffffff" stroke="#ced4da" stroke-width="1"/>
-  <text x="211" y="558" class="text-sub">SUPORTES (Toque)</text>
-  <text x="211" y="578" class="text-title">Árvore (Tree)</text>
-  <path d="M 351 562 L 357 566 L 351 570" class="chevron"/>
+  <rect x="201" y="586" width="164" height="52" rx="6" fill="#ffffff" stroke="#ced4da" stroke-width="1"/>
+  <text x="211" y="606" class="text-sub">SUPORTES (Toque)</text>
+  <text x="211" y="626" class="text-title">Árvore (Tree)</text>
+  <path d="M 351 610 L 357 614 L 351 618" class="chevron"/>
 
   <!-- [5] Estimativa Pré-Fatiamento -->
-  <rect x="15" y="614" width="360" height="66" rx="8" class="solid-box"/>
-  <text x="25" y="634" class="label-num">[5] ESTIMATIVA (Calculada após fatiamento)</text>
-  <text x="25" y="656" font-size="14" font-weight="700" fill="#495057">Tempo: —</text>
-  <text x="200" y="656" font-size="14" font-weight="700" fill="#495057">Filamento: —</text>
-  <text x="25" y="672" class="text-sub">Valores exatos só após fatiamento no resultado</text>
+  <rect x="15" y="660" width="360" height="56" rx="8" class="solid-box"/>
+  <text x="25" y="680" class="label-num">[5] ESTIMATIVA (Calculada após fatiamento)</text>
+  <text x="25" y="700" font-size="14" font-weight="700" fill="#495057">Tempo: —</text>
+  <text x="200" y="700" font-size="14" font-weight="700" fill="#495057">Filamento: —</text>
 
   <!-- [6] Ações: Visualizar Modelo e Fatiar -->
-  <rect x="15" y="694" width="360" height="48" class="btn-secondary"/>
-  <text x="195" y="724" class="btn-secondary-text">VISUALIZAR MODELO 3D (VOLUME)</text>
+  <rect x="15" y="724" width="360" height="48" class="btn-secondary"/>
+  <text x="195" y="754" class="btn-secondary-text">VISUALIZAR MODELO 3D (VOLUME)</text>
 
-  <rect x="15" y="752" width="360" height="52" class="btn-primary"/>
-  <text x="195" y="784" class="btn-primary-text">[6] FATIAR</text>
+  <rect x="15" y="778" width="360" height="52" class="btn-primary"/>
+  <text x="195" y="810" class="btn-primary-text">[6] FATIAR</text>
 </svg>

@@ -39,13 +39,15 @@
   <text x="35" y="380" font-family="monospace" font-size="12" fill="#6c757d">Limpeza: ficheiro temporário .tmp apagado.</text>
 
   <!-- Outros Erros Suportados -->
-  <rect x="25" y="424" width="340" height="130" rx="6" fill="#f8f9fa" stroke="#dee2e6" stroke-width="1"/>
-  <text x="35" y="444" class="label-num">OUTROS ERROS TRATADOS:</text>
-  <text x="35" y="464" class="text-body">• Memória esgotada (OOM ao carregar STL grande)</text>
-  <text x="35" y="482" class="text-body">• Modelo fora do volume de impressão útil</text>
-  <text x="35" y="500" class="text-body">• Ficheiro STL truncado ou corrompido</text>
-  <text x="35" y="518" class="text-body">• Espaço insuficiente em disco para o G-code</text>
-  <text x="35" y="538" class="text-sub">Ficheiros temporários são sempre limpos em caso de erro.</text>
+  <rect x="25" y="416" width="340" height="150" rx="6" fill="#f8f9fa" stroke="#dee2e6" stroke-width="1"/>
+  <text x="35" y="436" class="label-num">OUTROS ERROS TRATADOS:</text>
+  <text x="35" y="454" font-size="12" font-weight="700" fill="#c92a2a">• FATIAMENTO INTERROMPIDO PELO SISTEMA (APP EM BACKGROUND)</text>
+  <text x="35" y="472" class="text-sub">O Android suspendeu a thread NDK. O fatiamento foi cancelado</text>
+  <text x="35" y="488" class="text-sub">com segurança e os ficheiros temporários foram limpos.</text>
+  <text x="35" y="508" class="text-body">• Memória esgotada (OOM ao carregar STL grande)</text>
+  <text x="35" y="524" class="text-body">• Modelo fora do volume de impressão útil</text>
+  <text x="35" y="540" class="text-body">• Ficheiro STL truncado ou corrompido</text>
+  <text x="35" y="556" class="text-sub">Ficheiros temporários são sempre limpos em caso de erro.</text>
 
   <!-- [10] Ações de Erro -->
   <g transform="translate(15, 590)">
