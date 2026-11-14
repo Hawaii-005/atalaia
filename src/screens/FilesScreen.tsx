@@ -57,6 +57,7 @@ import { lerTimelapse } from '../utils/timelapse';
 import { t, useIdioma } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
+import { fonteNumeros } from '../theme/tokensV6';
 import {
   BT_ACENTO,
   BT_APAGADA,
@@ -247,7 +248,8 @@ const FileRow = ({
             className={`flex-row items-center ${denso ? 'mt-0.5' : 'mt-1'}`}
           >
             <Text
-              className={`${denso ? 'text-[9px]' : 'text-[10px]'} text-ink-muted flex-1`}
+              style={{ fontFamily: fonteNumeros }}
+              className={`${denso ? 'text-[9px]' : 'text-[10px]'} font-semibold text-ink-muted flex-1`}
               numberOfLines={1}
             >
               {legenda}
@@ -270,12 +272,31 @@ const FileRow = ({
       onPress={onOpen}
       onLongPress={onToggleFavorito}
       delayLongPress={350}
-      activeOpacity={0.7}
+      activeOpacity={0.75}
       accessibilityLabel={`${label}, ${legenda}`}
       accessibilityHint={t(favorito ? 'files.desfavoritar' : 'files.favoritar')}
-      className="flex-row items-center px-4 py-3 border-b border-line"
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: hexDe(tema.paleta.linha),
+      }}
     >
-      <View className="w-14 h-14 rounded-lg bg-cartao border border-line items-center justify-center overflow-hidden">
+      <View
+        style={{
+          width: 56,
+          height: 56,
+          borderRadius: 10,
+          borderWidth: 1,
+          borderColor: hexDe(tema.paleta.linha),
+          backgroundColor: '#070A10',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+        }}
+      >
         {mini ? (
           <Image
             source={{ uri: mini }}
@@ -286,16 +307,33 @@ const FileRow = ({
         ) : (
           <Ionicons
             name="cube-outline"
-            size={18}
-            color={hexDe(tema.paleta.tintaMuted)}
+            size={20}
+            color={hexDe(tema.paleta.acentoTexto)}
           />
         )}
       </View>
-      <View className="flex-1 ml-3">
-        <Text className="text-[13px] font-semibold text-ink" numberOfLines={2}>
+      <View style={{ flex: 1, marginLeft: 12 }}>
+        <Text
+          style={{
+            fontSize: 13,
+            fontWeight: '700',
+            color: hexDe(tema.paleta.tinta),
+          }}
+          numberOfLines={1}
+        >
           {label}
         </Text>
-        <Text className="text-[11px] text-ink-muted mt-1">{legenda}</Text>
+        <Text
+          style={{
+            fontSize: 11,
+            fontWeight: '600',
+            fontFamily: fonteNumeros,
+            color: hexDe(tema.paleta.tintaSoft),
+            marginTop: 3,
+          }}
+        >
+          {legenda}
+        </Text>
       </View>
       {favorito && (
         <Ionicons
@@ -307,7 +345,7 @@ const FileRow = ({
       )}
       <Ionicons
         name="chevron-forward"
-        size={18}
+        size={16}
         color={hexDe(tema.paleta.tintaMuted)}
       />
     </TouchableOpacity>

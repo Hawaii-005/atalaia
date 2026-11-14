@@ -54,6 +54,7 @@ import { lerTimelapse } from '../../utils/timelapse';
 import { t, useIdioma } from '../../i18n';
 import { useTheme } from '../../contexts/ThemeContext';
 import { hexDe } from '../../theme/temas';
+import { fonteNumeros } from '../../theme/tokensV6';
 import {
   BT_ACENTO,
   BT_APAGADA,
@@ -315,7 +316,10 @@ export const DetalheFicheiro = ({
             <Text className="text-[15px] font-bold text-ink" numberOfLines={2}>
               {label}
             </Text>
-            <Text className="text-[12px] text-ink-muted mt-1">
+            <Text
+              style={{ fontFamily: fonteNumeros }}
+              className="text-[12px] font-semibold text-ink-muted mt-1"
+            >
               {formatSize(size)}
               {detalhe?.EstTime
                 ? ` · ${formatTempo(Number(detalhe.EstTime))}`
