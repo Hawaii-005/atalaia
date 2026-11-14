@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { hexDe } from '../../theme/temas';
 import { t } from '../../i18n';
+import { fonteNumeros } from '../../theme/tokensV6';
 
 /** Altura mínima de toque recomendada (dp). */
 export const ALVO_MINIMO = 48;
@@ -26,15 +27,15 @@ export const Cartao = ({
   cor: string;
   children: React.ReactNode;
 }) => (
-  <View className="rounded-2xl border border-line bg-cartao overflow-hidden">
-    <View className="flex-row items-center px-4 pt-3.5 pb-2">
+  <View className="rounded-xl border border-line bg-cartao overflow-hidden">
+    <View className="flex-row items-center px-4 pt-3 pb-2 border-b border-line bg-[#070A10]">
       <View
-        className="w-7 h-7 rounded-[9px] items-center justify-center"
-        style={{ backgroundColor: cor + '1F' }}
+        className="w-6 h-6 rounded-[6px] items-center justify-center"
+        style={{ backgroundColor: cor + '22' }}
       >
-        <Ionicons name={icone as any} size={15} color={cor} />
+        <Ionicons name={icone as any} size={14} color={cor} />
       </View>
-      <Text className="ml-2.5 text-[9px] tracking-[1.3px] font-bold text-ink-muted">
+      <Text className="ml-2.5 text-[9.5px] tracking-[1.2px] font-extrabold text-ink-muted">
         {titulo.toUpperCase()}
       </Text>
     </View>
@@ -102,7 +103,10 @@ export const Linha = ({
         )}
       </View>
       {!!valor && (
-        <Text className="text-[12px] font-semibold text-ink-soft mr-1">
+        <Text
+          style={{ fontFamily: fonteNumeros }}
+          className="text-[12px] font-semibold text-ink-soft mr-1"
+        >
           {valor}
         </Text>
       )}
