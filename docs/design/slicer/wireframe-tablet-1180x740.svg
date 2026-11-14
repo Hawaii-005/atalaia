@@ -161,9 +161,9 @@
     <!-- Caixa Informativa de Modais e Estados Secundários (Req 8) -->
     <rect x="24" y="474" width="522" height="142" rx="8" class="block-box"/>
     <text x="36" y="496" class="label-num">COMPORTAMENTO TABLET E ESTADOS SECUNDÁRIOS:</text>
-    <text x="36" y="516" class="text-body">• O tablet reutiliza todos os estados do telemóvel ([E1B] a [E6]).</text>
-    <text x="36" y="534" class="text-body">• Modais de Confirmação (Mesa Limpa + Bloqueios da Fila), Falhas de Rede,</text>
-    <text x="36" y="552" class="text-body">  Erros de Motor e Gravação surgem em caixa modal sobreposta de 500 px.</text>
-    <text x="36" y="572" class="text-sub">Compatibilidade: layout adaptativo reutiliza componentes React Native partilhados.</text>
+    <text x="36" y="516" class="text-body">• O tablet reutiliza 100% dos estados do telemóvel ([E1B] a [E6]).</text>
+    <text x="36" y="534" class="text-body">• Pôr na Fila é local (não envia de imediato para a rede).</text>
+    <text x="36" y="552" class="text-body">• Modais de Confirmação (Mesa Limpa + Revalidação ociosa), Falhas e SAF</text>
+    <text x="36" y="570" class="text-sub">  surgem em caixa modal sobreposta centrada de 500 px.</text>
   </g>
 </svg>

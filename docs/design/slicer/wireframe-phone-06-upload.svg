@@ -47,27 +47,30 @@
   <text x="25" y="372" class="text-body">Se acionado com arranque: impressão a iniciar...</text>
   <text x="25" y="394" class="text-sub">A redirecionar para a vista de câmara/controlos em 3s.</text>
 
-  <!-- [16] Falhas e Bloqueios Adicionais (Req 8) -->
-  <rect x="15" y="434" width="360" height="280" rx="10" fill="#fff9db" stroke="#f08c00" stroke-width="1.5"/>
-  <text x="25" y="458" font-size="12" font-weight="700" fill="#b06200">[16] ERROS E BLOQUEIOS TRATADOS:</text>
+  <!-- [16] Falhas e Bloqueios Adicionais (Req 3f e 3g) -->
+  <rect x="15" y="430" width="360" height="290" rx="10" fill="#fff9db" stroke="#f08c00" stroke-width="1.5"/>
+  <text x="25" y="452" font-size="12" font-weight="700" fill="#b06200">[16] ERROS E BLOQUEIOS TRATADOS NO ENVIO:</text>
   
-  <!-- Impressora ocupada -->
-  <text x="25" y="482" font-size="12" font-weight="700" fill="#212529">• IMPRESSORA OCUPADA:</text>
-  <text x="25" y="498" class="text-body">A Centauri Carbon está a imprimir. O arranque é</text>
-  <text x="25" y="514" class="text-body">bloqueado; o ficheiro pode ser colocado na fila.</text>
+  <!-- Impressora ocupada ou revalidação falhada -->
+  <text x="25" y="474" font-size="12" font-weight="700" fill="#212529">• REVALIDAÇÃO PRÉ-ARRANQUE / OCUPADA:</text>
+  <text x="25" y="490" class="text-body">A máquina começou outra impressão antes de print.start.</text>
+  <text x="25" y="506" class="text-sub">Ficheiro guardado no Moonraker; arranque é cancelado.</text>
 
   <!-- Autenticação falhada -->
-  <text x="25" y="538" font-size="12" font-weight="700" fill="#212529">• AUTENTICAÇÃO FALHADA (401/403):</text>
-  <text x="25" y="554" class="text-body">Token da API Moonraker rejeitado. Permite</text>
-  <text x="25" y="570" class="text-body">reintroduzir a chave nas definições da impressora.</text>
+  <text x="25" y="528" font-size="12" font-weight="700" fill="#212529">• AUTENTICAÇÃO FALHADA (401/403):</text>
+  <text x="25" y="544" class="text-body">Token da API Moonraker rejeitado. Permite rever chave.</text>
 
-  <!-- Espaço insuficiente -->
-  <text x="25" y="594" font-size="12" font-weight="700" fill="#212529">• ESPAÇO INSUFICIENTE NO DESTINO:</text>
-  <text x="25" y="610" class="text-body">Disco eMMC da impressora sem espaço para o G-code.</text>
-  <text x="25" y="626" class="text-sub">Ficheiro parcial é removido no Moonraker.</text>
+  <!-- Espaço insuficiente e Timeout -->
+  <text x="25" y="566" font-size="12" font-weight="700" fill="#212529">• SEM ESPAÇO NO DISCO / TIMEOUT LAN:</text>
+  <text x="25" y="582" class="text-body">Erro 507 ou socket timeout. Ficheiro parcial é removido.</text>
+
+  <!-- Falha de print.start -->
+  <text x="25" y="604" font-size="12" font-weight="700" fill="#c92a2a">• FALHA NO PRINT.START (KLIPPER BUSY/ERROR):</text>
+  <text x="25" y="620" class="text-body">Upload concluído com sucesso, mas a macro PRINT_START</text>
+  <text x="25" y="636" class="text-body">foi recusada pelo Klipper. Ficheiro fica disponível na lista.</text>
 
   <!-- Ações de Recuperação -->
-  <g transform="translate(15, 726)">
+  <g transform="translate(15, 730)">
     <rect x="0" y="0" width="174" height="48" class="btn-primary"/>
     <text x="87" y="30" class="btn-primary-text">TENTAR NOVO</text>
 

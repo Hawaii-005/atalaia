@@ -116,4 +116,19 @@
 
   <rect x="15" y="778" width="360" height="52" class="btn-primary"/>
   <text x="195" y="810" class="btn-primary-text">[6] FATIAR</text>
+
+  <!-- Modal 3MF Multi-Cor: Confirmação Explícita de Ranhura Única (Req 3h) -->
+  <rect x="15" y="520" width="360" height="250" rx="10" fill="#ffffff" stroke="#212529" stroke-width="2"/>
+  <text x="28" y="546" font-size="13" font-weight="700" fill="#d9480f">3MF MULTI-COR DETETADO</text>
+  <text x="28" y="568" class="text-body">O ficheiro carregado contém 3 cores definidas.</text>
+  <text x="28" y="586" class="text-body">Na versão v1, o mapeamento por cor está fora de âmbito;</text>
+  <text x="28" y="604" class="text-body">o modelo será impresso integralmente na ranhura T0 (Preto).</text>
+  <text x="28" y="626" font-size="12" font-weight="700" fill="#212529">Pretendes continuar com fatiamento mono-ranhura?</text>
+
+  <rect x="25" y="644" width="140" height="48" rx="6" fill="#ffffff" stroke="#495057" stroke-width="1.5"/>
+  <text x="95" y="673" font-size="13" font-weight="600" fill="#343a40" text-anchor="middle">CANCELAR</text>
+
+  <rect x="175" y="644" width="190" height="48" class="btn-primary"/>
+  <text x="270" y="673" class="btn-primary-text">CONTINUAR EM T0</text>
+  <text x="28" y="710" class="text-sub">Mapeamento cor-a-ranhura Canvas planeado para a v2.</text>
 </svg>

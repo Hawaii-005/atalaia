@@ -63,9 +63,9 @@
     <text x="180" y="48" class="btn-primary-text">ENVIAR E ARRANCAR</text>
     <text x="180" y="66" font-size="12" fill="#ced4da" text-anchor="middle">(Valida bloqueios da Fila + Mesa Limpa)</text>
 
-    <!-- Pôr na Fila -->
+    <!-- Pôr na Fila Local (Sem envio de rede imediato) -->
     <rect x="0" y="86" width="360" height="48" class="btn-secondary"/>
-    <text x="180" y="116" class="btn-secondary-text">ENVIAR E PÔR NA FILA LOCAL</text>
+    <text x="180" y="116" class="btn-secondary-text">PÔR NA FILA LOCAL (SEM ENVIO IMEDIATO)</text>
 
     <!-- Apenas Upload -->
     <rect x="0" y="142" width="360" height="48" class="btn-secondary"/>
@@ -85,18 +85,18 @@
   <text x="28" y="636" class="text-body">• Ranhura Canvas: T0 (Preto / PLA)</text>
   <text x="28" y="652" class="text-body">• Tempo estimado: 1h 48m (42.6 g)</text>
 
-  <!-- Validação de Bloqueios da Fila: VARIANTE BLOQUEADA (Exemplo: Impressora Ocupada) -->
-  <rect x="25" y="662" width="340" height="92" rx="4" fill="#fff5f5" stroke="#ffc9c9" stroke-width="1.2"/>
-  <text x="35" y="680" font-size="12" font-weight="700" fill="#c92a2a">✕ ARRANQUE BLOQUEADO (REGRAS DA FILA):</text>
-  <text x="35" y="698" class="text-body">• Impressora ocupada: atualmente a imprimir peça_anterior.gcode</text>
-  <text x="35" y="714" class="text-sub">Motivo: arranque imediato só é permitido com máquina ociosa.</text>
-  <text x="35" y="730" font-size="12" font-weight="600" fill="#495057">Solução: Enviar o ficheiro e colocar na Fila de Impressão.</text>
+  <!-- Validação de Bloqueios da Fila (Req 3d e 3f) -->
+  <rect x="25" y="662" width="340" height="96" rx="4" fill="#fff9db" stroke="#f08c00" stroke-width="1.2"/>
+  <text x="35" y="680" font-size="12" font-weight="700" fill="#212529">VERIFICAÇÃO DE PRÉ-ARRANQUE:</text>
+  <text x="35" y="696" class="text-body">• Impressora ociosa (será revalidada antes de print.start)</text>
+  <text x="35" y="712" font-size="12" font-weight="700" fill="#b06200">⚠ AVISO: Filamento estimado &gt; registado no rolo (Apenas aviso)</text>
+  <text x="35" y="728" class="text-sub">Não bloqueia o arranque. Confirmação: Mesa 100% desobstruída?</text>
 
-  <!-- Botões do Modal: Variante Bloqueada (Confirmar desativado / Pôr na fila ativo) -->
+  <!-- Botões do Modal: Variante com Aviso Aceitável -->
   <rect x="25" y="764" width="140" height="52" class="btn-secondary"/>
-  <text x="95" y="796" class="btn-secondary-text">FECHAR</text>
+  <text x="95" y="796" class="btn-secondary-text">CANCELAR</text>
 
-  <!-- Botão Pôr na Fila em vez de Arrancar -->
+  <!-- Botão Confirmar e Arrancar com revalidação imediata -->
   <rect x="175" y="764" width="190" height="52" class="btn-primary"/>
-  <text x="270" y="796" class="btn-primary-text">PÔR NA FILA LOCAL</text>
+  <text x="270" y="796" class="btn-primary-text">CONFIRMAR E ARRANCAR</text>
 </svg>

@@ -1,25 +1,65 @@
 # Fatiador Integrado no Atalaia (libslic3r + Klipper / Cosmos AFC)
 
-Documento de arquitetura, fluxos, acessibilidade, matriz de capacidades e especificação de estados para o módulo de fatiamento local no Atalaia (`Hawaii-005/atalaia`).
+Documento de arquitetura, fluxos, acessibilidade, matriz de capacidades, licenciamento e especificação de estados para o módulo de fatiamento no Atalaia (`Hawaii-005/atalaia`).
 
 ---
 
-## 1. Ficheiros de Wireframes Low-Fi (Exportados por Ecrã)
+## 1. Alternativas de Arquitetura e Licenciamento (Decisão Pendente)
+
+O Atalaia é um fork do CC-Tool licenciado sob licença **MIT** (permissiva). O fatiamento local baseado em `libslic3r` introduz restrições legais decorrentes da licença **GNU AGPL v3**. Estão definidas três opções formais:
+
+- **Opção A (Atalaia sob AGPL v3):**
+  - O motor `libslic3r` é integrado diretamente no APK do Atalaia via JNI/NDK (`libslice_core.so`).
+  - *Implicação legal:* Toda a aplicação Atalaia passa a ser distribuída sob a GNU AGPL v3. Exige disponibilização integral e pública de todo o código-fonte correspondente (incluindo scripts de build e modificações nativas).
+  - *Requisito técnico:* O ficheiro `libslice_core.so` tem de ser compilado de raiz com toolchain reproduzível NDK r25b+, nunca extraído de APKs de terceiros.
+- **Opção B (Módulo / APK Companheiro Isolado via IPC):**
+  - O Atalaia permanece 100% sob licença **MIT**.
+  - O fatiador reside num APK separado ("Atalaia Slicer Daemon" ou serviço em background sob AGPL v3).
+  - A comunicação entre o Atalaia e o fatiador é feita estritamente através de IPC do Android (AIDL / `Messenger` / UNIX domain socket local), mantendo a separação de processos e evitando a contaminação viral da licença MIT do Atalaia.
+- **Opção C (App SlicePilot Separada via "Partilhar" / Intents - Zero Binário no Atalaia):**
+  - O Atalaia não incorpora qualquer código C++, JNI, NDK ou binário `libslice_core.so`.
+  - O utilizador instala a aplicação SlicePilot independente. O Atalaia limita-se a receber o ficheiro G-code fatiado através do intent padrão de partilha (`ACTION_SEND` / "Partilhar com Atalaia"), entrando diretamente no fluxo da Fase 5 (Ficheiros / Envio Moonraker).
+  - *Vantagens:* Zero risco de licença, zero aumento no tamanho do APK do Atalaia, complexidade de compilação C++ externa à aplicação.
+
+> **Garantia:** Nenhuma destas opções será implementada em código nem nenhum binário será introduzido no repositório até aprovação e escolha explícita do utilizador.
+
+---
+
+## 2. Esforço de Compilação do `libslice_core.so` e Exigências AGPL-3 (Para Opções A ou B)
+
+Compilar o `libslice_core.so` de forma reproduzível a partir do código-fonte representa um esforço de engenharia substancial:
+1. **Toolchain e Dependências:**
+   - Exige Android NDK r25b+, CMake 3.22+, Ninja, e compilação cruzada para `arm64-v8a` das seguintes bibliotecas estáticas C++ pesadas:
+     - Boost (system, filesystem, thread, log, locale, iostreams) com configuração em `boost-user-config.jam`
+     - TBB (Intel Threading Building Blocks)
+     - OpenVDB, Blosc, ZLIB
+     - CGAL 5.x e Eigen 3.4
+     - `libslic3r` (árvore C++ do PrusaSlicer/OrcaSlicer adaptada)
+2. **Tempo e Recursos de Build:**
+   - A compilação completa demora entre 45 a 90 minutos num processador multi-core moderno e consome ~25 GB de espaço em disco em artefatos intermediários.
+   - O repositório SlicePilot fornece um script mestre (`android/native-build/build.sh`), mas que exige patches de paths para compilação fora de ambientes Linux Ubuntu específicos.
+3. **Exigências Estritas da AGPL v3 (Código-Fonte Correspondente):**
+   - A secção 1 da AGPL v3 define o "Código-Fonte Correspondente" como todo o código necessário para gerar, instalar e executar o binário, incluindo scripts de controlo de compilação (`build.sh`, `CMakeLists.txt`), receitas de patches e definições de dependências exatas.
+   - Distribuir um binário pré-compilado sem fornecer o script e a árvore exata que o gerou viola a licença AGPL v3.
+
+---
+
+## 3. Ficheiros de Wireframes Low-Fi (Exportados por Ecrã)
 
 Todos os wireframes seguem a convenção low-fi estrutural do repositório (tons de cinzento, blocos numerados, tipografia mínima de 12 px, áreas de toque >= 48 px e contraste WCAG AA):
 
 - `wireframe-tablet-1180x740.svg`: Vista master-detail do tablet (1180×740) com visualizador 3D do volume de construção e painel lateral de fatiamento.
-- `wireframe-phone-01-config.svg`: `[E1]` Configurar fatiamento (STL, perfil, ranhura Canvas, botão visível "Escolher manualmente", parâmetros, estimativa pré-fatiamento e botão Fatiar).
-- `wireframe-phone-02-viewer.svg`: `[E1B]` Visualizador 3D do modelo e volume de construção da mesa (exemplo CC1: 256×256×256 mm extraído do perfil) com estados `Cabe`, `Excede` ou `Desconhecido`.
-- `wireframe-phone-03-slicing.svg`: `[E2]` Fatiamento em curso (percentagem, barra, tempo decorrido, modal de confirmação ao carregar em Voltar/Cancelar com limpeza de temporários e aviso de app em primeiro plano).
-- `wireframe-phone-04-error.svg`: `[E3]` Falha no fatiamento (diagnóstico, estado de fatiamento interrompido pelo sistema/background, catálogo de erros tratados e ações de recuperação).
-- `wireframe-phone-05-result.svg`: `[E4]` Resultado do fatiamento (pré-visualização 2D com slider de 48 px, métricas reais, aviso de perfil novo não verificado, ações de envio/guarda e modal de arranque com bloqueios da Fila e variante bloqueada).
-- `wireframe-phone-06-upload.svg`: `[E5]` Upload para o Moonraker (progresso HTTP multipart, cancelamento com limpeza e tratamento de impressora ocupada, autenticação falhada ou espaço insuficiente).
-- `wireframe-phone-07-saved.svg`: `[E6]` Ficheiro guardado localmente (mecanismos de armazenamento Android: pasta da app com partilha nativa vs. pasta escolhida via SAF).
+- `wireframe-phone-01-config.svg`: `[E1]` Configurar fatiamento (STL/3MF, perfil, ranhura Canvas, modal de confirmação para 3MF multi-cor em ranhura única, estimativa pré-fatiamento e botão Fatiar).
+- `wireframe-phone-02-viewer.svg`: `[E1B]` Visualizador 3D do modelo e volume de construção da mesa (256×256×256 mm) com estados `Cabe`, `Excede o volume útil` (bloqueio v1, sem escala nem rotação), `Volume do perfil indisponível` e `Dimensões do STL desconhecidas`.
+- `wireframe-phone-03-slicing.svg`: `[E2]` Fatiamento em curso (WakeLock/ecrã mantido ligado, persistência de marca de trabalho em disco, sem eliminação imediata em minimização).
+- `wireframe-phone-04-error.svg`: `[E3]` Falha no fatiamento (diagnóstico, deteção de fatiamento interrompido através de marca gravada ao regressar com limpeza de temporários).
+- `wireframe-phone-05-result.svg`: `[E4]` Resultado do fatiamento (pré-visualização 2D com slider de 48 px, ação de "Pôr na Fila Local" sem envio imediato, e modal de arranque com aviso não bloqueante de filamento e revalidação de máquina ociosa).
+- `wireframe-phone-06-upload.svg`: `[E5]` Upload para o Moonraker (progresso multipart, revalidação pré-arranque imediata, catálogo de erros: ocupada, 401/403, espaço insuficiente, timeout LAN e falha em `print.start`).
+- `wireframe-phone-07-saved.svg`: `[E6]` Ficheiro guardado localmente (mecanismos Android: pasta interna com partilha vs. Storage Access Framework).
 
 ---
 
-## 2. Lista Numerada dos Blocos de Interface
+## 4. Lista Numerada dos Blocos de Interface
 
 ### [E1] Ecrã de Configuração / Seleção (`wireframe-phone-01-config.svg`)
 1. **[1] Modelo Selecionado:** Cartão tocável com nome do ficheiro STL/3MF, tamanho em disco, dimensões cúbicas e chevron indicando abertura do seletor de documentos.
@@ -37,120 +77,146 @@ Todos os wireframes seguem a convenção low-fi estrutural do repositório (tons
    - Preenchimento (Infill): Cartão tocável com chevron (`15% Gyroid`).
    - Suportes: Cartão tocável com chevron (`Árvore / Tree`, `Normal`, `Desligado`).
 5. **[5] Estimativa Pré-Fatiamento:** Mostra estritamente `Tempo: —` e `Filamento: —` antes do fatiamento.
-6. **[6] Ações Principais:**
+6. **[6] Ações Principais e Confirmação 3MF:**
    - Botão **"VISUALIZAR MODELO 3D (VOLUME)"**: Transita para `[E1B]`.
-   - Botão **"FATIAR"**: Inicia o motor nativo. Não existe atalho direto de impressão antes do resultado.
+   - Botão **"FATIAR"**: Inicia o motor nativo.
+   - **Modal de Confirmação 3MF Multi-Cor:** Ao carregar um 3MF com múltiplas cores, abre modal de confirmação explícita alertando que na v1 o modelo será impresso integralmente na ranhura selecionada (`T0`).
 
 ### [E1B] Visor 3D e Volume de Construção (`wireframe-phone-02-viewer.svg`)
 7. **[V1] Viewport 3D:** Representação da mesa e volume útil extraídos dinamicamente do perfil de máquina (exemplo CC1: 256×256×256 mm).
-8. **[V2] Estado de Conformidade de Volume:**
+8. **[V2] Estados de Conformidade de Volume Rigorosamente Separados:**
    - **Cabe:** Dimensões dentro dos limites do perfil; autoriza fatiamento.
-   - **Excede:** Dimensões ultrapassam o volume útil; bloqueia fatiamento e sugere rotação ou escala.
-   - **Desconhecido:** Ficheiro STL com cabeçalho truncado ou dimensões não calculáveis antes do parsing total.
+   - **Excede o volume útil (v1):** Dimensões ultrapassam a mesa. Na v1 não há manipulação de escala nem rotação; o fatiamento é estritamente bloqueado.
+   - **Volume do perfil indisponível:** O JSON do perfil de máquina não contém valores válidos de `printable_area` ou `printable_height`.
+   - **Dimensões do STL desconhecidas:** O ficheiro STL possui cabeçalho corrompido ou malha sem vértices mensuráveis antes da leitura completa.
 
 ### [E2] Ecrã de Fatiamento em Curso (`wireframe-phone-03-slicing.svg`)
 9. **[7] Progresso do Motor Nativo (libslic3r):**
    - Mostra percentagem numérica (`58%`), barra de progresso AA, etapa atual do fatiamento e tempo decorrido.
 10. **[8] Botão Cancelar e Interceção de Voltar:**
-    - Toque no botão "Cancelar" ou no botão nativo "Voltar" do Android abre modal de confirmação: *"Cancelar fatiamento em curso? Se saíres agora, o cálculo será abortado e os ficheiros temporários .tmp serão eliminados"*.
-11. **Aviso de Primeiro Plano:** Alerta o utilizador para manter a aplicação aberta, pois a suspensão pelo Android interrompe o processo NDK.
+    - Toque em "Cancelar" ou no botão nativo "Voltar" abre modal de confirmação para abortar cálculo e limpar `.tmp`.
+11. **Ecrã Mantido Ligado e Gestão de Background:**
+    - Ativação de `WakeLock` / `keepScreenOn` para impedir suspensão do ecrã durante o cálculo.
+    - Gravação de uma marca de trabalho persistente em disco (`.job_active`). Se a app for minimizada, os temporários **não são apagados de imediato**. A interrupção é tratada no regresso.
 
 ### [E3] Ecrã de Falha no Fatiamento (`wireframe-phone-04-error.svg`)
 12. **[9] Painel de Erro e Diagnóstico:**
-    - Mensagem amigável de erro (ex.: *Geometria não-manifold detetada*).
-    - Caixa com exemplo ilustrativo de log do `libslic3r`.
-    - Catálogo de erros tratados:
-      - **Fatiamento interrompido pelo sistema:** Acionado se a aplicação for enviada para segundo plano pelo SO.
-      - **Memória esgotada (OOM):** Proteção em modelos excessivamente densos.
-      - **Modelo fora do volume:** Validação de limites geométricos.
-      - **Ficheiro truncado ou corrompido.**
-      - **Espaço insuficiente em disco.**
-13. **[10] Ações de Recuperação:** Botão para tentar com auto-reparação, escolher outro modelo ou voltar.
+    - Mensagem amigável de erro e log resumido.
+    - **Fatiamento Interrompido Detetado por Marca ao Regressar:** Se a aplicação for terminada ou a thread suspensa pelo SO durante background, a presença da marca ao reabrir a app direciona para este ecrã, realizando nesse momento a limpeza dos ficheiros parciais `.tmp`.
+    - Outros erros tratados: Memória esgotada (OOM), modelo fora do volume, ficheiro corrompido e disco cheio.
+13. **[10] Ações de Recuperação:** Auto-reparação, escolher outro modelo ou voltar.
 
 ### [E4] Ecrã de Resultado do Fatiamento (`wireframe-phone-05-result.svg`)
-14. **[11] Vista 2D de Camadas:** Visualização da trajetória com slider de altura mínima de **48 px** para navegação precisa camada a camada.
+14. **[11] Vista 2D de Camadas:** Visualização da trajetória com slider de altura mínima de **48 px** para navegação camada a camada.
 15. **[12] Dados Reais do G-code Gerado:**
-    - Tempo real calculado (ex.: `1h 48m`), filamento real (ex.: `42.6 g • 13.8 m`) e camadas totais (`340`).
-    - **Aviso de Perfil:** *"Gerado com o perfil Cosmos AFC (não verificado na impressora). Primeira impressão com perfil novo: vigia as primeiras camadas e valida o nivelamento da mesa."*
-16. **[13] Destino do G-code:** Enviar e Arrancar, Pôr na Fila Local, Apenas Upload HTTP ou Guardar G-code Local.
-17. **[14] Modal de Arranque Imediato (Bloqueios da Fila + Mesa Limpa):**
-    - Mostra nome do ficheiro, perfil, ranhura e duração estimada.
-    - **Variante Bloqueada:** Se a impressora estiver ocupada, sem ligação, ranhura incompatível ou filamento insuficiente, o botão de confirmação é desativado/substituído por *"Pôr na Fila Local"*, com o motivo explícito no cartão.
+    - Tempo real calculado (ex.: `1h 48m`), filamento real (ex.: `42.6 g • 13.8 m`) e total de camadas (`340`).
+    - Aviso de perfil: *"Gerado com o perfil Cosmos AFC (não verificado na impressora). Primeira impressão com perfil novo: vigia as primeiras camadas."*
+16. **[13] Destinos do G-code:**
+    - **Enviar e Arrancar:** Transita para validação e envio imediato.
+    - **Pôr na Fila Local:** Cria o item na base de dados local do Atalaia **sem efetuar qualquer envio de rede imediato**.
+    - **Apenas Upload:** Envia via Moonraker e encerra no estado `UPLOAD_ONLY_COMPLETED`.
+    - **Guardar G-code:** Grava no armazenamento local Android.
+17. **[14] Modal de Arranque Imediato:**
+    - Confirmação de mesa 100% desobstruída.
+    - **Filamento insuficiente:** Tratado como **aviso informativo não bloqueante** (alinhado com o módulo da Fila). O utilizador pode prosseguir se confirmar.
+    - **Revalidação de ociosidade:** A ociosidade é validada no modal e reconfirmada de imediato antes de invocar `printer.print.start`.
 
 ### [E5] Ecrã de Upload Moonraker (`wireframe-phone-06-upload.svg`)
-18. **[15] Progresso do Envio HTTP Multipart:** Barra de progresso, velocidade de transferência e botão de cancelamento com limpeza remota.
-19. **[16] Erros Tratados:** Impressora ocupada, autenticação falhada (401/403) e espaço insuficiente na impressora.
+18. **[15] Progresso do Envio HTTP Multipart:** Percentagem, velocidade de transferência e botão de cancelamento com remoção remota de ficheiro parcial.
+19. **[16] Catálogo Completo de Erros e Estados de Envio:**
+    - **Impressora Ocupada / Revalidação Falhada:** Detetado que a máquina iniciou outro trabalho antes do arranque; upload é mantido ou cancelado conforme o fluxo.
+    - **Autenticação Falhada (401/403):** Token da API Moonraker rejeitado.
+    - **Sem Espaço no Destino:** Erro 507 do Moonraker.
+    - **Timeout de Rede:** Falha na ligação LAN com a Centauri Carbon.
+    - **Falha em `print.start`:** Ficheiro é enviado com sucesso, mas a chamada à macro Klipper é recusada.
 
 ### [E6] Ecrã de Ficheiro Guardado (`wireframe-phone-07-saved.svg`)
 20. **[17] Mecanismos de Armazenamento Android:**
-    - **Opção A (Padrão):** Pasta interna da aplicação (`context.getExternalFilesDir("gcodes")`) com partilha imediata via `ACTION_SEND`.
-    - **Opção B:** Pasta escolhida pelo utilizador via Android Storage Access Framework (SAF).
-21. **[18] Ações Finais:** Partilhar ficheiro, guardar via SAF, ver na lista local do Atalaia ou voltar ao início.
+    - Pasta interna da aplicação com partilha direta (`ACTION_SEND`).
+    - Pasta escolhida pelo utilizador via Android Storage Access Framework (SAF).
 
 ---
 
-## 3. Comportamento no Tablet (`wireframe-tablet-1180x740.svg`)
+## 5. Comportamento no Tablet (`wireframe-tablet-1180x740.svg`)
 
-- **Reutilização Integral de Estados:** O tablet reutiliza **100% da máquina de estados do telemóvel** (`[E1B]` a `[E6]`).
-- **Master-Detail:** O visor 3D do volume de construção (`[T1]`) e a configuração (`[T2]` a `[T6]`) coexistem lado a lado.
-- **Modais:** Confirmações, bloqueios de arranque e falhas surgem em caixas modais sobrepostas de 500 px.
+- **Reutilização Integral:** Reutiliza 100% dos estados do telemóvel (`[E1B]` a `[E6]`).
+- **Master-Detail:** Visor 3D da mesa e configuração coexistem lado a lado.
+- Modais de confirmação, fila local e diagnósticos surgem como janelas sobrepostas de 500 px.
 
 ---
 
-## 4. Tabela de Estados da Interface
+## 6. Tabela Completa de Estados da Interface
 
 | Estado Lógico | Ecrã Ativo | Entradas Possíveis | Ação Desencadeada | Próximo Estado |
 |---|---|---|---|---|
 | `CONFIG_IDLE` | `[E1]` | Tocar em Modelo | Abre `DocumentPicker` | `CONFIG_IDLE` |
+| `CONFIG_IDLE` | `[E1]` | Carrega 3MF multi-cor | Deteta cores múltiplas; abre modal | `CONFIRM_3MF_MONO` |
+| `CONFIRM_3MF_MONO` | `[E1]` | Cancelar | Rejeita ficheiro ou volta | `CONFIG_IDLE` |
+| `CONFIRM_3MF_MONO` | `[E1]` | Confirmar T0 | Aceita modelo simplificado a uma ranhura | `CONFIG_IDLE` |
 | `CONFIG_IDLE` | `[E1]` | Mudar Perfil | Altera perfil; se != AFC desativa Canvas | `CONFIG_IDLE` |
 | `CONFIG_IDLE` | `[E1]` | Escolher Ranhura | Abre seletor manual ou define T0..T3 | `CONFIG_IDLE` |
 | `CONFIG_IDLE` | `[E1]` | "Visualizar Modelo" | Abre visualizador 3D com volume | `VIEWER_3D` |
 | `CONFIG_IDLE` | `[E1]` | "Fatiar" | Valida restrições e inicia NDK | `SLICING_ACTIVE` |
-| `VIEWER_3D` | `[E1B]` | Modelo excede mesa | Desativa fatiar; avisa escala | `VIEWER_3D` |
-| `VIEWER_3D` | `[E1B]` | "Voltar e Fatiar" | Regressa à configuração ou fatia | `CONFIG_IDLE` / `SLICING_ACTIVE` |
-| `SLICING_ACTIVE` | `[E2]` | Callback NDK | Atualiza progresso (0-100%) | `SLICING_ACTIVE` |
+| `VIEWER_3D` | `[E1B]` | Modelo cabe | Habilita botão de fatiamento | `VIEWER_3D` |
+| `VIEWER_3D` | `[E1B]` | Modelo excede mesa | Desativa fatiar (v1 sem escala/rotação) | `VIEWER_3D` |
+| `VIEWER_3D` | `[E1B]` | Perfil sem volume | Alerta volume de perfil indisponível | `VIEWER_3D` |
+| `VIEWER_3D` | `[E1B]` | STL não mensurável | Alerta dimensões de STL desconhecidas | `VIEWER_3D` |
+| `VIEWER_3D` | `[E1B]` | "Voltar e Fatiar" | Regressa à configuração e fatia | `SLICING_ACTIVE` |
+| `SLICING_ACTIVE` | `[E2]` | Início do cálculo | Liga WakeLock e grava marca de job | `SLICING_ACTIVE` |
+| `SLICING_ACTIVE` | `[E2]` | Callback NDK | Atualiza percentagem (0-100%) | `SLICING_ACTIVE` |
 | `SLICING_ACTIVE` | `[E2]` | Cancelar / Voltar | Abre modal de confirmação de saída | `CONFIRM_CANCEL_SLICING` |
-| `CONFIRM_CANCEL_SLICING` | `[E2]` | "Sim, Cancelar" | `nativeCancel()` e limpa `.tmp` | `CONFIG_IDLE` |
-| `CONFIRM_CANCEL_SLICING` | `[E2]` | "Continuar" | Fecha modal e retoma UI de progresso | `SLICING_ACTIVE` |
-| `SLICING_ACTIVE` | `[E2]` | App em background | SO suspende NDK; limpa parciais | `SLICING_ERROR` (`background_interrupted`) |
-| `SLICING_ACTIVE` | `[E2]` | Erro motor C++ | Lê código de erro e limpa `.tmp` | `SLICING_ERROR` |
-| `SLICING_ACTIVE` | `[E2]` | Sucesso C++ | Extrai dados e prepara preview | `SLICING_RESULT` |
+| `CONFIRM_CANCEL_SLICING` | `[E2]` | "Sim, Cancelar" | Aborta NDK, remove marca e limpa `.tmp` | `CONFIG_IDLE` |
+| `CONFIRM_CANCEL_SLICING` | `[E2]` | "Continuar" | Fecha modal e mantém fatiamento | `SLICING_ACTIVE` |
+| `SLICING_ACTIVE` | `[E2]` | App minimizada | WakeLock tenta manter; marca permanece | `SLICING_ACTIVE` |
+| `SLICING_ACTIVE` | `[E2]` | Reabertura com job morto | SO matou processo; deteta marca e limpa | `SLICING_ERROR` (`interrupted`) |
+| `SLICING_ACTIVE` | `[E2]` | Erro motor C++ | Lê erro, remove marca e limpa `.tmp` | `SLICING_ERROR` |
+| `SLICING_ACTIVE` | `[E2]` | Sucesso C++ | Remove marca, gera preview e transita | `SLICING_RESULT` |
 | `SLICING_ERROR` | `[E3]` | "Auto-Reparação" | Reexecuta com flag de reparação | `SLICING_ACTIVE` |
 | `SLICING_ERROR` | `[E3]` | "Escolher Outro" | Abre seletor de ficheiros | `CONFIG_IDLE` |
 | `SLICING_RESULT` | `[E4]` | Mover slider (48px) | Renderiza camada selecionada | `SLICING_RESULT` |
+| `SLICING_RESULT` | `[E4]` | "Pôr na Fila Local" | Cria registo na BD local (sem envio) | `QUEUE_SAVED_LOCAL` |
+| `SLICING_RESULT` | `[E4]` | "Apenas Upload" | Inicia upload multipart sem arranque | `UPLOADING_ONLY` |
 | `SLICING_RESULT` | `[E4]` | "Enviar e Arrancar" | Avalia regras da Fila; abre modal | `CONFIRM_START_MODAL` |
-| `CONFIRM_START_MODAL`| `[E4]` | Impressora livre | Confirma mesa limpa e arranca | `UPLOADING` |
-| `CONFIRM_START_MODAL`| `[E4]` | Impressora ocupada | Variante bloqueada: "Pôr na Fila" | `UPLOADING` (ou Fila) |
+| `CONFIRM_START_MODAL`| `[E4]` | Filamento baixo | Mostra aviso informativo não bloqueante | `CONFIRM_START_MODAL` |
+| `CONFIRM_START_MODAL`| `[E4]` | Máquina ocupada | Bloqueia arranque; sugere Fila Local | `CONFIRM_START_MODAL` |
+| `CONFIRM_START_MODAL`| `[E4]` | Confirmar arranque | Inicia envio Moonraker | `UPLOADING_FOR_PRINT` |
+| `UPLOADING_ONLY` | `[E5]` | Upload concluído | Concluído com sucesso (ficheiro na CC1) | `UPLOAD_ONLY_COMPLETED` |
+| `UPLOADING_FOR_PRINT`| `[E5]` | Upload concluído | Revalida se impressora está ociosa | `PRE_PRINT_VERIFY` |
+| `PRE_PRINT_VERIFY` | `[E5]` | Impressora ocupada | Cancela disparo; avisa utilizador | `ERROR_PRINTER_BUSY` |
+| `PRE_PRINT_VERIFY` | `[E5]` | Impressora ociosa | Dispara chamada `printer.print.start` | `DISPATCHING_PRINT` |
+| `DISPATCHING_PRINT` | `[E5]` | Sucesso macro Klipper | Arranca e redireciona para monitor | `PRINTING_STARTED` |
+| `DISPATCHING_PRINT` | `[E5]` | Erro no `print.start` | Ficheiro enviado mas macro recusada | `ERROR_PRINT_START_FAILED` |
+| `UPLOADING_*` | `[E5]` | Erro 401/403 | Falha de autenticação | `ERROR_UPLOAD_AUTH` |
+| `UPLOADING_*` | `[E5]` | Erro 507 | Espaço insuficiente no eMMC | `ERROR_UPLOAD_NO_SPACE` |
+| `UPLOADING_*` | `[E5]` | Timeout de socket | Falha de ligação LAN | `ERROR_UPLOAD_TIMEOUT` |
+| `UPLOADING_*` | `[E5]` | Cancelar upload | Aborta requisição e remove parcial | `SLICING_RESULT` |
 | `SLICING_RESULT` | `[E4]` | "Guardar G-code" | Grava via pasta da app ou SAF | `SAVED_LOCAL` |
-| `UPLOADING` | `[E5]` | Progresso HTTP | Atualiza percentagem e velocidade | `UPLOADING` |
-| `UPLOADING` | `[E5]` | Cancelar envio | Fecha socket e limpa remoto | `SLICING_RESULT` |
-| `UPLOADING` | `[E5]` | Envio concluído | Se arranque: dispara impressão | `PRINTING_STARTED` |
 | `SAVED_LOCAL` | `[E6]` | "Partilhar" | Despacha intent `ACTION_SEND` | `SAVED_LOCAL` |
 | `SAVED_LOCAL` | `[E6]` | "Guardar com SAF" | Abre seletor de pastas Android | `SAVED_LOCAL` |
 
 ---
 
-## 5. Perguntas «Depende de X» a Verificar na Impressora
+## 7. Perguntas «Depende de X» a Validar na Impressora
 
-1. **Porta e Endereço do Moonraker:**
-   - *Pergunta:* O Moonraker no firmware COSMOS da CC1 responde na porta 80 HTTP direta ou na 7125 padrão do Klipper?
-   - *Comportamento se não verificado:* O Atalaia tenta a porta configurada no perfil da impressora (porta 80) com fallback para 7125.
-2. **Telemetria do Módulo Canvas AFC:**
-   - *Pergunta:* O Klipper/Moonraker expõe as cores e filamentos das 4 ranhuras através do objeto `printer.canvas` ou via variáveis de macro salvas?
-   - *Comportamento se não verificado:* Se a consulta falhar, a interface disponibiliza o botão explícito "Escolher manualmente" para o utilizador definir a ranhura ativa.
-3. **Comportamento da Macro `PRINT_START` com AFC:**
-   - *Pergunta:* A macro aceita os parâmetros `TOOL={initial_tool}` e `PURGE_LENGTH` exatamente como formatado pelo perfil OrcaSlicer?
-   - *Comportamento se não verificado:* O ficheiro G-code gerado inclui o aviso de perfil não verificado para validação da primeira camada.
-4. **Callbacks de Progresso e Logs do Motor NDK:**
-   - *Pergunta:* A biblioteca C++ exporta callbacks linha a linha para etapas de fatiamento ou apenas percentagem global?
-   - *Comportamento se não verificado:* A interface mostra texto genérico caso os passos específicos não sejam emitidos pelo motor.
+1. **Porta e Protocolo Moonraker:**
+   - *Pergunta:* O firmware COSMOS da CC1 expõe o Moonraker na porta 80 ou na 7125?
+   - *Fallback:* Tentativa prioritária na porta configurada com fallback automático.
+2. **Telemetria de Ranhuras Canvas AFC:**
+   - *Pergunta:* O Klipper expõe o estado de filamento/cor das 4 ranhuras através do objeto `printer.canvas` ou variáveis salvas?
+   - *Fallback:* Disponibilização obrigatória do botão "Escolher manualmente" para seleção de T0..T3.
+3. **Parâmetros da Macro `PRINT_START`:**
+   - *Pergunta:* A macro aceita os parâmetros `TOOL={initial_tool}` e `PURGE_LENGTH` gerados pelo fatiador?
+   - *Fallback:* Alerta explícito de primeira impressão com perfil não verificado.
+4. **Callbacks de Progresso do libslic3r:**
+   - *Pergunta:* O motor exporta passos detalhados ou apenas percentagem global?
+   - *Fallback:* Exibição de barra genérica e percentagem quando não houver detalhe.
 5. **Suporte Nativo a Auto-Reparação de Malha:**
-   - *Pergunta:* A compilação do `libslic3r` inclui suporte completo ao reparo de malhas não-manifold via CGAL/Boost?
-   - *Comportamento se não verificado:* Na ausência de suporte no binário, a opção direciona para escolha de outro modelo.
+   - *Pergunta:* O binário compilado tem CGAL/Boost ativado para reparação de geometrias não-manifold?
+   - *Fallback:* Se ausente, aviso para substituição do ficheiro STL.
 
 ---
 
-## 6. Matriz de Capacidades e Perfis
+## 8. Matriz de Capacidades dos Perfis
 
 | Parâmetro Técnico | Cosmos AFC (Recomendado) | Cosmos Mono | OpenCentauri | Stock Elegoo (SDCP) |
 |---|---|---|---|---|
@@ -164,7 +230,7 @@ Todos os wireframes seguem a convenção low-fi estrutural do repositório (tons
 
 ---
 
-## 7. Política Multi-Cor (Escopo v1 vs v2)
+## 9. Política Multi-Cor (Escopo v1 vs v2)
 
-- **Escopo v1:** Suporte estrito a modelos STL mono-cor com atribuição a uma ranhura do Canvas (`T0..T3`).
-- **Ficheiros 3MF Multi-Cor:** O mapeamento avançado de cores para ranhuras fica **fora da v1**. Ficheiros 3MF carregados na v1 são fatiados utilizando a ranhura primária selecionada, apresentando um aviso explícito de simplificação para prevenir falhas no motor nativo.
+- **Escopo v1:** Suporte estrito a modelos STL mono-cor atribuídos a uma ranhura (`T0..T3`). Ficheiros 3MF multi-cor exigem confirmação explícita para fatiamento com cor única na ranhura selecionada.
+- **Escopo v2:** Mapeamento visual avançado de corpos/cores do 3MF para as ranhuras do módulo Canvas AFC.
