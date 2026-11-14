@@ -1,92 +1,317 @@
-<svg viewBox="0 0 390 844" width="390" height="844" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
-  <!-- Background -->
-  <rect width="390" height="844" fill="#090A0F"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2400 900" width="2400" height="900" style="background:#ffffff; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <style>
+      .screen-bg { fill: #f8f9fa; stroke: #adb5bd; stroke-width: 2; }
+      .header-bg { fill: #ffffff; stroke: #dee2e6; stroke-width: 1; }
+      .header-title { font-size: 15px; font-weight: 700; fill: #212529; }
+      .block-box { fill: #ffffff; stroke: #6c757d; stroke-width: 1.5; stroke-dasharray: 4; }
+      .solid-box { fill: #ffffff; stroke: #495057; stroke-width: 1.5; }
+      .label-num { font-size: 12px; font-weight: 700; fill: #495057; }
+      .text-title { font-size: 13px; font-weight: 700; fill: #212529; }
+      .text-body { font-size: 12px; fill: #495057; }
+      .text-muted { font-size: 12px; fill: #6c757d; }
+      .text-sub { font-size: 12px; fill: #868e96; }
+      .btn-primary { fill: #212529; rx: 8px; }
+      .btn-primary-text { font-size: 14px; font-weight: 700; fill: #ffffff; text-anchor: middle; }
+      .btn-secondary { fill: #ffffff; stroke: #495057; stroke-width: 1.5; rx: 8px; }
+      .btn-secondary-text { font-size: 13px; font-weight: 600; fill: #343a40; text-anchor: middle; }
+      .btn-danger { fill: #ffffff; stroke: #c92a2a; stroke-width: 1.5; rx: 8px; }
+      .btn-danger-text { font-size: 13px; font-weight: 700; fill: #c92a2a; text-anchor: middle; }
+      .chevron { fill: none; stroke: #495057; stroke-width: 2; stroke-linecap: round; }
+    </style>
+  </defs>
 
-  <!-- Top Bar / Header -->
-  <rect x="0" y="0" width="390" height="88" fill="#12141C"/>
-  <path d="M 24 54 L 34 44 M 24 54 L 34 64" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round"/>
-  <text x="50" y="58" fill="#F8FAFC" font-size="18" font-weight="700">Fatiar Modelo 3D</text>
-  <rect x="300" y="42" width="70" height="28" rx="6" fill="#1E2330"/>
-  <text x="335" y="60" fill="#38BDF8" font-size="12" font-weight="600" text-anchor="middle">COSMOS</text>
+  <!-- ========================================================================= -->
+  <!-- SCREEN 1: CONFIGURAÇÃO / SELEÇÃO (x: 20)                                  -->
+  <!-- ========================================================================= -->
+  <g transform="translate(20, 20)">
+    <rect width="370" height="844" rx="14" class="screen-bg"/>
+    <rect width="370" height="56" rx="14" class="header-bg"/>
+    <text x="20" y="35" class="header-title">[E1] FATIAR MODELO 3D</text>
 
-  <!-- Model Info Card -->
-  <rect x="16" y="104" width="358" height="80" rx="12" fill="#161922" stroke="#262B3A" stroke-width="1"/>
-  <rect x="28" y="116" width="56" height="56" rx="8" fill="#222838"/>
-  <path d="M 56 128 L 70 136 L 56 144 L 42 136 Z M 42 138 L 42 150 L 56 158 L 56 146 Z M 70 138 L 70 150 L 56 158 L 56 146 Z" fill="none" stroke="#38BDF8" stroke-width="1.5"/>
-  <text x="96" y="136" fill="#F8FAFC" font-size="15" font-weight="600">suporte_cabo_cc1.stl</text>
-  <text x="96" y="156" fill="#94A3B8" font-size="12">14.2 MB • 45 × 32 × 68 mm</text>
+    <!-- [1] Modelo e Ficheiro -->
+    <rect x="15" y="70" width="340" height="66" rx="8" class="solid-box"/>
+    <text x="25" y="90" class="label-num">[1] MODELO SELECIONADO</text>
+    <text x="25" y="110" class="text-title">suporte_cabo_cc1.stl</text>
+    <text x="25" y="126" class="text-sub">14.2 MB • 45 × 32 × 68 mm (Toque p/ trocar)</text>
+    <path d="M 335 98 L 343 104 L 335 110" class="chevron"/>
 
-  <!-- Printer Profile Selection -->
-  <text x="20" y="210" fill="#94A3B8" font-size="12" font-weight="700" letter-spacing="0.5">PERFIL DE MÁQUINA &amp; FIRMWARE</text>
-  <rect x="16" y="222" width="358" height="52" rx="10" fill="#161922" stroke="#38BDF8" stroke-width="1.5"/>
-  <circle cx="36" cy="248" r="6" fill="#38BDF8"/>
-  <text x="52" y="244" fill="#F8FAFC" font-size="14" font-weight="600">Centauri Carbon 0.4 — Cosmos AFC</text>
-  <text x="52" y="260" fill="#38BDF8" font-size="11">Klipper + Moonraker + Módulo Canvas</text>
+    <!-- [2] Seletor de Perfil -->
+    <rect x="15" y="148" width="340" height="154" rx="8" class="block-box"/>
+    <text x="25" y="168" class="label-num">[2] SELETOR DE PERFIL DE MÁQUINA</text>
+    
+    <!-- Opção A (Selecionada) -->
+    <rect x="25" y="178" width="320" height="48" rx="6" fill="#e9ecef" stroke="#212529" stroke-width="1.5"/>
+    <circle cx="42" cy="196" r="6" fill="#212529"/>
+    <text x="56" y="196" class="text-title">Cosmos AFC (0.4 nozzle)</text>
+    <text x="56" y="214" class="text-sub">Klipper + multi-cor Canvas (pistas T0..T3)</text>
 
-  <!-- Material & Canvas Slot Selector -->
-  <text x="20" y="300" fill="#94A3B8" font-size="12" font-weight="700" letter-spacing="0.5">RANHURA CANVAS (AFC)</text>
-  <g transform="translate(16, 312)">
-    <!-- Slot 1 (Selected) -->
-    <rect x="0" y="0" width="82" height="64" rx="8" fill="#1E293B" stroke="#38BDF8" stroke-width="2"/>
-    <circle cx="20" cy="22" r="8" fill="#EF4444"/>
-    <text x="34" y="26" fill="#F8FAFC" font-size="13" font-weight="700">T0</text>
-    <text x="12" y="48" fill="#94A3B8" font-size="11">PLA Preto</text>
+    <!-- Opção B -->
+    <rect x="25" y="230" width="320" height="34" rx="6" fill="#ffffff" stroke="#ced4da" stroke-width="1"/>
+    <circle cx="42" cy="247" r="6" fill="none" stroke="#6c757d" stroke-width="1.5"/>
+    <text x="56" y="252" class="text-body">Cosmos Mono (0.4 nozzle)</text>
 
-    <!-- Slot 2 -->
-    <rect x="92" y="0" width="82" height="64" rx="8" fill="#161922" stroke="#262B3A" stroke-width="1"/>
-    <circle cx="112" cy="22" r="8" fill="#FFFFFF"/>
-    <text x="126" y="26" fill="#94A3B8" font-size="13" font-weight="700">T1</text>
-    <text x="104" y="48" fill="#64748B" font-size="11">PLA Branco</text>
+    <!-- Opção C -->
+    <rect x="25" y="268" width="320" height="30" rx="6" fill="#ffffff" stroke="#ced4da" stroke-width="1"/>
+    <circle cx="42" cy="283" r="6" fill="none" stroke="#6c757d" stroke-width="1.5"/>
+    <text x="56" y="287" class="text-body">OpenCentauri (0.4 nozzle)</text>
 
-    <!-- Slot 3 -->
-    <rect x="184" y="0" width="82" height="64" rx="8" fill="#161922" stroke="#262B3A" stroke-width="1"/>
-    <circle cx="204" cy="22" r="8" fill="#3B82F6"/>
-    <text x="218" y="26" fill="#94A3B8" font-size="13" font-weight="700">T2</text>
-    <text x="196" y="48" fill="#64748B" font-size="11">PETG Azul</text>
+    <!-- [3] Ranhura Canvas AFC -->
+    <rect x="15" y="314" width="340" height="96" rx="8" class="block-box"/>
+    <text x="25" y="334" class="label-num">[3] RANHURA CANVAS AFC (Ativo no Perfil AFC)</text>
+    <text x="25" y="348" class="text-sub">Depende de: Perfil Cosmos AFC ativo</text>
+    <g transform="translate(25, 354)">
+      <!-- T0 (Ativo) -->
+      <rect x="0" y="0" width="74" height="48" rx="6" fill="#212529" stroke="#212529" stroke-width="1.5"/>
+      <circle cx="16" cy="18" r="6" fill="#ffffff"/>
+      <text x="28" y="22" font-size="12" font-weight="700" fill="#ffffff">T0</text>
+      <text x="8" y="38" font-size="12" fill="#e9ecef">Preto (PLA)</text>
 
-    <!-- Slot 4 -->
-    <rect x="276" y="0" width="82" height="64" rx="8" fill="#161922" stroke="#262B3A" stroke-width="1"/>
-    <circle cx="296" cy="22" r="8" fill="#EAB308"/>
-    <text x="310" y="26" fill="#94A3B8" font-size="13" font-weight="700">T3</text>
-    <text x="288" y="48" fill="#64748B" font-size="11">ABS Laranja</text>
+      <!-- T1 -->
+      <rect x="80" y="0" width="74" height="48" rx="6" fill="#ffffff" stroke="#adb5bd" stroke-width="1"/>
+      <circle cx="96" cy="18" r="6" fill="#ced4da"/>
+      <text x="108" y="22" font-size="12" font-weight="700" fill="#495057">T1</text>
+      <text x="88" y="38" font-size="12" fill="#6c757d">Branco</text>
+
+      <!-- T2 -->
+      <rect x="160" y="0" width="74" height="48" rx="6" fill="#ffffff" stroke="#adb5bd" stroke-width="1"/>
+      <circle cx="176" cy="18" r="6" fill="#ced4da"/>
+      <text x="188" y="22" font-size="12" font-weight="700" fill="#495057">T2</text>
+      <text x="168" y="38" font-size="12" fill="#6c757d">Azul</text>
+
+      <!-- T3 -->
+      <rect x="240" y="0" width="76" height="48" rx="6" fill="#ffffff" stroke="#adb5bd" stroke-width="1"/>
+      <circle cx="256" cy="18" r="6" fill="#ced4da"/>
+      <text x="268" y="22" font-size="12" font-weight="700" fill="#495057">T3</text>
+      <text x="248" y="38" font-size="12" fill="#6c757d">Laranja</text>
+    </g>
+
+    <!-- [4] Parâmetros de Impressão -->
+    <rect x="15" y="422" width="340" height="154" rx="8" class="solid-box"/>
+    <text x="25" y="442" class="label-num">[4] PARÂMETROS BÁSICOS DE IMPRESSÃO</text>
+    
+    <!-- Altura de camada -->
+    <rect x="25" y="452" width="320" height="48" rx="6" fill="#f1f3f5" stroke="#ced4da" stroke-width="1"/>
+    <rect x="130" y="456" width="110" height="40" rx="6" fill="#212529"/>
+    <text x="75" y="480" class="text-body" text-anchor="middle">0.12</text>
+    <text x="185" y="480" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">0.20 Standard</text>
+    <text x="290" y="480" class="text-body" text-anchor="middle">0.28</text>
+
+    <!-- Infill e Suportes (min touch 48px) -->
+    <rect x="25" y="512" width="154" height="50" rx="6" fill="#ffffff" stroke="#ced4da" stroke-width="1"/>
+    <text x="35" y="530" class="text-sub">INFILL (Toque)</text>
+    <text x="35" y="550" class="text-title">15% Gyroid</text>
+    <path d="M 165 536 L 171 540 L 165 544" class="chevron"/>
+
+    <rect x="191" y="512" width="154" height="50" rx="6" fill="#ffffff" stroke="#ced4da" stroke-width="1"/>
+    <text x="201" y="530" class="text-sub">SUPORTES (Toque)</text>
+    <text x="201" y="550" class="text-title">Árvore (Tree)</text>
+    <path d="M 331 536 L 337 540 L 331 544" class="chevron"/>
+
+    <!-- [5] Estimativa Pré-Fatiamento -->
+    <rect x="15" y="588" width="340" height="66" rx="8" class="solid-box"/>
+    <text x="25" y="608" class="label-num">[5] ESTIMATIVA (Calculada após fatiamento)</text>
+    <text x="25" y="632" font-size="14" font-weight="700" fill="#495057">Tempo: —</text>
+    <text x="190" y="632" font-size="14" font-weight="700" fill="#495057">Filamento: —</text>
+    <text x="25" y="646" class="text-sub">Valores exatos gerados no ecrã de resultado</text>
+
+    <!-- [6] Ação Primária: Fatiar -->
+    <rect x="15" y="760" width="340" height="52" class="btn-primary"/>
+    <text x="185" y="792" class="btn-primary-text">[6] FATIAR</text>
   </g>
 
-  <!-- Slicing Parameters -->
-  <text x="20" y="404" fill="#94A3B8" font-size="12" font-weight="700" letter-spacing="0.5">PARÂMETROS DE IMPRESSÃO</text>
-  
-  <!-- Layer Height Segmented -->
-  <rect x="16" y="416" width="358" height="44" rx="8" fill="#161922" stroke="#262B3A" stroke-width="1"/>
-  <rect x="122" y="420" width="116" height="36" rx="6" fill="#2563EB"/>
-  <text x="68" y="443" fill="#94A3B8" font-size="13" text-anchor="middle">0.12 Fina</text>
-  <text x="180" y="443" fill="#FFFFFF" font-size="13" font-weight="600" text-anchor="middle">0.20 Standard</text>
-  <text x="294" y="443" fill="#94A3B8" font-size="13" text-anchor="middle">0.28 Rápida</text>
+  <!-- ========================================================================= -->
+  <!-- SCREEN 2: A FATIAR / PROGRESSO (x: 415)                                    -->
+  <!-- ========================================================================= -->
+  <g transform="translate(415, 20)">
+    <rect width="370" height="844" rx="14" class="screen-bg"/>
+    <rect width="370" height="56" rx="14" class="header-bg"/>
+    <text x="20" y="35" class="header-title">[E2] FATIAMENTO EM CURSO</text>
 
-  <!-- Infill & Supports Row -->
-  <g transform="translate(16, 474)">
-    <rect x="0" y="0" width="173" height="60" rx="8" fill="#161922" stroke="#262B3A" stroke-width="1"/>
-    <text x="14" y="24" fill="#94A3B8" font-size="11">PREENCHIMENTO</text>
-    <text x="14" y="46" fill="#F8FAFC" font-size="14" font-weight="600">15% Gyroid</text>
+    <!-- [7] Caixa de Progresso -->
+    <rect x="15" y="160" width="340" height="260" rx="10" class="solid-box"/>
+    <text x="25" y="195" class="label-num">[7] MOTOR NATIVO LIBSLIC3R</text>
+    <text x="185" y="240" font-size="34" font-weight="700" fill="#212529" text-anchor="middle">58%</text>
+    
+    <!-- Barra de progresso -->
+    <rect x="35" y="260" width="300" height="12" rx="6" fill="#e9ecef"/>
+    <rect x="35" y="260" width="174" height="12" rx="6" fill="#212529"/>
 
-    <rect x="185" y="0" width="173" height="60" rx="8" fill="#161922" stroke="#262B3A" stroke-width="1"/>
-    <text x="199" y="24" fill="#94A3B8" font-size="11">SUPORTES</text>
-    <text x="199" y="46" fill="#F8FAFC" font-size="14" font-weight="600">Árvore (Tree)</text>
+    <text x="185" y="300" class="text-title" text-anchor="middle">A gerar perímetros e preenchimento...</text>
+    <text x="185" y="324" class="text-sub" text-anchor="middle">Passo 4 de 7: Gerar infill Gyroid</text>
+    <text x="185" y="348" class="text-sub" text-anchor="middle">Tempo decorrido: 00:08</text>
+
+    <!-- [8] Botão Cancelar -->
+    <rect x="35" y="360" width="300" height="48" class="btn-danger"/>
+    <text x="185" y="390" class="btn-danger-text">[8] CANCELAR FATIAMENTO</text>
   </g>
 
-  <!-- Estimation Box -->
-  <rect x="16" y="550" width="358" height="70" rx="10" fill="#121824" stroke="#1E293B" stroke-width="1"/>
-  <text x="32" y="578" fill="#94A3B8" font-size="12">Estimativa prevista:</text>
-  <text x="32" y="602" fill="#38BDF8" font-size="18" font-weight="700">~ 1h 42m</text>
-  <text x="200" y="578" fill="#94A3B8" font-size="12">Filamento estimado:</text>
-  <text x="200" y="602" fill="#F8FAFC" font-size="18" font-weight="700">38g (12.4m)</text>
+  <!-- ========================================================================= -->
+  <!-- SCREEN 3: ERRO DE FATIAMENTO (x: 810)                                     -->
+  <!-- ========================================================================= -->
+  <g transform="translate(810, 20)">
+    <rect width="370" height="844" rx="14" class="screen-bg"/>
+    <rect width="370" height="56" rx="14" class="header-bg"/>
+    <text x="20" y="35" class="header-title">[E3] FALHA NO FATIAMENTO</text>
 
-  <!-- Action Buttons -->
-  <g transform="translate(16, 680)">
-    <!-- Primary CTA: Slice & Print -->
-    <rect x="0" y="0" width="358" height="54" rx="12" fill="#2563EB"/>
-    <text x="179" y="33" fill="#FFFFFF" font-size="16" font-weight="700" text-anchor="middle">Fatiar e Imprimir no COSMOS</text>
+    <!-- [9] Painel de Erro -->
+    <rect x="15" y="120" width="340" height="420" rx="10" fill="#fff5f5" stroke="#ffc9c9" stroke-width="1.5"/>
+    <circle cx="185" cy="170" r="24" fill="#fa5252"/>
+    <text x="185" y="177" font-size="20" font-weight="700" fill="#ffffff" text-anchor="middle">✕</text>
+    <text x="185" y="220" font-size="16" font-weight="700" fill="#c92a2a" text-anchor="middle">[9] ERRO DO MOTOR NATIVO</text>
+    
+    <text x="35" y="250" class="text-title">Geometria não-manifold detetada</text>
+    <text x="35" y="272" class="text-body">O modelo STL possui faces abertas ou normais invertidas que impedem o cálculo de camadas.</text>
 
-    <!-- Secondary CTA: Only Slice -->
-    <rect x="0" y="66" width="358" height="48" rx="12" fill="none" stroke="#334155" stroke-width="1.5"/>
-    <text x="179" y="96" fill="#94A3B8" font-size="14" font-weight="600" text-anchor="middle">Apenas Gerar G-code</text>
+    <!-- Detalhe técnico / Logs -->
+    <rect x="30" y="300" width="310" height="130" rx="6" fill="#ffffff" stroke="#dee2e6" stroke-width="1"/>
+    <text x="40" y="322" class="label-num">DETALHE DO LIBSLIC3R:</text>
+    <text x="40" y="344" font-family="monospace" font-size="12" fill="#495057">Model::repair() failed</text>
+    <text x="40" y="364" font-family="monospace" font-size="12" fill="#495057">Intersecting facets in layer 14</text>
+    <text x="40" y="384" font-family="monospace" font-size="12" fill="#495057">Exit status: 2 (Unrecoverable)</text>
+    <text x="40" y="404" font-family="monospace" font-size="12" fill="#868e96">NDK thread terminated safely.</text>
+
+    <!-- [10] Ações de Erro -->
+    <rect x="30" y="450" width="310" height="48" class="btn-primary"/>
+    <text x="185" y="480" class="btn-primary-text">[10] TENTAR COM AUTO-REPARAÇÃO</text>
+    
+    <rect x="30" y="506" width="310" height="48" class="btn-secondary"/>
+    <text x="185" y="535" class="btn-secondary-text">ESCOLHER OUTRO MODELO</text>
+  </g>
+
+  <!-- ========================================================================= -->
+  <!-- SCREEN 4: RESULTADO (x: 1205)                                             -->
+  <!-- ========================================================================= -->
+  <g transform="translate(1205, 20)">
+    <rect width="370" height="844" rx="14" class="screen-bg"/>
+    <rect width="370" height="56" rx="14" class="header-bg"/>
+    <text x="20" y="35" class="header-title">[E4] RESULTADO DO FATIAMENTO</text>
+
+    <!-- [11] Vista 2D de Camadas -->
+    <rect x="15" y="70" width="340" height="200" rx="8" class="solid-box"/>
+    <rect x="25" y="80" width="320" height="144" rx="6" fill="#212529"/>
+    <!-- Gcode toolpath dummy -->
+    <path d="M 80 170 L 160 110 L 250 120 L 270 180 L 190 200 Z" fill="none" stroke="#ced4da" stroke-width="2"/>
+    <path d="M 100 165 L 160 125 L 235 132 L 250 175 L 190 190 Z" fill="none" stroke="#6c757d" stroke-width="1.5"/>
+    <text x="35" y="104" font-size="12" font-weight="700" fill="#ffffff">[11] PRÉ-VISUALIZAÇÃO 2D</text>
+    <text x="35" y="214" font-size="12" fill="#adb5bd">Camada 142 de 340 (Z = 28.40 mm)</text>
+    <!-- Slider de camadas (min 48px touch) -->
+    <rect x="25" y="228" width="320" height="34" rx="4" fill="#f8f9fa" stroke="#ced4da" stroke-width="1"/>
+    <text x="35" y="250" class="text-sub">Arrastar slider para inspecionar camadas</text>
+
+    <!-- [12] Métricas Reais e Avisos -->
+    <rect x="15" y="280" width="340" height="120" rx="8" class="solid-box"/>
+    <text x="25" y="300" class="label-num">[12] DADOS REAIS DO G-CODE GERADO</text>
+    <text x="25" y="326" font-size="18" font-weight="700" fill="#212529">1h 48m</text>
+    <text x="25" y="342" class="text-sub">Tempo de impressão</text>
+
+    <text x="140" y="326" font-size="18" font-weight="700" fill="#212529">42.6 g</text>
+    <text x="140" y="342" class="text-sub">Filamento (13.8 m)</text>
+
+    <text x="255" y="326" font-size="18" font-weight="700" fill="#212529">340</text>
+    <text x="255" y="342" class="text-sub">Camadas totais</text>
+
+    <!-- Aviso de conformidade -->
+    <rect x="25" y="356" width="320" height="34" rx="4" fill="#e9ecef"/>
+    <text x="35" y="377" class="text-body">✔ Perfil Cosmos AFC validado (G-code: Klipper)</text>
+
+    <!-- [13] Ações do Fatiamento (Grupo 48px) -->
+    <g transform="translate(15, 412)">
+      <text x="10" y="18" class="label-num">[13] DESTINO DO G-CODE</text>
+
+      <!-- Botão Enviar e Arrancar (Abre Confirmação Mesa Limpa) -->
+      <rect x="0" y="30" width="340" height="50" class="btn-primary"/>
+      <text x="170" y="61" class="btn-primary-text">ENVIAR E ARRANCAR (MESA LIMPA)</text>
+
+      <!-- Botão Pôr na Fila -->
+      <rect x="0" y="90" width="340" height="48" class="btn-secondary"/>
+      <text x="170" y="120" class="btn-secondary-text">ENVIAR E PÔR NA FILA LOCAL</text>
+
+      <!-- Botão Apenas Enviar para a Impressora -->
+      <rect x="0" y="148" width="340" height="48" class="btn-secondary"/>
+      <text x="170" y="178" class="btn-secondary-text">APENAS ENVIAR PARA COSMOS (UPLOAD)</text>
+
+      <!-- Botão Guardar Ficheiro G-code -->
+      <rect x="0" y="206" width="340" height="48" class="btn-secondary"/>
+      <text x="170" y="236" class="btn-secondary-text">GUARDAR FICHEIRO G-CODE LOCAL</text>
+    </g>
+
+    <!-- [14] Modal Sobreposto: Confirmação de Mesa Limpa -->
+    <rect x="25" y="680" width="320" height="144" rx="10" fill="#ffffff" stroke="#212529" stroke-width="2"/>
+    <text x="40" y="704" font-size="13" font-weight="700" fill="#c92a2a">[14] CONFIRMAR MESA LIMPA</text>
+    <text x="40" y="724" class="text-body">A superfície da mesa está 100% desobstruída e pronta para iniciar a impressão?</text>
+    <rect x="40" y="744" width="120" height="48" class="btn-secondary"/>
+    <text x="100" y="773" class="btn-secondary-text">CANCELAR</text>
+    <rect x="170" y="744" width="160" height="48" class="btn-primary"/>
+    <text x="250" y="773" class="btn-primary-text">SIM, ARRANCAR</text>
+  </g>
+
+  <!-- ========================================================================= -->
+  <!-- SCREEN 5: A ENVIAR (x: 1600)                                              -->
+  <!-- ========================================================================= -->
+  <g transform="translate(1600, 20)">
+    <rect width="370" height="844" rx="14" class="screen-bg"/>
+    <rect width="370" height="56" rx="14" class="header-bg"/>
+    <text x="20" y="35" class="header-title">[E5] UPLOAD PARA O MOONRAKER</text>
+
+    <!-- [15] Painel de Upload -->
+    <rect x="15" y="120" width="340" height="310" rx="10" class="solid-box"/>
+    <text x="25" y="150" class="label-num">[15] ENVIO HTTP MULTIPART (POST /server/files/upload)</text>
+    <text x="185" y="200" font-size="34" font-weight="700" fill="#212529" text-anchor="middle">74%</text>
+    
+    <rect x="35" y="220" width="300" height="12" rx="6" fill="#e9ecef"/>
+    <rect x="35" y="220" width="222" height="12" rx="6" fill="#212529"/>
+
+    <text x="185" y="260" class="text-title" text-anchor="middle">A transferir suporte_cabo_cc1.gcode</text>
+    <text x="185" y="284" class="text-sub" text-anchor="middle">5.8 MB de 7.9 MB (1.8 MB/s)</text>
+    <text x="185" y="308" class="text-sub" text-anchor="middle">Destino: http://192.168.1.5:80 (COSMOS)</text>
+
+    <rect x="35" y="340" width="300" height="48" class="btn-danger"/>
+    <text x="185" y="370" class="btn-danger-text">CANCELAR ENVIO</text>
+
+    <!-- [16] Estado de Falha / Recuperação no Envio -->
+    <rect x="15" y="450" width="340" height="220" rx="10" fill="#fff9db" stroke="#f08c00" stroke-width="1.5" stroke-dasharray="4"/>
+    <text x="25" y="475" font-size="12" font-weight="700" fill="#e67700">[16] TRATAMENTO DE FALHA DE REDE</text>
+    <text x="25" y="500" class="text-title">Conexão interrompida (Timeout Moonraker)</text>
+    <text x="25" y="522" class="text-body">O ficheiro G-code foi preservado intacto no armazenamento local do dispositivo.</text>
+    
+    <rect x="25" y="546" width="320" height="48" class="btn-primary"/>
+    <text x="185" y="576" class="btn-primary-text">TENTAR ENVIAR NOVAMENTE</text>
+
+    <rect x="25" y="604" width="320" height="48" class="btn-secondary"/>
+    <text x="185" y="634" class="btn-secondary-text">COLOCAR NA FILA OFFLINE</text>
+  </g>
+
+  <!-- ========================================================================= -->
+  <!-- SCREEN 6: G-CODE GUARDADO (x: 1995)                                       -->
+  <!-- ========================================================================= -->
+  <g transform="translate(1995, 20)">
+    <rect width="370" height="844" rx="14" class="screen-bg"/>
+    <rect width="370" height="56" rx="14" class="header-bg"/>
+    <text x="20" y="35" class="header-title">[E6] FICHEIRO GUARDADO</text>
+
+    <!-- [17] Confirmação Local -->
+    <rect x="15" y="140" width="340" height="380" rx="10" class="solid-box"/>
+    <circle cx="185" cy="195" r="28" fill="#2b8a3e"/>
+    <text x="185" y="204" font-size="24" font-weight="700" fill="#ffffff" text-anchor="middle">✔</text>
+
+    <text x="185" y="250" font-size="16" font-weight="700" fill="#212529" text-anchor="middle">[17] G-CODE GERADO COM SUCESSO</text>
+    <text x="35" y="280" class="text-body" text-anchor="middle">O ficheiro G-code foi guardado no armazenamento do telemóvel pronto para uso.</text>
+
+    <rect x="30" y="310" width="310" height="100" rx="6" fill="#f8f9fa" stroke="#dee2e6" stroke-width="1"/>
+    <text x="42" y="335" class="label-num">FICHEIRO:</text>
+    <text x="42" y="355" class="text-title">suporte_cabo_cc1.gcode (7.9 MB)</text>
+    <text x="42" y="375" class="text-sub">Destino: Documentos/Atalaia/Gcodes/</text>
+    <text x="42" y="395" class="text-sub">Formato: Klipper Flavor • Cosmos AFC</text>
+
+    <!-- [18] Ações Finais -->
+    <rect x="30" y="430" width="310" height="48" class="btn-primary"/>
+    <text x="185" y="460" class="btn-primary-text">[18] PARTILHAR FICHEIRO</text>
+
+    <rect x="30" y="488" width="310" height="48" class="btn-secondary"/>
+    <text x="185" y="518" class="btn-secondary-text">VER NA LISTA DE FICHEIROS</text>
+    
+    <rect x="30" y="546" width="310" height="48" class="btn-secondary"/>
+    <text x="185" y="576" class="btn-secondary-text">VOLTAR AO INÍCIO</text>
   </g>
 </svg>
