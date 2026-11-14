@@ -3,6 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 import { hexDe } from '../../theme/temas';
 import { t, useIdioma } from '../../i18n';
+import { fonteNumeros } from '../../theme/tokensV6';
 import { Controlo, MapaControlos } from '../../utils/controlos/capacidades';
 import { Slider } from './Slider';
 
@@ -98,6 +99,7 @@ export const CartaoVentilacao = ({
               accessibilityRole="button"
               accessibilityLabel={`${pct}%`}
               accessibilityState={{ disabled: !permitido, selected: escolhido }}
+              activeOpacity={0.8}
               style={[
                 estilos.chip,
                 {
@@ -112,8 +114,10 @@ export const CartaoVentilacao = ({
               <Text
                 style={{
                   fontSize: 13,
-                  fontWeight: '700',
+                  fontWeight: '800',
                   color: escolhido ? '#fff' : hexDe(p.tinta),
+                  fontFamily: fonteNumeros,
+                  letterSpacing: 0.5,
                 }}
               >
                 {pct}%
@@ -178,11 +182,11 @@ export const CartaoVentilacao = ({
 
 const estilos = StyleSheet.create({
   linha: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  titulo: { fontSize: 15, fontWeight: '700', flex: 1 },
+  titulo: { fontSize: 15, fontWeight: '800', letterSpacing: 0.3, flex: 1 },
   chip: {
     flex: 1,
     minHeight: 44,
-    borderRadius: 10,
+    borderRadius: 8,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

@@ -10,6 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../../contexts/ThemeContext';
 import { hexDe } from '../../theme/temas';
 import { t, useIdioma } from '../../i18n';
+import { fonteNumeros } from '../../theme/tokensV6';
 import { MapaControlos } from '../../utils/controlos/capacidades';
 import {
   CHAVE_TEMPERATURAS,
@@ -85,19 +86,24 @@ export const CartaoTemperaturas = ({
   };
 
   return (
-    <View style={{ gap: 10 }}>
+    <View style={{ gap: 12 }}>
       <View style={estilos.linha}>
         <Text style={[estilos.titulo, { color: hexDe(p.tinta) }]}>
           {t('painel.temperaturas')}
         </Text>
-        <Text style={{ fontSize: 12, color: hexDe(p.tintaSoft) }}>
-          {t('controlos.tempAtual', {
-            bico: String(Math.round(atual.bico)),
-            mesa: String(Math.round(atual.mesa)),
-          })}
+        <Text
+          style={{
+            fontSize: 11,
+            fontWeight: '700',
+            color: hexDe(p.tintaSoft),
+            fontFamily: fonteNumeros,
+          }}
+        >
+          {`${t('comum.bico')} ${Math.round(atual.bico)}° · ${t('comum.mesa')} ${Math.round(atual.mesa)}°`}
         </Text>
       </View>
 
+      {/* Grelha de Presets de Materiais */}
       <View style={estilos.linha}>
         {MATERIAIS.map(nome => {
           const activo = nome === material;
@@ -111,6 +117,7 @@ export const CartaoTemperaturas = ({
               accessibilityRole="button"
               accessibilityLabel={nome}
               accessibilityState={{ selected: activo }}
+              activeOpacity={0.8}
               style={[
                 estilos.chip,
                 {
@@ -123,8 +130,9 @@ export const CartaoTemperaturas = ({
             >
               <Text
                 style={{
-                  fontSize: 12,
-                  fontWeight: '700',
+                  fontSize: 12.5,
+                  fontWeight: '800',
+                  letterSpacing: 0.5,
                   color: activo ? '#fff' : hexDe(p.tinta),
                 }}
               >
@@ -133,10 +141,12 @@ export const CartaoTemperaturas = ({
               <Text
                 style={{
                   fontSize: 10,
-                  color: activo ? '#fff' : hexDe(p.tintaSoft),
+                  fontWeight: '700',
+                  fontFamily: fonteNumeros,
+                  color: activo ? '#ffffffdd' : hexDe(p.tintaSoft),
                 }}
               >
-                {`${presets[nome].bico}°/${presets[nome].mesa}°`}
+                {`${presets[nome].bico}° / ${presets[nome].mesa}°`}
               </Text>
             </TouchableOpacity>
           );
@@ -189,6 +199,7 @@ export const CartaoTemperaturas = ({
           accessibilityRole="button"
           accessibilityLabel={t('controlos.aplicarPreset', { material })}
           accessibilityState={{ disabled: !permitido }}
+          activeOpacity={0.8}
           style={[
             estilos.principal,
             {
@@ -197,8 +208,15 @@ export const CartaoTemperaturas = ({
             },
           ]}
         >
-          <Text style={{ fontSize: 13, fontWeight: '700', color: '#fff' }}>
-            {t('controlos.aplicarPreset', { material })}
+          <Text
+            style={{
+              fontSize: 12.5,
+              fontWeight: '800',
+              color: '#fff',
+              letterSpacing: 0.5,
+            }}
+          >
+            {t('controlos.aplicarPreset', { material }).toUpperCase()}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -207,15 +225,25 @@ export const CartaoTemperaturas = ({
           accessibilityRole="button"
           accessibilityLabel={t('controlos.arrefecer')}
           accessibilityState={{ disabled: !permitido }}
+          activeOpacity={0.8}
           style={[
             estilos.acao,
-            { borderColor: hexDe(p.linha), opacity: permitido ? 1 : 0.4 },
+            {
+              borderColor: hexDe(p.linha),
+              backgroundColor: hexDe(p.fundoBaixo),
+              opacity: permitido ? 1 : 0.4,
+            },
           ]}
         >
           <Text
-            style={{ fontSize: 12, fontWeight: '600', color: hexDe(p.tinta) }}
+            style={{
+              fontSize: 12,
+              fontWeight: '700',
+              color: hexDe(p.tinta),
+              letterSpacing: 0.3,
+            }}
           >
-            {t('controlos.arrefecer')}
+            {t('controlos.arrefecer').toUpperCase()}
           </Text>
         </TouchableOpacity>
       </View>

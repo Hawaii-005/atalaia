@@ -3,6 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 import { hexDe } from '../../theme/temas';
 import { t, useIdioma } from '../../i18n';
+import { fonteNumeros } from '../../theme/tokensV6';
 import {
   Disponibilidade,
   MapaControlos,
@@ -46,7 +47,14 @@ export const SecaoResina = ({
           {ligada ? t('inicio.pronta') : t('inicio.semLigacao')}
         </Text>
         {typeof progresso === 'number' && progresso > 0 ? (
-          <Text style={{ fontSize: 12, color: hexDe(p.tintaSoft) }}>
+          <Text
+            style={{
+              fontSize: 12,
+              fontWeight: '700',
+              fontFamily: fonteNumeros,
+              color: hexDe(p.tintaSoft),
+            }}
+          >
             {`${Math.round(progresso)}%`}
             {restanteSeg ? ` · ${formatDuracao(restanteSeg)}` : ''}
           </Text>
@@ -99,18 +107,25 @@ export const SecaoResina = ({
         accessibilityRole="button"
         accessibilityLabel={t('comum.parar')}
         accessibilityState={{ disabled: !temFicheiro }}
+        activeOpacity={0.8}
         style={[
           estilos.parar,
           {
             borderColor: hexDe(p.perigo),
+            backgroundColor: hexDe(p.perigo) + '18',
             opacity: temFicheiro ? 1 : 0.4,
           },
         ]}
       >
         <Text
-          style={{ fontSize: 14, fontWeight: '700', color: hexDe(p.perigo) }}
+          style={{
+            fontSize: 13,
+            fontWeight: '800',
+            color: hexDe(p.perigo),
+            letterSpacing: 0.5,
+          }}
         >
-          {t('comum.parar')}
+          {t('comum.parar').toUpperCase()}
         </Text>
       </TouchableOpacity>
     </View>
