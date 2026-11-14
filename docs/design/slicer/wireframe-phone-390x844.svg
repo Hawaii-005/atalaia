@@ -1,0 +1,92 @@
+<svg viewBox="0 0 390 844" width="390" height="844" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <!-- Background -->
+  <rect width="390" height="844" fill="#090A0F"/>
+
+  <!-- Top Bar / Header -->
+  <rect x="0" y="0" width="390" height="88" fill="#12141C"/>
+  <path d="M 24 54 L 34 44 M 24 54 L 34 64" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round"/>
+  <text x="50" y="58" fill="#F8FAFC" font-size="18" font-weight="700">Fatiar Modelo 3D</text>
+  <rect x="300" y="42" width="70" height="28" rx="6" fill="#1E2330"/>
+  <text x="335" y="60" fill="#38BDF8" font-size="12" font-weight="600" text-anchor="middle">COSMOS</text>
+
+  <!-- Model Info Card -->
+  <rect x="16" y="104" width="358" height="80" rx="12" fill="#161922" stroke="#262B3A" stroke-width="1"/>
+  <rect x="28" y="116" width="56" height="56" rx="8" fill="#222838"/>
+  <path d="M 56 128 L 70 136 L 56 144 L 42 136 Z M 42 138 L 42 150 L 56 158 L 56 146 Z M 70 138 L 70 150 L 56 158 L 56 146 Z" fill="none" stroke="#38BDF8" stroke-width="1.5"/>
+  <text x="96" y="136" fill="#F8FAFC" font-size="15" font-weight="600">suporte_cabo_cc1.stl</text>
+  <text x="96" y="156" fill="#94A3B8" font-size="12">14.2 MB • 45 × 32 × 68 mm</text>
+
+  <!-- Printer Profile Selection -->
+  <text x="20" y="210" fill="#94A3B8" font-size="12" font-weight="700" letter-spacing="0.5">PERFIL DE MÁQUINA &amp; FIRMWARE</text>
+  <rect x="16" y="222" width="358" height="52" rx="10" fill="#161922" stroke="#38BDF8" stroke-width="1.5"/>
+  <circle cx="36" cy="248" r="6" fill="#38BDF8"/>
+  <text x="52" y="244" fill="#F8FAFC" font-size="14" font-weight="600">Centauri Carbon 0.4 — Cosmos AFC</text>
+  <text x="52" y="260" fill="#38BDF8" font-size="11">Klipper + Moonraker + Módulo Canvas</text>
+
+  <!-- Material & Canvas Slot Selector -->
+  <text x="20" y="300" fill="#94A3B8" font-size="12" font-weight="700" letter-spacing="0.5">RANHURA CANVAS (AFC)</text>
+  <g transform="translate(16, 312)">
+    <!-- Slot 1 (Selected) -->
+    <rect x="0" y="0" width="82" height="64" rx="8" fill="#1E293B" stroke="#38BDF8" stroke-width="2"/>
+    <circle cx="20" cy="22" r="8" fill="#EF4444"/>
+    <text x="34" y="26" fill="#F8FAFC" font-size="13" font-weight="700">T0</text>
+    <text x="12" y="48" fill="#94A3B8" font-size="11">PLA Preto</text>
+
+    <!-- Slot 2 -->
+    <rect x="92" y="0" width="82" height="64" rx="8" fill="#161922" stroke="#262B3A" stroke-width="1"/>
+    <circle cx="112" cy="22" r="8" fill="#FFFFFF"/>
+    <text x="126" y="26" fill="#94A3B8" font-size="13" font-weight="700">T1</text>
+    <text x="104" y="48" fill="#64748B" font-size="11">PLA Branco</text>
+
+    <!-- Slot 3 -->
+    <rect x="184" y="0" width="82" height="64" rx="8" fill="#161922" stroke="#262B3A" stroke-width="1"/>
+    <circle cx="204" cy="22" r="8" fill="#3B82F6"/>
+    <text x="218" y="26" fill="#94A3B8" font-size="13" font-weight="700">T2</text>
+    <text x="196" y="48" fill="#64748B" font-size="11">PETG Azul</text>
+
+    <!-- Slot 4 -->
+    <rect x="276" y="0" width="82" height="64" rx="8" fill="#161922" stroke="#262B3A" stroke-width="1"/>
+    <circle cx="296" cy="22" r="8" fill="#EAB308"/>
+    <text x="310" y="26" fill="#94A3B8" font-size="13" font-weight="700">T3</text>
+    <text x="288" y="48" fill="#64748B" font-size="11">ABS Laranja</text>
+  </g>
+
+  <!-- Slicing Parameters -->
+  <text x="20" y="404" fill="#94A3B8" font-size="12" font-weight="700" letter-spacing="0.5">PARÂMETROS DE IMPRESSÃO</text>
+  
+  <!-- Layer Height Segmented -->
+  <rect x="16" y="416" width="358" height="44" rx="8" fill="#161922" stroke="#262B3A" stroke-width="1"/>
+  <rect x="122" y="420" width="116" height="36" rx="6" fill="#2563EB"/>
+  <text x="68" y="443" fill="#94A3B8" font-size="13" text-anchor="middle">0.12 Fina</text>
+  <text x="180" y="443" fill="#FFFFFF" font-size="13" font-weight="600" text-anchor="middle">0.20 Standard</text>
+  <text x="294" y="443" fill="#94A3B8" font-size="13" text-anchor="middle">0.28 Rápida</text>
+
+  <!-- Infill & Supports Row -->
+  <g transform="translate(16, 474)">
+    <rect x="0" y="0" width="173" height="60" rx="8" fill="#161922" stroke="#262B3A" stroke-width="1"/>
+    <text x="14" y="24" fill="#94A3B8" font-size="11">PREENCHIMENTO</text>
+    <text x="14" y="46" fill="#F8FAFC" font-size="14" font-weight="600">15% Gyroid</text>
+
+    <rect x="185" y="0" width="173" height="60" rx="8" fill="#161922" stroke="#262B3A" stroke-width="1"/>
+    <text x="199" y="24" fill="#94A3B8" font-size="11">SUPORTES</text>
+    <text x="199" y="46" fill="#F8FAFC" font-size="14" font-weight="600">Árvore (Tree)</text>
+  </g>
+
+  <!-- Estimation Box -->
+  <rect x="16" y="550" width="358" height="70" rx="10" fill="#121824" stroke="#1E293B" stroke-width="1"/>
+  <text x="32" y="578" fill="#94A3B8" font-size="12">Estimativa prevista:</text>
+  <text x="32" y="602" fill="#38BDF8" font-size="18" font-weight="700">~ 1h 42m</text>
+  <text x="200" y="578" fill="#94A3B8" font-size="12">Filamento estimado:</text>
+  <text x="200" y="602" fill="#F8FAFC" font-size="18" font-weight="700">38g (12.4m)</text>
+
+  <!-- Action Buttons -->
+  <g transform="translate(16, 680)">
+    <!-- Primary CTA: Slice & Print -->
+    <rect x="0" y="0" width="358" height="54" rx="12" fill="#2563EB"/>
+    <text x="179" y="33" fill="#FFFFFF" font-size="16" font-weight="700" text-anchor="middle">Fatiar e Imprimir no COSMOS</text>
+
+    <!-- Secondary CTA: Only Slice -->
+    <rect x="0" y="66" width="358" height="48" rx="12" fill="none" stroke="#334155" stroke-width="1.5"/>
+    <text x="179" y="96" fill="#94A3B8" font-size="14" font-weight="600" text-anchor="middle">Apenas Gerar G-code</text>
+  </g>
+</svg>
