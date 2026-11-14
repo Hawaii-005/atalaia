@@ -47,6 +47,7 @@ import type { ConnectionStatus } from '../types';
 import { t, useIdioma } from '../i18n';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexDe } from '../theme/temas';
+import { fonteNumeros } from '../theme/tokensV6';
 import {
   BT_ACENTO,
   BT_APAGADA,
@@ -808,13 +809,13 @@ export const CameraScreen = ({ navigation, route }: any) => {
               <View className="flex-row items-baseline mt-0.5">
                 <Text
                   className="text-[15px] font-bold"
-                  style={{ color: item.cor, fontFamily: 'monospace' }}
+                  style={{ color: item.cor, fontFamily: fonteNumeros }}
                 >
                   {item.valor}
                 </Text>
                 <Text
                   className="text-[10px] text-ink-soft ml-1"
-                  style={{ fontFamily: 'monospace' }}
+                  style={{ fontFamily: fonteNumeros }}
                 >
                   {item.alvo > 0
                     ? `/ ${Math.round(item.alvo)}°`

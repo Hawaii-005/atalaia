@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePrinterConnections } from '../contexts/PrinterConnectionsContext';
 import { hexDe } from '../theme/temas';
+import { fonteNumeros } from '../theme/tokensV6';
 import { larguraMaximaConteudo } from '../theme/layout';
 import { useLayout } from '../hooks/useLayout';
 import { t, useIdioma } from '../i18n';
@@ -169,7 +170,14 @@ export const FilaScreen = ({ navigation }: any) => {
           >
             {t('fila.titulo')}
           </Text>
-          <Text style={{ fontSize: 12, color: hexDe(p.tintaSoft) }}>
+          <Text
+            style={{
+              fontSize: 11,
+              fontWeight: '600',
+              fontFamily: fonteNumeros,
+              color: hexDe(p.tintaSoft),
+            }}
+          >
             {itens.length === 1
               ? t('fila.contagemUm')
               : t('fila.contagem', { n: itens.length })}
