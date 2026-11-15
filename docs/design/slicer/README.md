@@ -13,13 +13,15 @@ O Atalaia é um fork do CC-Tool licenciado sob licença **MIT** (permissiva). O 
   - *Implicação legal:* Toda a aplicação Atalaia passa a ser distribuída sob a GNU AGPL v3. Exige disponibilização integral e pública de todo o código-fonte correspondente (incluindo scripts de build e modificações nativas).
   - *Requisito técnico:* O ficheiro `libslice_core.so` tem de ser compilado de raiz com toolchain reproduzível NDK r25b+, nunca extraído de APKs de terceiros.
 - **Opção B (Módulo / APK Companheiro Isolado via IPC):**
-  - O Atalaia permanece 100% sob licença **MIT**.
+  - O Atalaia permanece sob licença **MIT**.
   - O fatiador reside num APK separado ("Atalaia Slicer Daemon" ou serviço em background sob AGPL v3).
-  - A comunicação entre o Atalaia e o fatiador é feita estritamente através de IPC do Android (AIDL / `Messenger` / UNIX domain socket local), mantendo a separação de processos e evitando a contaminação viral da licença MIT do Atalaia.
+  - A comunicação entre o Atalaia e o fatiador é feita estritamente através de IPC do Android (AIDL / `Messenger` / UNIX domain socket local), mantendo a separação de processos.
+  - *Aviso legal:* O isolamento via IPC pode reduzir o risco de contaminação viral da licença MIT do Atalaia; não é uma garantia jurídica absoluta (consultar advogado de propriedade intelectual antes de distribuição pública ou comercial).
 - **Opção C (App SlicePilot Separada via "Partilhar" / Intents — Zero Código/Binário no Atalaia):**
   - O Atalaia não incorpora qualquer código C++, JNI, NDK ou binário `libslice_core.so`.
   - O utilizador instala a aplicação SlicePilot independente. O Atalaia limita-se a receber o ficheiro G-code fatiado através do intent padrão de partilha (`ACTION_SEND` / "Partilhar com Atalaia"), entrando diretamente no fluxo da Fase 5 (Ficheiros / Envio Moonraker).
   - *Vantagens:* Zero risco de contaminação da licença MIT, zero megabytes adicionados ao APK do Atalaia, complexidade de compilação C++ externa à aplicação.
+  - *Nota de privacidade e telemetria:* A aplicação SlicePilot proprietária inclui SDKs de telemetria (Firebase Analytics e Crashlytics) e fluxo de login na cloud da Elegoo. O Atalaia, por princípio, opera de forma 100% local, privada e sem telemetria.
 
 > **Garantia:** Nenhuma destas opções será implementada em código nem nenhum binário será introduzido no repositório até aprovação e escolha explícita do utilizador.
 
@@ -35,8 +37,9 @@ Compilar o `libslice_core.so` de forma reproduzível a partir do código-fonte r
      - OpenVDB, Blosc, ZLIB
      - CGAL 5.x e Eigen 3.4
      - `libslic3r` (árvore C++ do PrusaSlicer/OrcaSlicer adaptada)
-2. **Tempo e Recursos de Build:**
-   - A compilação completa demora entre 45 a 90 minutos num processador multi-core moderno e consome ~25 GB de espaço em disco em artefatos intermediários.
+2. **Tempo e Recursos de Build (Estimativas Empíricas):**
+   - *Tempo estimado:* A compilação completa demora entre ~45 a 90 minutos num processador multi-core moderno (estimativa sujeita ao hardware do host).
+   - *Espaço estimado:* Consome ~25 GB de espaço em disco em artefatos intermediários e árvores de dependências (estimativa sujeita às flags de depuração).
    - O repositório SlicePilot fornece um script mestre (`android/native-build/build.sh`), mas que exige patches de caminhos para compilação fora de ambientes Linux Ubuntu específicos.
 3. **Exigências Estritas da AGPL v3 (Código-Fonte Correspondente):**
    - A secção 1 da AGPL v3 define o "Código-Fonte Correspondente" como todo o código necessário para gerar, instalar e executar o binário, incluindo scripts de controlo de compilação (`build.sh`, `CMakeLists.txt`), receitas de patches e definições de dependências exatas.
@@ -51,10 +54,10 @@ Todos os wireframes seguem a convenção low-fi estrutural do repositório (tons
 - `wireframe-tablet-1180x740.svg`: Vista master-detail do tablet (1180×740) com visualizador 3D do volume de construção e painel lateral de fatiamento.
 - `wireframe-phone-01-config.svg`: `[E1]` Configurar fatiamento (STL/3MF, perfil, ranhura Canvas, modal de confirmação para 3MF multi-cor em ranhura única, estimativa pré-fatiamento e botão Fatiar).
 - `wireframe-phone-02-viewer.svg`: `[E1B]` Visualizador 3D do modelo e volume de construção da mesa (256×256×256 mm) com separação rigorosa de estados: `Cabe`, `Excede o volume útil` (bloqueio v1, sem escala nem rotação), `Volume do perfil indisponível` (avisa e permite) e `Dimensões do STL desconhecidas` (bloqueia).
-- `wireframe-phone-03-slicing.svg`: `[E2]` Fatiamento em curso (flag `keepScreenOn` ativa para manter ecrã ligado, persistência de marca `.job_active` em disco, sem eliminação imediata de parciais ao minimizar).
+- `wireframe-phone-03-slicing.svg`: `[E2]` Fatiamento em curso (flag `keepScreenOn` ativa com app visível, persistência de marca `.job_active` em disco, sem eliminação imediata de parciais ao minimizar).
 - `wireframe-phone-04-error.svg`: `[E3]` Falha no fatiamento (diagnóstico, deteção de fatiamento interrompido através de marca gravada ao regressar com limpeza de temporários).
 - `wireframe-phone-05-result.svg`: `[E4]` Resultado do fatiamento (pré-visualização 2D com slider de 48 px, ação de "Pôr na Fila Local" como item local sem envio imediato, e modal de arranque com aviso não bloqueante de filamento e revalidação de máquina ociosa).
-- `wireframe-phone-05b-result-blocked.svg`: `[E4B]` Variante bloqueada do modal de arranque (motivos explícitos de segurança: impressora ocupada, sem ligação > 60s ou ranhura incompatível, com botão primário para "Pôr na Fila Local").
+- `wireframe-phone-05b-result-blocked.svg`: `[E4B]` Variante bloqueada do modal de arranque (motivo coerente: impressora ocupada a imprimir e ligação ativa; lista de variantes independentes; botão primário para "Pôr na Fila Local").
 - `wireframe-phone-06-upload.svg`: `[E5]` Upload para o Moonraker (progresso multipart, revalidação pré-arranque imediata, estado "Apenas enviado" com botões manuais de arranque e conclusão sem timer de 3s; tratamento de timeout/sem espaço com tentativa de remoção parcial e aviso; catálogo de erros: 401/403, 507 e falha em `print.start`).
 - `wireframe-phone-07-saved.svg`: `[E6]` Ficheiro guardado localmente (mecanismos Android: pasta interna com partilha vs. Storage Access Framework).
 
@@ -96,16 +99,19 @@ Todos os wireframes seguem a convenção low-fi estrutural do repositório (tons
    - Mostra percentagem numérica (`58%`), barra de progresso AA, etapa atual do fatiamento e tempo decorrido.
 10. **[8] Botão Cancelar e Interceção de Voltar:**
     - Toque em "Cancelar" ou no botão nativo "Voltar" abre modal de confirmação para abortar cálculo e limpar `.tmp`.
-11. **Ecrã Mantido Ligado e Gestão de Background:**
-    - Ativação da flag `keepScreenOn` para impedir suspensão do ecrã durante o cálculo.
-    - Gravação de uma marca de trabalho persistente em disco (`.job_active`). Se a app for minimizada, os temporários **não são apagados de imediato**. A interrupção é tratada no regresso à app.
+11. **Ecrã Mantido Ligado e Gestão de Background / Ciclo de Vida:**
+    - A flag `keepScreenOn` mantém o ecrã ligado **apenas enquanto a aplicação estiver visível em primeiro plano**.
+    - Gravação de uma marca de trabalho persistente em disco (`.job_active`).
+    - *Comportamento se a aplicação for minimizada:* Os ficheiros temporários **não são apagados de imediato**.
+      - **Regresso a processo vivo com job a correr:** A thread NDK prossegue e a UI continua a atualizar (`SLICING_ACTIVE`).
+      - **Arranque a frio (cold start) com marca antiga:** Se o SO matou o processo e a app é reaberta do zero, a inicialização deteta a marca pendente, transita para `SLICING_ERROR` (`interrupted`), limpa os ficheiros temporários `.tmp` e remove a marca.
 
 ### [E3] Ecrã de Falha no Fatiamento (`wireframe-phone-04-error.svg`)
 12. **[9] Painel de Erro e Diagnóstico:**
     - Mensagem amigável de erro e log resumido.
-    - **Fatiamento Interrompido Detetado por Marca ao Regressar:** Se a aplicação for terminada ou a thread suspensa pelo SO durante background, a presença da marca ao reabrir a app direciona para este ecrã, realizando nesse momento a limpeza dos ficheiros parciais `.tmp`.
+    - **Fatiamento Interrompido Detetado por Marca ao Regressar:** Acionado em arranque a frio se a execução anterior tiver sido terminada pelo SO.
     - Outros erros tratados: Memória esgotada (OOM), modelo fora do volume, ficheiro corrompido e disco cheio.
-13. **[10] Ações de Recuperação:** Auto-reparação, escolher outro modelo ou voltar.
+13. **[10] Ações de Recuperação:** Auto-reparação, escolher outro modelo ou voltar ao início.
 
 ### [E4] Ecrã de Resultado do Fatiamento (`wireframe-phone-05-result.svg` e `wireframe-phone-05b-result-blocked.svg`)
 14. **[11] Vista 2D de Camadas:** Visualização da trajetória com slider de altura mínima de **48 px** para navegação camada a camada.
@@ -119,7 +125,7 @@ Todos os wireframes seguem a convenção low-fi estrutural do repositório (tons
     - **Guardar G-code:** Grava no armazenamento local Android.
 17. **[14] Modal de Arranque Imediato (`[E4]` vs `[E4B]`):**
     - **Variante Regular (`[E4]`):** Confirmação de mesa 100% desobstruída. Aviso de filamento insuficiente é **meramente informativo e não bloqueia** o arranque.
-    - **Variante Bloqueada (`[E4B]`):** Acionada se houver violação das regras de segurança (impressora ocupada, sem ligação > 60s ou ranhura de filamento incompatível). O botão de confirmação direta é desativado e substituído pela ação primária **"Pôr na Fila Local"** com os motivos explicitados.
+    - **Variante Bloqueada (`[E4B]`):** Acionada se houver violação das regras de segurança com dados coerentes (ex.: impressora ocupada a imprimir peça anterior com ligação Moonraker ativa). O botão de confirmação direta é desativado e substituído pela ação primária **"Pôr na Fila Local"**.
     - **Revalidação de ociosidade:** A ociosidade é validada no modal e reconfirmada de imediato antes de invocar `printer.print.start`.
 
 ### [E5] Ecrã de Upload Moonraker (`wireframe-phone-06-upload.svg`)
@@ -169,12 +175,13 @@ Todos os wireframes seguem a convenção low-fi estrutural do repositório (tons
 | `SLICING_ACTIVE` | `[E2]` | Cancelar / Voltar | Abre modal de confirmação de saída | `CONFIRM_CANCEL_SLICING` |
 | `CONFIRM_CANCEL_SLICING` | `[E2]` | "Sim, Cancelar" | Aborta NDK, remove marca e limpa `.tmp` | `CONFIG_IDLE` |
 | `CONFIRM_CANCEL_SLICING` | `[E2]` | "Continuar" | Fecha modal e mantém fatiamento | `SLICING_ACTIVE` |
-| `SLICING_ACTIVE` | `[E2]` | App minimizada | `keepScreenOn` tenta manter; marca fica | `SLICING_ACTIVE` |
-| `SLICING_ACTIVE` | `[E2]` | Reabertura com job morto | SO matou processo; deteta marca e limpa | `SLICING_ERROR` (`interrupted`) |
+| `SLICING_ACTIVE` | `[E2]` | Minimizada / Retoma vivo | Processo vivo com job a correr: continua | `SLICING_ACTIVE` |
+| `SLICING_ACTIVE` | `[E2]` | Cold start / Marca antiga | Processo morto pelo SO: deteta marca, limpa | `SLICING_ERROR` (`interrupted`) |
 | `SLICING_ACTIVE` | `[E2]` | Erro motor C++ | Lê erro, remove marca e limpa `.tmp` | `SLICING_ERROR` |
 | `SLICING_ACTIVE` | `[E2]` | Sucesso C++ | Remove marca, gera preview e transita | `SLICING_RESULT` |
 | `SLICING_ERROR` | `[E3]` | "Auto-Reparação" | Reexecuta com flag de reparação | `SLICING_ACTIVE` |
 | `SLICING_ERROR` | `[E3]` | "Escolher Outro" | Abre seletor de ficheiros | `CONFIG_IDLE` |
+| `SLICING_ERROR` | `[E3]` | "Voltar ao Início" | Limpa estado do fatiador | `CONFIG_IDLE` |
 | `SLICING_RESULT` | `[E4]` | Mover slider (48px) | Renderiza camada selecionada | `SLICING_RESULT` |
 | `SLICING_RESULT` | `[E4]` | "Pôr na Fila Local" | Cria registo na BD local (sem envio) | `QUEUE_SAVED_LOCAL` |
 | `SLICING_RESULT` | `[E4]` | "Apenas Upload" | Inicia upload multipart sem arranque | `UPLOADING_ONLY` |
@@ -193,9 +200,24 @@ Todos os wireframes seguem a convenção low-fi estrutural do repositório (tons
 | `PRE_PRINT_VERIFY` | `[E5]` | Impressora ociosa | Dispara chamada `printer.print.start` | `DISPATCHING_PRINT` |
 | `DISPATCHING_PRINT` | `[E5]` | Sucesso macro Klipper | Arranca e redireciona para monitor | `PRINTING_STARTED` |
 | `DISPATCHING_PRINT` | `[E5]` | Erro no `print.start` | Ficheiro enviado mas macro recusada | `ERROR_PRINT_START_FAILED` |
+| `ERROR_PRINTER_BUSY`| `[E5]` | "Pôr na Fila Local" | Adiciona trabalho à fila local | `QUEUE_SAVED_LOCAL` |
+| `ERROR_PRINTER_BUSY`| `[E5]` | "Voltar ao Resultado"| Regressa para rever dados de fatiamento | `SLICING_RESULT` |
 | `UPLOADING_*` | `[E5]` | Erro 401/403 | Falha de autenticação por token | `ERROR_UPLOAD_AUTH` |
+| `ERROR_UPLOAD_AUTH` | `[E5]` | "Configurar Credenciais" | Abre ecrã de definições da máquina | `SETTINGS_MACHINE` |
+| `ERROR_UPLOAD_AUTH` | `[E5]` | "Tentar de Novo" | Repete envio com credenciais atuais | `UPLOADING_ONLY` / `UPLOADING_FOR_PRINT` |
+| `ERROR_UPLOAD_AUTH` | `[E5]` | "Voltar ao Resultado"| Regressa à vista de camadas | `SLICING_RESULT` |
 | `UPLOADING_*` | `[E5]` | Erro 507 / Sem espaço | Tenta apagar parcial; se falhar avisa | `ERROR_UPLOAD_NO_SPACE` |
+| `ERROR_UPLOAD_NO_SPACE`| `[E5]`| "Tentar de Novo" | Tenta novo upload após libertar espaço | `UPLOADING_ONLY` / `UPLOADING_FOR_PRINT` |
+| `ERROR_UPLOAD_NO_SPACE`| `[E5]`| "Pôr na Fila Local" | Guarda o item localmente | `QUEUE_SAVED_LOCAL` |
+| `ERROR_UPLOAD_NO_SPACE`| `[E5]`| "Voltar ao Resultado"| Regressa ao resultado | `SLICING_RESULT` |
 | `UPLOADING_*` | `[E5]` | Timeout de socket | Tenta apagar parcial; se falhar avisa | `ERROR_UPLOAD_TIMEOUT` |
+| `ERROR_UPLOAD_TIMEOUT`| `[E5]` | "Tentar de Novo" | Repete pedido HTTP multipart | `UPLOADING_ONLY` / `UPLOADING_FOR_PRINT` |
+| `ERROR_UPLOAD_TIMEOUT`| `[E5]` | "Pôr na Fila Local" | Guarda para sincronização futura | `QUEUE_SAVED_LOCAL` |
+| `ERROR_UPLOAD_TIMEOUT`| `[E5]` | "Voltar ao Resultado"| Regressa ao resultado | `SLICING_RESULT` |
+| `ERROR_PRINT_START_FAILED`| `[E5]`| "Tentar de Novo" | Reexecuta chamada `printer.print.start` | `DISPATCHING_PRINT` |
+| `ERROR_PRINT_START_FAILED`| `[E5]`| "Pôr na Fila Local" | Guarda na fila para arranque posterior | `QUEUE_SAVED_LOCAL` |
+| `ERROR_PRINT_START_FAILED`| `[E5]`| "Concluir (Na CC1)" | Ficheiro fica na impressora; sai | `CONFIG_IDLE` |
+| `ERROR_PRINT_START_FAILED`| `[E5]`| "Voltar ao Resultado"| Regressa ao resultado de camadas | `SLICING_RESULT` |
 | `UPLOADING_*` | `[E5]` | Cancelar upload | Aborta requisição e remove parcial | `SLICING_RESULT` |
 | `SLICING_RESULT` | `[E4]` | "Guardar G-code" | Grava via pasta da app ou SAF | `SAVED_LOCAL` |
 | `SAVED_LOCAL` | `[E6]` | "Partilhar" | Despacha intent `ACTION_SEND` | `SAVED_LOCAL` |
@@ -226,6 +248,9 @@ Todos os wireframes seguem a convenção low-fi estrutural do repositório (tons
 7. **Autenticação por Token / Chave de API:**
    - *Pergunta:* O Moonraker no COSMOS está configurado com autenticação restrita (`trusted_clients` vs tokens de utilizador nos endpoints HTTP)?
    - *Fallback:* Se receber HTTP 401/403, a interface encaminha para configuração de credenciais nas definições de máquina do Atalaia.
+8. **Importação de Perfis no SlicePilot (Opção C):**
+   - *Pergunta:* O SlicePilot permite importar perfis OrcaSlicer/PrusaSlicer personalizados com macros Klipper `PRINT_START` e parâmetros AFC (`TOOL={initial_tool}` e `PURGE_LENGTH`)?
+   - *Impacto se não suportado:* Se o SlicePilot apenas permitir perfis stock embutidos da Elegoo, os ficheiros G-code gerados por ele podem não conter as macros Klipper necessárias para o firmware COSMOS e o módulo Canvas.
 
 ---
 

@@ -70,7 +70,7 @@
   <!-- Espaço insuficiente e Timeout com remoção parcial e aviso -->
   <text x="25" y="602" font-size="12" font-weight="700" fill="#212529">• TIMEOUT DE REDE / SEM ESPAÇO (HTTP 507):</text>
   <text x="25" y="618" class="text-body">Tenta remover o ficheiro parcial; se falhar, avisa.</text>
-  <text x="25" y="632" class="text-sub">Depende de: resposta HTTP 507 e espaço eMMC na impressora.</text>
+  <text x="25" y="632" class="text-sub">Depende de: resposta 507 e eMMC da impressora.</text>
 
   <!-- Falha de print.start -->
   <text x="25" y="652" font-size="12" font-weight="700" fill="#c92a2a">• FALHA NO PRINT.START (KLIPPER RECUSOU):</text>

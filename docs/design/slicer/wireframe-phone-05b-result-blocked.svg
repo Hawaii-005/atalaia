@@ -18,7 +18,7 @@
 
   <rect width="390" height="844" rx="14" class="screen-bg"/>
   <rect width="390" height="56" rx="14" class="header-bg"/>
-  <text x="20" y="35" class="header-title">[E4B] RESULTADO • MODAL BLOQUEADO PELA FILA</text>
+  <text x="20" y="35" class="header-title">[E4B] ARRANQUE BLOQUEADO (FILA)</text>
 
   <!-- [11] Vista 2D de Camadas (Em segundo plano) -->
   <rect x="15" y="66" width="360" height="154" rx="8" class="solid-box" opacity="0.6"/>
@@ -49,28 +49,25 @@
   <text x="28" y="418" class="text-body">• Perfil: Cosmos AFC • Ranhura pedida: T0 (Preto)</text>
   <text x="28" y="434" class="text-body">• Duração: 1h 48m • Filamento: 42.6 g</text>
 
-  <!-- Caixa de Bloqueios Específicos com Motivo (Req 1) -->
+  <!-- Caixa de Bloqueio com Dados Coerentes (Req 1) -->
   <rect x="25" y="448" width="340" height="230" rx="8" fill="#fff5f5" stroke="#ffc9c9" stroke-width="1.5"/>
-  <text x="35" y="470" font-size="12" font-weight="700" fill="#c92a2a">✕ REGRAS DE SEGURANÇA NÃO CUMPRIDAS:</text>
+  <text x="35" y="470" font-size="12" font-weight="700" fill="#c92a2a">✕ REGRA DE SEGURANÇA NÃO CUMPRIDA:</text>
   
-  <!-- Motivo 1: Impressora ocupada -->
-  <text x="35" y="492" font-size="12" font-weight="700" fill="#212529">1. Impressora Ocupada:</text>
-  <text x="35" y="508" class="text-body">   A Centauri Carbon está a imprimir peça_anterior.gcode.</text>
-  <text x="35" y="522" class="text-sub">   Arranque direto bloqueado para evitar colisão.</text>
+  <!-- Variante Ativa Ilustrada: Impressora Ocupada -->
+  <text x="35" y="492" font-size="12" font-weight="700" fill="#212529">Variante Ilustrada: Impressora Ocupada</text>
+  <text x="35" y="508" class="text-body">• Telemetria Klipper: Ligação ativa (há 2 s)</text>
+  <text x="35" y="524" class="text-body">• Estado atual: A imprimir peca_anterior.gcode (64%)</text>
+  <text x="35" y="538" class="text-sub">  Arranque direto bloqueado para evitar colisão na mesa.</text>
 
-  <!-- Motivo 2: Sem ligação recente / estado antigo -->
-  <text x="35" y="542" font-size="12" font-weight="700" fill="#212529">2. Ligação / Estado Antigo (&gt; 60s):</text>
-  <text x="35" y="558" class="text-body">   Última telemetria Moonraker há 3 min (desatualizada).</text>
-  <text x="35" y="572" class="text-sub">   Não é seguro arrancar sem confirmação em tempo real.</text>
-
-  <!-- Motivo 3: Ranhura incompatível -->
-  <text x="35" y="592" font-size="12" font-weight="700" fill="#212529">3. Ranhura Canvas Incompatível:</text>
-  <text x="35" y="608" class="text-body">   G-code exige PLA na ranhura T0; Canvas reporta TPU.</text>
-  <text x="35" y="622" class="text-sub">   Temperaturas e fluxo incompatíveis com o material.</text>
+  <!-- Outras Variantes de Bloqueio Tratadas -->
+  <text x="35" y="562" font-size="12" font-weight="700" fill="#495057">Outras Variantes Independentes Suportadas:</text>
+  <text x="35" y="578" class="text-sub">• Sem ligação recente: Telemetria desatualizada (&gt; 60 s)</text>
+  <text x="35" y="592" class="text-sub">• Ranhura Canvas incompatível: Material PLA vs TPU</text>
 
   <!-- Resumo da Solução -->
-  <text x="35" y="650" font-size="12" font-weight="700" fill="#495057">Solução: Põe na Fila Local para imprimir mais tarde.</text>
-  <text x="35" y="666" class="text-sub">O arranque direto permanecerá desativado até resolução.</text>
+  <text x="35" y="618" font-size="12" font-weight="700" fill="#212529">Ação Recomendada: Pôr na Fila Local</text>
+  <text x="35" y="634" class="text-body">O ficheiro fica guardado na app e pronto a imprimir</text>
+  <text x="35" y="648" class="text-sub">assim que a impressora concluir o trabalho atual.</text>
 
   <!-- Botões do Modal: Confirmar desativado / Pôr na Fila Local Ativo (>= 48px) -->
   <rect x="25" y="694" width="140" height="52" class="btn-secondary"/>
