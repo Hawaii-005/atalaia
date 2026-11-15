@@ -1,0 +1,59 @@
+name: Slicer Spike - Build libslice_core.so
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'atalaia-slicer-spike/**'
+      - '.github/workflows/slicer-spike-build.yml'
+
+jobs:
+  build-native:
+    name: Compilar libslice_core.so (arm64-v8a via Docker)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout repositório Atalaia
+        uses: actions/checkout@v4
+
+      - name: Libertar espaço em disco no Runner (~40 GB livres)
+        run: |
+          echo "=== Espaço em disco antes da limpeza ==="
+          df -h
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf /opt/hostedtoolcache
+          sudo docker image prune -a -f || true
+          echo "=== Espaço em disco após limpeza ==="
+          df -h
+
+      - name: Construir imagem Docker do compilador NDK r27
+        run: |
+          cd atalaia-slicer-spike
+          docker build -t atalaia-slicer-builder:latest .
+
+      - name: Executar compilação do libslice_core.so
+        run: |
+          mkdir -p atalaia-slicer-spike/output
+          docker run --rm \
+            -v "$(pwd)/atalaia-slicer-spike/output:/workspace/output" \
+            atalaia-slicer-builder:latest
+
+      - name: Validar integridade e símbolos do binário ELF
+        run: |
+          SO_FILE="atalaia-slicer-spike/output/arm64-v8a/libslice_core.so"
+          test -f "$SO_FILE"
+          echo "Tamanho do ficheiro:"
+          ls -lh "$SO_FILE"
+          echo "Checksum SHA256:"
+          sha256sum "$SO_FILE"
+
+      - name: Publicar binário como Artifact do GitHub Actions
+        uses: actions/upload-artifact@v4
+        with:
+          name: libslice_core-arm64-v8a
+          path: atalaia-slicer-spike/output/arm64-v8a/libslice_core.so
+          retention-days: 14
