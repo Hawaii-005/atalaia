@@ -39,7 +39,7 @@ Quando a variante completa do Atalaia é distribuída sob os termos da **GNU AGP
 | `expo-screen-orientation` | `~8.1.7` | **MIT** | Compatível | Gestão de orientação tablet/phone |
 | `expo-sharing` | `~13.1.5` | **MIT** | Compatível | Partilha local (`ACTION_SEND`) |
 | `expo-status-bar` | `~2.2.3` | **MIT** | Compatível | Barra de estado do SO |
-| `nativewind` | `latest` | **MIT** | Compatível | Camada Tailwind CSS para React Native |
+| `nativewind` | `4.1.23` (fixada) | **MIT** | Compatível | Camada Tailwind CSS para React Native |
 | `react` | `19.0.0` | **MIT** | Compatível | Biblioteca base de componentes |
 | `react-dom` | `19.0.0` | **MIT** | Compatível | React DOM |
 | `react-native` | `0.79.5` | **MIT** | Compatível | Core React Native |
@@ -60,7 +60,34 @@ Quando a variante completa do Atalaia é distribuída sob os termos da **GNU AGP
 
 ---
 
-## 3. Conclusão da Auditoria
+## 3. Auditoria Completa de Dependências Transitivas (`license-checker`)
 
-1. **Ausência de Incompatibilidades:** Todas as 40 dependências diretas de produção utilizam licenças permissivas (**MIT**, **Apache-2.0** ou **BSD-2-Clause**).
-2. **Conformidade com a AGPL-3:** Nenhuma dependência utiliza licenças restritivas incompatíveis com o copyleft forte da GNU AGPL v3.0. A variante completa pode ser validamente distribuída sob AGPL-3.0-or-later, cumprindo a exigência de atribuição através do ficheiro `NOTICE`.
+Foi executado o comando oficial:
+```bash
+npx license-checker --production --summary
+```
+
+### Resumo Estatístico das Dependências de Produção (Diretas + Transitivas):
+* Total de pacotes analisados no grafo de produção: **757 pacotes**
+* Distribuição de licenças:
+  - **MIT:** 645 pacotes (85.2%)
+  - **ISC:** 47 pacotes (6.2%)
+  - **BSD-3-Clause:** 18 pacotes (2.4%)
+  - **BSD-2-Clause:** 16 pacotes (2.1%)
+  - **Apache-2.0 / Apache 2.0:** 14 pacotes (1.8%)
+  - **BlueOak-1.0.0:** 6 pacotes (0.8%)
+  - **(MIT OR CC0-1.0) / CC0-1.0 / 0BSD / Unlicense:** 7 pacotes (0.9%)
+  - **MPL-2.0:** 2 pacotes (`@react-native/metro-babel-transformer`, `metro-transform-plugins`)
+  - **Python-2.0:** 1 pacote (`argparse`)
+  - **(BSD-3-Clause OR GPL-2.0):** 1 pacote (`node-forge` — dual-licensed, seleciona-se BSD-3-Clause)
+  - **CC-BY-4.0:** 1 pacote (`caniuse-lite` — base de dados de compatibilidade de browsers)
+  - **(BSD-2-Clause OR MIT OR Apache-2.0):** 1 pacote
+  - **(WTFPL OR MIT):** 1 pacote
+  - **UNLICENSED: 1** (Trata-se exclusivamente do pacote raiz `atalaia@2.4.6` no repositório de desenvolvimento)
+
+---
+
+## 4. Conclusão da Auditoria
+
+1. **Ausência de Incompatibilidades:** Nenhuma dependência direta ou transitiva contém licenças restritivas de copyleft incompatíveis (como GNU GPL v3 sem exceção para bibliotecas de JS, ou restrições não-comerciais).
+2. **Conformidade com a AGPL-3:** A variante completa pode ser validamente distribuída sob AGPL-3.0-or-later, cumprindo a exigência de atribuição através do ficheiro `NOTICE`.

@@ -22,9 +22,9 @@ Para garantir que o Atalaia mantém uma versão puramente **MIT** (sem qualquer 
    - **Application ID:** `io.github.hawaii005.atalaia.lite` (sufixo explícito).
    - **Licença:** 100% **MIT**.
    - **Exclusões estritas:**
-     - O módulo `modules/atalaia-slicer/` **não é empacotado** nem ligado.
+     - O módulo nativo do fatiador **não é empacotado** nem ligado.
      - O ficheiro binário `libslice_core.so` **não é incluído** no APK.
-     - Nenhum código C++ ou símbolo JNI derivado do `libslic3r` está presente no binário.
+     - Nenhum código C++ ou classe do módulo fatiador está presente no APK.
      - Na camada React Native, a funcionalidade é desativada via flag estática (`BuildConfig.SLICER_ENABLED = false`).
      - A capacidade `slicer` é forçada a `false` em todas as impressoras.
    - **Tamanho Estimado do APK:** ~22 a 26 MB.
@@ -33,19 +33,25 @@ Para garantir que o Atalaia mantém uma versão puramente **MIT** (sem qualquer 
 
 ## 2. Tratamento do Autolinking do Expo e Resolução no `settings.gradle`
 
-O mecanismo de autolinking do Expo (`expo-modules-autolinking` no `settings.gradle`) deteta automaticamente pastas em `modules/` e incluiria o módulo em todas as compilações.
+### O Problema do Autolinking do Expo:
+Por defeito, o comando `useExpoModules()` executado no `android/settings.gradle` varre pastas padrão (como `modules/` na raiz do projeto) e autolinka qualquer módulo local que encontre, incluindo-o indiscriminadamente em todos os sabores de build.
 
-Para garantir que a variante `lite` não inclui o módulo:
-1. **Nome da pasta fora do padrão de autolinking direto:** O módulo é registado com uma convenção que não é autolinkada automaticamente sem declaração explícita ou utiliza a configuração `expo-module.config.json` com exclusão controlada.
-2. **Resolução de Dependências por Flavor no `android/app/build.gradle`:**
-   O módulo é incluído no `settings.gradle` como projeto de biblioteca, mas a sua dependência é vinculada estritamente à variante `completa`:
+### Solução Arquitetural (Hipótese a Validar em CI):
+Para evitar que o Expo Module autolinke o fatiador na variante `lite`:
+1. **Caminho Fora do Autolinking:** O módulo não ficará localizado na pasta padrão `modules/` escaneada pelo autolinking do Expo, sendo alojado explicitamente em `android-modules/atalaia-slicer`.
+2. **Inclusão Controlada no Gradle:** No ficheiro `android/settings.gradle`, o projeto de biblioteca é adicionado como subprojeto Gradle tradicional, completamente desacoplado do ciclo `expoAutolinking`:
+   ```groovy
+   include ':android-modules:atalaia-slicer'
+   project(':android-modules:atalaia-slicer').projectDir = new File(rootProject.projectDir, '../android-modules/atalaia-slicer')
+   ```
+3. **Dependência Restrita à Variante Completa:** No ficheiro `android/app/build.gradle`, o módulo é associado exclusivamente à configuração `completaImplementation`:
    ```groovy
    dependencies {
        // O Gradle compila e empacota o módulo APENAS para a variante completa:
-       completaImplementation project(':modules:atalaia-slicer')
+       completaImplementation project(':android-modules:atalaia-slicer')
    }
    ```
-3. **Sem Código AGPL no APK Lite:** Como a dependência `completaImplementation` não é resolvida nem empacotada no flavor `lite`, o ProGuard/R8 e o `dex` da variante `lite` ficam 100% isentos de qualquer classe, bytecode ou ficheiro ELF `.so` associado ao fatiador.
+4. **Estado da Exclusão:** **[Hipótese a Validar em CI]**. Embora a configuração Gradle em teoria exclua a biblioteca do classpath de compilação e empacotamento da variante `lite`, a efetiva ausência deve ser comprovada deterministicamente através dos testes de CI descritos abaixo.
 
 ---
 
@@ -81,16 +87,8 @@ android {
 
 dependencies {
     // Módulo do fatiador incluído estritamente na variante completa
-    completaImplementation project(':modules:atalaia-slicer')
+    completaImplementation project(':android-modules:atalaia-slicer')
 }
-```
-
-### No `android/settings.gradle`:
-
-```groovy
-// Inclusão do módulo como projeto de biblioteca
-include ':modules:atalaia-slicer'
-project(':modules:atalaia-slicer').projectDir = new File(rootProject.projectDir, '../modules/atalaia-slicer/android')
 ```
 
 ---
@@ -121,17 +119,26 @@ O pipeline de Integração Contínua (GitHub Actions) executará testes automát
 
 1. **Validação Estrita da Variante Lite:**
    * Compilação com `./gradlew assembleLiteRelease`.
-   * **Teste de ficheiro ELF:**
+   * **Teste 1 — Ausência de qualquer ficheiro .so do fatiador:**
      ```bash
-     unzip -l app-lite-release.apk | grep -i "libslice_core.so" && exit 1 || echo "OK: Ficheiro .so ausente no APK Lite"
+     unzip -l app-lite-release.apk | grep -i "libslice_core.so" && {
+       echo "FALHA CRÍTICA: libslice_core.so encontrado no APK Lite!" >&2
+       exit 1
+     } || echo "OK: Ficheiro libslice_core.so ausente no APK Lite."
      ```
-   * **Teste de símbolos libslic3r:**
+   * **Teste 2 — Ausência de qualquer classe do módulo fatiador no classes.dex:**
      ```bash
-     # Extrai classes.dex e verifica ausência absoluta de referências ao namespace nativo do fatiador
-     dexdump -d app-lite-release.apk | grep -i "libslic3r\|NativeLib_slice" && exit 1 || echo "OK: Zero símbolos Slic3r no Dex Lite"
+     # Despeja classes contidas no DEX e verifica ausência do pacote do módulo nativo
+     dexdump -c app-lite-release.apk | grep -E "Class descriptor.*(world/yemyat/slicepilot|atalaia/slicer)" && {
+       echo "FALHA CRÍTICA: Classes do módulo fatiador detetadas no classes.dex do APK Lite!" >&2
+       exit 1
+     } || echo "OK: Zero classes do módulo fatiador no DEX do APK Lite."
      ```
 
 2. **Validação da Variante Completa:**
    * Compilação com `./gradlew assembleCompletaRelease`.
    * Confirmação da presença do binário `lib/arm64-v8a/libslice_core.so`.
-   * Verificação de exportação dos símbolos JNI essenciais via `nm -D`.
+   * Verificação de exportação dos símbolos JNI essenciais via `nm -D`:
+     ```bash
+     nm -D app-completa-release/lib/arm64-v8a/libslice_core.so | grep -E "Java_world_yemyat_slicepilot_NativeLib_nativeInit|Java_world_yemyat_slicepilot_NativeLib_nativeSliceWithOverrides"
+     ```

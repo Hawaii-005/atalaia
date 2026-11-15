@@ -1,7 +1,6 @@
 # Dockerfile para Compilação Reproduzível do libslice_core.so (arm64-v8a)
-# Alinhado com as exigências do repositório SlicePilot (NDK r27)
-
-FROM ubuntu:22.04
+# Imagem base fixa por digest (Ubuntu 22.04 LTS linux/amd64)
+FROM ubuntu:22.04@sha256:45e9ddc6895604674618a409ca9f73d301da8fdb75fe330e8e9a27b3b219e4ad
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV ANDROID_HOME=/opt/android-sdk
@@ -28,7 +27,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# 2. Instalação do Android SDK Command-Line Tools e NDK r27
+# 2. Instalação do Android SDK Command-Line Tools e NDK r27 fixo
 RUN mkdir -p ${ANDROID_HOME}/cmdline-tools && \
     curl -sSL -o /tmp/cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip && \
     unzip -q /tmp/cmdline-tools.zip -d ${ANDROID_HOME}/cmdline-tools && \

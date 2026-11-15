@@ -1,6 +1,7 @@
 package io.github.hawaii005.slicerspike
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -12,6 +13,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.content.FileProvider
 import org.json.JSONObject
+import world.yemyat.slicepilot.NativeLib
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -22,6 +24,11 @@ import kotlin.concurrent.thread
 /**
  * Aplicação de Benchmark e Teste de Viabilidade do Fatiador Atalaia.
  * Opera 100% offline, sem contas, sem telemetria e sem rede.
+ *
+ * NOTA METODOLÓGICA:
+ * O pico de RAM medido é aproximado: a amostragem periódica de Debug.MemoryInfo.totalPss
+ * reflete a memória proporcional (PSS) observada a cada intervalo de amostragem (200 ms),
+ * não correspondendo ao pico absoluto instantâneo de alocação ao nível do kernel.
  */
 class MainActivity : Activity() {
 
@@ -32,13 +39,15 @@ class MainActivity : Activity() {
     private lateinit var btnStart: Button
     private lateinit var btnShare: Button
 
-    private var isSlicing = false
+    @Volatile
+    private var isSlicing: Boolean = false
+
     private var lastReportFile: File? = null
     private val lifecycleEvents = mutableListOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Flag keepScreenOn ativa para manter o ecrã ligado em primeiro plano
+        // Manter o ecrã ativo durante o fatiamento
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         setContentView(R.layout.activity_main)
@@ -85,7 +94,7 @@ class MainActivity : Activity() {
         btnStart.isEnabled = false
         btnShare.isEnabled = false
         progressBar.progress = 0
-        tvStatus.text = "A preparar ficheiro de teste e perfil Cosmos AFC..."
+        tvStatus.text = "A preparar diretório de perfis e STL fechado..."
 
         lifecycleEvents.clear()
         lifecycleEvents.add("startBenchmark at ${System.currentTimeMillis()}")
@@ -94,34 +103,46 @@ class MainActivity : Activity() {
             val startTime = SystemClock.elapsedRealtime()
             var peakMemoryBytes: Long = 0
 
-            // Preparar ficheiro STL e Perfil na cache local da app
+            // 1. Preparar diretórios conforme nativeInit(dataDir, resDir)
+            val slicerDataDir = File(filesDir, "slic3r_data")
+            val slicerResDir = File(filesDir, "slic3r_res")
+            slicerDataDir.mkdirs()
+            slicerResDir.mkdirs()
+
+            val profilesSysDir = File(slicerDataDir, "system")
+            profilesSysDir.mkdirs()
+            val profileDest = File(profilesSysDir, "Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC.json")
+            assets.open("profiles/system/Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC.json").use { input ->
+                FileOutputStream(profileDest).use { output -> input.copyTo(output) }
+            }
+
+            // 2. Criar modelo de teste: Cubo fechado 20x20x10 mm (12 triângulos, malha fechada manifold)
             val testDir = File(filesDir, "spike_run")
             testDir.mkdirs()
-            val stlFile = File(testDir, "calibracao_cubo_20mm.stl")
-            if (!stlFile.exists()) {
-                criarStlMinimoExemplo(stlFile)
-            }
+            val stlFile = File(testDir, "cubo_fechado_20x20x10.stl")
+            criarStlCuboFechado20x20x10(stlFile)
+
             val gcodeFile = File(testDir, "saida_cosmos_afc.gcode")
             if (gcodeFile.exists()) gcodeFile.delete()
 
-            val profileJson = """
-                {
-                  "name": "Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC",
-                  "gcode_flavor": "klipper",
-                  "printable_area": ["0x0", "256x0", "256x256", "0x256"],
-                  "printable_height": "256",
-                  "initial_tool": 0
-                }
-            """.trimIndent()
-
             runOnUiThread {
-                tvStatus.text = "A inicializar motor nativo libslic3r..."
+                tvStatus.text = "A carregar libslice_core.so e inicializar motor..."
             }
 
-            NativeSlicerSpike.init(profileJson)
+            val libLoaded = NativeLib.loadLibrary()
+            if (!libLoaded) {
+                runOnUiThread {
+                    tvStatus.text = "ERRO: libslice_core.so não encontrado no pacote!"
+                    tvMetrics.text = "Coloque o binário libslice_core.so em app/src/main/jniLibs/arm64-v8a/"
+                    btnStart.isEnabled = true
+                }
+                isSlicing = false
+                return@thread
+            }
 
-            // Thread de monitorização de memória e progresso
-            var progress = 0
+            NativeLib.nativeInit(slicerDataDir.absolutePath, slicerResDir.absolutePath)
+
+            // Monitorização de memória PSS aproximada
             val monitorThread = thread {
                 while (isSlicing) {
                     val memInfo = Debug.MemoryInfo()
@@ -130,28 +151,46 @@ class MainActivity : Activity() {
                     if (totalPssBytes > peakMemoryBytes) {
                         peakMemoryBytes = totalPssBytes
                     }
-                    progress = NativeSlicerSpike.getProgress()
                     runOnUiThread {
-                        progressBar.progress = progress
-                        tvMetrics.text = "Progresso: $progress% • RAM PSS Atual: ${totalPssBytes / (1024 * 1024)} MB"
+                        tvMetrics.text = "Fatiando... RAM PSS Aproximada: ${totalPssBytes / (1024 * 1024)} MB"
                     }
-                    Thread.sleep(200)
+                    try {
+                        Thread.sleep(200)
+                    } catch (e: InterruptedException) {
+                        break
+                    }
                 }
             }
 
-            // Executar fatiamento
-            val resultCode = NativeSlicerSpike.slice(
-                stlFile.absolutePath,
-                gcodeFile.absolutePath,
-                "{}"
+            // Executar fatiamento com callback oficial de progresso
+            val callback = object : NativeLib.SliceCallback {
+                override fun onProgress(step: Int, text: String, percent: Int) {
+                    runOnUiThread {
+                        progressBar.progress = percent
+                        tvStatus.text = "Fatiamento: $percent% ($text)"
+                    }
+                }
+            }
+
+            val printerName = "Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC"
+            val success = NativeLib.nativeSliceWithOverrides(
+                modelPath = stlFile.absolutePath,
+                printerName = printerName,
+                filamentName = printerName,
+                processName = printerName,
+                overridesIni = "",
+                supportFilamentName = "",
+                outPath = gcodeFile.absolutePath,
+                callback = callback
             )
+
             val durationMs = SystemClock.elapsedRealtime() - startTime
             isSlicing = false
+            monitorThread.interrupt()
             monitorThread.join()
 
             val gcodeSize = if (gcodeFile.exists()) gcodeFile.length() else 0L
 
-            // Gerar relatório JSON gravado em ficheiro partilhável
             val reportJson = JSONObject().apply {
                 put("manufacturer", Build.MANUFACTURER)
                 put("model", Build.MODEL)
@@ -159,8 +198,9 @@ class MainActivity : Activity() {
                 put("android_release", Build.VERSION.RELEASE)
                 put("android_sdk", Build.VERSION.SDK_INT)
                 put("duration_ms", durationMs)
-                put("peak_ram_pss_mb", peakMemoryBytes / (1024 * 1024))
-                put("result_code", resultCode)
+                put("peak_ram_pss_mb_approx", peakMemoryBytes / (1024 * 1024))
+                put("memory_measurement_method", "Debug.MemoryInfo.totalPss sampled every 200ms (approximate PSS)")
+                put("success", success)
                 put("gcode_size_bytes", gcodeSize)
                 put("lifecycle_events", lifecycleEvents)
                 put("timestamp", SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date()))
@@ -175,9 +215,9 @@ class MainActivity : Activity() {
             runOnUiThread {
                 btnStart.isEnabled = true
                 btnShare.isEnabled = true
-                progressBar.progress = 100
-                tvStatus.text = if (resultCode == 0) "Fatiamento concluído com SUCESSO!" else "Erro no fatiamento: código $resultCode"
-                tvMetrics.text = "Duração: ${durationMs / 1000.0} s\nPico RAM PSS: ${peakMemoryBytes / (1024 * 1024)} MB\nG-code: ${gcodeSize / 1024} KB\nRelatório guardado localmente."
+                progressBar.progress = if (success) 100 else 0
+                tvStatus.text = if (success) "Fatiamento concluído com SUCESSO!" else "Falha no fatiamento: ${NativeLib.nativeGetError()}"
+                tvMetrics.text = "Duração: ${durationMs / 1000.0} s\nPico RAM PSS (aprox.): ${peakMemoryBytes / (1024 * 1024)} MB\nG-code gerado: ${gcodeSize / 1024} KB\nRelatório guardado localmente."
             }
         }
     }
@@ -193,39 +233,97 @@ class MainActivity : Activity() {
         startActivity(Intent.createChooser(shareIntent, "Partilhar Relatório de Benchmark (Sem Telemetria)"))
     }
 
-    private fun criarStlMinimoExemplo(file: File) {
-        // Gera um cubo STL ASCII simplificado de calibração 20x20x10 mm para o teste
+    /**
+     * Gera um cubo fechado e estanque (watertight manifold) de 20x20x10 mm com exatamente 12 triângulos (2 por face).
+     */
+    private fun criarStlCuboFechado20x20x10(file: File) {
         val asciiStl = """
-            solid cubo_calibracao_20mm
-              facet normal 0 0 -1
-                outer loop
-                  vertex 0 0 0
-                  vertex 20 0 0
-                  vertex 20 20 0
-                endloop
-              endfacet
-              facet normal 0 0 -1
-                outer loop
-                  vertex 0 0 0
-                  vertex 20 20 0
-                  vertex 0 20 0
-                endloop
-              endfacet
-              facet normal 0 0 1
-                outer loop
-                  vertex 0 0 10
-                  vertex 20 20 10
-                  vertex 20 0 10
-                endloop
-              endfacet
-              facet normal 0 0 1
-                outer loop
-                  vertex 0 0 10
-                  vertex 0 20 10
-                  vertex 20 20 10
-                endloop
-              endfacet
-            endsolid cubo_calibracao_20mm
+solid cubo_20x20x10_fechado
+  facet normal 0 0 -1
+    outer loop
+      vertex 0 0 0
+      vertex 20 20 0
+      vertex 20 0 0
+    endloop
+  endfacet
+  facet normal 0 0 -1
+    outer loop
+      vertex 0 0 0
+      vertex 0 20 0
+      vertex 20 20 0
+    endloop
+  endfacet
+  facet normal 0 0 1
+    outer loop
+      vertex 0 0 10
+      vertex 20 0 10
+      vertex 20 20 10
+    endloop
+  endfacet
+  facet normal 0 0 1
+    outer loop
+      vertex 0 0 10
+      vertex 20 20 10
+      vertex 0 20 10
+    endloop
+  endfacet
+  facet normal 0 -1 0
+    outer loop
+      vertex 0 0 0
+      vertex 20 0 0
+      vertex 20 0 10
+    endloop
+  endfacet
+  facet normal 0 -1 0
+    outer loop
+      vertex 0 0 0
+      vertex 20 0 10
+      vertex 0 0 10
+    endloop
+  endfacet
+  facet normal 1 0 0
+    outer loop
+      vertex 20 0 0
+      vertex 20 20 0
+      vertex 20 20 10
+    endloop
+  endfacet
+  facet normal 1 0 0
+    outer loop
+      vertex 20 0 0
+      vertex 20 20 10
+      vertex 20 0 10
+    endloop
+  endfacet
+  facet normal 0 1 0
+    outer loop
+      vertex 20 20 0
+      vertex 0 20 0
+      vertex 0 20 10
+    endloop
+  endfacet
+  facet normal 0 1 0
+    outer loop
+      vertex 20 20 0
+      vertex 0 20 10
+      vertex 20 20 10
+    endloop
+  endfacet
+  facet normal -1 0 0
+    outer loop
+      vertex 0 20 0
+      vertex 0 0 0
+      vertex 0 0 10
+    endloop
+  endfacet
+  facet normal -1 0 0
+    outer loop
+      vertex 0 20 0
+      vertex 0 0 10
+      vertex 0 20 10
+    endloop
+  endfacet
+endsolid cubo_20x20x10_fechado
         """.trimIndent()
         FileOutputStream(file).use { it.write(asciiStl.toByteArray()) }
     }
