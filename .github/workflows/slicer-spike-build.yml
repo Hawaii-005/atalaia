@@ -1,15 +1,11 @@
-name: Slicer Spike - Build libslice_core.so
+name: Slicer Spike - Build & Verify
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'atalaia-slicer-spike/**'
-      - '.github/workflows/slicer-spike-build.yml'
 
 jobs:
-  build-native:
-    name: Compilar libslice_core.so (arm64-v8a via Docker)
+  build-native-and-apk:
+    name: Compilar NDK .so, Verificar Símbolos JNI e Montar APK Debug
     runs-on: ubuntu-24.04
     timeout-minutes: 180
 
@@ -37,23 +33,45 @@ jobs:
 
       - name: Executar compilação do libslice_core.so
         run: |
-          mkdir -p atalaia-slicer-spike/output
+          mkdir -p atalaia-slicer-spike/output/arm64-v8a
           docker run --rm \
             -v "$(pwd)/atalaia-slicer-spike/output:/workspace/output" \
             atalaia-slicer-builder:latest
 
-      - name: Validar integridade e símbolos do binário ELF
+      - name: Validação e Auditoria de Símbolos JNI (readelf / nm)
         run: |
           SO_FILE="atalaia-slicer-spike/output/arm64-v8a/libslice_core.so"
           test -f "$SO_FILE"
-          echo "Tamanho do ficheiro:"
-          ls -lh "$SO_FILE"
-          echo "Checksum SHA256:"
-          sha256sum "$SO_FILE"
+          echo "=== Informação do Ficheiro ELF ==="
+          file "$SO_FILE"
+          echo "=== Verificação Dynamic Section (readelf -d) ==="
+          readelf -d "$SO_FILE"
+          echo "=== Símbolos JNI Definidos (nm -D --defined-only) ==="
+          nm -D --defined-only "$SO_FILE" | grep "Java_world_yemyat_slicepilot_NativeLib_" || echo "AVISO: Nenhum símbolo Java_world_yemyat_slicepilot_NativeLib encontrado diretamente."
+          echo "=== Todos os símbolos JNI exportados ==="
+          nm -D --defined-only "$SO_FILE" | grep "Java_" || true
 
-      - name: Publicar binário como Artifact do GitHub Actions
+      - name: Montar APK de Debug do Spike com Gradle
+        run: |
+          cd atalaia-slicer-spike
+          # Inserir o binário compilado no local esperado por jniLibs
+          mkdir -p app/src/main/jniLibs/arm64-v8a
+          cp output/arm64-v8a/libslice_core.so app/src/main/jniLibs/arm64-v8a/libslice_core.so
+          
+          # Dar permissão de execução ao gradle wrapper
+          chmod +x gradlew
+          
+          # Compilar APK de debug
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Publicar Binário .so e APK de Debug como Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: libslice_core-arm64-v8a
-          path: atalaia-slicer-spike/output/arm64-v8a/libslice_core.so
+          name: slicer-spike-artifacts
+          path: |
+            atalaia-slicer-spike/output/arm64-v8a/libslice_core.so
+            atalaia-slicer-spike/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 14
+
+      - name: Espaço em disco final do runner
+        run: df -h

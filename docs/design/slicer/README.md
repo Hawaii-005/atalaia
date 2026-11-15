@@ -35,7 +35,7 @@ Compilar o `libslice_core.so` de forma reproduzível a partir do código-fonte r
      - Boost (system, filesystem, thread, log, locale, iostreams) com configuração em `boost-user-config.jam`
      - TBB (Intel Threading Building Blocks)
      - OpenVDB, Blosc, ZLIB
-     - CGAL 5.x e Eigen 3.4
+     - CGAL 5.x e Eigen 5.0.1 (Eigen3)
      - `libslic3r` (árvore C++ do PrusaSlicer/OrcaSlicer adaptada)
 2. **Tempo e Recursos de Build (Estimativas Empíricas):**
    - *Tempo estimado:* A compilação completa demora entre ~45 a 90 minutos num processador multi-core moderno (estimativa sujeita ao hardware do host).

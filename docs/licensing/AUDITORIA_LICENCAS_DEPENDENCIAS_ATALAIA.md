@@ -60,34 +60,27 @@ Quando a variante completa do Atalaia é distribuída sob os termos da **GNU AGP
 
 ---
 
-## 3. Auditoria Completa de Dependências Transitivas (`license-checker`)
+## 3. Auditoria de Dependências Transitivas (`license-checker`) — Licenças Não-Padrão / Especiais
 
-Foi executado o comando oficial:
-```bash
-npx license-checker --production --summary
-```
+Abaixo lista-se explicitamente todos os pacotes transitivos de produção cujas licenças não pertencem ao conjunto puramente permissivo padrão (MIT, Apache-2.0, BSD-2/3-Clause, ISC):
 
-### Resumo Estatístico das Dependências de Produção (Diretas + Transitivas):
-* Total de pacotes analisados no grafo de produção: **757 pacotes**
-* Distribuição de licenças:
-  - **MIT:** 645 pacotes (85.2%)
-  - **ISC:** 47 pacotes (6.2%)
-  - **BSD-3-Clause:** 18 pacotes (2.4%)
-  - **BSD-2-Clause:** 16 pacotes (2.1%)
-  - **Apache-2.0 / Apache 2.0:** 14 pacotes (1.8%)
-  - **BlueOak-1.0.0:** 6 pacotes (0.8%)
-  - **(MIT OR CC0-1.0) / CC0-1.0 / 0BSD / Unlicense:** 7 pacotes (0.9%)
-  - **MPL-2.0:** 2 pacotes (`@react-native/metro-babel-transformer`, `metro-transform-plugins`)
-  - **Python-2.0:** 1 pacote (`argparse`)
-  - **(BSD-3-Clause OR GPL-2.0):** 1 pacote (`node-forge` — dual-licensed, seleciona-se BSD-3-Clause)
-  - **CC-BY-4.0:** 1 pacote (`caniuse-lite` — base de dados de compatibilidade de browsers)
-  - **(BSD-2-Clause OR MIT OR Apache-2.0):** 1 pacote
-  - **(WTFPL OR MIT):** 1 pacote
-  - **UNLICENSED: 1** (Trata-se exclusivamente do pacote raiz `atalaia@2.4.6` no repositório de desenvolvimento)
+| Pacote | Licença Declarada | Avaliação de Compatibilidade com AGPL-3 |
+|---|---|---|
+| `atalaia@2.4.6` (Pacote Raiz) | `UNLICENSED` | Domínio interno do projeto (MIT na distribuição base). |
+| `argparse@2.0.1` | `Python-2.0` | Compatível (Licença permissiva estilo BSD para Python). |
+| `big-integer@1.6.52`, `stream-buffers@2.2.0` | `Unlicense` | Compatível (Domínio público / Dedicação total). |
+| `caniuse-lite@1.0.30001727` | `CC-BY-4.0` | Compatível (Atribuição requerida para dados de compatibilidade estáticos). |
+| `chownr@3.0.0`, `jackspeak@3.4.3`, `minipass@7.1.3`, `package-json-from-dist@1.0.1`, `path-scurry@1.11.1`, `yallist@5.0.0` | `BlueOak-1.0.0` | Compatível (Blue Oak Model License 1.0.0 é uma licença permissiva moderna de código aberto). |
+| `jsc-safe-url@0.2.4` | `0BSD` | Compatível (Zero Clause BSD, equivalente a domínio público). |
+| `lightningcss`, `lightningcss-darwin-x64` | `MPL-2.0` | Compatível (Mozilla Public License 2.0 é copyleft fraco, compatível em módulos separados). |
+| `mdn-data@2.0.14` | `CC0-1.0` | Compatível (Creative Commons Zero / Domínio público). |
+| `node-forge@1.3.1` | `(BSD-3-Clause OR GPL-2.0)` | Compatível (Dual-license; adota-se o ramo BSD-3-Clause permissivo). |
+| `spark-md5@3.0.2` | `(WTFPL OR MIT)` | Compatível (Do What The Fuck You Want To Public License / MIT). |
+| `type-fest` (v0.7.1, v0.21.3, v2.19.0) | `(MIT OR CC0-1.0)` | Compatível. |
 
 ---
 
 ## 4. Conclusão da Auditoria
 
-1. **Ausência de Incompatibilidades:** Nenhuma dependência direta ou transitiva contém licenças restritivas de copyleft incompatíveis (como GNU GPL v3 sem exceção para bibliotecas de JS, ou restrições não-comerciais).
+1. **Ausência de Incompatibilidades:** Nenhuma dependência direta ou transitiva contém licenças restritivas comerciais (como CC-BY-NC) ou incompatíveis com a AGPL-3.
 2. **Conformidade com a AGPL-3:** A variante completa pode ser validamente distribuída sob AGPL-3.0-or-later, cumprindo a exigência de atribuição através do ficheiro `NOTICE`.

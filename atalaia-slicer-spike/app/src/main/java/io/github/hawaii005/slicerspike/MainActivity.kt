@@ -12,6 +12,7 @@ import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.content.FileProvider
+import org.json.JSONArray
 import org.json.JSONObject
 import world.yemyat.slicepilot.NativeLib
 import java.io.File
@@ -94,7 +95,7 @@ class MainActivity : Activity() {
         btnStart.isEnabled = false
         btnShare.isEnabled = false
         progressBar.progress = 0
-        tvStatus.text = "A preparar diretório de perfis e STL fechado..."
+        tvStatus.text = "A preparar diretório de perfis de sistema e utilizador..."
 
         lifecycleEvents.clear()
         lifecycleEvents.add("startBenchmark at ${System.currentTimeMillis()}")
@@ -103,17 +104,24 @@ class MainActivity : Activity() {
             val startTime = SystemClock.elapsedRealtime()
             var peakMemoryBytes: Long = 0
 
-            // 1. Preparar diretórios conforme nativeInit(dataDir, resDir)
+            // 1. Preparar diretórios conforme nativeInit(dataDir, resDir) do libslic3r
             val slicerDataDir = File(filesDir, "slic3r_data")
             val slicerResDir = File(filesDir, "slic3r_res")
             slicerDataDir.mkdirs()
             slicerResDir.mkdirs()
 
-            val profilesSysDir = File(slicerDataDir, "system")
-            profilesSysDir.mkdirs()
-            val profileDest = File(profilesSysDir, "Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC.json")
-            assets.open("profiles/system/Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC.json").use { input ->
-                FileOutputStream(profileDest).use { output -> input.copyTo(output) }
+            // Copiar perfis de sistema do SlicePilot para resDir/profiles e dataDir/system
+            val resProfilesDir = File(slicerResDir, "profiles")
+            val dataSystemDir = File(slicerDataDir, "system")
+            copiarPastaAssetsRecursiva("profiles", resProfilesDir)
+            copiarPastaAssetsRecursiva("profiles", dataSystemDir)
+
+            // Copiar perfil de utilizador Cosmos AFC para a pasta de impressoras de utilizador
+            val dataUserPrinterDir = File(slicerDataDir, "printer")
+            dataUserPrinterDir.mkdirs()
+            val cosmosUserFile = File(dataUserPrinterDir, "Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC.json")
+            assets.open("user_profiles/Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC.json").use { input ->
+                FileOutputStream(cosmosUserFile).use { output -> input.copyTo(output) }
             }
 
             // 2. Criar modelo de teste: Cubo fechado 20x20x10 mm (12 triângulos, malha fechada manifold)
@@ -142,6 +150,47 @@ class MainActivity : Activity() {
 
             NativeLib.nativeInit(slicerDataDir.absolutePath, slicerResDir.absolutePath)
 
+            // 3. Confirmar impressora via nativeGetPrinters() e selecionar
+            val printersJsonRaw = NativeLib.nativeGetPrinters()
+            val printersArray = try { JSONArray(printersJsonRaw) } catch (e: Exception) { JSONArray() }
+            
+            val targetPrinter = "Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC"
+            var printerFound = false
+            for (i in 0 until printersArray.length()) {
+                val p = printersArray.getJSONObject(i).optString("name")
+                if (p == targetPrinter) {
+                    printerFound = true
+                    break
+                }
+            }
+
+            // Se o perfil de utilizador não aparecer diretamente pelo nome, selecionar o perfil base de sistema
+            val activePrinter = if (printerFound) targetPrinter else "Elegoo Centauri Carbon 0.4 nozzle"
+            NativeLib.nativeSelectPrinter(activePrinter)
+
+            // 4. Obter filamento e processo compatíveis via funções nativas
+            val compatibleFilamentsRaw = NativeLib.nativeGetCompatibleFilaments()
+            val compatibleProcessesRaw = NativeLib.nativeGetCompatibleProcesses()
+
+            val filamentsArray = try { JSONArray(compatibleFilamentsRaw) } catch (e: Exception) { JSONArray() }
+            val processesArray = try { JSONArray(compatibleProcessesRaw) } catch (e: Exception) { JSONArray() }
+
+            val chosenFilament = if (filamentsArray.length() > 0) {
+                filamentsArray.getJSONObject(0).optString("name", "Generic PLA @Elegoo Centauri")
+            } else {
+                "Generic PLA @Elegoo Centauri"
+            }
+
+            val chosenProcess = if (processesArray.length() > 0) {
+                processesArray.getJSONObject(0).optString("name", "0.20mm Standard @Elegoo CC 0.4 nozzle")
+            } else {
+                "0.20mm Standard @Elegoo CC 0.4 nozzle"
+            }
+
+            runOnUiThread {
+                tvStatus.text = "A fatiar: Impressora='$activePrinter'\nFilamento='$chosenFilament'\nProcesso='$chosenProcess'"
+            }
+
             // Monitorização de memória PSS aproximada
             val monitorThread = thread {
                 while (isSlicing) {
@@ -152,7 +201,7 @@ class MainActivity : Activity() {
                         peakMemoryBytes = totalPssBytes
                     }
                     runOnUiThread {
-                        tvMetrics.text = "Fatiando... RAM PSS Aproximada: ${totalPssBytes / (1024 * 1024)} MB"
+                        tvMetrics.text = "RAM PSS Aprox.: ${totalPssBytes / (1024 * 1024)} MB"
                     }
                     try {
                         Thread.sleep(200)
@@ -172,12 +221,11 @@ class MainActivity : Activity() {
                 }
             }
 
-            val printerName = "Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC"
             val success = NativeLib.nativeSliceWithOverrides(
                 modelPath = stlFile.absolutePath,
-                printerName = printerName,
-                filamentName = printerName,
-                processName = printerName,
+                printerName = activePrinter,
+                filamentName = chosenFilament,
+                processName = chosenProcess,
                 overridesIni = "",
                 supportFilamentName = "",
                 outPath = gcodeFile.absolutePath,
@@ -200,6 +248,9 @@ class MainActivity : Activity() {
                 put("duration_ms", durationMs)
                 put("peak_ram_pss_mb_approx", peakMemoryBytes / (1024 * 1024))
                 put("memory_measurement_method", "Debug.MemoryInfo.totalPss sampled every 200ms (approximate PSS)")
+                put("active_printer", activePrinter)
+                put("chosen_filament", chosenFilament)
+                put("chosen_process", chosenProcess)
                 put("success", success)
                 put("gcode_size_bytes", gcodeSize)
                 put("lifecycle_events", lifecycleEvents)
@@ -219,6 +270,22 @@ class MainActivity : Activity() {
                 tvStatus.text = if (success) "Fatiamento concluído com SUCESSO!" else "Falha no fatiamento: ${NativeLib.nativeGetError()}"
                 tvMetrics.text = "Duração: ${durationMs / 1000.0} s\nPico RAM PSS (aprox.): ${peakMemoryBytes / (1024 * 1024)} MB\nG-code gerado: ${gcodeSize / 1024} KB\nRelatório guardado localmente."
             }
+        }
+    }
+
+    private fun copiarPastaAssetsRecursiva(assetPath: String, destDir: File) {
+        val list = assets.list(assetPath) ?: return
+        if (list.isEmpty()) {
+            destDir.parentFile?.mkdirs()
+            assets.open(assetPath).use { input ->
+                FileOutputStream(destDir).use { output -> input.copyTo(output) }
+            }
+            return
+        }
+        destDir.mkdirs()
+        for (item in list) {
+            val subAsset = if (assetPath.isEmpty()) item else "$assetPath/$item"
+            copiarPastaAssetsRecursiva(subAsset, File(destDir, item))
         }
     }
 

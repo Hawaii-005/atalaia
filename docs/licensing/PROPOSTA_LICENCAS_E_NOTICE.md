@@ -119,7 +119,7 @@ repositório de origem para ligação estática no binário 'libslice_core.so' (
   Licença: BSD 3-Clause License [Declarado no repositório]
 
 • Eigen
-  Versão: 3.4.0 (fornecida no arquivo eigen-5.0.1.tar.gz via release GitLab do projeto Eigen / libigl)
+  Versão: 5.0.1 (Eigen3 com SemVer adotado a partir da v5.0.0; arquivo eigen-5.0.1.tar.gz via release GitLab do projeto libeigen/eigen, onde EIGEN_WORLD_VERSION=3 e EIGEN_VERSION_STRING="5.0.1")
   Copyright (c) Eigen Authors
   Licença: Mozilla Public License 2.0 (MPL-2.0) [Declarado no repositório]
 
