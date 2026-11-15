@@ -10,51 +10,58 @@
 > ⚠️ **ATENÇÃO:** Nunca inicie este teste de forma remota ou desatendida. Permaneça fisicamente junto da impressora durante todo o procedimento.
 
 1. **Mesa Totalmente Desobstruída:** Verifique visual e manualmente que a placa flexível PEI está limpa, corretamente encaixada nos batentes magnéticos e sem qualquer resíduo, espátula ou peça anterior.
-2. **Posição de Segurança (Corte de Emergência):** Mantenha uma mão próxima do interruptor de energia físico da Centauri Carbon ou com o ecrã do Atalaia aberto no botão de paragem de emergência (`M112`). Se detetar ruído de esforço nos motores, desvio de eixo ou cabeçote a forçar contra a mesa, **desligue imediatamente a alimentação**.
-3. **Vigilância Obrigatória da Primeira Camada:** Os primeiros 3 a 5 minutos (aquecimento, homing, purga e primeira camada) são críticos para confirmar o Z-offset e prevenir danos na superfície da mesa.
+2. **Posição de Segurança (Corte de Emergência Físico):** Mantenha a mão próxima do interruptor de energia físico da Centauri Carbon. Se detetar ruído anómalo, esforço nos motores, desvio de eixo ou cabeçote a forçar contra a mesa, **desligue imediatamente a alimentação no botão físico da máquina**.
+3. **Vigilância Obrigatória da Primeira Camada:** Os primeiros minutos (aquecimento, homing, purga e primeira camada) são críticos para confirmar o comportamento do cabeçote e prevenir danos mecânicos na superfície PEI.
 
 ---
 
 ## 2. Preparação da Impressora
 
 * **Material Carregado:** Filamento PLA padrão verificado na ranhura ativa correspondente (exemplo: ranhura `T0` / Preto).
-* **Módulo Canvas AFC:** Certifique-se de que o filamento está engatado e que o sensor de alimentação da pista `T0` reporta estado livre e pronto.
-* **Conectividade:** Confirme que a aplicação Atalaia estabeleceu ligação WebSocket com o Moonraker (indicador verde, latência < 1s).
+* **Módulo Canvas AFC:** Certifique-se de que o filamento está engatado e que o sensor da pista `T0` reporta estado pronto.
+* **Temperaturas Nominais do Perfil:**
+  - Bico (Nozzle): 215 °C primeira camada (conforme definido no perfil `Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC.json`).
+  - Mesa (Bed): 60 °C primeira camada.
 
 ---
 
 ## 3. Sequência de Execução Passo a Passo
 
-### Passo 1: Envio do Ficheiro de Calibração
-* Utilize o ficheiro de teste gerado pelo spike: modelo de calibração reduzido (cubo de 20 × 20 × 10 mm fatiado com o perfil `Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC.json`).
-* No Atalaia, confirme o ecrã de revisão com as métricas reais (~12 a 15 minutos de impressão, ~4 g de filamento).
-* Confirme o modal de arranque com mesa limpa.
+### Passo 1: Envio do Ficheiro de Calibração (Via Interface Web / curl)
+*Como o fluxo integrado de envio do Atalaia ainda não existe (será implementado na Fase 4), o ficheiro G-code gerado deve ser enviado diretamente ao Moonraker através da interface web do COSMOS/Fluidd/Mainsail ou via linha de comandos:*
+```bash
+# Exemplo de upload via curl diretamente para o Moonraker da impressora (substituir IP_DA_CC1):
+curl -F "file=@cubo_teste_cosmos_afc.gcode" "http://IP_DA_CC1/server/files/upload"
+```
+* **Arranque:** Inicie a impressão manualmente através da interface web da impressora ou do ecrã físico da máquina após confirmar que a mesa está limpa e desobstruída.
 
-### Passo 2: Verificação da Rotina `PRINT_START`
-Observe a sequência exata de comandos executados pela máquina:
-1. **Aquecimento da Mesa:** A mesa deve aquecer primeiro até aos 60 °C definidos no perfil.
-2. **Homing dos Eixos (G28):** O cabeçote deve deslocar-se suavemente para o centro/fins de curso sem bater nas extremidades.
-3. **Aquecimento do Nozzle:** O bico só deve subir para a temperatura de extrusão (210–215 °C) após o homing, evitando que filamento derretido pingue sobre a mesa durante a calibração.
-4. **Chamada de Ferramenta (`TOOL=0`):** O módulo Canvas AFC deve posicionar a ranhura T0 sem encravar o tubo Bowden.
+### Passo 2: Observação e Registo da Sequência Real do `PRINT_START`
+Em vez de assumir a ordem dos comandos, observe atentamente e anote a sequência real executada pela macro `PRINT_START` do firmware COSMOS da máquina:
+1. **Ordem de Aquecimento:** Registar qual dos componentes aquece primeiro (mesa vs. bico) e se o bico aguarda pelo homing para subir para a temperatura final de extrusão.
+2. **Movimentos de Homing e Calibração:** Registar como o cabeçote efetua o homing (`G28`), se faz nivelamento de malha (`BED_MESH_CALIBRATE`) e se há contacto seguro do sensor com a mesa sem raspar.
+3. **Comportamento do Canvas AFC:** Registar se a chamada `TOOL=0` alimenta o filamento da ranhura T0 suavemente até ao sensor do cabeçote.
+4. **Temperaturas no Ecrã Físico:** Comparar as temperaturas indicadas no ecrã real da impressora com as temperaturas configuradas no perfil JSON.
 
 ### Passo 3: Inspeção da Linha de Purga e Primeira Camada
-* **Linha de Purga:** Verifique se a linha inicial é traçada na margem esquerda da mesa, com espessura uniforme e sem bolhas.
-* **Perímetro da Peça:** Ao iniciar a primeira camada do cubo de 20 mm, observe a altura de extrusão:
-  - *Correto:* Filamento ligeiramente achatado contra o PEI, com boa aderência e sem transparência excessiva.
-  - *Muito Alto:* O fio solta-se da mesa (pare a impressão e ajuste o Z-offset no Atalaia).
-  - *Muito Baixo:* O bico raspa no PEI (pare imediatamente a impressão).
+* **Linha de Purga:** Observar onde e como a linha de purga é traçada (margem da mesa, espessura e aderência).
+* **Perímetro da Peça:** Ao iniciar a primeira camada do cubo de 20 mm, observar a altura e aderência:
+  - *Aderência correta:* Linha contínua, ligeiramente achatada contra o PEI.
+  - *Problema de adesão:* Filamento solto ou a enrolar no bico (interromper a impressão pelo painel da máquina).
+  - *Aproximação excessiva:* Bico a marcar o PEI (desligar imediatamente o interruptor físico).
 
-### Passo 4: Conclusão e Registo de Resultados
-* Se a primeira camada assentar perfeitamente, deixe a impressão concluir até aos 10 mm de altura.
-* No final, a macro `PRINT_END` deve afastar o bico, desligar os aquecedores e retrair o filamento com segurança.
+### Passo 4: Conclusão e Registo de Métricas Reais
+* Se a primeira camada assentar corretamente, deixe a impressão concluir até aos 10 mm de altura.
+* No final, observe o comportamento da macro `PRINT_END` (arrefecimento, parqueamento do cabeçote e retração de filamento).
+* **Registo de Métricas:** Compare o tempo total e consumo de filamento indicados no ecrã real da Centauri Carbon com a estimativa do fatiador.
 
 ---
 
-## 4. O Que Registar para Validação Final
+## 4. Grelha de Registo para Validação da Fase 1
 
-Após o teste, anote os seguintes pontos para relatório da Fase 1:
-* [ ] O Klipper aceitou todos os parâmetros da macro `PRINT_START` sem emitir erro no log da consola?
-* [ ] A ranhura T0 do Canvas foi alimentada corretamente na primeira tentativa?
-* [ ] As temperaturas reais atingiram os valores nominais definidos no perfil JSON?
-* [ ] O Z-offset comportou-se de forma idêntica à impressão enviada via OrcaSlicer desktop?
-* [ ] Dimensões finais do cubo medido com paquímetro (tolerância aceitável: ±0.15 mm).
+Preencha os seguintes pontos durante e após o teste físico:
+* [ ] Sequência real do `PRINT_START` observada no ecrã/consola da máquina: ___________________________
+* [ ] Houve algum erro de comando Klipper ou parâmetro desconhecido na consola? [ ] Sim  [ ] Não
+* [ ] A alimentação da ranhura T0 pelo Canvas correu sem bloqueios? [ ] Sim  [ ] Não
+* [ ] Temperaturas reais observadas no visor da máquina: Mesa: ___ °C / Bico: ___ °C
+* [ ] Tempo real decorrido no ecrã da CC1: ___ min (vs. estimado: ___ min)
+* [ ] Dimensões reais do cubo com paquímetro: X: ___ mm / Y: ___ mm / Z: ___ mm (nominal: 20×20×10 mm)

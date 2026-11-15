@@ -51,11 +51,10 @@ A licença GNU AGPL-3.0 impõe um dever de copyleft forte ("viral"):
   3. Não oferece garantia jurídica absoluta de proteção contra contaminação por dependência funcional estrita sem consulta especializada a advogados de propriedade intelectual.
 
 ### Opção C: Integração Externa com App SlicePilot via Intents / Partilhar (Rejeitada)
-* *Desenho:* Manter o Atalaia 100% sem motor de fatiamento e receber o G-code final fatiado na app oficial SlicePilot através de `ACTION_SEND`.
+* *Desenho:* Manter o Atalaia 100% sem motor de fatiamento e receber o G-code final fatiado na aplicação SlicePilot através de `ACTION_SEND`.
 * *Motivo da rejeição:*
-  1. A app proprietária SlicePilot inclui telemetria de terceiros (Google Firebase Analytics e Crashlytics) e requer login na cloud da Elegoo, violando os princípios de privacidade e operação 100% local do Atalaia.
-  2. Não permite controlo direto da interface, impossibilitando a experiência unificada planeada nos wireframes E1 a E6.
-  3. Incerteza sobre a capacidade de importação de perfis Klipper com macros parametrizadas para o módulo Canvas AFC.
+  1. Quebra do requisito de fluxo unificado e integrado: o utilizador pretendia fatiar, enviar e monitorizar a impressão diretamente dentro do Atalaia num ciclo contínuo (ecrãs E1 a E6), sem saltos entre aplicações nem perda de contexto.
+  2. A aplicação SlicePilot é de código aberto (licença MIT com libslic3r sob AGPL-3), mas inclui dependências de telemetria (Firebase/Crashlytics) e autenticação cloud que não coincidem com os princípios de operação 100% local do Atalaia. Contudo, o motivo determinante para a rejeição foi a exigência de um fluxo de fatiamento e acompanhamento unificado dentro do Atalaia.
 
 ---
 

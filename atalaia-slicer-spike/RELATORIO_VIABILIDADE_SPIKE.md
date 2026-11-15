@@ -2,85 +2,87 @@
 
 * **Projeto:** Atalaia (`Hawaii-005/atalaia`)
 * **Spike:** `atalaia-slicer-spike`
-* **Data:** 2026-11-15
+* **Data:** 2026-11-15 (Revisão 2)
 * **Responsável:** Engenharia Atalaia
 
 ---
 
-## 1. Arquitetura do Host e Impacto de Emulação
+## 1. Estado de Demonstração da Viabilidade
 
-### Diagnóstico do Sistema Local
-* **Host Kernel:** macOS 14.8.4 (Darwin 23.6.0)
-* **Arquitetura da CPU:** `x86_64` (AMD Ryzen 5 2600 — Hackintosh MSI X570-A PRO)
-* **Impacto de Emulação no Docker:** **Nulo (0% overhead)**
-  - O processador é nativamente `x86_64`.
-  - Os contentores Docker Linux correm como `linux/amd64` nativo, sem qualquer camada de tradução dinâmica de instruções (sem QEMU e sem Rosetta 2).
-  - A compilação para Android `arm64-v8a` é uma compilação cruzada pura (cross-compilation) realizada pelo compilador Clang do Android NDK r27 (`aarch64-linux-android28-clang++`), que já é um executável binário `x86_64` nativo desenhado para gerar binários ARM64.
-  - *Comparativo com Apple Silicon (ARM64):* Caso o Mac fosse Apple Silicon (M1/M2/M3), a execução de imagens Docker `linux/amd64` exigiria emulação QEMU/Rosetta, com degradação de desempenho de 2 a 3 vezes. No ambiente atual, o desempenho é nativo.
+> ⚠️ **AVISO METODOLÓGICO:** O processo completo de compilação C++ cruzada a partir do código-fonte ainda **NÃO FOI EXECUTADO** localmente nem no CI. A viabilidade prática de gerar `libslice_core.so` reproduzível a partir do código-fonte permanece **NÃO DEMONSTRADA** até que o workflow ou o contentor Docker terminem com código de saída 0 e gerem o artefacto binário funcional.
+
+Cada secção e métrica deste documento está explicitamente classificada com um dos seguintes estados de verificação:
+* **[Executado (com log)]**: Ação testada em máquina com saída confirmada por comandos e logs.
+* **[Lido no código]**: Inspeção direta linha a linha nos repositórios `Hawaii-005/atalaia` ou `yemyatthu1990/slicepilot-android-public`.
+* **[Estimado]**: Projeção teórica calculada ou deduzida a partir de documentação ou builds de C++ semelhantes, carecendo de execução real para validação.
 
 ---
 
-## 2. Viabilidade no GitHub Actions e Espaço em Disco
+## 2. Arquitetura do Host e Impacto de Emulação
 
-### Avaliação do Disco do Runner (`ubuntu-24.04`)
-* **Espaço Padrão Inicial:** Os runners públicos standard do GitHub Actions disponibilizam aproximadamente ~14 GB de espaço livre em `/`.
-* **Exigência do Build:** A compilação completa do `libslic3r` e das suas dependências C++ (Boost estático, OpenCASCADE, OpenVDB, CGAL) atinge um pico de ~22 a 25 GB de artefatos temporários em disco.
-* **Solução Validada:**
-  - O workflow `.github/workflows/slicer-spike-build.yml` inclui um passo preliminar de limpeza agressiva de ferramentas pré-instaladas no runner que não são necessárias para este build (remoção do .NET Core SDK, Android SDK de sistema, Haskell/GHC, Boost do sistema e caches Docker desnecessários):
+### Diagnóstico do Sistema Local
+* **Host Kernel:** macOS 14.8.4 (Darwin 23.6.0) **[Executado (com log)]** (`uname -a`)
+* **Arquitetura da CPU:** `x86_64` (AMD Ryzen 5 2600 — Hackintosh MSI X570-A PRO) **[Executado (com log)]** (`uname -m`)
+* **Impacto de Emulação no Docker:** **[Estimado: Nulo (0% overhead de CPU)]**
+  - O processador é nativamente `x86_64`.
+  - Os contentores Docker Linux correm como `linux/amd64` nativo, sem camadas de tradução dinâmica de instruções (sem QEMU e sem Rosetta 2).
+  - A compilação para Android `arm64-v8a` é uma compilação cruzada pura (cross-compilation) executada pelo compilador Clang do Android NDK r27 (`aarch64-linux-android28-clang++`), que é ele próprio um executável `x86_64` gerando binários ARM64.
+  - *Comparativo com Apple Silicon (ARM64):* Caso o host fosse Apple Silicon (M1/M2/M3), correr imagens Docker `linux/amd64` incorreria em forte penalização por emulação QEMU. No hardware x86_64 atual, a execução no container é nativa.
+
+---
+
+## 3. Hipótese de Espaço em Disco no GitHub Actions (`ubuntu-24.04`)
+
+* **Espaço Padrão Inicial:** Runners padrão do GitHub Actions disponibilizam aproximadamente ~14 GB de espaço livre em disco **[Estimado / Documentação GitHub]**.
+* **Necessidade Estimada do Build:** A compilação estática de Boost, OpenCASCADE, OpenVDB, TBB e CGAL projeta um pico de ocupação temporária de ~20 a 25 GB durante as fases intermédias de compilação de objetos `.o` **[Estimado]**.
+* **Proposta de Mitigação no Workflow:**
+  - O workflow `.github/workflows/slicer-spike-build.yml` introduz uma etapa preliminar de remoção de ferramentas pré-instaladas desnecessárias no runner:
     ```bash
     sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/share/boost /opt/hostedtoolcache
     ```
-  - **Resultado de Espaço Livre:** Liberta entre **35 GB a 42 GB** adicionais, elevando o espaço útil disponível para **> 45 GB**, o que acomoda com ampla margem a compilação completa.
+  - **Status:** **[Estimado / Por Executar]**. A eficácia da limpeza e a capacidade de suportar o pico de compilação sem esgotar o disco apenas serão consideradas confirmadas após a conclusão bem-sucedida de um job no GitHub Actions com relatório `df -h`.
 
 ---
 
-## 3. Toolchain, Dependências e Patches Necessários
+## 4. Toolchain, Dependências e Patches Identificados
 
-A compilação do `libslice_core.so` reproduz a receita de build estática do SlicePilot, exigindo o seguinte conjunto fixo:
+A partir da leitura minuciosa de `android/native-build/build.sh` e `android/core/CMakeLists.txt` no repositório SlicePilot:
 
-1. **Android NDK:** Versão estrita **27.0.12077973 (r27)**, Android API level 28 (Android 9.0+), ABI `arm64-v8a`.
-2. **Patches de Compilação:**
-   * **`build.sh` (NDK Path):** O script original continha o caminho fixo `NDK="$HOME/Android/Sdk/ndk/27.0.12077973"`. Foi corrigido no container para consumir dinamicamente `$ANDROID_NDK_HOME`.
-   * **OpenSSL 3.1.8:** A compilação paralela com `-j` pode apresentar concorrência na geração de ficheiros `.dep`. O script isola `build_libs` e realiza a instalação em `make -j1 install_sw`.
-   * **OpenVDB:** Aplicação do patch `0001-clang19.patch` para compatibilidade com o Clang do NDK r27.
-   * **OpenCASCADE (OCCT 7.6.0):** Aplicação do patch `0001-OCCT-fix.patch` para desativar módulos gráficos pesados (`USE_TK=OFF`, `USE_FFMPEG=OFF`, `USE_VTK=OFF`) e focar estritamente em BRep e modelação matemática 3D.
-3. **Métricas de Artefato:**
-   * **Tamanho do `libslice_core.so` (Release com strip):** ~66.2 MB.
-   * **Impacto no APK da Variante Completa:** O APK final passará de ~22 MB (variante Lite) para ~78 a 85 MB (variante Completa).
-
----
-
-## 4. Auditoria de Sintaxe do G-Code Gerado (Cosmos AFC)
-
-Foi gerado e inspecionado o G-code de teste para o perfil `Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC.json`:
-
-1. **Flavor Klipper:** O cabeçalho e os comandos de movimento respeitam a sintaxe padrão Klipper (coordenadas absolutas `G90`, extrusão relativa `M83`).
-2. **Macro `PRINT_START` Parametrizada:**
-   ```gcode
-   PRINT_START EXTRUDER=215 BED=60 CHAMBER=0 TOOL=0
-   ```
-   *Verificação:* As variáveis de temperatura da primeira camada e a ranhura inicial (`TOOL=0`) são injetadas corretamente a partir do perfil.
-3. **Trocas de Ferramenta Multi-Material (Canvas AFC):**
-   ```gcode
-   T1 PURGE_LENGTH=35
-   ```
-   *Verificação:* Os comandos de troca de ferramenta utilizam as macros `T0` a `T3` com especificação de comprimento de purga.
-4. **Macro `PRINT_END`:** Presente no rodapé do ficheiro para retração, arrefecimento e parqueamento do cabeçote.
-5. **Ressalva de Validação Física:**
-   * **Aviso Estrito:** A conformidade sintática foi validada textualmente. **O G-code NÃO é declarado validado** nem aprovado para produção sem execução do teste físico monitorizado no hardware real da Centauri Carbon CC1.
+1. **Android NDK:** Exige a versão exata **27.0.12077973 (r27)**, API Level 28 (`arm64-v8a`) **[Lido no código: build.sh linha 12]**.
+2. **Patches Identificados como Necessários:**
+   * **Caminho do NDK:** O script `build.sh` possui o caminho fixo `NDK="$HOME/Android/Sdk/ndk/27.0.12077973"`. No Docker/CI foi introduzido patch para utilizar a variável de ambiente `$ANDROID_NDK_HOME` **[Lido no código]**.
+   * **OpenSSL 3.1.8:** A compilação paralela com `-j` pode apresentar concorrência na geração de dependências; o script do SlicePilot isola a compilação de bibliotecas **[Lido no código]**.
+   * **OpenVDB:** Presença do patch `0001-clang19.patch` na árvore do SlicePilot **[Lido no código]**.
+   * **OpenCASCADE (OCCT 7.6.0):** Presença do patch `0001-OCCT-fix.patch` para desativação de módulos de interface gráfica **[Lido no código]**.
+3. **Métricas de Ficheiro:**
+   * **Tamanho do `.so` e do APK:**
+     - O tamanho final do binário gerado pelo script de build próprio e o seu impacto no APK permanecem **[Estimado / Por Medir em Build Próprio]**. Nenhum valor é assumido como validado sem compilação local.
 
 ---
 
-## 5. Instruções para Execução do Benchmark nos Dispositivos-Alvo
+## 5. Estrutura dos Parâmetros no Perfil Cosmos AFC
 
-A aplicação de benchmark local (`atalaia-slicer-spike/app`) foi desenvolvida especificamente para permitir ao utilizador medir o comportamento em mão nos 3 aparelhos:
-* **Samsung Galaxy Tab S10 Lite** (Tablet de controlo)
-* **Samsung Galaxy S25 Ultra** (Flagship moderno)
-* **Samsung Galaxy Note 20 Ultra** (Aparelho legado)
+* **Flavor Klipper:** O perfil `Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC.json` define a sintaxe `klipper`, coordenadas absolutas e extrusão relativa **[Lido no código: perfil JSON]**.
+* **Parâmetros da Macro `PRINT_START` no Perfil:**
+  - O perfil OrcaSlicer/Cosmos AFC contém a chamada de macro com parâmetros dinâmicos:
+    `PRINT_START EXTRUDER=[first_layer_temperature] BED=[first_layer_bed_temperature] CHAMBER=[chamber_temperature] TOOL={initial_tool}` **[Lido no código: perfil JSON]**.
+  - A troca de ferramenta Canvas AFC parametriza: `T[next_extruder] PURGE_LENGTH=[flush_length]` **[Lido no código: perfil JSON]**.
+* **Estado de Validação:**
+  - A formatação é estritamente a que consta nos ficheiros JSON do repositório.
+  - **Aviso de Segurança Física:** O comportamento real da macro na Centauri Carbon depende de observação e registo durante o teste físico na máquina (ver `docs/design/slicer/GUIA_TESTE_FISICO_PRIMEIRA_IMPRESSAO.md`). Nenhum G-code é considerado validado antes desse teste.
 
-### Procedimento:
-1. Instalar o APK gerado do spike (`atalaia-slicer-spike.apk`).
-2. Abrir a app e premir **"EXECUTAR BENCHMARK LOCAL"**.
-3. O teste fatia o modelo padrão de calibração (cubo 20×20×10 mm) utilizando o perfil Cosmos AFC.
-4. **Teste de Minimização:** Durante o fatiamento, premir o botão Home para enviar a app para segundo plano durante 3 segundos e reabrir. A app regista no relatório se a thread sobreviveu sem falha de memória.
-5. Premir **"PARTILHAR RELATÓRIO JSON"** para exportar as métricas locais sem qualquer transmissão de rede externa.
+---
+
+## 6. Procedimento para Teste no Aparelho Real (App de Benchmark Local)
+
+A aplicação de benchmark local isolada (`atalaia-slicer-spike/app`) foi desenhada para recolher medições reais nos três aparelhos-alvo:
+* **Samsung Galaxy Tab S10 Lite**
+* **Samsung Galaxy S25 Ultra**
+* **Samsung Galaxy Note 20 Ultra**
+
+### O que a app mede e regista localmente (sem telemetria):
+1. **Identificação do Dispositivo:** `Build.MANUFACTURER`, `Build.MODEL`, `Build.DEVICE`, versão do Android.
+2. **Tempo de Execução:** Duração do fatiamento em milissegundos via `SystemClock.elapsedRealtime()`.
+3. **Memória RAM:** Monitorização contínua do pico de memória PSS (`Debug.MemoryInfo.totalPss`) durante o fatiamento.
+4. **Comportamento ao Minimizar:** Registo de eventos de ciclo de vida (`onPause`, `onStop`, `onResume`) para verificar se a thread NDK sobrevive ao envio da aplicação para segundo plano.
+5. **Resultado e Relatório:** Registo do código de retorno e tamanho do ficheiro gerado, gravando um relatório JSON no armazenamento da app com opção de partilha manual (`ACTION_SEND`).
