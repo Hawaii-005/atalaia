@@ -2,51 +2,69 @@
 
 A tabela abaixo cruza as funções nativas exportadas em C++ no ficheiro `slice_jni.cpp` (do repositório SlicePilot, commit `c8d0646944f2eedb8837a02d5352cbcde22863e6`) com as declarações `external fun` correspondentes em Kotlin na classe `world.yemyat.slicepilot.NativeLib`.
 
----
-
-## Tabela de Assinaturas JNI
-
-| Função em C++ (`slice_jni.cpp`) | Nome JNI JAVAH (`Java_...`) | Assinatura em Kotlin (`NativeLib.kt`) | Tipo de Retorno | Descrição / Parâmetros Principais |
-|---|---|---|---|---|
-| `nativeInit` | `Java_world_yemyat_slicepilot_NativeLib_nativeInit` | `external fun nativeInit(dataDir: String, resDir: String)` | `Unit` | Inicializa diretórios de dados e recursos (`PresetBundle`, `AppConfig`). |
-| `nativeSlice` | `Java_world_yemyat_slicepilot_NativeLib_nativeSlice` | `external fun nativeSlice(modelPath: String, iniConfig: String, outPath: String, callback: SliceCallback): Boolean` | `Boolean` | Executa fatiamento com config genérica. |
-| `nativeSliceWithPreset` | `Java_world_yemyat_slicepilot_NativeLib_nativeSliceWithPreset` | `external fun nativeSliceWithPreset(modelPath: String, printerName: String, filamentName: String, processName: String, outPath: String, callback: SliceCallback): Boolean` | `Boolean` | Fatiamento com seleção de presets nominais. |
-| `nativeGetPrinters` | `Java_world_yemyat_slicepilot_NativeLib_nativeGetPrinters` | `external fun nativeGetPrinters(): String` | `String` (JSON) | Retorna lista de impressoras disponíveis. |
-| `nativeGetFilaments` | `Java_world_yemyat_slicepilot_NativeLib_nativeGetFilaments` | `external fun nativeGetFilaments(): String` | `String` (JSON) | Retorna lista de filamentos disponíveis. |
-| `nativeGetProcesses` | `Java_world_yemyat_slicepilot_NativeLib_nativeGetProcesses` | `external fun nativeGetProcesses(): String` | `String` (JSON) | Retorna lista de processos disponíveis. |
-| `nativeSelectPrinter` | `Java_world_yemyat_slicepilot_NativeLib_nativeSelectPrinter` | `external fun nativeSelectPrinter(printerName: String): Boolean` | `Boolean` | Seleciona impressora ativa e atualiza compatibilidade. |
-| `nativeSelectProcess` | `Java_world_yemyat_slicepilot_NativeLib_nativeSelectProcess` | `external fun nativeSelectProcess(processName: String): Boolean` | `Boolean` | Seleciona processo ativo. |
-| `nativeGetCompatibleProcesses`| `Java_world_yemyat_slicepilot_NativeLib_nativeGetCompatibleProcesses` | `external fun nativeGetCompatibleProcesses(): String` | `String` (JSON) | Retorna processos compatíveis com a impressora ativa. |
-| `nativeGetCompatibleFilaments`| `Java_world_yemyat_slicepilot_NativeLib_nativeGetCompatibleFilaments` | `external fun nativeGetCompatibleFilaments(): String` | `String` (JSON) | Retorna filamentos compatíveis com a impressora ativa. |
-| `nativeSliceWithOverrides` | `Java_world_yemyat_slicepilot_NativeLib_nativeSliceWithOverrides` | `external fun nativeSliceWithOverrides(modelPath: String, printerName: String, filamentName: String, processName: String, overridesIni: String, supportFilamentName: String, outPath: String, callback: SliceCallback): Boolean` | `Boolean` | Fatiamento completo com parâmetros nominais e overrides INI. |
-| `nativeSetModelTransform` | `Java_world_yemyat_slicepilot_NativeLib_nativeSetModelTransform` | `external fun nativeSetModelTransform(rotX: Float, rotY: Float, rotZ: Float, mirrorX: Boolean, mirrorY: Boolean, mirrorZ: Boolean, offsetX: Float, offsetY: Float)` | `Unit` | Define rotação, espelhamento e translação do modelo. |
-| `nativeSetPartPoses` | `Java_world_yemyat_slicepilot_NativeLib_nativeSetPartPoses` | `external fun nativeSetPartPoses(poses: FloatArray?, rowCount: Int)` | `Unit` | Define posições por peça (multi-part). |
-| `nativeCancel` | `Java_world_yemyat_slicepilot_NativeLib_nativeCancel` | `external fun nativeCancel()` | `Unit` | Solicita cancelamento imediato da thread de fatiamento. |
-| `nativeIsRunning` | `Java_world_yemyat_slicepilot_NativeLib_nativeIsRunning` | `external fun nativeIsRunning(): Boolean` | `Boolean` | Indica se o motor está a fatiar no momento. |
-| `nativeGetError` | `Java_world_yemyat_slicepilot_NativeLib_nativeGetError` | `external fun nativeGetError(): String` | `String` | Retorna a mensagem de erro do último fatiamento falhado. |
-| `nativeGetVersion` | `Java_world_yemyat_slicepilot_NativeLib_nativeGetVersion` | `external fun nativeGetVersion(): String` | `String` | Retorna a versão da compilação do libslic3r. |
-| `nativeParsePreview` | `Java_world_yemyat_slicepilot_NativeLib_nativeParsePreview` | `external fun nativeParsePreview(path: String, targetTris: Int, callback: PreviewCallback?): Array<Any>?` | `Array<Any>?` | Parser rápido de malha para pré-visualização 3D. |
+Inclui:
+- **Descritor JNI JVM** (assinatura canónica JNI)
+- **Assinatura C++ JNI** (`JNIEnv*`, `jclass`, parâmetros e retorno C++)
+- **Assinatura Kotlin**
+- **Classes e Métodos de Callback** pesquisados dinamicamente via JNI em runtime C++.
 
 ---
 
-## Conformidade das Interfaces de Callback
+## Tabela Completa de Assinaturas e Tipos JNI
 
-1. **`SliceCallback`:**
-   - **C++ (`slice_jni.cpp`):** Procura o método `onProgress(int step, String text, int percent)` na classe `SliceCallback`.
-   - **Kotlin (`NativeLib.kt`):**
-     ```kotlin
-     interface SliceCallback {
-         fun onProgress(step: Int, text: String, percent: Int)
-     }
-     ```
-   - **Resultado:** **Coincidência exata de tipos e parâmetros**.
+| Função Kotlin / Símbolo JNI | Descritor JNI JVM | Assinatura e Tipos em C++ (`slice_jni.cpp`) | Assinatura em Kotlin (`NativeLib.kt`) |
+|---|---|---|---|
+| `nativeInit`<br>`Java_world_yemyat_slicepilot_NativeLib_nativeInit` | `(Ljava/lang/String;Ljava/lang/String;)V` | `JNIEXPORT void JNICALL`<br>`(JNIEnv *env, jclass, jstring dataDir, jstring resDir)` | `external fun nativeInit(dataDir: String, resDir: String): Unit` |
+| `nativeSlice`<br>`Java_world_yemyat_slicepilot_NativeLib_nativeSlice` | `(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lworld/yemyat/slicepilot/NativeLib$SliceCallback;)Z` | `JNIEXPORT jboolean JNICALL`<br>`(JNIEnv *env, jclass, jstring modelPath, jstring iniConfig, jstring outPath, jobject callback)` | `external fun nativeSlice(modelPath: String, iniConfig: String, outPath: String, callback: SliceCallback): Boolean` |
+| `nativeSliceWithPreset`<br>`Java_world_yemyat_slicepilot_NativeLib_nativeSliceWithPreset` | `(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lworld/yemyat/slicepilot/NativeLib$SliceCallback;)Z` | `JNIEXPORT jboolean JNICALL`<br>`(JNIEnv *env, jclass, jstring modelPath, jstring printerName, jstring filamentName, jstring processName, jstring outPath, jobject callback)` | `external fun nativeSliceWithPreset(modelPath: String, printerName: String, filamentName: String, processName: String, outPath: String, callback: SliceCallback): Boolean` |
+| `nativeGetPrinters`<br>`Java_world_yemyat_slicepilot_NativeLib_nativeGetPrinters` | `()Ljava/lang/String;` | `JNIEXPORT jstring JNICALL`<br>`(JNIEnv *env, jclass)` | `external fun nativeGetPrinters(): String` |
+| `nativeGetFilaments`<br>`Java_world_yemyat_slicepilot_NativeLib_nativeGetFilaments` | `()Ljava/lang/String;` | `JNIEXPORT jstring JNICALL`<br>`(JNIEnv *env, jclass)` | `external fun nativeGetFilaments(): String` |
+| `nativeGetProcesses`<br>`Java_world_yemyat_slicepilot_NativeLib_nativeGetProcesses` | `()Ljava/lang/String;` | `JNIEXPORT jstring JNICALL`<br>`(JNIEnv *env, jclass)` | `external fun nativeGetProcesses(): String` |
+| `nativeSelectPrinter`<br>`Java_world_yemyat_slicepilot_NativeLib_nativeSelectPrinter` | `(Ljava/lang/String;)Z` | `JNIEXPORT jboolean JNICALL`<br>`(JNIEnv *env, jclass, jstring printerName)` | `external fun nativeSelectPrinter(printerName: String): Boolean` |
+| `nativeSelectProcess`<br>`Java_world_yemyat_slicepilot_NativeLib_nativeSelectProcess` | `(Ljava/lang/String;)Z` | `JNIEXPORT jboolean JNICALL`<br>`(JNIEnv *env, jclass, jstring processName)` | `external fun nativeSelectProcess(processName: String): Boolean` |
+| `nativeGetCompatibleProcesses`<br>`Java_world_yemyat_slicepilot_NativeLib_nativeGetCompatibleProcesses` | `()Ljava/lang/String;` | `JNIEXPORT jstring JNICALL`<br>`(JNIEnv *env, jclass)` | `external fun nativeGetCompatibleProcesses(): String` |
+| `nativeGetCompatibleFilaments`<br>`Java_world_yemyat_slicepilot_NativeLib_nativeGetCompatibleFilaments` | `()Ljava/lang/String;` | `JNIEXPORT jstring JNICALL`<br>`(JNIEnv *env, jclass)` | `external fun nativeGetCompatibleFilaments(): String` |
+| `nativeSliceWithOverrides`<br>`Java_world_yemyat_slicepilot_NativeLib_nativeSliceWithOverrides` | `(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lworld/yemyat/slicepilot/NativeLib$SliceCallback;)Z` | `JNIEXPORT jboolean JNICALL`<br>`(JNIEnv *env, jclass, jstring modelPath, jstring printerName, jstring filamentName, jstring processName, jstring overridesIni, jstring supportFilamentName, jstring outPath, jobject callback)` | `external fun nativeSliceWithOverrides(modelPath: String, printerName: String, filamentName: String, processName: String, overridesIni: String, supportFilamentName: String, outPath: String, callback: SliceCallback): Boolean` |
+| `nativeSetModelTransform`<br>`Java_world_yemyat_slicepilot_NativeLib_nativeSetModelTransform` | `(FFFZZZFF)V` | `JNIEXPORT void JNICALL`<br>`(JNIEnv *, jclass, jfloat rotX, jfloat rotY, jfloat rotZ, jboolean mirrorX, jboolean mirrorY, jboolean mirrorZ, jfloat offsetX, jfloat offsetY)` | `external fun nativeSetModelTransform(rotX: Float, rotY: Float, rotZ: Float, mirrorX: Boolean, mirrorY: Boolean, mirrorZ: Boolean, offsetX: Float, offsetY: Float): Unit` |
+| `nativeSetPartPoses`<br>`Java_world_yemyat_slicepilot_NativeLib_nativeSetPartPoses` | `([FI)V` | `JNIEXPORT void JNICALL`<br>`(JNIEnv *env, jclass, jfloatArray poses, jint row_count)` | `external fun nativeSetPartPoses(poses: FloatArray?, rowCount: Int): Unit` |
+| `nativeCancel`<br>`Java_world_yemyat_slicepilot_NativeLib_nativeCancel` | `()V` | `JNIEXPORT void JNICALL`<br>`(JNIEnv *, jclass)` | `external fun nativeCancel(): Unit` |
+| `nativeIsRunning`<br>`Java_world_yemyat_slicepilot_NativeLib_nativeIsRunning` | `()Z` | `JNIEXPORT jboolean JNICALL`<br>`(JNIEnv *, jclass)` | `external fun nativeIsRunning(): Boolean` |
+| `nativeGetError`<br>`Java_world_yemyat_slicepilot_NativeLib_nativeGetError` | `()Ljava/lang/String;` | `JNIEXPORT jstring JNICALL`<br>`(JNIEnv *env, jclass)` | `external fun nativeGetError(): String` |
+| `nativeGetVersion`<br>`Java_world_yemyat_slicepilot_NativeLib_nativeGetVersion` | `()Ljava/lang/String;` | `JNIEXPORT jstring JNICALL`<br>`(JNIEnv *env, jclass)` | `external fun nativeGetVersion(): String` |
+| `nativeParsePreview`<br>`Java_world_yemyat_slicepilot_NativeLib_nativeParsePreview` | `(Ljava/lang/String;ILworld/yemyat/slicepilot/NativeLib$PreviewCallback;)[Ljava/lang/Object;` | `JNIEXPORT jobjectArray JNICALL`<br>`(JNIEnv *env, jclass, jstring jpath, jint target_tris, jobject callback)` | `external fun nativeParsePreview(path: String, targetTris: Int, callback: PreviewCallback?): Array<Any>?` |
 
-2. **`PreviewCallback`:**
-   - **C++ (`slice_jni.cpp`):** Procura o método `onProgress(int percent)` na classe interna `NativeLib$PreviewCallback`.
-   - **Kotlin (`NativeLib.kt`):**
-     ```kotlin
-     interface PreviewCallback {
-         fun onProgress(percent: Int)
-     }
-     ```
-   - **Resultado:** **Coincidência exata de tipos e parâmetros**.
+---
+
+## Callbacks Pesquisados Dinamicamente em C++
+
+### 1. `SliceCallback` (Notificação de Progresso do Fatiamento)
+- **Localização em C++:** Função `report_progress` em `slice_jni.cpp` (linhas 128–143).
+- **Lookup da Classe:** `jclass cls = env->GetObjectClass(g_state.callback);` (a instância passada ao invocar `nativeSlice` / `nativeSliceWithPreset` / `nativeSliceWithOverrides`).
+- **Lookup do Método:** `jmethodID mid = env->GetMethodID(cls, "onProgress", "(ILjava/lang/String;I)V");`
+- **Nome do Método:** `onProgress`
+- **Descritor JNI:** `(ILjava/lang/String;I)V`
+- **Parâmetros C++ passados:**
+  1. `step`: `jint` (índice da etapa do fatiamento)
+  2. `text`: `jstring` (criado via `env->NewStringUTF(text.c_str())`)
+  3. `percent`: `jint` (percentagem 0–100)
+- **Correspondência Kotlin:**
+  ```kotlin
+  interface SliceCallback {
+      fun onProgress(step: Int, text: String, percent: Int)
+  }
+  ```
+
+### 2. `PreviewCallback` (Notificação de Progresso do Parser de Malha)
+- **Localização em C++:** Início da função `Java_world_yemyat_slicepilot_NativeLib_nativeParsePreview` em `slice_jni.cpp` (linhas 858–864).
+- **Lookup da Classe:** `jclass cb_cls = env->FindClass("world/yemyat/slicepilot/NativeLib$PreviewCallback");`
+- **Lookup do Método:** `jmethodID progress_mid = env->GetMethodID(cb_cls, "onProgress", "(I)V");`
+- **Nome da Classe no C++:** `"world/yemyat/slicepilot/NativeLib$PreviewCallback"`
+- **Nome do Método:** `onProgress`
+- **Descritor JNI:** `(I)V`
+- **Parâmetros C++ passados:** `percent` (`jint`, percentagem 0–100)
+- **Correspondência Kotlin:**
+  ```kotlin
+  interface PreviewCallback {
+      fun onProgress(percent: Int)
+  }
+  ```
