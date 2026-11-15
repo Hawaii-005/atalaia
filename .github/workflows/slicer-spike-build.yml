@@ -2,6 +2,9 @@ name: Slicer Spike - Build & Verify
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - fatiador-1-viabilidade-licenca
 
 jobs:
   build-native:
