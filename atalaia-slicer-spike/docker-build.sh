@@ -80,18 +80,32 @@ cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK_HOME}/build/cmake/android.toolchain.
 
 cmake --build . -j"${MAX_JOBS}" --target slice_core
 
-# 6. Validação do binário gerado e cálculo de SHA256
+# 6. Validação do binário gerado, strip e cálculo de SHA256
 SO_PATH="$SRC_DIR/android/core/build-arm64/libslice_core.so"
 if [ ! -f "$SO_PATH" ]; then
     echo "ERRO: Artefato ${SO_PATH} não foi encontrado após o build!" >&2
     exit 1
 fi
 
+STRIP_TOOL="${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip"
+if [ ! -f "$STRIP_TOOL" ]; then
+    STRIP_TOOL="llvm-strip"
+fi
+
+# Preservar o binário não-stripped com símbolos para depuração
+cp "$SO_PATH" "$OUTPUT_DIR/libslice_core.unstripped.so"
+sha256sum "$OUTPUT_DIR/libslice_core.unstripped.so" > "$OUTPUT_DIR/libslice_core.unstripped.so.sha256"
+
+# Criar a versão stripped para produção/benchmark
 cp "$SO_PATH" "$OUTPUT_DIR/libslice_core.so"
+"$STRIP_TOOL" --strip-unneeded "$OUTPUT_DIR/libslice_core.so"
 
 echo "=========================================================="
-echo "Compilação concluída!"
+echo "Compilação e Strip concluídos!"
+echo "--- Binário com símbolos de debug (unstripped) ---"
+ls -lh "$OUTPUT_DIR/libslice_core.unstripped.so"
+echo "--- Binário final otimizado (stripped) ---"
 ls -lh "$OUTPUT_DIR/libslice_core.so"
-echo "SHA256 do binário compilado:"
+echo "SHA256 do binário stripped:"
 sha256sum "$OUTPUT_DIR/libslice_core.so" | tee "$OUTPUT_DIR/libslice_core.so.sha256"
 echo "=========================================================="

@@ -2,6 +2,12 @@ name: Slicer Spike - Build & Verify
 
 on:
   workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'ID de uma execução anterior para reutilizar o libslice-core-arm64 (salta build-native)'
+        required: false
+        type: string
+        default: ''
   push:
     branches:
       - fatiador-1-viabilidade-licenca
@@ -9,6 +15,8 @@ on:
 jobs:
   build-native:
     name: Compilar NDK .so e Auditar Símbolos JNI
+    # Só executa se NÃO tiver sido fornecido run_id nos inputs do workflow_dispatch
+    if: "${{ github.event.inputs.run_id == '' || github.event.inputs.run_id == null }}"
     runs-on: ubuntu-24.04
     timeout-minutes: 180
 
@@ -16,16 +24,9 @@ jobs:
       - name: Checkout repositório Atalaia
         uses: actions/checkout@v4
 
-      - name: Libertar espaço em disco no Runner (~40 GB livres)
+      - name: Informação de espaço em disco no Runner
         run: |
-          echo "=== Espaço em disco antes da limpeza ==="
-          df -h
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /usr/local/share/boost
-          sudo rm -rf /opt/hostedtoolcache
-          sudo docker image prune -a -f || true
-          echo "=== Espaço em disco após limpeza ==="
+          echo "=== Espaço em disco disponível no Runner ==="
           df -h
 
       - name: Construir imagem Docker do compilador NDK r27
@@ -60,8 +61,6 @@ jobs:
           readelf -d "$SO_FILE"
 
           echo "=== Extração de Símbolos Exportados com readelf --dyn-syms -W ==="
-          # O readelf lê ELF AArch64 de forma nativa e sem necessidade de cross-nm
-          # Filtra símbolos definidos (Ndx != UND) e extrai estritamente a última coluna (nome exato do símbolo)
           readelf --dyn-syms -W "$SO_FILE" \
             | awk '$7 != "UND" && NF >= 8 {print $8}' \
             | sed 's/@@.*//' \
@@ -74,7 +73,6 @@ jobs:
             exit 1
           fi
 
-          # Extrair todas as declarações external fun do Kotlin
           grep -E "external fun" "$KT_FILE" \
             | sed -E 's/.*external fun ([a-zA-Z0-9_]+).*/\1/' \
             | while read -r fn; do
@@ -86,7 +84,6 @@ jobs:
           while read -r sym; do
             [ -z "$sym" ] && continue
             CHECKED_COUNT=$((CHECKED_COUNT + 1))
-            # Comparação por correspondência EXATA de linha (-Fx)
             if grep -Fxq "$sym" /tmp/exported_symbols.txt; then
               echo "  [OK] $sym"
             else
@@ -110,7 +107,7 @@ jobs:
             echo "Nenhum símbolo Java_* excedente detectado. Alinhamento 1:1 perfeito."
           fi
 
-      - name: Publicar Binário libslice_core.so como Artifact
+      - name: Publicar Binário Stripped libslice_core.so como Artifact Principal
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -118,9 +115,19 @@ jobs:
           path: atalaia-slicer-spike/output/arm64-v8a/libslice_core.so
           retention-days: 14
 
+      - name: Publicar Binário Não-Stripped (com símbolos de debug) como Artifact Opcional
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: libslice-core-arm64-debug-symbols
+          path: atalaia-slicer-spike/output/arm64-v8a/libslice_core.unstripped.so
+          retention-days: 7
+
   build-apk:
     name: Montar APK Debug do Spike (com Android SDK preservado)
     needs: build-native
+    # Corre se build-native teve sucesso OU se foi saltado por ter sido fornecido run_id
+    if: "${{ always() && (needs.build-native.result == 'success' || needs.build-native.result == 'skipped') }}"
     runs-on: ubuntu-24.04
     timeout-minutes: 60
 
@@ -137,11 +144,13 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Descarregar libslice_core.so compilado
+      - name: Descarregar libslice_core.so compilado (Artifact Local ou de Execução Anterior)
         uses: actions/download-artifact@v4
         with:
           name: libslice-core-arm64
           path: atalaia-slicer-spike/app/src/main/jniLibs/arm64-v8a
+          run-id: "${{ github.event.inputs.run_id || github.run_id }}"
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Montar APK de Debug do Spike com Gradle Wrapper 8.2
         run: |
