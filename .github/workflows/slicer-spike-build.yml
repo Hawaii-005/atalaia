@@ -56,6 +56,14 @@ jobs:
           echo "=== Verificação Dynamic Section (readelf -d) ==="
           readelf -d "$SO_FILE"
 
+          echo "=== Extração de Símbolos Exportados com readelf --dyn-syms -W ==="
+          # O readelf lê ELF AArch64 de forma nativa e sem necessidade de cross-nm
+          # Filtra símbolos definidos (Ndx != UND) e extrai estritamente a última coluna (nome exato do símbolo)
+          readelf --dyn-syms -W "$SO_FILE" \
+            | awk '$7 != "UND" && NF >= 8 {print $8}' \
+            | sed 's/@@.*//' \
+            | sort -u > /tmp/exported_symbols.txt
+
           echo "=== Verificação Estrita de Funções JNI do NativeLib.kt ==="
           KT_FILE="atalaia-slicer-spike/app/src/main/java/world/yemyat/slicepilot/NativeLib.kt"
           if [ ! -f "$KT_FILE" ]; then
@@ -64,30 +72,40 @@ jobs:
           fi
 
           # Extrair todas as declarações external fun do Kotlin
-          EXTERNAL_FUNS=$(grep -E "external fun" "$KT_FILE" | sed -E 's/.*external fun ([a-zA-Z0-9_]+).*/\1/')
-          
-          # Extrair todos os símbolos definidos exportados pelo .so
-          EXPORTED_SYMBOLS=$(nm -D --defined-only "$SO_FILE")
+          grep -E "external fun" "$KT_FILE" \
+            | sed -E 's/.*external fun ([a-zA-Z0-9_]+).*/\1/' \
+            | while read -r fn; do
+                echo "Java_world_yemyat_slicepilot_NativeLib_${fn}"
+              done > /tmp/expected_symbols.txt
 
           MISSING_COUNT=0
           CHECKED_COUNT=0
-          for fn in $EXTERNAL_FUNS; do
-            EXPECTED_SYM="Java_world_yemyat_slicepilot_NativeLib_${fn}"
+          while read -r sym; do
+            [ -z "$sym" ] && continue
             CHECKED_COUNT=$((CHECKED_COUNT + 1))
-            if echo "$EXPORTED_SYMBOLS" | grep -q "$EXPECTED_SYM"; then
-              echo "  [OK] $EXPECTED_SYM"
+            # Comparação por correspondência EXATA de linha (-Fx)
+            if grep -Fxq "$sym" /tmp/exported_symbols.txt; then
+              echo "  [OK] $sym"
             else
-              echo "  [FALHA] Símbolo obrigatório AUSENTE no .so: $EXPECTED_SYM" >&2
+              echo "  [FALHA] Símbolo obrigatório AUSENTE no .so: $sym" >&2
               MISSING_COUNT=$((MISSING_COUNT + 1))
             fi
-          done
+          done < /tmp/expected_symbols.txt
 
           echo "Total de funções JNI verificadas: $CHECKED_COUNT"
           if [ "$MISSING_COUNT" -gt 0 ]; then
             echo "ERRO CRÍTICO: $MISSING_COUNT símbolos JNI esperados não foram encontrados no binário!" >&2
             exit 1
           fi
-          echo "Todos os símbolos JNI foram validados com sucesso!"
+          echo "Todos os símbolos JNI obrigatórios foram validados com correspondência exata!"
+
+          echo "=== Símbolos Java_* Exportados SEM correspondência em NativeLib.kt (Informativo) ==="
+          EXTRA_SYMS=$(grep "^Java_" /tmp/exported_symbols.txt | grep -Fvx -f /tmp/expected_symbols.txt || true)
+          if [ -n "$EXTRA_SYMS" ]; then
+            echo "$EXTRA_SYMS"
+          else
+            echo "Nenhum símbolo Java_* excedente detectado. Alinhamento 1:1 perfeito."
+          fi
 
       - name: Publicar Binário libslice_core.so como Artifact
         uses: actions/upload-artifact@v4
@@ -107,6 +125,9 @@ jobs:
       - name: Checkout repositório Atalaia
         uses: actions/checkout@v4
 
+      - name: Validar Integridade do Gradle Wrapper com Ação Oficial
+        uses: gradle/actions/wrapper-validation@v4
+
       - name: Configurar Java 17
         uses: actions/setup-java@v4
         with:
@@ -118,18 +139,6 @@ jobs:
         with:
           name: libslice-core-arm64
           path: atalaia-slicer-spike/app/src/main/jniLibs/arm64-v8a
-
-      - name: Validar Checksum Oficial do gradle-wrapper.jar
-        run: |
-          cd atalaia-slicer-spike
-          JAR_HASH=$(sha256sum gradle/wrapper/gradle-wrapper.jar | awk '{print $1}')
-          EXPECTED_HASH="a8451eeda314d0568b5340498b36edf147a8f0d692c5ff58082d477abe9146e4"
-          echo "Hash do gradle-wrapper.jar: $JAR_HASH"
-          if [ "$JAR_HASH" != "$EXPECTED_HASH" ]; then
-            echo "ERRO DE SEGURANÇA: Checksum do gradle-wrapper.jar difere do hash oficial Gradle 8.2!" >&2
-            exit 1
-          fi
-          echo "gradle-wrapper.jar validado com sucesso contra o hash oficial."
 
       - name: Montar APK de Debug do Spike com Gradle Wrapper 8.2
         run: |
