@@ -76,27 +76,27 @@
     <text x="180" y="228" class="btn-secondary-text">GUARDAR FICHEIRO G-CODE LOCAL</text>
   </g>
 
-  <!-- [14] Modal: Confirmação de Mesa Limpa + Bloqueios da Fila (Req 2 e 3) -->
-  <rect x="15" y="560" width="360" height="270" rx="10" fill="#ffffff" stroke="#212529" stroke-width="2"/>
-  <text x="28" y="584" font-size="13" font-weight="700" fill="#c92a2a">[14] CONFIRMAR ARRANQUE IMEDIATO</text>
+  <!-- [14] Modal: Confirmação de Mesa Limpa + Bloqueios da Fila -->
+  <rect x="15" y="546" width="360" height="284" rx="10" fill="#ffffff" stroke="#212529" stroke-width="2"/>
+  <text x="28" y="570" font-size="13" font-weight="700" fill="#c92a2a">[14] CONFIRMAR ARRANQUE IMEDIATO</text>
   
-  <text x="28" y="604" class="text-title">Ficheiro: suporte_cabo_cc1.gcode</text>
-  <text x="28" y="620" class="text-body">• Perfil: Cosmos AFC (0.4 nozzle)</text>
-  <text x="28" y="636" class="text-body">• Ranhura Canvas: T0 (Preto / PLA)</text>
-  <text x="28" y="652" class="text-body">• Tempo estimado: 1h 48m (42.6 g)</text>
+  <text x="28" y="590" class="text-title">Ficheiro: suporte_cabo_cc1.gcode</text>
+  <text x="28" y="606" class="text-body">• Perfil: Cosmos AFC • Ranhura: T0 (Preto / PLA)</text>
+  <text x="28" y="622" class="text-body">• Duração estimada: 1h 48m (42.6 g)</text>
 
-  <!-- Validação de Bloqueios da Fila (Req 3d e 3f) -->
-  <rect x="25" y="662" width="340" height="96" rx="4" fill="#fff9db" stroke="#f08c00" stroke-width="1.2"/>
-  <text x="35" y="680" font-size="12" font-weight="700" fill="#212529">VERIFICAÇÃO DE PRÉ-ARRANQUE:</text>
-  <text x="35" y="696" class="text-body">• Impressora ociosa (será revalidada antes de print.start)</text>
-  <text x="35" y="712" font-size="12" font-weight="700" fill="#b06200">⚠ AVISO: Filamento estimado &gt; registado no rolo (Apenas aviso)</text>
-  <text x="35" y="728" class="text-sub">Não bloqueia o arranque. Confirmação: Mesa 100% desobstruída?</text>
+  <!-- Validação de Bloqueios da Fila (Linhas Quebradas Sem Passar da Caixa - Req 6) -->
+  <rect x="25" y="632" width="340" height="118" rx="4" fill="#fff9db" stroke="#f08c00" stroke-width="1.2"/>
+  <text x="35" y="650" font-size="12" font-weight="700" fill="#212529">VERIFICAÇÃO DE PRÉ-ARRANQUE:</text>
+  <text x="35" y="668" class="text-body">• Impressora ociosa (revalidada antes de print.start)</text>
+  <text x="35" y="686" font-size="12" font-weight="700" fill="#b06200">• ⚠ AVISO: Filamento estimado &gt; registado no rolo</text>
+  <text x="35" y="702" class="text-sub">  (Apenas aviso informativo; não bloqueia o arranque)</text>
+  <text x="35" y="720" class="text-body">• Confirmação: Mesa está 100% desobstruída e limpa?</text>
 
   <!-- Botões do Modal: Variante com Aviso Aceitável -->
-  <rect x="25" y="764" width="140" height="52" class="btn-secondary"/>
-  <text x="95" y="796" class="btn-secondary-text">CANCELAR</text>
+  <rect x="25" y="760" width="140" height="52" class="btn-secondary"/>
+  <text x="95" y="792" class="btn-secondary-text">CANCELAR</text>
 
   <!-- Botão Confirmar e Arrancar com revalidação imediata -->
-  <rect x="175" y="764" width="190" height="52" class="btn-primary"/>
-  <text x="270" y="796" class="btn-primary-text">CONFIRMAR E ARRANCAR</text>
+  <rect x="175" y="760" width="190" height="52" class="btn-primary"/>
+  <text x="270" y="792" class="btn-primary-text">CONFIRMAR E ARRANCAR</text>
 </svg>

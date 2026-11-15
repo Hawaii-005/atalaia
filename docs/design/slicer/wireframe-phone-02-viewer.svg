@@ -28,7 +28,7 @@
 
   <!-- Representação isométrica da mesa (dimensões vêm do perfil) -->
   <path d="M 60 350 L 195 400 L 330 350 L 195 300 Z" fill="#e9ecef" stroke="#adb5bd" stroke-width="1.5"/>
-  <text x="195" y="380" font-size="12" fill="#868e96" text-anchor="middle">Mesa (exemplo CC1: 256 × 256 mm)</text>
+  <text x="195" y="380" font-size="12" fill="#6c757d" text-anchor="middle">Mesa (exemplo CC1: 256 × 256 mm)</text>
 
   <!-- Volume da caixa delimitadora Z (exemplo CC1: 256 mm) -->
   <path d="M 60 350 L 60 170 L 195 120 L 330 170 L 330 350" fill="none" stroke="#ced4da" stroke-width="1" stroke-dasharray="3"/>
@@ -52,7 +52,7 @@
 
   <!-- [V3] Estados Alternativos (Ilustração de Regras - Req 3a e 3b) -->
   <g transform="translate(15, 536)">
-    <rect x="0" y="0" width="360" height="150" rx="8" class="block-box"/>
+    <rect x="0" y="0" width="360" height="174" rx="8" class="block-box"/>
     <text x="12" y="18" class="label-num">[V2B] OUTROS ESTADOS DE CONFORMIDADE:</text>
     
     <!-- Excede (Alinhado com v1: sem escala nem rotação) -->
@@ -60,13 +60,15 @@
     <text x="12" y="54" class="text-body">Dimensões maiores que a mesa. Na versão v1 não há</text>
     <text x="12" y="70" class="text-body">escala nem rotação na app. Fatiamento bloqueado.</text>
 
-    <!-- Volume do perfil indisponível -->
-    <text x="12" y="92" font-size="12" font-weight="700" fill="#d9480f">• VOLUME DO PERFIL INDISPONÍVEL:</text>
-    <text x="12" y="108" class="text-body">Perfil JSON sem chaves printable_area/height válidas.</text>
+    <!-- Volume do perfil indisponível (Avisar e permitir) -->
+    <text x="12" y="90" font-size="12" font-weight="700" fill="#d9480f">• VOLUME DO PERFIL INDISPONÍVEL (AVISAR E PERMITIR):</text>
+    <text x="12" y="106" class="text-body">Perfil JSON sem chaves de volume válidas. Apresenta aviso</text>
+    <text x="12" y="120" class="text-sub">com risco assumido, mas permite avançar para o fatiamento.</text>
 
-    <!-- Dimensões do STL desconhecidas -->
-    <text x="12" y="128" font-size="12" font-weight="700" fill="#e67700">• DIMENSÕES STL DESCONHECIDAS:</text>
-    <text x="12" y="144" class="text-body">Cabeçalho truncado ou malha sem limites calculáveis.</text>
+    <!-- Dimensões do STL desconhecidas (Bloquear) -->
+    <text x="12" y="138" font-size="12" font-weight="700" fill="#c92a2a">• DIMENSÕES STL DESCONHECIDAS (BLOQUEAR):</text>
+    <text x="12" y="152" class="text-body">Cabeçalho truncado ou malha sem limites calculáveis.</text>
+    <text x="12" y="166" class="text-sub">Fatiamento é bloqueado; exige novo ficheiro ou reparação.</text>
   </g>
 
   <!-- [V4] Ações do Visor (v1: Apenas Voltar e Fatiar ou Trocar) -->

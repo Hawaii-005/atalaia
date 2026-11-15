@@ -35,7 +35,7 @@
     
     <!-- Mesa CC1 isométrica (exemplo: 256x256 mm) -->
     <path d="M 70 320 L 250 370 L 430 320 L 250 270 Z" fill="#e9ecef" stroke="#adb5bd" stroke-width="1.5"/>
-    <text x="250" y="345" font-size="12" fill="#868e96" text-anchor="middle">Mesa (exemplo CC1: 256 × 256 mm)</text>
+    <text x="250" y="345" font-size="12" fill="#6c757d" text-anchor="middle">Mesa (exemplo CC1: 256 × 256 mm)</text>
 
     <!-- Volume delimitador Z (exemplo CC1: 256 mm) -->
     <path d="M 70 320 L 70 160 L 250 110 L 430 160 L 430 320" fill="none" stroke="#ced4da" stroke-width="1" stroke-dasharray="3"/>

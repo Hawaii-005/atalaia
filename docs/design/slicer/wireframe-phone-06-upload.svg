@@ -40,37 +40,45 @@
   <rect x="35" y="254" width="320" height="48" class="btn-danger"/>
   <text x="195" y="284" class="btn-danger-text">CANCELAR (LIMPA FICHEIRO PARCIAL)</text>
 
-  <!-- [15B] Estado: Envio Concluído com Sucesso -->
-  <rect x="15" y="312" width="360" height="110" rx="8" fill="#ebfbee" stroke="#40c057" stroke-width="1"/>
-  <text x="25" y="334" font-size="12" font-weight="700" fill="#2b8a3e">ESTADO: ENVIO CONCLUÍDO COM SUCESSO</text>
-  <text x="25" y="354" class="text-body">Ficheiro gravado no Moonraker da Centauri Carbon.</text>
-  <text x="25" y="372" class="text-body">Se acionado com arranque: impressão a iniciar...</text>
-  <text x="25" y="394" class="text-sub">A redirecionar para a vista de câmara/controlos em 3s.</text>
+  <!-- [15B] Estado: Apenas Enviado (Req 2) -->
+  <rect x="15" y="312" width="360" height="150" rx="8" fill="#ebfbee" stroke="#40c057" stroke-width="1.5"/>
+  <text x="25" y="334" font-size="12" font-weight="700" fill="#2b8a3e">ESTADO: APENAS ENVIADO (FICHEIRO NO MOONRAKER)</text>
+  <text x="25" y="352" class="text-body">Ficheiro guardado com sucesso na Centauri Carbon.</text>
+  <text x="25" y="368" class="text-sub">Sem arranque automático. O que pretendes fazer?</text>
+  
+  <!-- Ações pós-envio (Botões manuais sem redirecionamento de 3s) -->
+  <rect x="25" y="380" width="165" height="48" class="btn-primary"/>
+  <text x="107" y="410" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">ARRANCAR AGORA</text>
+  <text x="107" y="422" font-size="10" fill="#ced4da" text-anchor="middle">(MESA LIMPA)</text>
 
-  <!-- [16] Falhas e Bloqueios Adicionais (Req 3f e 3g) -->
-  <rect x="15" y="430" width="360" height="290" rx="10" fill="#fff9db" stroke="#f08c00" stroke-width="1.5"/>
-  <text x="25" y="452" font-size="12" font-weight="700" fill="#b06200">[16] ERROS E BLOQUEIOS TRATADOS NO ENVIO:</text>
+  <rect x="200" y="380" width="165" height="48" class="btn-secondary"/>
+  <text x="282" y="410" font-size="13" font-weight="600" fill="#343a40" text-anchor="middle">CONCLUIR</text>
+
+  <!-- [16] Falhas e Bloqueios Tratados no Envio (Req 3) -->
+  <rect x="15" y="474" width="360" height="250" rx="10" fill="#fff9db" stroke="#f08c00" stroke-width="1.5"/>
+  <text x="25" y="496" font-size="12" font-weight="700" fill="#b06200">[16] ERROS E BLOQUEIOS TRATADOS NO ENVIO:</text>
   
   <!-- Impressora ocupada ou revalidação falhada -->
-  <text x="25" y="474" font-size="12" font-weight="700" fill="#212529">• REVALIDAÇÃO PRÉ-ARRANQUE / OCUPADA:</text>
-  <text x="25" y="490" class="text-body">A máquina começou outra impressão antes de print.start.</text>
-  <text x="25" y="506" class="text-sub">Ficheiro guardado no Moonraker; arranque é cancelado.</text>
+  <text x="25" y="516" font-size="12" font-weight="700" fill="#212529">• REVALIDAÇÃO PRÉ-ARRANQUE / OCUPADA:</text>
+  <text x="25" y="532" class="text-body">A máquina começou outra impressão antes de print.start.</text>
+  <text x="25" y="546" class="text-sub">Ficheiro mantido no Moonraker; arranque direto cancelado.</text>
 
   <!-- Autenticação falhada -->
-  <text x="25" y="528" font-size="12" font-weight="700" fill="#212529">• AUTENTICAÇÃO FALHADA (401/403):</text>
-  <text x="25" y="544" class="text-body">Token da API Moonraker rejeitado. Permite rever chave.</text>
+  <text x="25" y="566" font-size="12" font-weight="700" fill="#212529">• AUTENTICAÇÃO FALHADA (401/403):</text>
+  <text x="25" y="582" class="text-sub">Depende de: Moonraker exigir token ou chave API.</text>
 
-  <!-- Espaço insuficiente e Timeout -->
-  <text x="25" y="566" font-size="12" font-weight="700" fill="#212529">• SEM ESPAÇO NO DISCO / TIMEOUT LAN:</text>
-  <text x="25" y="582" class="text-body">Erro 507 ou socket timeout. Ficheiro parcial é removido.</text>
+  <!-- Espaço insuficiente e Timeout com remoção parcial e aviso -->
+  <text x="25" y="602" font-size="12" font-weight="700" fill="#212529">• TIMEOUT DE REDE / SEM ESPAÇO (HTTP 507):</text>
+  <text x="25" y="618" class="text-body">Tenta remover o ficheiro parcial; se falhar, avisa.</text>
+  <text x="25" y="632" class="text-sub">Depende de: resposta HTTP 507 e espaço eMMC na impressora.</text>
 
   <!-- Falha de print.start -->
-  <text x="25" y="604" font-size="12" font-weight="700" fill="#c92a2a">• FALHA NO PRINT.START (KLIPPER BUSY/ERROR):</text>
-  <text x="25" y="620" class="text-body">Upload concluído com sucesso, mas a macro PRINT_START</text>
-  <text x="25" y="636" class="text-body">foi recusada pelo Klipper. Ficheiro fica disponível na lista.</text>
+  <text x="25" y="652" font-size="12" font-weight="700" fill="#c92a2a">• FALHA NO PRINT.START (KLIPPER RECUSOU):</text>
+  <text x="25" y="668" class="text-body">Upload concluído, mas macro PRINT_START falhou.</text>
+  <text x="25" y="682" class="text-sub">Ficheiro guardado; utilizador pode arrancar manualmente.</text>
 
   <!-- Ações de Recuperação -->
-  <g transform="translate(15, 730)">
+  <g transform="translate(15, 736)">
     <rect x="0" y="0" width="174" height="48" class="btn-primary"/>
     <text x="87" y="30" class="btn-primary-text">TENTAR NOVO</text>
 

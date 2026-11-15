@@ -37,14 +37,14 @@
   <rect x="35" y="356" width="320" height="52" class="btn-danger"/>
   <text x="195" y="388" class="btn-danger-text">[8] CANCELAR FATIAMENTO</text>
 
-  <!-- [Aviso de Ecrã Ligado e Deteção de Interrupção - Req 3c] -->
+  <!-- [Aviso de Ecrã Ligado e Deteção de Interrupção - Req 3c e 6] -->
   <rect x="15" y="460" width="360" height="136" rx="8" fill="#fff9db" stroke="#f08c00" stroke-width="1.5"/>
   <text x="25" y="482" font-size="12" font-weight="700" fill="#e67700">ECRÃ MANTIDO LIGADO DURANTE O FATIAMENTO</text>
-  <text x="25" y="500" class="text-body">• WakeLock ativo: previne suspensão automática do telemóvel.</text>
+  <text x="25" y="500" class="text-body">• Flag keepScreenOn ativa: previne suspensão do ecrã.</text>
   <text x="25" y="516" class="text-body">• Se a app for minimizada: NÃO se apaga nada de imediato.</text>
-  <text x="25" y="532" class="text-body">• Marca persistente gravada em disco (job_id / .lock).</text>
+  <text x="25" y="532" class="text-body">• Marca persistente gravada em disco (.job_active).</text>
   <text x="25" y="548" class="text-body">• Ao regressar: se o SO matou a thread, deteta a marca e</text>
-  <text x="25" y="564" class="text-sub">  apresenta o ecrã de interrupção, limpando então os ficheiros.</text>
+  <text x="25" y="564" class="text-sub">  apresenta o ecrã de erro, limpando então os ficheiros.</text>
 
   <!-- Modal de Confirmação de Saída / Botão Voltar (Req 3) -->
   <rect x="15" y="606" width="360" height="216" rx="10" fill="#ffffff" stroke="#212529" stroke-width="2"/>

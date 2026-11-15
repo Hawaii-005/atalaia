@@ -39,14 +39,14 @@
   <text x="35" y="380" font-family="monospace" font-size="12" fill="#6c757d">Limpeza: ficheiro temporário .tmp apagado.</text>
 
   <!-- Outros Erros Suportados -->
-  <rect x="25" y="416" width="340" height="154" rx="6" fill="#f8f9fa" stroke="#dee2e6" stroke-width="1"/>
-  <text x="35" y="436" class="label-num">OUTROS ERROS TRATADOS:</text>
-  <text x="35" y="454" font-size="12" font-weight="700" fill="#c92a2a">• FATIAMENTO INTERROMPIDO (DETETADO POR MARCA AO REGRESSAR):</text>
-  <text x="35" y="472" class="text-sub">A app foi minimizada e o SO suspendeu/matou a thread.</text>
-  <text x="35" y="488" class="text-sub">Marca em disco detetada ao reabrir. Ficheiros .tmp limpos.</text>
-  <text x="35" y="508" class="text-body">• Memória esgotada (OOM ao carregar STL grande)</text>
-  <text x="35" y="524" class="text-body">• Modelo excede volume útil (v1 sem escala)</text>
-  <text x="35" y="540" class="text-body">• Ficheiro STL truncado ou corrompido</text>
+  <rect x="25" y="416" width="340" height="160" rx="6" fill="#f8f9fa" stroke="#dee2e6" stroke-width="1"/>
+  <text x="35" y="434" class="label-num">OUTROS ERROS TRATADOS:</text>
+  <text x="35" y="452" font-size="12" font-weight="700" fill="#c92a2a">• FATIAMENTO INTERROMPIDO:</text>
+  <text x="35" y="468" class="text-sub">  Detetado por marca persistente ao regressar à app.</text>
+  <text x="35" y="484" class="text-sub">  Thread suspensa pelo SO; temporários limpos.</text>
+  <text x="35" y="504" class="text-body">• Memória esgotada (OOM ao carregar STL grande)</text>
+  <text x="35" y="520" class="text-body">• Modelo excede volume útil (v1 sem escala)</text>
+  <text x="35" y="536" class="text-body">• Ficheiro STL truncado ou corrompido</text>
   <text x="35" y="556" class="text-sub">Ficheiros temporários são sempre limpos em caso de erro.</text>
 
   <!-- [10] Ações de Erro -->

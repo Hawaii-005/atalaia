@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 844" width="390" height="844" style="background:#ffffff; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <style>
+      .screen-bg { fill: #f8f9fa; stroke: #adb5bd; stroke-width: 2; }
+      .header-bg { fill: #ffffff; stroke: #dee2e6; stroke-width: 1; }
+      .header-title { font-size: 15px; font-weight: 700; fill: #212529; }
+      .solid-box { fill: #ffffff; stroke: #495057; stroke-width: 1.5; }
+      .label-num { font-size: 12px; font-weight: 700; fill: #495057; }
+      .text-title { font-size: 13px; font-weight: 700; fill: #212529; }
+      .text-body { font-size: 12px; fill: #495057; }
+      .text-sub { font-size: 12px; fill: #6c757d; }
+      .btn-primary { fill: #212529; rx: 8px; }
+      .btn-primary-text { font-size: 14px; font-weight: 700; fill: #ffffff; text-anchor: middle; }
+      .btn-secondary { fill: #ffffff; stroke: #495057; stroke-width: 1.5; rx: 8px; }
+      .btn-secondary-text { font-size: 13px; font-weight: 600; fill: #343a40; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <rect width="390" height="844" rx="14" class="screen-bg"/>
+  <rect width="390" height="56" rx="14" class="header-bg"/>
+  <text x="20" y="35" class="header-title">[E4B] RESULTADO • MODAL BLOQUEADO PELA FILA</text>
+
+  <!-- [11] Vista 2D de Camadas (Em segundo plano) -->
+  <rect x="15" y="66" width="360" height="154" rx="8" class="solid-box" opacity="0.6"/>
+  <rect x="25" y="74" width="340" height="96" rx="6" fill="#212529" opacity="0.6"/>
+  <path d="M 90 135 L 170 95 L 260 102 L 280 145 L 200 160 Z" fill="none" stroke="#ced4da" stroke-width="2"/>
+  <text x="35" y="92" font-size="12" font-weight="700" fill="#ffffff">[11] PRÉ-VISUALIZAÇÃO 2D</text>
+  <text x="35" y="155" font-size="12" fill="#adb5bd">Camada 142 de 340 (Z = 28.40 mm)</text>
+  
+  <!-- Slider de camadas -->
+  <rect x="25" y="176" width="340" height="36" rx="6" fill="#f8f9fa" stroke="#ced4da" stroke-width="1" opacity="0.6"/>
+  <line x1="45" y1="194" x2="345" y2="194" stroke="#adb5bd" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="160" cy="194" r="8" fill="#212529"/>
+
+  <!-- [12] Métricas Reais e Avisos de Perfil (Fundo) -->
+  <rect x="15" y="228" width="360" height="110" rx="8" class="solid-box" opacity="0.6"/>
+  <text x="25" y="248" class="label-num">[12] DADOS REAIS: 1h 48m • 42.6 g • 340 camadas</text>
+  <text x="25" y="270" class="text-sub">Perfil: Cosmos AFC (não verificado na impressora)</text>
+  <text x="25" y="288" class="text-sub">Destino pretendido: Enviar e Arrancar</text>
+
+  <!-- Overlay Escuro do Modal -->
+  <rect x="0" y="0" width="390" height="844" fill="#000000" opacity="0.35"/>
+
+  <!-- [14B] Modal Bloqueado: Variante com Bloqueios Ativos da Fila (Req 1) -->
+  <rect x="15" y="348" width="360" height="476" rx="12" fill="#ffffff" stroke="#212529" stroke-width="2"/>
+  <text x="28" y="376" font-size="14" font-weight="700" fill="#c92a2a">[14B] ARRANQUE IMEDIATO BLOQUEADO</text>
+  
+  <text x="28" y="400" class="text-title">Ficheiro: suporte_cabo_cc1.gcode</text>
+  <text x="28" y="418" class="text-body">• Perfil: Cosmos AFC • Ranhura pedida: T0 (Preto)</text>
+  <text x="28" y="434" class="text-body">• Duração: 1h 48m • Filamento: 42.6 g</text>
+
+  <!-- Caixa de Bloqueios Específicos com Motivo (Req 1) -->
+  <rect x="25" y="448" width="340" height="230" rx="8" fill="#fff5f5" stroke="#ffc9c9" stroke-width="1.5"/>
+  <text x="35" y="470" font-size="12" font-weight="700" fill="#c92a2a">✕ REGRAS DE SEGURANÇA NÃO CUMPRIDAS:</text>
+  
+  <!-- Motivo 1: Impressora ocupada -->
+  <text x="35" y="492" font-size="12" font-weight="700" fill="#212529">1. Impressora Ocupada:</text>
+  <text x="35" y="508" class="text-body">   A Centauri Carbon está a imprimir peça_anterior.gcode.</text>
+  <text x="35" y="522" class="text-sub">   Arranque direto bloqueado para evitar colisão.</text>
+
+  <!-- Motivo 2: Sem ligação recente / estado antigo -->
+  <text x="35" y="542" font-size="12" font-weight="700" fill="#212529">2. Ligação / Estado Antigo (&gt; 60s):</text>
+  <text x="35" y="558" class="text-body">   Última telemetria Moonraker há 3 min (desatualizada).</text>
+  <text x="35" y="572" class="text-sub">   Não é seguro arrancar sem confirmação em tempo real.</text>
+
+  <!-- Motivo 3: Ranhura incompatível -->
+  <text x="35" y="592" font-size="12" font-weight="700" fill="#212529">3. Ranhura Canvas Incompatível:</text>
+  <text x="35" y="608" class="text-body">   G-code exige PLA na ranhura T0; Canvas reporta TPU.</text>
+  <text x="35" y="622" class="text-sub">   Temperaturas e fluxo incompatíveis com o material.</text>
+
+  <!-- Resumo da Solução -->
+  <text x="35" y="650" font-size="12" font-weight="700" fill="#495057">Solução: Põe na Fila Local para imprimir mais tarde.</text>
+  <text x="35" y="666" class="text-sub">O arranque direto permanecerá desativado até resolução.</text>
+
+  <!-- Botões do Modal: Confirmar desativado / Pôr na Fila Local Ativo (>= 48px) -->
+  <rect x="25" y="694" width="140" height="52" class="btn-secondary"/>
+  <text x="95" y="726" class="btn-secondary-text">CANCELAR</text>
+
+  <rect x="175" y="694" width="190" height="52" class="btn-primary"/>
+  <text x="270" y="726" class="btn-primary-text">PÔR NA FILA LOCAL</text>
+  <text x="195" y="770" font-size="12" fill="#6c757d" text-anchor="middle">Guarda na BD local sem envio de rede imediato.</text>
+</svg>
