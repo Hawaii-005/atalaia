@@ -30,7 +30,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # 2. Instalação do Android SDK Command-Line Tools (com verificação estrita de SHA256) e NDK r27 fixo
 RUN mkdir -p ${ANDROID_HOME}/cmdline-tools && \
     curl -sSL -o /tmp/cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip && \
-    echo "2d6ffd6d1c448ab0f74cc7da8f1589139ffebcf7bc9e0a12513f5c94294b4070  /tmp/cmdline-tools.zip" | sha256sum -c - && \
+    echo "2d2d50857e4eb553af5a6dc3ad507a17adf43d115264b1afc116f95c92e5e258  /tmp/cmdline-tools.zip" | sha256sum -c - && \
     unzip -q /tmp/cmdline-tools.zip -d ${ANDROID_HOME}/cmdline-tools && \
     mv ${ANDROID_HOME}/cmdline-tools/cmdline-tools ${ANDROID_HOME}/cmdline-tools/latest && \
     rm /tmp/cmdline-tools.zip
