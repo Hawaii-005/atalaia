@@ -248,17 +248,27 @@ class MainActivity : Activity() {
             val activePrinter = if (printerFound) targetPrinter else "Elegoo Centauri Carbon 0.4 nozzle"
             NativeLib.nativeSelectPrinter(activePrinter)
 
-            // O nome do ficheiro tem de reflectir o perfil realmente usado
-            val sufixo = if (printerFound) "cosmos_afc" else "fabrica"
-            val gcodeFile = File(reportsDir, "saida_${sufixo}.gcode")
-            if (gcodeFile.exists()) gcodeFile.delete()
-
             // 5. Obter filamento e processo compatíveis via funções nativas
             val compatibleFilamentsRaw = NativeLib.nativeGetCompatibleFilaments()
             val compatibleProcessesRaw = NativeLib.nativeGetCompatibleProcesses()
 
             val filamentsArray = try { JSONArray(compatibleFilamentsRaw) } catch (e: Exception) { JSONArray() }
             val processesArray = try { JSONArray(compatibleProcessesRaw) } catch (e: Exception) { JSONArray() }
+
+            // Overrides INI: start/end G-code do perfil Cosmos AFC aplicados sobre o perfil de fábrica
+            val cosmosPerfil = try {
+                JSONObject(assets.open("user_profiles/Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC.json")
+                    .bufferedReader().use { it.readText() })
+            } catch (_: Exception) { null }
+            fun iniEsc(v: String) = v.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+            val overridesIni = cosmosPerfil?.let {
+                "machine_start_gcode = \"" + iniEsc(it.optString("machine_start_gcode")) + "\"\n" +
+                "machine_end_gcode = \"" + iniEsc(it.optString("machine_end_gcode")) + "\"\n"
+            } ?: ""
+
+            // O nome do ficheiro tem de reflectir o que foi realmente aplicado
+            val gcodeFile = File(reportsDir, if (overridesIni.isNotEmpty() || printerFound) "saida_cosmos_afc.gcode" else "saida_fabrica.gcode")
+            if (gcodeFile.exists()) gcodeFile.delete()
 
             val chosenFilament = nomesDe(filamentsArray).firstOrNull() ?: "Generic PLA @Elegoo Centauri"
             val chosenProcess = nomesDe(processesArray).firstOrNull() ?: "0.20mm Standard @Elegoo CC 0.4 nozzle"
@@ -307,7 +317,7 @@ class MainActivity : Activity() {
                 printerName = activePrinter,
                 filamentName = chosenFilament,
                 processName = chosenProcess,
-                overridesIni = "",
+                overridesIni = overridesIni,
                 supportFilamentName = "",
                 outPath = gcodeFile.absolutePath,
                 callback = callback
@@ -338,6 +348,14 @@ class MainActivity : Activity() {
             monitorThread.join()
 
             val gcodeSize = if (gcodeFile.exists()) gcodeFile.length() else 0L
+            // Verificação direta: o start G-code aplicado tem mesmo de estar no ficheiro
+            val gcodeCabeca = try {
+                gcodeFile.bufferedReader().use { r ->
+                    val buf = CharArray(200_000); val n = r.read(buf); String(buf, 0, maxOf(n, 0))
+                }
+            } catch (_: Exception) { "" }
+            val temPrintStart = gcodeCabeca.contains("PRINT_START")
+            val temPrintEnd = gcodeCabeca.contains("PRINT_END")
             val durationMs = nativeReturnAt - startTime
             val exportDurationMs = exportFinishAt - startTime
             val exportOnlyMs = exportFinishAt - nativeReturnAt
@@ -391,6 +409,9 @@ class MainActivity : Activity() {
                 put("native_error_text", errorText)
                 put("gcode_path", if (gcodeFile.exists()) gcodeFile.absolutePath else "")
                 put("gcode_size_bytes", gcodeSize)
+                put("gcode_overrides", if (overridesIni.isNotEmpty()) "machine_start_gcode + machine_end_gcode do perfil Cosmos AFC" else "nenhum")
+                put("gcode_has_print_start", temPrintStart)
+                put("gcode_has_print_end", temPrintEnd)
                 put("lifecycle_events", lifecycleEvents)
                 put("timestamp", SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date()))
             }
