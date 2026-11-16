@@ -10,6 +10,7 @@ import android.os.Debug
 import android.os.SystemClock
 import android.view.WindowManager
 import android.widget.Button
+import android.widget.Toast
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.content.FileProvider
