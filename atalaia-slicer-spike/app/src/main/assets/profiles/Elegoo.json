@@ -2449,6 +2449,10 @@
         {
             "name": "Elegoo Neptune 0.8 nozzle",
             "sub_path": "machine/EN2SERIES/Elegoo Neptune 0.8 nozzle.json"
+        },
+        {
+            "name": "Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC",
+            "sub_path": "machine/ECC/Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC.json"
         }
     ]
 }

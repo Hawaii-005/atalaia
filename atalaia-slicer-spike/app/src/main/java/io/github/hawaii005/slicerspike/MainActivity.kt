@@ -282,7 +282,9 @@ class MainActivity : Activity() {
                 .joinToString("\n")
                 .replace("\\", "\\\\")
                 .replace("\n", "\\n")
-            val overridesIni = cosmosPerfil?.let {
+            // Perfil Cosmos: se o preset de sistema carregou, não sobrepor nada (prova real).
+            // Só usar INI quando o motor não o lista.
+            val overridesIni = if (printerFound) "" else cosmosPerfil?.let {
                 "machine_start_gcode = " + iniValor(it.optString("machine_start_gcode")) + "\n" +
                 "machine_end_gcode = " + iniValor(it.optString("machine_end_gcode")) + "\n"
             } ?: ""
@@ -433,7 +435,10 @@ class MainActivity : Activity() {
                 put("vm_hwm_mb", vmHwmMb)
                 put("memory_measurement_method", "PSS amostrado a cada 200ms durante todo o processo; VmHWM lido de /proc/self/status no fim")
                 put("active_printer", activePrinter)
+                put("printers_count", printerNames.size)
                 put("printers_available", JSONArray(printerNames))
+                put("printer_found_in_engine", printerFound)
+                put("profile_source", if (printerFound) "system-tree" else if (overridesIni.isNotEmpty()) "overrides-ini" else "fabrica")
                 put("chosen_filament", chosenFilament)
                 put("chosen_process", chosenProcess)
                 put("compatible_filaments", JSONArray(nomesDe(filamentsArray)))
