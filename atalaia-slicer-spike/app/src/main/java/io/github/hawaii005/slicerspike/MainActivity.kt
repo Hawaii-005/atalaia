@@ -1,6 +1,7 @@
 package io.github.hawaii005.slicerspike
 
 import android.app.Activity
+import android.content.ClipData
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -47,6 +48,10 @@ class MainActivity : Activity() {
     // Callbacks tardios do motor não podem reescrever o estado final
     @Volatile
     private var sliceFinished: Boolean = false
+
+    /** Instante (elapsedRealtime) em que o motor reportou o fim do export. 0 = ainda não. */
+    @Volatile
+    private var exportDoneAt: Long = 0L
 
     private var lastReportFile: File? = null
     private var lastGcodeFile: File? = null
@@ -181,6 +186,12 @@ class MainActivity : Activity() {
             assets.open("user_profiles/Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC.json").use { input ->
                 FileOutputStream(cosmosUserFile).use { output -> input.copyTo(output) }
             }
+            // O motor só lista o que está no bundle de sistema: cópia também para aí
+            val cosmosNoBundle = File(resProfilesDir, "Elegoo/machine/Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC.json")
+            cosmosNoBundle.parentFile?.mkdirs()
+            assets.open("user_profiles/Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC.json").use { input ->
+                FileOutputStream(cosmosNoBundle).use { output -> input.copyTo(output) }
+            }
 
             // 2. Materializar o STL escolhido pelo utilizador
             val stlFile: File
@@ -206,9 +217,7 @@ class MainActivity : Activity() {
             // 3. O .gcode e o relatório vão para a pasta partilhável (FileProvider)
             val reportsDir = getExternalFilesDir("benchmarks") ?: filesDir
             reportsDir.mkdirs()
-            val gcodeFile = File(reportsDir, "saida_cosmos_afc.gcode")
-            if (gcodeFile.exists()) gcodeFile.delete()
-
+            exportDoneAt = 0L
             runOnUiThread {
                 tvStatus.text = "A carregar libslice_core.so e inicializar motor..."
             }
@@ -244,6 +253,11 @@ class MainActivity : Activity() {
             val activePrinter = if (printerFound) targetPrinter else "Elegoo Centauri Carbon 0.4 nozzle"
             NativeLib.nativeSelectPrinter(activePrinter)
 
+            // O nome do ficheiro tem de reflectir o perfil realmente usado
+            val sufixo = if (printerFound) "cosmos_afc" else "fabrica"
+            val gcodeFile = File(reportsDir, "saida_${sufixo}.gcode")
+            if (gcodeFile.exists()) gcodeFile.delete()
+
             // 5. Obter filamento e processo compatíveis via funções nativas
             val compatibleFilamentsRaw = NativeLib.nativeGetCompatibleFilaments()
             val compatibleProcessesRaw = NativeLib.nativeGetCompatibleProcesses()
@@ -260,7 +274,7 @@ class MainActivity : Activity() {
 
             // Monitorização de memória PSS aproximada
             val monitorThread = thread {
-                while (isSlicing) {
+                while (!sliceFinished) {
                     val memInfo = Debug.MemoryInfo()
                     Debug.getMemoryInfo(memInfo)
                     val totalPssBytes = memInfo.totalPss * 1024L
@@ -281,6 +295,9 @@ class MainActivity : Activity() {
             // Executar fatiamento com callback oficial de progresso
             val callback = object : NativeLib.SliceCallback {
                 override fun onProgress(step: Int, text: String, percent: Int) {
+                    if (text.contains("exported", ignoreCase = true) || percent >= 100) {
+                        if (exportDoneAt == 0L) exportDoneAt = SystemClock.elapsedRealtime()
+                    }
                     if (sliceFinished) return
                     runOnUiThread {
                         if (sliceFinished) return@runOnUiThread
@@ -301,24 +318,35 @@ class MainActivity : Activity() {
                 callback = callback
             )
 
-            val durationMs = SystemClock.elapsedRealtime() - startTime
+            // A chamada nativa devolve antes de o motor acabar (infill/toolpaths + export).
+            // O fim real é o callback "exported"; sem ele, o ficheiro estabilizar.
+            val nativeReturnAt = SystemClock.elapsedRealtime()
+            var tamanhoAnterior = -1L
+            var amostrasEstaveis = 0
+            val limiteEspera = nativeReturnAt + 300_000
+            while (success && SystemClock.elapsedRealtime() < limiteEspera) {
+                val tamanho = if (gcodeFile.exists()) gcodeFile.length() else 0L
+                if (tamanho > 0 && tamanho == tamanhoAnterior) {
+                    amostrasEstaveis++
+                    if (amostrasEstaveis >= 4) break
+                } else {
+                    amostrasEstaveis = 0
+                }
+                tamanhoAnterior = tamanho
+                try { Thread.sleep(500) } catch (e: InterruptedException) { break }
+            }
+
+            val exportFinishAt = if (exportDoneAt > 0L) exportDoneAt else SystemClock.elapsedRealtime()
             sliceFinished = true
             isSlicing = false
             monitorThread.interrupt()
             monitorThread.join()
 
-            // O export do G-code corre depois de nativeSliceWithOverrides devolver:
-            // esperar que o ficheiro estabilize antes de medir (senão fica 0 bytes).
-            var gcodeEstavel = 0L
-            val limiteEspera = SystemClock.elapsedRealtime() + 180_000
-            while (success && SystemClock.elapsedRealtime() < limiteEspera) {
-                val atual = if (gcodeFile.exists()) gcodeFile.length() else 0L
-                if (atual > 0 && atual == gcodeEstavel) break
-                gcodeEstavel = atual
-                try { Thread.sleep(1000) } catch (e: InterruptedException) { break }
-            }
             val gcodeSize = if (gcodeFile.exists()) gcodeFile.length() else 0L
-            val exportDurationMs = SystemClock.elapsedRealtime() - startTime
+            val durationMs = nativeReturnAt - startTime
+            val exportDurationMs = exportFinishAt - startTime
+            val exportOnlyMs = exportFinishAt - nativeReturnAt
+            val vmHwmMb = lerVmHwmMb()
 
             // nativeGetError devolve código + texto; tentar JSON e cair para texto cru
             val errorRaw = try {
@@ -353,9 +381,12 @@ class MainActivity : Activity() {
                     put("z", modelInfo.dimensoes[2])
                 })
                 put("duration_ms", durationMs)
+                put("duration_slice_call_ms", durationMs)
+                put("duration_export_ms", exportOnlyMs)
                 put("duration_including_export_ms", exportDurationMs)
                 put("peak_ram_pss_mb_approx", peakMemoryBytes / (1024 * 1024))
-                put("memory_measurement_method", "Debug.MemoryInfo.totalPss sampled every 200ms (approximate PSS)")
+                put("vm_hwm_mb", vmHwmMb)
+                put("memory_measurement_method", "PSS amostrado a cada 200ms durante todo o processo; VmHWM lido de /proc/self/status no fim")
                 put("active_printer", activePrinter)
                 put("printers_available", JSONArray(printerNames))
                 put("chosen_filament", chosenFilament)
@@ -380,10 +411,23 @@ class MainActivity : Activity() {
                 progressBar.progress = if (success) 100 else 0
                 tvStatus.text = if (success) "Fatiamento concluído (resultado reportado pelo motor)."
                 else "Falha no fatiamento: $errorText"
-                tvMetrics.text = "Duração: ${durationMs / 1000.0} s\nPico RAM PSS (aprox.): ${peakMemoryBytes / (1024 * 1024)} MB\n" +
+                tvMetrics.text = "Duração total: ${exportDurationMs / 1000.0} s (fatiar ${durationMs / 1000.0} s + export ${exportOnlyMs / 1000.0} s)\n" +
+                        "Pico RAM PSS (aprox.): ${peakMemoryBytes / (1024 * 1024)} MB • VmHWM: $vmHwmMb MB\n" +
                         "Triângulos: ${modelInfo.triangulos} • Dimensões: ${modelInfo.dimensoesFormatadas()} mm\n" +
                         "G-code: ${gcodeSize / 1024} KB\nRelatório e G-code prontos para partilha."
             }
+        }
+    }
+
+    /** Pico de memória residente do processo (kB em VmHWM), fiável e barato. */
+    private fun lerVmHwmMb(): Long {
+        return try {
+            File("/proc/self/status").readLines()
+                .firstOrNull { it.startsWith("VmHWM:") }
+                ?.filter { it.isDigit() }
+                ?.toLongOrNull()?.div(1024) ?: 0L
+        } catch (_: Exception) {
+            0L
         }
     }
 
@@ -427,6 +471,10 @@ class MainActivity : Activity() {
         }.apply {
             type = "*/*"
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            // Sem ClipData o ChooserActivity da Samsung não recebe a permissão de leitura
+            clipData = ClipData.newRawUri("atalaia", uris[0]).also { cd ->
+                uris.drop(1).forEach { cd.addItem(ClipData.Item(it)) }
+            }
         }
         startActivity(Intent.createChooser(intent, "Partilhar relatório e G-code (sem telemetria)"))
     }
