@@ -180,17 +180,12 @@ class MainActivity : Activity() {
             copiarPastaAssetsRecursiva("profiles", dataSystemDir)
 
             // Copiar perfil de utilizador Cosmos AFC para a pasta de impressoras de utilizador
-            val dataUserPrinterDir = File(slicerDataDir, "printer")
+            // O motor lê presets de utilizador de data/user/<utilizador>/printer
+            val dataUserPrinterDir = File(slicerDataDir, "user/default/printer")
             dataUserPrinterDir.mkdirs()
             val cosmosUserFile = File(dataUserPrinterDir, "Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC.json")
             assets.open("user_profiles/Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC.json").use { input ->
                 FileOutputStream(cosmosUserFile).use { output -> input.copyTo(output) }
-            }
-            // O motor só lista o que está no bundle de sistema: cópia também para aí
-            val cosmosNoBundle = File(resProfilesDir, "Elegoo/machine/Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC.json")
-            cosmosNoBundle.parentFile?.mkdirs()
-            assets.open("user_profiles/Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC.json").use { input ->
-                FileOutputStream(cosmosNoBundle).use { output -> input.copyTo(output) }
             }
 
             // 2. Materializar o STL escolhido pelo utilizador
