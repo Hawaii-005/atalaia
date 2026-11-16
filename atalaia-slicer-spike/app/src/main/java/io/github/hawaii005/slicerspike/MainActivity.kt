@@ -44,6 +44,10 @@ class MainActivity : Activity() {
     @Volatile
     private var isSlicing: Boolean = false
 
+    // Callbacks tardios do motor não podem reescrever o estado final
+    @Volatile
+    private var sliceFinished: Boolean = false
+
     private var lastReportFile: File? = null
     private var lastGcodeFile: File? = null
     private val lifecycleEvents = mutableListOf<String>()
@@ -145,6 +149,7 @@ class MainActivity : Activity() {
 
     private fun runBenchmark(uri: Uri) {
         isSlicing = true
+        sliceFinished = false
         btnStart.isEnabled = false
         btnShare.isEnabled = false
         progressBar.progress = 0
@@ -276,7 +281,9 @@ class MainActivity : Activity() {
             // Executar fatiamento com callback oficial de progresso
             val callback = object : NativeLib.SliceCallback {
                 override fun onProgress(step: Int, text: String, percent: Int) {
+                    if (sliceFinished) return
                     runOnUiThread {
+                        if (sliceFinished) return@runOnUiThread
                         progressBar.progress = percent
                         tvStatus.text = "Fatiamento: $percent% ($text)"
                     }
@@ -295,6 +302,7 @@ class MainActivity : Activity() {
             )
 
             val durationMs = SystemClock.elapsedRealtime() - startTime
+            sliceFinished = true
             isSlicing = false
             monitorThread.interrupt()
             monitorThread.join()
