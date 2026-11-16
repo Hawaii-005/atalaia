@@ -260,10 +260,16 @@ class MainActivity : Activity() {
                 JSONObject(assets.open("user_profiles/Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC.json")
                     .bufferedReader().use { it.readText() })
             } catch (_: Exception) { null }
-            fun iniEsc(v: String) = v.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+            // Valores sem aspas: o parser INI do motor inclui as aspas no valor.
+            // Comentários ';' removidos para não serem interpretados.
+            fun iniValor(v: String) = v.lineSequence()
+                .map { it.substringBefore(";").trimEnd() }
+                .joinToString("\n")
+                .replace("\\", "\\\\")
+                .replace("\n", "\\n")
             val overridesIni = cosmosPerfil?.let {
-                "machine_start_gcode = \"" + iniEsc(it.optString("machine_start_gcode")) + "\"\n" +
-                "machine_end_gcode = \"" + iniEsc(it.optString("machine_end_gcode")) + "\"\n"
+                "machine_start_gcode = " + iniValor(it.optString("machine_start_gcode")) + "\n" +
+                "machine_end_gcode = " + iniValor(it.optString("machine_end_gcode")) + "\n"
             } ?: ""
 
             // O nome do ficheiro tem de reflectir o que foi realmente aplicado
@@ -354,8 +360,15 @@ class MainActivity : Activity() {
                     val buf = CharArray(200_000); val n = r.read(buf); String(buf, 0, maxOf(n, 0))
                 }
             } catch (_: Exception) { "" }
+            val gcodeCauda = try {
+                RandomAccessFile(gcodeFile, "r").use { raf ->
+                    val n = minOf(200_000L, raf.length()).toInt()
+                    raf.seek(raf.length() - n)
+                    val buf = ByteArray(n); raf.readFully(buf); String(buf)
+                }
+            } catch (_: Exception) { "" }
             val temPrintStart = gcodeCabeca.contains("PRINT_START")
-            val temPrintEnd = gcodeCabeca.contains("PRINT_END")
+            val temPrintEnd = gcodeCauda.contains("PRINT_END")
             val durationMs = nativeReturnAt - startTime
             val exportDurationMs = exportFinishAt - startTime
             val exportOnlyMs = exportFinishAt - nativeReturnAt
