@@ -299,7 +299,18 @@ class MainActivity : Activity() {
             monitorThread.interrupt()
             monitorThread.join()
 
+            // O export do G-code corre depois de nativeSliceWithOverrides devolver:
+            // esperar que o ficheiro estabilize antes de medir (senão fica 0 bytes).
+            var gcodeEstavel = 0L
+            val limiteEspera = SystemClock.elapsedRealtime() + 180_000
+            while (success && SystemClock.elapsedRealtime() < limiteEspera) {
+                val atual = if (gcodeFile.exists()) gcodeFile.length() else 0L
+                if (atual > 0 && atual == gcodeEstavel) break
+                gcodeEstavel = atual
+                try { Thread.sleep(1000) } catch (e: InterruptedException) { break }
+            }
             val gcodeSize = if (gcodeFile.exists()) gcodeFile.length() else 0L
+            val exportDurationMs = SystemClock.elapsedRealtime() - startTime
 
             // nativeGetError devolve código + texto; tentar JSON e cair para texto cru
             val errorRaw = try {
@@ -334,9 +345,11 @@ class MainActivity : Activity() {
                     put("z", modelInfo.dimensoes[2])
                 })
                 put("duration_ms", durationMs)
+                put("duration_including_export_ms", exportDurationMs)
                 put("peak_ram_pss_mb_approx", peakMemoryBytes / (1024 * 1024))
                 put("memory_measurement_method", "Debug.MemoryInfo.totalPss sampled every 200ms (approximate PSS)")
                 put("active_printer", activePrinter)
+                put("printers_available", JSONArray(printerNames))
                 put("chosen_filament", chosenFilament)
                 put("chosen_process", chosenProcess)
                 put("success", success)
