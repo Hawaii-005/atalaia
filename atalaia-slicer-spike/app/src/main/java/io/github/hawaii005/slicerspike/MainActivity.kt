@@ -232,14 +232,8 @@ class MainActivity : Activity() {
             val printersArray = try { JSONArray(printersJsonRaw) } catch (e: Exception) { JSONArray() }
 
             val targetPrinter = "Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC"
-            var printerFound = false
-            for (i in 0 until printersArray.length()) {
-                val p = printersArray.getJSONObject(i).optString("name")
-                if (p == targetPrinter) {
-                    printerFound = true
-                    break
-                }
-            }
+            val printerNames = nomesDe(printersArray)
+            val printerFound = printerNames.contains(targetPrinter)
 
             // Se o perfil de utilizador não aparecer diretamente pelo nome, selecionar o perfil base de sistema
             val activePrinter = if (printerFound) targetPrinter else "Elegoo Centauri Carbon 0.4 nozzle"
@@ -252,17 +246,8 @@ class MainActivity : Activity() {
             val filamentsArray = try { JSONArray(compatibleFilamentsRaw) } catch (e: Exception) { JSONArray() }
             val processesArray = try { JSONArray(compatibleProcessesRaw) } catch (e: Exception) { JSONArray() }
 
-            val chosenFilament = if (filamentsArray.length() > 0) {
-                filamentsArray.getJSONObject(0).optString("name", "Generic PLA @Elegoo Centauri")
-            } else {
-                "Generic PLA @Elegoo Centauri"
-            }
-
-            val chosenProcess = if (processesArray.length() > 0) {
-                processesArray.getJSONObject(0).optString("name", "0.20mm Standard @Elegoo CC 0.4 nozzle")
-            } else {
-                "0.20mm Standard @Elegoo CC 0.4 nozzle"
-            }
+            val chosenFilament = nomesDe(filamentsArray).firstOrNull() ?: "Generic PLA @Elegoo Centauri"
+            val chosenProcess = nomesDe(processesArray).firstOrNull() ?: "0.20mm Standard @Elegoo CC 0.4 nozzle"
 
             runOnUiThread {
                 tvStatus.text = "A fatiar: Impressora='$activePrinter'\nFilamento='$chosenFilament'\nProcesso='$chosenProcess'"
@@ -379,6 +364,18 @@ class MainActivity : Activity() {
                         "G-code: ${gcodeSize / 1024} KB\nRelatório e G-code prontos para partilha."
             }
         }
+    }
+
+    /** As listas nativas vêm ora como ["nome"], ora como [{"name":"nome"}]. Aceita as duas formas. */
+    private fun nomesDe(array: JSONArray): List<String> {
+        val nomes = mutableListOf<String>()
+        for (i in 0 until array.length()) {
+            when (val item = array.opt(i)) {
+                is String -> nomes.add(item)
+                is JSONObject -> item.optString("name").takeIf { it.isNotEmpty() }?.let { nomes.add(it) }
+            }
+        }
+        return nomes
     }
 
     private fun copiarPastaAssetsRecursiva(assetPath: String, destDir: File) {
