@@ -55,6 +55,7 @@ class MainActivity : Activity() {
 
     private var lastReportFile: File? = null
     private var lastGcodeFile: File? = null
+    private var zipPendente: File? = null
     private val lifecycleEvents = mutableListOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -115,6 +116,19 @@ class MainActivity : Activity() {
     @Deprecated("API de resultado clássica, suficiente para o spike")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQ_SAVE_ZIP) {
+            val uri = data?.data
+            val zip = zipPendente
+            if (resultCode == RESULT_OK && uri != null && zip != null) {
+                try {
+                    contentResolver.openOutputStream(uri)?.use { out -> zip.inputStream().use { it.copyTo(out) } }
+                    Toast.makeText(this, "Zip exportado: ${zip.length() / 1024} KB", Toast.LENGTH_LONG).show()
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Falha ao exportar: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+            return
+        }
         if (requestCode != REQ_PICK_STL) return
         val uri = data?.data
         if (resultCode != RESULT_OK || uri == null) {
@@ -277,7 +291,11 @@ class MainActivity : Activity() {
             val gcodeFile = File(reportsDir, if (overridesIni.isNotEmpty() || printerFound) "saida_cosmos_afc.gcode" else "saida_fabrica.gcode")
             if (gcodeFile.exists()) gcodeFile.delete()
 
-            val chosenFilament = nomesDe(filamentsArray).firstOrNull() ?: "Generic PLA @Elegoo Centauri"
+            // Preferir PLA real da Elegoo (é o material do primeiro teste físico); senão o primeiro.
+            val nomesFil = nomesDe(filamentsArray)
+            val chosenFilament = nomesFil.firstOrNull { it.startsWith("Elegoo PLA @") }
+                ?: nomesFil.firstOrNull { it.contains("PLA") }
+                ?: nomesFil.firstOrNull() ?: "Generic PLA @Elegoo Centauri"
             val chosenProcess = nomesDe(processesArray).firstOrNull() ?: "0.20mm Standard @Elegoo CC 0.4 nozzle"
 
             runOnUiThread {
@@ -492,24 +510,27 @@ class MainActivity : Activity() {
         }
     }
 
-    /** Partilha o relatório JSON e, se existir, o .gcode gerado. */
+    /** Exporta relatório + gcode num zip, via SAF (o utilizador escolhe onde gravar). */
     private fun shareFiles() {
         val files = listOfNotNull(lastReportFile, lastGcodeFile).filter { it.exists() }
         if (files.isEmpty()) return
-        val uris = files.map { FileProvider.getUriForFile(this, "${packageName}.provider", it) }
-        val intent = if (uris.size == 1) {
-            Intent(Intent.ACTION_SEND).apply { putExtra(Intent.EXTRA_STREAM, uris[0]) }
-        } else {
-            Intent(Intent.ACTION_SEND_MULTIPLE).apply { putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris)) }
-        }.apply {
-            type = "*/*"
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            // Sem ClipData o ChooserActivity da Samsung não recebe a permissão de leitura
-            clipData = ClipData.newRawUri("atalaia", uris[0]).also { cd ->
-                uris.drop(1).forEach { cd.addItem(ClipData.Item(it)) }
+        val zip = File(cacheDir, "atalaia_export.zip")
+        java.util.zip.ZipOutputStream(zip.outputStream().buffered()).use { zos ->
+            for (f in files) {
+                zos.putNextEntry(java.util.zip.ZipEntry(f.name))
+                f.inputStream().use { it.copyTo(zos) }
+                zos.closeEntry()
             }
         }
-        startActivity(Intent.createChooser(intent, "Partilhar relatório e G-code (sem telemetria)"))
+        zipPendente = zip
+        startActivityForResult(
+            Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "application/zip"
+                putExtra(Intent.EXTRA_TITLE, "atalaia_export.zip")
+            },
+            REQ_SAVE_ZIP
+        )
     }
 
     private data class ModelInfo(
@@ -592,5 +613,6 @@ class MainActivity : Activity() {
 
     companion object {
         private const val REQ_PICK_STL = 1001
+        private const val REQ_SAVE_ZIP = 1002
     }
 }
