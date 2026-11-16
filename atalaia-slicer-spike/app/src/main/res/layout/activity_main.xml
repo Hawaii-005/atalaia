@@ -61,7 +61,7 @@
         android:id="@+id/btnStart"
         android:layout_width="match_parent"
         android:layout_height="52dp"
-        android:text="EXECUTAR BENCHMARK LOCAL"
+        android:text="ESCOLHER STL E FATIAR"
         android:backgroundTint="#212529"
         android:textColor="#ffffff"
         android:layout_marginBottom="12dp" />
@@ -70,7 +70,7 @@
         android:id="@+id/btnShare"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:text="PARTILHAR RELATÓRIO JSON"
+        android:text="PARTILHAR RELATÓRIO + G-CODE"
         android:backgroundTint="#495057"
         android:textColor="#ffffff"
         android:enabled="false" />

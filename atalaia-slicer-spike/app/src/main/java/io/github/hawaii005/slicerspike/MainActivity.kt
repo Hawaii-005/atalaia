@@ -1,8 +1,8 @@
 package io.github.hawaii005.slicerspike
 
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Debug
@@ -17,6 +17,7 @@ import org.json.JSONObject
 import world.yemyat.slicepilot.NativeLib
 import java.io.File
 import java.io.FileOutputStream
+import java.io.RandomAccessFile
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -44,6 +45,7 @@ class MainActivity : Activity() {
     private var isSlicing: Boolean = false
 
     private var lastReportFile: File? = null
+    private var lastGcodeFile: File? = null
     private val lifecycleEvents = mutableListOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,13 +67,11 @@ class MainActivity : Activity() {
         tvDeviceInfo.text = deviceDesc
 
         btnStart.setOnClickListener {
-            if (!isSlicing) {
-                runBenchmark()
-            }
+            if (!isSlicing) pickStl()
         }
 
         btnShare.setOnClickListener {
-            shareReport()
+            shareFiles()
         }
     }
 
@@ -90,7 +90,60 @@ class MainActivity : Activity() {
         lifecycleEvents.add("onResume at ${System.currentTimeMillis()} (App retomada)")
     }
 
-    private fun runBenchmark() {
+    /** Abre o seletor de ficheiros do Android para escolher um STL do aparelho. */
+    private fun pickStl() {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+            putExtra(
+                Intent.EXTRA_MIME_TYPES,
+                arrayOf("model/stl", "application/sla", "application/vnd.ms-pki.stl", "application/octet-stream")
+            )
+        }
+        startActivityForResult(Intent.createChooser(intent, "Escolher modelo STL"), REQ_PICK_STL)
+    }
+
+    @Deprecated("API de resultado clássica, suficiente para o spike")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != REQ_PICK_STL) return
+        val uri = data?.data
+        if (resultCode != RESULT_OK || uri == null) {
+            tvStatus.text = "Nenhum STL escolhido. Benchmark não iniciado."
+            return
+        }
+        try {
+            contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        } catch (_: SecurityException) {
+            // Nem todos os providers concedem persistência; a leitura imediata continua válida.
+        }
+        runBenchmark(uri)
+    }
+
+    /** Copia o STL escolhido para o armazenamento interno e devolve o ficheiro local. */
+    private fun copiarStlParaInterno(uri: Uri): File {
+        val testDir = File(filesDir, "spike_run")
+        testDir.mkdirs()
+        val nomeOriginal = queryDisplayName(uri) ?: "modelo.stl"
+        val nomeSeguro = nomeOriginal.replace(Regex("[^A-Za-z0-9._-]"), "_")
+        val destino = File(testDir, nomeSeguro)
+        contentResolver.openInputStream(uri).use { input ->
+            requireNotNull(input) { "Não foi possível abrir o STL escolhido" }
+            FileOutputStream(destino).use { output -> input.copyTo(output) }
+        }
+        return destino
+    }
+
+    private fun queryDisplayName(uri: Uri): String? {
+        return try {
+            contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)
+                ?.use { c -> if (c.moveToFirst()) c.getString(0) else null }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun runBenchmark(uri: Uri) {
         isSlicing = true
         btnStart.isEnabled = false
         btnShare.isEnabled = false
@@ -124,13 +177,31 @@ class MainActivity : Activity() {
                 FileOutputStream(cosmosUserFile).use { output -> input.copyTo(output) }
             }
 
-            // 2. Criar modelo de teste: Cubo fechado 20x20x10 mm (12 triângulos, malha fechada manifold)
-            val testDir = File(filesDir, "spike_run")
-            testDir.mkdirs()
-            val stlFile = File(testDir, "cubo_fechado_20x20x10.stl")
-            criarStlCuboFechado20x20x10(stlFile)
+            // 2. Materializar o STL escolhido pelo utilizador
+            val stlFile: File
+            val modelInfo: ModelInfo
+            try {
+                stlFile = copiarStlParaInterno(uri)
+                modelInfo = obterInfoModeloSTL(stlFile)
+            } catch (e: Exception) {
+                runOnUiThread {
+                    tvStatus.text = "ERRO ao ler o STL escolhido: ${e.message}"
+                    btnStart.isEnabled = true
+                    isSlicing = false
+                }
+                return@thread
+            }
 
-            val gcodeFile = File(testDir, "saida_cosmos_afc.gcode")
+            runOnUiThread {
+                tvStatus.text = "Modelo: ${modelInfo.nome}\n" +
+                        "Triângulos: ${modelInfo.triangulos}\n" +
+                        "Dimensões: ${modelInfo.dimensoesFormatadas()} mm • ${modelInfo.tamanhoBytes / 1024} KB"
+            }
+
+            // 3. O .gcode e o relatório vão para a pasta partilhável (FileProvider)
+            val reportsDir = getExternalFilesDir("benchmarks") ?: filesDir
+            reportsDir.mkdirs()
+            val gcodeFile = File(reportsDir, "saida_cosmos_afc.gcode")
             if (gcodeFile.exists()) gcodeFile.delete()
 
             runOnUiThread {
@@ -150,10 +221,16 @@ class MainActivity : Activity() {
 
             NativeLib.nativeInit(slicerDataDir.absolutePath, slicerResDir.absolutePath)
 
-            // 3. Confirmar impressora via nativeGetPrinters() e selecionar
+            val engineVersion = try {
+                NativeLib.nativeGetVersion()
+            } catch (e: Throwable) {
+                "indisponível: ${e.message}"
+            }
+
+            // 4. Confirmar impressora via nativeGetPrinters() e selecionar
             val printersJsonRaw = NativeLib.nativeGetPrinters()
             val printersArray = try { JSONArray(printersJsonRaw) } catch (e: Exception) { JSONArray() }
-            
+
             val targetPrinter = "Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC"
             var printerFound = false
             for (i in 0 until printersArray.length()) {
@@ -168,7 +245,7 @@ class MainActivity : Activity() {
             val activePrinter = if (printerFound) targetPrinter else "Elegoo Centauri Carbon 0.4 nozzle"
             NativeLib.nativeSelectPrinter(activePrinter)
 
-            // 4. Obter filamento e processo compatíveis via funções nativas
+            // 5. Obter filamento e processo compatíveis via funções nativas
             val compatibleFilamentsRaw = NativeLib.nativeGetCompatibleFilaments()
             val compatibleProcessesRaw = NativeLib.nativeGetCompatibleProcesses()
 
@@ -239,12 +316,38 @@ class MainActivity : Activity() {
 
             val gcodeSize = if (gcodeFile.exists()) gcodeFile.length() else 0L
 
+            // nativeGetError devolve código + texto; tentar JSON e cair para texto cru
+            val errorRaw = try {
+                NativeLib.nativeGetError()
+            } catch (e: Throwable) {
+                "indisponível: ${e.message}"
+            }
+            var errorCode: Any = JSONObject.NULL
+            var errorText = errorRaw
+            try {
+                val errObj = JSONObject(errorRaw)
+                errorCode = errObj.opt("code") ?: JSONObject.NULL
+                errorText = errObj.optString("message", errorRaw)
+            } catch (_: Exception) {
+                // Texto simples: mantém-se como texto, código fica nulo
+            }
+
             val reportJson = JSONObject().apply {
                 put("manufacturer", Build.MANUFACTURER)
                 put("model", Build.MODEL)
                 put("device", Build.DEVICE)
                 put("android_release", Build.VERSION.RELEASE)
                 put("android_sdk", Build.VERSION.SDK_INT)
+                put("abi", Build.SUPPORTED_ABIS.firstOrNull() ?: "")
+                put("engine_version", engineVersion)
+                put("model_file", stlFile.name)
+                put("model_size_bytes", modelInfo.tamanhoBytes)
+                put("triangle_count", modelInfo.triangulos)
+                put("model_dimensions_mm", JSONObject().apply {
+                    put("x", modelInfo.dimensoes[0])
+                    put("y", modelInfo.dimensoes[1])
+                    put("z", modelInfo.dimensoes[2])
+                })
                 put("duration_ms", durationMs)
                 put("peak_ram_pss_mb_approx", peakMemoryBytes / (1024 * 1024))
                 put("memory_measurement_method", "Debug.MemoryInfo.totalPss sampled every 200ms (approximate PSS)")
@@ -252,23 +355,28 @@ class MainActivity : Activity() {
                 put("chosen_filament", chosenFilament)
                 put("chosen_process", chosenProcess)
                 put("success", success)
+                put("native_error_code", errorCode)
+                put("native_error_text", errorText)
+                put("gcode_path", if (gcodeFile.exists()) gcodeFile.absolutePath else "")
                 put("gcode_size_bytes", gcodeSize)
                 put("lifecycle_events", lifecycleEvents)
                 put("timestamp", SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date()))
             }
 
-            val reportsDir = getExternalFilesDir("benchmarks") ?: filesDir
-            reportsDir.mkdirs()
             val reportFile = File(reportsDir, "benchmark_${Build.MODEL}_${System.currentTimeMillis()}.json")
             FileOutputStream(reportFile).use { it.write(reportJson.toString(2).toByteArray()) }
             lastReportFile = reportFile
+            lastGcodeFile = if (gcodeFile.exists()) gcodeFile else null
 
             runOnUiThread {
                 btnStart.isEnabled = true
                 btnShare.isEnabled = true
                 progressBar.progress = if (success) 100 else 0
-                tvStatus.text = if (success) "Fatiamento concluído com SUCESSO!" else "Falha no fatiamento: ${NativeLib.nativeGetError()}"
-                tvMetrics.text = "Duração: ${durationMs / 1000.0} s\nPico RAM PSS (aprox.): ${peakMemoryBytes / (1024 * 1024)} MB\nG-code gerado: ${gcodeSize / 1024} KB\nRelatório guardado localmente."
+                tvStatus.text = if (success) "Fatiamento concluído (resultado reportado pelo motor)."
+                else "Falha no fatiamento: $errorText"
+                tvMetrics.text = "Duração: ${durationMs / 1000.0} s\nPico RAM PSS (aprox.): ${peakMemoryBytes / (1024 * 1024)} MB\n" +
+                        "Triângulos: ${modelInfo.triangulos} • Dimensões: ${modelInfo.dimensoesFormatadas()} mm\n" +
+                        "G-code: ${gcodeSize / 1024} KB\nRelatório e G-code prontos para partilha."
             }
         }
     }
@@ -289,109 +397,101 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun shareReport() {
-        val file = lastReportFile ?: return
-        val uri = FileProvider.getUriForFile(this, "${packageName}.provider", file)
-        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-            type = "application/json"
-            putExtra(Intent.EXTRA_STREAM, uri)
+    /** Partilha o relatório JSON e, se existir, o .gcode gerado. */
+    private fun shareFiles() {
+        val files = listOfNotNull(lastReportFile, lastGcodeFile).filter { it.exists() }
+        if (files.isEmpty()) return
+        val uris = files.map { FileProvider.getUriForFile(this, "${packageName}.provider", it) }
+        val intent = if (uris.size == 1) {
+            Intent(Intent.ACTION_SEND).apply { putExtra(Intent.EXTRA_STREAM, uris[0]) }
+        } else {
+            Intent(Intent.ACTION_SEND_MULTIPLE).apply { putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris)) }
+        }.apply {
+            type = "*/*"
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        startActivity(Intent.createChooser(shareIntent, "Partilhar Relatório de Benchmark (Sem Telemetria)"))
+        startActivity(Intent.createChooser(intent, "Partilhar relatório e G-code (sem telemetria)"))
+    }
+
+    private data class ModelInfo(
+        val nome: String,
+        val triangulos: Int,
+        val dimensoes: DoubleArray,
+        val tamanhoBytes: Long,
+    ) {
+        fun dimensoesFormatadas(): String =
+            String.format(Locale.US, "%.2f × %.2f × %.2f", dimensoes[0], dimensoes[1], dimensoes[2])
     }
 
     /**
-     * Gera um cubo fechado e estanque (watertight manifold) de 20x20x10 mm com exatamente 12 triângulos (2 por face).
+     * Lê o STL (binário ou ASCII) e devolve nº de triângulos e caixa envolvente em mm.
+     * Não interpreta unidades: assume mm, como o resto do pipeline.
      */
-    private fun criarStlCuboFechado20x20x10(file: File) {
-        val asciiStl = """
-solid cubo_20x20x10_fechado
-  facet normal 0 0 -1
-    outer loop
-      vertex 0 0 0
-      vertex 20 20 0
-      vertex 20 0 0
-    endloop
-  endfacet
-  facet normal 0 0 -1
-    outer loop
-      vertex 0 0 0
-      vertex 0 20 0
-      vertex 20 20 0
-    endloop
-  endfacet
-  facet normal 0 0 1
-    outer loop
-      vertex 0 0 10
-      vertex 20 0 10
-      vertex 20 20 10
-    endloop
-  endfacet
-  facet normal 0 0 1
-    outer loop
-      vertex 0 0 10
-      vertex 20 20 10
-      vertex 0 20 10
-    endloop
-  endfacet
-  facet normal 0 -1 0
-    outer loop
-      vertex 0 0 0
-      vertex 20 0 0
-      vertex 20 0 10
-    endloop
-  endfacet
-  facet normal 0 -1 0
-    outer loop
-      vertex 0 0 0
-      vertex 20 0 10
-      vertex 0 0 10
-    endloop
-  endfacet
-  facet normal 1 0 0
-    outer loop
-      vertex 20 0 0
-      vertex 20 20 0
-      vertex 20 20 10
-    endloop
-  endfacet
-  facet normal 1 0 0
-    outer loop
-      vertex 20 0 0
-      vertex 20 20 10
-      vertex 20 0 10
-    endloop
-  endfacet
-  facet normal 0 1 0
-    outer loop
-      vertex 20 20 0
-      vertex 0 20 0
-      vertex 0 20 10
-    endloop
-  endfacet
-  facet normal 0 1 0
-    outer loop
-      vertex 20 20 0
-      vertex 0 20 10
-      vertex 20 20 10
-    endloop
-  endfacet
-  facet normal -1 0 0
-    outer loop
-      vertex 0 20 0
-      vertex 0 0 0
-      vertex 0 0 10
-    endloop
-  endfacet
-  facet normal -1 0 0
-    outer loop
-      vertex 0 20 0
-      vertex 0 0 10
-      vertex 0 20 10
-    endloop
-  endfacet
-endsolid cubo_20x20x10_fechado
-        """.trimIndent()
-        FileOutputStream(file).use { it.write(asciiStl.toByteArray()) }
+    private fun obterInfoModeloSTL(file: File): ModelInfo {
+        val tamanho = file.length()
+        var triangulos = 0
+        val min = doubleArrayOf(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE)
+        val max = doubleArrayOf(-Double.MAX_VALUE, -Double.MAX_VALUE, -Double.MAX_VALUE)
+
+        RandomAccessFile(file, "r").use { raf ->
+            val cabecalho = ByteArray(84)
+            val lidos = if (tamanho >= 84) raf.read(cabecalho) else -1
+            val declarado = if (lidos == 84) {
+                (cabecalho[80].toLong() and 0xFF) or
+                        ((cabecalho[81].toLong() and 0xFF) shl 8) or
+                        ((cabecalho[82].toLong() and 0xFF) shl 16) or
+                        ((cabecalho[83].toLong() and 0xFF) shl 24)
+            } else -1L
+            val binario = declarado > 0 && tamanho == 84 + declarado * 50
+
+            if (binario) {
+                triangulos = declarado.toInt()
+                raf.seek(84)
+                val buf = ByteArray(48)
+                for (i in 0 until triangulos) {
+                    raf.readFully(buf)
+                    for (v in 0 until 3) {
+                        val base = v * 12
+                        for (eixo in 0 until 3) {
+                            val bits = (buf[base + eixo * 4].toInt() and 0xFF) or
+                                    ((buf[base + eixo * 4 + 1].toInt() and 0xFF) shl 8) or
+                                    ((buf[base + eixo * 4 + 2].toInt() and 0xFF) shl 16) or
+                                    ((buf[base + eixo * 4 + 3].toInt() and 0xFF) shl 24)
+                            val valor = Float.fromBits(bits).toDouble()
+                            if (valor < min[eixo]) min[eixo] = valor
+                            if (valor > max[eixo]) max[eixo] = valor
+                        }
+                    }
+                    raf.seek(raf.filePointer + 2) // atributo de 2 bytes no fim de cada faceta
+                }
+            } else {
+                // ASCII: contar "facet normal" e ler "vertex x y z"
+                file.bufferedReader().useLines { linhas ->
+                    linhas.forEach { linha ->
+                        val t = linha.trim()
+                        when {
+                            t.startsWith("facet normal") -> triangulos++
+                            t.startsWith("vertex") -> {
+                                val p = t.split(Regex("\\s+"))
+                                if (p.size >= 4) {
+                                    for (eixo in 0 until 3) {
+                                        val valor = p[eixo + 1].toDoubleOrNull() ?: continue
+                                        if (valor < min[eixo]) min[eixo] = valor
+                                        if (valor > max[eixo]) max[eixo] = valor
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        val dims = if (triangulos > 0) DoubleArray(3) { max[it] - min[it] } else DoubleArray(3)
+        return ModelInfo(file.name, triangulos, dims, tamanho)
+    }
+
+    companion object {
+        private const val REQ_PICK_STL = 1001
     }
 }
