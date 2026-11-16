@@ -284,8 +284,7 @@ class MainActivity : Activity() {
                 .replace("\n", "\\n")
             val overridesIni = cosmosPerfil?.let {
                 "machine_start_gcode = " + iniValor(it.optString("machine_start_gcode")) + "\n" +
-                "machine_end_gcode = " + iniValor(it.optString("machine_end_gcode")) + "\n" +
-                "curr_bed_type = " + (cosmosPerfil.optString("curr_bed_type").ifEmpty { "Engineering Plate" }) + "\n"
+                "machine_end_gcode = " + iniValor(it.optString("machine_end_gcode")) + "\n"
             } ?: ""
 
             // O nome do ficheiro tem de reflectir o que foi realmente aplicado
@@ -439,6 +438,7 @@ class MainActivity : Activity() {
                 put("chosen_process", chosenProcess)
                 put("compatible_filaments", JSONArray(nomesDe(filamentsArray)))
                 put("compatible_processes", JSONArray(nomesDe(processesArray)))
+                put("bed_type_source", "predefinicao do perfil (sem override); placa fisica por confirmar")
                 put("slice_timing_source", "ver logcat do aparelho (linha Slice timing: apply/process/export)")
                 put("success", success)
                 put("native_error_code", errorCode)
