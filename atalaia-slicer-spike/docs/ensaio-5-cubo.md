@@ -35,3 +35,17 @@ não há diferença de geometria; há diferença de ordenação/ancoragem do pre
 `battery unplug` + `deviceidle force-idle` (`mState=IDLE`), HOME + ecrã desligado 80 s, perfil 0.20 mm:
 `apply=24 917 ms`, `process=12 223 ms`, total 39,6 s, pid 2162 igual antes e depois, `onResume` presente no
 JSON e `bed_type_override = Textured PEI Plate`. Não comparável com os 61,7 s anteriores (eram 0.12 mm).
+
+## Linha de base do cubo em primeiro plano (0.20 mm)
+
+| Condição | apply | process | total slice_call | PSS | VmHWM |
+|---|---|---|---|---|---|
+| App já aberta, 2.º fatiamento | 77 ms | 289 ms | 0,37 s | — | — |
+| App reaberta (mesmo processo) | 92 ms | 299 ms | 0,39 s | — | — |
+| **Processo novo, motor a frio** | 480 ms* | — | **0,68 s** | 168 MB | 280 MB |
+
+*apply do processo frio inclui carregar perfis; o slice_call inteiro é < 1 s.
+
+Leitura: o "apply ~9 s" do Gengar **não é** custo fixo de perfis — o cubo a frio custa 0,68 s total. É
+proporcional ao modelo (Gengar: 142k triângulos, 641 camadas). A sugestão de manter o motor carregado poupa
+pouco; o ganho possível é em cache da malha do modelo entre fatiamentos, não em manter o motor vivo.
