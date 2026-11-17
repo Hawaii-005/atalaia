@@ -322,7 +322,10 @@ class MainActivity : Activity() {
 
             // O nome do ficheiro tem de reflectir o que foi realmente aplicado: modelo, perfil e data
             val stamp = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.ROOT).format(java.util.Date())
-            val baseModelo = stlFile.nameWithoutExtension.replace(Regex("[^A-Za-z0-9._-]"), "_")
+            val baseModelo = stlFile.nameWithoutExtension
+                .replace(Regex("[^A-Za-z0-9._-]"), "_")
+                .replace(Regex("_+"), "_")
+                .trim('_', '.')
             val perfilTag = if (overridesIni.isNotEmpty() || printerFound) "cosmos_afc" else "fabrica"
             val gcodeFile = File(reportsDir, "saida_${baseModelo}_${perfilTag}_$stamp.gcode")
             if (gcodeFile.exists()) gcodeFile.delete()
@@ -429,7 +432,9 @@ class MainActivity : Activity() {
             val temPrintEnd = gcodeCauda.contains("PRINT_END")
             val durationMs = nativeReturnAt - startTime
             val exportDurationMs = exportFinishAt - startTime
-            val exportOnlyMs = exportFinishAt - nativeReturnAt
+            // Tempo até o ficheiro parar de crescer após o retorno nativo (não é só o export do motor:
+            // inclui o resto do processamento e a amostragem de 500 ms).
+            val fileStableMs = exportFinishAt - nativeReturnAt
             val vmHwmMb = lerVmHwmMb()
 
             // nativeGetError devolve código + texto; tentar JSON e cair para texto cru
@@ -466,7 +471,7 @@ class MainActivity : Activity() {
                 })
                 put("duration_ms", durationMs)
                 put("duration_slice_call_ms", durationMs)
-                put("duration_post_return_ms", exportOnlyMs)
+                put("duration_post_return_ms", fileStableMs)
                 put("duration_including_export_ms", exportDurationMs)
                 put("peak_ram_pss_mb_approx", peakMemoryBytes / (1024 * 1024))
                 put("vm_hwm_mb", vmHwmMb)
@@ -509,7 +514,7 @@ class MainActivity : Activity() {
                 progressBar.progress = if (success) 100 else 0
                 tvStatus.text = if (success) "Fatiamento concluído (resultado reportado pelo motor)."
                 else "Falha no fatiamento: $errorText"
-                tvMetrics.text = "Duração total: ${exportDurationMs / 1000.0} s (fatiar ${durationMs / 1000.0} s + export ${exportOnlyMs / 1000.0} s)\n" +
+                tvMetrics.text = "Duração total: ${exportDurationMs / 1000.0} s (motor devolve em ${durationMs / 1000.0} s; ficheiro estabiliza ${fileStableMs / 1000.0} s depois)\n" +
                         "Pico RAM PSS (aprox.): ${peakMemoryBytes / (1024 * 1024)} MB • VmHWM: $vmHwmMb MB\n" +
                         "Triângulos: ${modelInfo.triangulos} • Dimensões: ${modelInfo.dimensoesFormatadas()} mm\n" +
                         "G-code: ${gcodeFile.name} (${tamanhoLegivel(gcodeSize)})\nRelatório e G-code prontos para partilha."
