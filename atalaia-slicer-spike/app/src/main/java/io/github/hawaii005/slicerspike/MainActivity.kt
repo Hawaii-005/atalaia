@@ -324,7 +324,7 @@ class MainActivity : Activity() {
             val stamp = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.ROOT).format(java.util.Date())
             val baseModelo = stlFile.nameWithoutExtension.replace(Regex("[^A-Za-z0-9._-]"), "_")
             val perfilTag = if (overridesIni.isNotEmpty() || printerFound) "cosmos_afc" else "fabrica"
-            val gcodeFile = File(reportsDir, "saida_${baseModelo}_$perfilTag_$stamp.gcode")
+            val gcodeFile = File(reportsDir, "saida_${baseModelo}_${perfilTag}_$stamp.gcode")
             if (gcodeFile.exists()) gcodeFile.delete()
 
             // Preferir PLA real da Elegoo (é o material do primeiro teste físico); senão o primeiro.
