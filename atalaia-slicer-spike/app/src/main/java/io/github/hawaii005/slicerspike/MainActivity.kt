@@ -59,6 +59,8 @@ class MainActivity : Activity() {
     @Volatile private var escolhaProcesso = ""
     @Volatile private var escolhaPlaca = ""
     private var latchConfig: CountDownLatch? = null
+    /** Tempo que o utilizador passou a escolher perfis; sai das durações medidas pela app. */
+    @Volatile private var configWaitMs = 0L
 
     @Volatile
     private var isSlicing: Boolean = false
@@ -460,8 +462,10 @@ class MainActivity : Activity() {
             } catch (_: Exception) { "" }
             val temPrintStart = gcodeCabeca.contains("PRINT_START")
             val temPrintEnd = gcodeCauda.contains("PRINT_END")
-            val durationMs = nativeReturnAt - startTime
-            val exportDurationMs = exportFinishAt - startTime
+            // O tempo de escolha no ecrã não é tempo de motor: descontar ao relógio da app.
+            val startTimeAjustado = startTime + configWaitMs
+            val durationMs = nativeReturnAt - startTimeAjustado
+            val exportDurationMs = exportFinishAt - startTimeAjustado
             // Tempo até o ficheiro parar de crescer após o retorno nativo (não é só o export do motor:
             // inclui o resto do processamento e a amostragem de 500 ms).
             val fileStableMs = exportFinishAt - nativeReturnAt
@@ -503,6 +507,7 @@ class MainActivity : Activity() {
                 put("duration_slice_call_ms", durationMs)
                 put("duration_post_return_ms", fileStableMs)
                 put("duration_including_export_ms", exportDurationMs)
+                put("config_wait_ms", configWaitMs)
                 put("peak_ram_pss_mb_approx", peakMemoryBytes / (1024 * 1024))
                 put("vm_hwm_mb", vmHwmMb)
                 put("memory_measurement_method", "PSS amostrado a cada 200ms durante todo o processo; VmHWM lido de /proc/self/status no fim")
@@ -581,11 +586,13 @@ class MainActivity : Activity() {
             btnStart.isEnabled = false
             tvStatus.text = "Escolhe filamento, processo e placa; depois FATIAR."
         }
+        val esperaInicio = SystemClock.elapsedRealtime()
         try {
             latch.await()
         } catch (_: InterruptedException) {
             // Interrupção do processo: segue com as omissões.
         }
+        configWaitMs = SystemClock.elapsedRealtime() - esperaInicio
         latchConfig = null
         runOnUiThread { llConfig.visibility = View.GONE }
         return arrayOf(
