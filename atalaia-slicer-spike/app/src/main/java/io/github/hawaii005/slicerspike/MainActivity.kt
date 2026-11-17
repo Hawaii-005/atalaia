@@ -320,8 +320,11 @@ class MainActivity : Activity() {
                 "machine_end_gcode = " + iniValor(it.optString("machine_end_gcode")) + "\n"
             } ?: "") + (pedidoPlaca?.let { "curr_bed_type = $it\n" } ?: "")
 
-            // O nome do ficheiro tem de reflectir o que foi realmente aplicado
-            val gcodeFile = File(reportsDir, if (overridesIni.isNotEmpty() || printerFound) "saida_cosmos_afc.gcode" else "saida_fabrica.gcode")
+            // O nome do ficheiro tem de reflectir o que foi realmente aplicado: modelo, perfil e data
+            val stamp = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.ROOT).format(java.util.Date())
+            val baseModelo = stlFile.nameWithoutExtension.replace(Regex("[^A-Za-z0-9._-]"), "_")
+            val perfilTag = if (overridesIni.isNotEmpty() || printerFound) "cosmos_afc" else "fabrica"
+            val gcodeFile = File(reportsDir, "saida_${baseModelo}_$perfilTag_$stamp.gcode")
             if (gcodeFile.exists()) gcodeFile.delete()
 
             // Preferir PLA real da Elegoo (é o material do primeiro teste físico); senão o primeiro.
@@ -483,6 +486,7 @@ class MainActivity : Activity() {
                 put("native_error_code", errorCode)
                 put("native_error_text", errorText)
                 put("gcode_path", if (gcodeFile.exists()) gcodeFile.absolutePath else "")
+                put("gcode_file_name", if (gcodeFile.exists()) gcodeFile.name else "")
                 put("gcode_size_bytes", gcodeSize)
                 put("gcode_overrides", if (overridesIni.isNotEmpty()) "machine_start_gcode + machine_end_gcode do perfil Cosmos AFC" else "nenhum")
                 put("bed_type_override", pedidoPlaca ?: "nenhum")
@@ -508,7 +512,7 @@ class MainActivity : Activity() {
                 tvMetrics.text = "Duração total: ${exportDurationMs / 1000.0} s (fatiar ${durationMs / 1000.0} s + export ${exportOnlyMs / 1000.0} s)\n" +
                         "Pico RAM PSS (aprox.): ${peakMemoryBytes / (1024 * 1024)} MB • VmHWM: $vmHwmMb MB\n" +
                         "Triângulos: ${modelInfo.triangulos} • Dimensões: ${modelInfo.dimensoesFormatadas()} mm\n" +
-                        "G-code: ${gcodeSize / 1024} KB\nRelatório e G-code prontos para partilha."
+                        "G-code: ${gcodeFile.name} (${tamanhoLegivel(gcodeSize)})\nRelatório e G-code prontos para partilha."
             }
         }
     }
@@ -536,6 +540,11 @@ class MainActivity : Activity() {
         }
         if (tmp.length() > 0) { f.delete(); tmp.renameTo(f) }
     }
+
+    /** Tamanho legível: MB com uma casa decimal acima de 1 MB, senão KB. */
+    private fun tamanhoLegivel(bytes: Long): String =
+        if (bytes >= 1024 * 1024) String.format(Locale.ROOT, "%.1f MB", bytes / 1048576.0)
+        else "${bytes / 1024} KB"
 
     /** Pico de memória residente do processo (kB em VmHWM), fiável e barato. */
     private fun lerVmHwmMb(): Long {
