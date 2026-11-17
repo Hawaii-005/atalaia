@@ -47,6 +47,14 @@ Verificação do override: o cubo fatiado com `--es bed 'Textured PEI Plate'` sa
 `curr_bed_type = Textured PEI Plate`, `first_layer_bed_temperature = 60` e `PRINT_START … BED=60`.
 A app passou a enviar `curr_bed_type` sempre, com seleção no ecrã (omissão: Textured PEI Plate).
 
+## Repetição com os seletores (omissões da app)
+
+Já com os seletores no ecrã e as omissões `Generic PLA @Elegoo Centauri` + `0.20mm Standard` +
+`Textured PEI Plate` (APK `31983c99…`): `apply=5 526 ms`, `process=2 982 ms` (8,5 s), PSS 400 MB,
+VmHWM 556 MB. O G-code sai com `curr_bed_type = Textured PEI Plate`, `first_layer_bed_temperature = 60` e
+`PRINT_START … BED=60`, mantendo 385 camadas. A duração da app passou a descontar o tempo de escolha
+(`config_wait_ms` no JSON).
+
 ## Nota sobre as métricas
 
 - `apply`, `process` e `export` vêm do motor (`SliceCore: Slice timing`), não da app.

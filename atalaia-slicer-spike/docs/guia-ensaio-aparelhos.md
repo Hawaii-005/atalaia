@@ -8,8 +8,8 @@ App de benchmark: pacote `io.github.hawaii005.slicerspike` (NÃO é o `atalaia`)
 adb install -r slicer-spike-app-debug.apk
 ```
 
-APK: execução CI 44029810386 (artefacto `slicer-spike-apk-debug`), sha256
-`7b56b09d0c6c967dbb7c8455d5ab866972191204e0a7dce06f5466f4fa02d916`.
+APK: execução CI 44127905552 (artefacto `slicer-spike-apk-debug`), sha256
+`31983c99ae9c91b2ae4f4046a4092e99411e582db34e9a47f73c1d4d1776c8d6`, 74 318 233 bytes.
 
 Se já houver versão instalada: `adb uninstall io.github.hawaii005.slicerspike` antes (a assinatura de debug
 muda a cada execução do CI e o install falha com `INSTALL_FAILED_UPDATE_INCOMPATIBLE`).
@@ -20,25 +20,22 @@ muda a cada execução do CI e o install falha com `INSTALL_FAILED_UPDATE_INCOMP
 adb push Cubo.stl /sdcard/Download/Cubo.stl
 ```
 
-## 3. Correr (app visível, ecrã ligado)
+## 3. Correr (sem adb, app visível, ecrã ligado)
 
 1. Abrir **Atalaia Slicer • Spike de Viabilidade**.
-2. `ESCOLHER STL E FATIAR` → escolher `Cubo.stl`.
-3. Esperar pelo estado `Fatiamento concluído`.
-4. `PARTILHAR RELATÓRIO + G-CODE` → guardar o zip.
+2. `ESCOLHER STL E FATIAR` → escolher o STL em Transferências.
+3. Aparecem três seletores: **Filamento**, **Processo** e **Placa**, já preenchidos com
+   `Generic PLA @Elegoo Centauri`, `0.20mm Standard @Elegoo CC 0.4 nozzle` e `Textured PEI Plate`.
+   Mudar o que for preciso com um toque.
+4. `FATIAR COM ESTAS OPÇÕES`.
+5. Esperar por `Fatiamento concluído`; o ecrã mostra o nome e o tamanho do G-code.
+6. `PARTILHAR RELATÓRIO + G-CODE` → guardar o zip.
 
-Perfis: a app escolhe `Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC`, o primeiro filamento compatível e o
-primeiro processo compatível. Para o teste justo com o OrcaSlicer, forçar pelo intent:
+Os extras de intent (`--es filament/process/bed`) continuam a existir para ensaios automáticos e, nesse
+caso, os seletores não aparecem. No uso manual não são precisos.
 
-```bash
-adb shell "am start -S -n io.github.hawaii005.slicerspike/.MainActivity \
-  --es filament 'Generic PLA @Elegoo Centauri' \
-  --es process '0.20mm Standard @Elegoo CC 0.4 nozzle' \
-  --es bed 'Textured PEI Plate'"
-```
-
-As aspas simples por dentro são obrigatórias: sem elas o `am` parte o valor nos espaços e a placa não é
- aplicada.
+Para o teste físico do cubo, o resultado tem de dizer: `total layer number: 128`, `max_z_height: 25.60`,
+`PRINT_START … BED=60 … TOOL=0`, um só `HEADER_BLOCK_END` e ~270 000 bytes.
 
 ## 4. O que trazer
 
