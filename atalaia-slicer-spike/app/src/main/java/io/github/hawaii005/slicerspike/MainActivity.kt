@@ -42,15 +42,6 @@ import kotlin.concurrent.thread
  */
 class MainActivity : Activity() {
 
-    companion object {
-        /** Perfil do teste físico do cubo e do ensaio comparável ao OrcaSlicer. */
-        private const val FILAMENTO_OMISSAO = "Generic PLA @Elegoo Centauri"
-        private const val PROCESSO_OMISSAO = "0.20mm Standard @Elegoo CC 0.4 nozzle"
-        private const val PLACA_OMISSAO = "Textured PEI Plate"
-        /** Só os tipos verificados no motor; "Cool Plate" é o que o motor assume sem override. */
-        private val PLACAS = listOf("Textured PEI Plate", "Cool Plate")
-    }
-
     private lateinit var tvDeviceInfo: TextView
     private lateinit var tvStatus: TextView
     private lateinit var tvMetrics: TextView
@@ -787,5 +778,11 @@ class MainActivity : Activity() {
     companion object {
         private const val REQ_PICK_STL = 1001
         private const val REQ_SAVE_ZIP = 1002
+        /** Perfil do teste físico do cubo e do ensaio comparável ao OrcaSlicer. */
+        private const val FILAMENTO_OMISSAO = "Generic PLA @Elegoo Centauri"
+        private const val PROCESSO_OMISSAO = "0.20mm Standard @Elegoo CC 0.4 nozzle"
+        private const val PLACA_OMISSAO = "Textured PEI Plate"
+        /** Só os tipos verificados no motor; "Cool Plate" é o que o motor assume sem override. */
+        private val PLACAS = listOf("Textured PEI Plate", "Cool Plate")
     }
 }

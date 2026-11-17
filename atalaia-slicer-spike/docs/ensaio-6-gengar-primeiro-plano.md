@@ -39,8 +39,13 @@ HEADER_BLOCK_END             → 1 ocorrência (a duplicação do motor continua
 PRINT_START EXTRUDER=210 BED=35 CHAMBER=0 TOOL=0
 ```
 
-`BED=35` vem do perfil de filamento `Elegoo PLA @ECC` (o cubo de referência, com `Generic PLA`, pede
-`BED=60`). Não afeta a medição, mas se este G-code for impresso tal como está, a mesa fica a 35 °C.
+`BED=35` não vem do filamento: o bloco de configuração desse G-code diz `curr_bed_type = Cool Plate`, com
+`cool_plate_temp = 35`, `cool_plate_temp_initial_layer = 35`, `textured_plate_temp = 60` e
+`hot_plate_temp = 60`. O motor assume "Cool Plate" quando ninguém escolhe placa, e o perfil do filamento
+tem os 60 °C para a Textured PEI. Esse fatiamento correu sem override de placa; o ensaio E (doze) tinha-o.
+Verificação do override: o cubo fatiado com `--es bed 'Textured PEI Plate'` sai com
+`curr_bed_type = Textured PEI Plate`, `first_layer_bed_temperature = 60` e `PRINT_START … BED=60`.
+A app passou a enviar `curr_bed_type` sempre, com seleção no ecrã (omissão: Textured PEI Plate).
 
 ## Nota sobre as métricas
 
