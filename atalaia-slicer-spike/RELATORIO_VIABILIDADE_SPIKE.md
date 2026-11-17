@@ -86,3 +86,15 @@ A aplicação de benchmark local isolada (`atalaia-slicer-spike/app`) foi desenh
 3. **Memória RAM:** Monitorização contínua do pico de memória PSS (`Debug.MemoryInfo.totalPss`) durante o fatiamento.
 4. **Comportamento ao Minimizar:** Registo de eventos de ciclo de vida (`onPause`, `onStop`, `onResume`) para verificar se a thread NDK sobrevive ao envio da aplicação para segundo plano.
 5. **Resultado e Relatório:** Registo do código de retorno e tamanho do ficheiro gerado, gravando um relatório JSON no armazenamento da app com opção de partilha manual (`ACTION_SEND`).
+
+### Regra de produto: fatiar com a app visível e o ecrã ligado
+
+Medido no Note 20 Ultra (SM-N986B), mesmo STL e perfil: em primeiro plano `apply+process = 14,6 s`; com a app em
+segundo plano ou o ecrã desligado durante 60 s, `apply+process = 58,4 s` (≈4× mais lento), com o mesmo G-code no
+fim (19 093 KB) e o processo vivo. O Android reduz o CPU a apps não visíveis; o export não é a causa.
+
+- A UI deve mostrar o aviso "mantém a app aberta durante o fatiamento" enquanto `isSlicing`.
+- Fatiar em segundo plano depressa exigiria um serviço em primeiro plano com notificação permanente. Fica
+  registado como **decisão futura**, não implementada: contraria a regra atual de não ter notificações em
+  segundo plano.
+- As medições completas estão em `docs/ensaio-4-ciclo-vida.md`.

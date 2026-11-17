@@ -9,6 +9,7 @@ Mesmo STL (Gengar 142 376 triângulos), perfil `Elegoo Centauri Carbon 0.4 nozzl
 | A — referência, primeiro plano | 9 187 ms | 5 403 ms | 19,1 s | 574 MB | 726 MB | 5847 | concluído |
 | B — HOME durante 60 s | (não registado) | — | 61,6 s | 562 MB | 708 MB | 5847 → 5847 | concluído |
 | C — ecrã desligado (Dozing) 60 s | 38 360 ms | 20 070 ms | 62,7 s | 571 MB | 719 MB | 5847 → 5847 | concluído |
+| D — doze forçado (`battery unplug` + `deviceidle force-idle`, `mState=IDLE`), HOME + ecrã desligado 75 s | 37 306 ms | 19 947 ms | 61,7 s | 579 MB | 726 MB | 5847 → 5847 | concluído |
 
 ## Leitura
 
@@ -19,6 +20,9 @@ Mesmo STL (Gengar 142 376 triângulos), perfil `Elegoo Centauri Carbon 0.4 nozzl
   relatório é escrito no fim do fatiamento, antes de a app voltar ao primeiro plano; a ausência não significa
   que a app não retomou (verificado com `am start` e dump de UI).
 - Minimizar e desligar o ecrã não são distinguíveis em tempo: os dois ~62 s.
+- O ensaio D confirma que não é só o ecrã desligado da Samsung: com `mState=IDLE` (deep doze) e bateria "desligada"
+  por `dumpsys`, o tempo foi o mesmo (~57 s de apply+process). O custo é a prioridade de CPU de uma app não
+  visível, não o Doze em si.
 
 ## Limites
 

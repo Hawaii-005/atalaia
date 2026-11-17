@@ -59,6 +59,10 @@ class MainActivity : Activity() {
     private var zipPendente: File? = null
     private val lifecycleEvents = mutableListOf<String>()
     private var pidAnteriorDiferente: Boolean = false
+    // Escolhas forçadas por intent (ensaios comparativos): --es filament/process/bed
+    private var pedidoFilamento: String? = null
+    private var pedidoProcesso: String? = null
+    private var pedidoPlaca: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,6 +87,10 @@ class MainActivity : Activity() {
         val pidAnterior = if (pidFile.exists()) pidFile.readText().trim() else null
         pidAnteriorDiferente = pidAnterior != null && pidAnterior != Process.myPid().toString()
         pidFile.writeText(Process.myPid().toString())
+
+        pedidoFilamento = intent?.getStringExtra("filament")
+        pedidoProcesso = intent?.getStringExtra("process")
+        pedidoPlaca = intent?.getStringExtra("bed")
 
         btnStart.setOnClickListener {
             if (!isSlicing) pickStl()
@@ -306,10 +314,10 @@ class MainActivity : Activity() {
                 .replace("\n", "\\n")
             // Perfil Cosmos: se o preset de sistema carregou, não sobrepor nada (prova real).
             // Só usar INI quando o motor não o lista.
-            val overridesIni = if (printerFound) "" else cosmosPerfil?.let {
+            val overridesIni = (if (printerFound) "" else cosmosPerfil?.let {
                 "machine_start_gcode = " + iniValor(it.optString("machine_start_gcode")) + "\n" +
                 "machine_end_gcode = " + iniValor(it.optString("machine_end_gcode")) + "\n"
-            } ?: ""
+            } ?: "") + (pedidoPlaca?.let { "curr_bed_type = $it\n" } ?: "")
 
             // O nome do ficheiro tem de reflectir o que foi realmente aplicado
             val gcodeFile = File(reportsDir, if (overridesIni.isNotEmpty() || printerFound) "saida_cosmos_afc.gcode" else "saida_fabrica.gcode")
@@ -317,10 +325,12 @@ class MainActivity : Activity() {
 
             // Preferir PLA real da Elegoo (é o material do primeiro teste físico); senão o primeiro.
             val nomesFil = nomesDe(filamentsArray)
-            val chosenFilament = nomesFil.firstOrNull { it.startsWith("Elegoo PLA @") }
+            val chosenFilament = pedidoFilamento
+                ?: nomesFil.firstOrNull { it.startsWith("Elegoo PLA @") }
                 ?: nomesFil.firstOrNull { it.contains("PLA") }
                 ?: nomesFil.firstOrNull() ?: "Generic PLA @Elegoo Centauri"
-            val chosenProcess = nomesDe(processesArray).firstOrNull() ?: "0.20mm Standard @Elegoo CC 0.4 nozzle"
+            val chosenProcess = pedidoProcesso
+                ?: nomesDe(processesArray).firstOrNull() ?: "0.20mm Standard @Elegoo CC 0.4 nozzle"
 
             runOnUiThread {
                 tvStatus.text = "A fatiar: Impressora='$activePrinter'\nFilamento='$chosenFilament'\nProcesso='$chosenProcess'"
@@ -473,6 +483,7 @@ class MainActivity : Activity() {
                 put("gcode_path", if (gcodeFile.exists()) gcodeFile.absolutePath else "")
                 put("gcode_size_bytes", gcodeSize)
                 put("gcode_overrides", if (overridesIni.isNotEmpty()) "machine_start_gcode + machine_end_gcode do perfil Cosmos AFC" else "nenhum")
+                put("bed_type_override", pedidoPlaca ?: "nenhum")
                 put("gcode_has_print_start", temPrintStart)
                 put("gcode_has_print_end", temPrintEnd)
                 put("lifecycle_events", lifecycleEvents)
