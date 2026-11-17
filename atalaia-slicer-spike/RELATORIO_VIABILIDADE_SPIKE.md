@@ -98,3 +98,26 @@ fim (19 093 KB) e o processo vivo. O Android reduz o CPU a apps não visíveis; 
   registado como **decisão futura**, não implementada: contraria a regra atual de não ter notificações em
   segundo plano.
 - As medições completas estão em `docs/ensaio-4-ciclo-vida.md`.
+
+## E5. Falhas do `PRINT_START` no COSMOS (26.10.1) e como a app as deve reportar
+
+O macro `PRINT_START` corre no Klipper, não no G-code: o fatiador só passa `EXTRUDER`, `BED`, `CHAMBER` e
+`TOOL`. Há quatro condições que abortam a impressão depois de o utilizador já ter mandado imprimir:
+
+| Condição no macro | Efeito | Mensagem no ecrã |
+|---|---|---|
+| `_CHECK_CALIBRATION_VARS.all_calibrated == false` | `CANCEL_PRINT` + `RETURN` | "Calibration process not completed…" |
+| sem perfil de malha `default` | `CANCEL_PRINT` + `RETURN` | "NO BED MESH!" |
+| sensor de filamento ativo e sem filamento (sem AFC) | `CANCEL_PRINT` + `RETURN` | "NO FILAMENT LOADED!" |
+| AFC presente e `TOOL` ausente nos parâmetros | só aviso (`RESPOND TYPE=error`), imprime | "Multicolor is only properly supported…" |
+
+Estado verificado nesta máquina (leitura GET): `all_calibrated = true` (shaper, malha, load cell e PID do
+extruder), perfil `bed_mesh.profiles.default` presente, sensor `extruder_tool_start` com
+`filament_detected = true`. Pistas AFC: `CANVAS_4` em `In Tool`/`Tooled` (mapa `T3`), `CANVAS_1..3` em
+`Ready`; `CANVAS_2` é o `T0` do perfil.
+
+Regra para a app (a implementar no produto, não no spike): depois de enviar a impressão, ler
+`notify_gcode_response` (WebSocket) e `display_status.message` para mostrar a razão exata da recusa em vez de
+um "falhou" genérico. As quatro condições acima são detetáveis antes do envio via `objects/query`
+(`_CHECK_CALIBRATION_VARS`, `bed_mesh`, `filament_switch_sensor extruder_tool_start`, `AFC.lanes`), pelo que a
+app deve avisar antes de mandar o trabalho.

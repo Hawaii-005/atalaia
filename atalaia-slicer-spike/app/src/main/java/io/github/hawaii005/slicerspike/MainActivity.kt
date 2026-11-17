@@ -407,6 +407,7 @@ class MainActivity : Activity() {
             monitorThread.interrupt()
             monitorThread.join()
 
+            corrigirCabecalho(gcodeFile)
             val gcodeSize = if (gcodeFile.exists()) gcodeFile.length() else 0L
             // Verificação direta: o start G-code aplicado tem mesmo de estar no ficheiro
             val gcodeCabeca = try {
@@ -510,6 +511,30 @@ class MainActivity : Activity() {
                         "G-code: ${gcodeSize / 1024} KB\nRelatório e G-code prontos para partilha."
             }
         }
+    }
+
+    /** O motor emite dois "; HEADER_BLOCK_END"; remove o segundo para o cabeçalho ficar válido. */
+    private fun corrigirCabecalho(f: File) {
+        if (!f.exists() || f.length() < 4096) return
+        val cab = ByteArray(4096)
+        RandomAccessFile(f, "r").use { it.readFully(cab) }
+        if (String(cab).split("HEADER_BLOCK_END").size <= 2) return
+        val tmp = File(f.parentFile, f.name + ".tmp")
+        var fim = 0
+        f.bufferedReader().use { r ->
+            tmp.bufferedWriter().use { w ->
+                var l = r.readLine()
+                while (l != null) {
+                    if (l.startsWith("; HEADER_BLOCK_END")) {
+                        fim++
+                        if (fim > 1) { l = r.readLine(); continue }
+                    }
+                    w.write(l); w.newLine()
+                    l = r.readLine()
+                }
+            }
+        }
+        if (tmp.length() > 0) { f.delete(); tmp.renameTo(f) }
     }
 
     /** Pico de memória residente do processo (kB em VmHWM), fiável e barato. */
