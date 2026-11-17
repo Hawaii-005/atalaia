@@ -9,10 +9,14 @@ import android.os.Bundle
 import android.os.Debug
 import android.os.Process
 import android.os.SystemClock
+import android.view.View
 import android.view.WindowManager
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.Toast
+import android.widget.LinearLayout
 import android.widget.ProgressBar
+import android.widget.Spinner
 import android.widget.TextView
 import androidx.core.content.FileProvider
 import org.json.JSONArray
@@ -24,6 +28,7 @@ import java.io.RandomAccessFile
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.CountDownLatch
 import kotlin.concurrent.thread
 
 /**
@@ -37,12 +42,32 @@ import kotlin.concurrent.thread
  */
 class MainActivity : Activity() {
 
+    companion object {
+        /** Perfil do teste físico do cubo e do ensaio comparável ao OrcaSlicer. */
+        private const val FILAMENTO_OMISSAO = "Generic PLA @Elegoo Centauri"
+        private const val PROCESSO_OMISSAO = "0.20mm Standard @Elegoo CC 0.4 nozzle"
+        private const val PLACA_OMISSAO = "Textured PEI Plate"
+        /** Só os tipos verificados no motor; "Cool Plate" é o que o motor assume sem override. */
+        private val PLACAS = listOf("Textured PEI Plate", "Cool Plate")
+    }
+
     private lateinit var tvDeviceInfo: TextView
     private lateinit var tvStatus: TextView
     private lateinit var tvMetrics: TextView
     private lateinit var progressBar: ProgressBar
     private lateinit var btnStart: Button
     private lateinit var btnShare: Button
+    private lateinit var llConfig: LinearLayout
+    private lateinit var spFilament: Spinner
+    private lateinit var spProcess: Spinner
+    private lateinit var spBed: Spinner
+    private lateinit var btnSlice: Button
+
+    /** Escolhas feitas no ecrã (ver escolherPerfis). Voláteis: escritas na UI, lidas na thread de fatiamento. */
+    @Volatile private var escolhaFilamento = ""
+    @Volatile private var escolhaProcesso = ""
+    @Volatile private var escolhaPlaca = ""
+    private var latchConfig: CountDownLatch? = null
 
     @Volatile
     private var isSlicing: Boolean = false
@@ -78,6 +103,19 @@ class MainActivity : Activity() {
         progressBar = findViewById(R.id.progressBar)
         btnStart = findViewById(R.id.btnStart)
         btnShare = findViewById(R.id.btnShare)
+        llConfig = findViewById(R.id.llConfig)
+        spFilament = findViewById(R.id.spFilament)
+        spProcess = findViewById(R.id.spProcess)
+        spBed = findViewById(R.id.spBed)
+        btnSlice = findViewById(R.id.btnSlice)
+
+        btnSlice.setOnClickListener {
+            escolhaFilamento = spFilament.selectedItem?.toString() ?: ""
+            escolhaProcesso = spProcess.selectedItem?.toString() ?: ""
+            escolhaPlaca = spBed.selectedItem?.toString() ?: ""
+            btnSlice.isEnabled = false
+            latchConfig?.countDown()
+        }
 
         val deviceDesc = "Aparelho: ${Build.MANUFACTURER} ${Build.MODEL} (${Build.DEVICE})\n" +
                 "Android: ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT}) • ABI: ${Build.SUPPORTED_ABIS.firstOrNull()}"
@@ -301,6 +339,14 @@ class MainActivity : Activity() {
             val filamentsArray = try { JSONArray(compatibleFilamentsRaw) } catch (e: Exception) { JSONArray() }
             val processesArray = try { JSONArray(compatibleProcessesRaw) } catch (e: Exception) { JSONArray() }
 
+            // Filamento, processo e placa: vem do intent (ensaios por adb) ou dos seletores no ecrã.
+            val nomesFil = nomesDe(filamentsArray)
+            val nomesProc = nomesDe(processesArray)
+            val escolhas = escolherPerfis(nomesFil, nomesProc)
+            val chosenFilament = escolhas[0]
+            val chosenProcess = escolhas[1]
+            val chosenBed = escolhas[2]
+
             // Overrides INI: start/end G-code do perfil Cosmos AFC aplicados sobre o perfil de fábrica
             val cosmosPerfil = try {
                 JSONObject(assets.open("user_profiles/Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC.json")
@@ -314,11 +360,12 @@ class MainActivity : Activity() {
                 .replace("\\", "\\\\")
                 .replace("\n", "\\n")
             // Perfil Cosmos: se o preset de sistema carregou, não sobrepor nada (prova real).
-            // Só usar INI quando o motor não o lista.
+            // Só usar INI quando o motor não o lista. A placa é sempre explícita: o motor
+            // assume "Cool Plate" por omissão (35 °C), o que não serve para a Textured PEI.
             val overridesIni = (if (printerFound) "" else cosmosPerfil?.let {
                 "machine_start_gcode = " + iniValor(it.optString("machine_start_gcode")) + "\n" +
                 "machine_end_gcode = " + iniValor(it.optString("machine_end_gcode")) + "\n"
-            } ?: "") + (pedidoPlaca?.let { "curr_bed_type = $it\n" } ?: "")
+            } ?: "") + "curr_bed_type = $chosenBed\n"
 
             // O nome do ficheiro tem de reflectir o que foi realmente aplicado: modelo, perfil e data
             val stamp = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.ROOT).format(java.util.Date())
@@ -326,21 +373,13 @@ class MainActivity : Activity() {
                 .replace(Regex("[^A-Za-z0-9._-]"), "_")
                 .replace(Regex("_+"), "_")
                 .trim('_', '.')
-            val perfilTag = if (overridesIni.isNotEmpty() || printerFound) "cosmos_afc" else "fabrica"
+            val perfilTag = if (printerFound) "cosmos_afc" else "fabrica"
             val gcodeFile = File(reportsDir, "saida_${baseModelo}_${perfilTag}_$stamp.gcode")
             if (gcodeFile.exists()) gcodeFile.delete()
 
-            // Preferir PLA real da Elegoo (é o material do primeiro teste físico); senão o primeiro.
-            val nomesFil = nomesDe(filamentsArray)
-            val chosenFilament = pedidoFilamento
-                ?: nomesFil.firstOrNull { it.startsWith("Elegoo PLA @") }
-                ?: nomesFil.firstOrNull { it.contains("PLA") }
-                ?: nomesFil.firstOrNull() ?: "Generic PLA @Elegoo Centauri"
-            val chosenProcess = pedidoProcesso
-                ?: nomesDe(processesArray).firstOrNull() ?: "0.20mm Standard @Elegoo CC 0.4 nozzle"
-
             runOnUiThread {
-                tvStatus.text = "A fatiar: Impressora='$activePrinter'\nFilamento='$chosenFilament'\nProcesso='$chosenProcess'"
+                tvStatus.text = "A fatiar: Impressora='$activePrinter'\nFilamento='$chosenFilament'\n" +
+                        "Processo='$chosenProcess' • Placa='$chosenBed'"
             }
 
             // Monitorização de memória PSS aproximada
@@ -494,7 +533,7 @@ class MainActivity : Activity() {
                 put("gcode_file_name", if (gcodeFile.exists()) gcodeFile.name else "")
                 put("gcode_size_bytes", gcodeSize)
                 put("gcode_overrides", if (overridesIni.isNotEmpty()) "machine_start_gcode + machine_end_gcode do perfil Cosmos AFC" else "nenhum")
-                put("bed_type_override", pedidoPlaca ?: "nenhum")
+                put("bed_type_override", chosenBed)
                 put("gcode_has_print_start", temPrintStart)
                 put("gcode_has_print_end", temPrintEnd)
                 put("lifecycle_events", lifecycleEvents)
@@ -520,6 +559,59 @@ class MainActivity : Activity() {
                         "G-code: ${gcodeFile.name} (${tamanhoLegivel(gcodeSize)})\nRelatório e G-code prontos para partilha."
             }
         }
+    }
+
+
+    /**
+     * Decide filamento, processo e placa.
+     * Com extras no intent (ensaios por adb) usa-os e não mostra a UI.
+     * Sem extras, mostra os seletores e espera pelo botão FATIAR.
+     */
+    private fun escolherPerfis(nomesFil: List<String>, nomesProc: List<String>): Array<String> {
+        val placaOmissao = pedidoPlaca ?: PLACA_OMISSAO
+        val filOmissao = nomesFil.firstOrNull { it == FILAMENTO_OMISSAO }
+            ?: nomesFil.firstOrNull { it.contains("PLA") }
+            ?: nomesFil.firstOrNull() ?: FILAMENTO_OMISSAO
+        val procOmissao = nomesProc.firstOrNull { it == PROCESSO_OMISSAO }
+            ?: nomesProc.firstOrNull() ?: PROCESSO_OMISSAO
+
+        if (pedidoFilamento != null || pedidoProcesso != null || pedidoPlaca != null) {
+            return arrayOf(pedidoFilamento ?: filOmissao, pedidoProcesso ?: procOmissao, placaOmissao)
+        }
+
+        val latch = CountDownLatch(1)
+        latchConfig = latch
+        runOnUiThread {
+            preencherSpinner(spFilament, nomesFil, filOmissao)
+            preencherSpinner(spProcess, nomesProc, procOmissao)
+            preencherSpinner(spBed, PLACAS, placaOmissao)
+            llConfig.visibility = View.VISIBLE
+            btnSlice.isEnabled = true
+            btnStart.isEnabled = false
+            tvStatus.text = "Escolhe filamento, processo e placa; depois FATIAR."
+        }
+        try {
+            latch.await()
+        } catch (_: InterruptedException) {
+            // Interrupção do processo: segue com as omissões.
+        }
+        latchConfig = null
+        runOnUiThread { llConfig.visibility = View.GONE }
+        return arrayOf(
+            escolhaFilamento.ifEmpty { filOmissao },
+            escolhaProcesso.ifEmpty { procOmissao },
+            escolhaPlaca.ifEmpty { placaOmissao }
+        )
+    }
+
+    /** Enche um Spinner e seleciona a opção pedida (ou a primeira). */
+    private fun preencherSpinner(sp: Spinner, itens: List<String>, selecionado: String) {
+        val lista = itens.ifEmpty { listOf(selecionado) }
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, lista)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        sp.adapter = adapter
+        val idx = lista.indexOf(selecionado).takeIf { it >= 0 } ?: 0
+        sp.setSelection(idx)
     }
 
     /** O motor emite dois "; HEADER_BLOCK_END"; remove o segundo para o cabeçalho ficar válido. */
