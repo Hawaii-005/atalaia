@@ -58,6 +58,7 @@ class MainActivity : Activity() {
     private var lastGcodeFile: File? = null
     private var zipPendente: File? = null
     private val lifecycleEvents = mutableListOf<String>()
+    private var pidAnteriorDiferente: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,6 +77,12 @@ class MainActivity : Activity() {
         val deviceDesc = "Aparelho: ${Build.MANUFACTURER} ${Build.MODEL} (${Build.DEVICE})\n" +
                 "Android: ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT}) • ABI: ${Build.SUPPORTED_ABIS.firstOrNull()}"
         tvDeviceInfo.text = deviceDesc
+
+        // Regista se o processo anterior morreu desde o último arranque (comparação de pid).
+        val pidFile = File(filesDir, "ultimo_pid.txt")
+        val pidAnterior = if (pidFile.exists()) pidFile.readText().trim() else null
+        pidAnteriorDiferente = pidAnterior != null && pidAnterior != Process.myPid().toString()
+        pidFile.writeText(Process.myPid().toString())
 
         btnStart.setOnClickListener {
             if (!isSlicing) pickStl()
@@ -99,6 +106,21 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         lifecycleEvents.add("onResume at ${System.currentTimeMillis()} (App retomada)")
+        atualizarRelatorioCicloDeVida()
+    }
+
+    /** Regrava o relatório já escrito para incluir os eventos de ciclo de vida posteriores ao fim do fatiamento. */
+    private fun atualizarRelatorioCicloDeVida() {
+        val f = lastReportFile ?: return
+        if (!f.exists() || isSlicing) return
+        try {
+            val obj = JSONObject(f.readText())
+            obj.put("lifecycle_events", JSONArray(lifecycleEvents))
+            obj.put("lifecycle_atualizado_apos_retoma", true)
+            f.writeText(obj.toString(2))
+        } catch (_: Exception) {
+            // Relatório ilegível não pode derrubar a retoma da app.
+        }
     }
 
     /** Abre o seletor de ficheiros do Android para escolher um STL do aparelho. */
@@ -454,6 +476,8 @@ class MainActivity : Activity() {
                 put("gcode_has_print_start", temPrintStart)
                 put("gcode_has_print_end", temPrintEnd)
                 put("lifecycle_events", lifecycleEvents)
+                put("process_pid", Process.myPid())
+                put("processo_anterior_terminou", pidAnteriorDiferente)
                 put("timestamp", SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date()))
             }
 
