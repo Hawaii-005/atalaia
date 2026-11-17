@@ -121,3 +121,10 @@ Regra para a app (a implementar no produto, não no spike): depois de enviar a i
 um "falhou" genérico. As quatro condições acima são detetáveis antes do envio via `objects/query`
 (`_CHECK_CALIBRATION_VARS`, `bed_mesh`, `filament_switch_sensor extruder_tool_start`, `AFC.lanes`), pelo que a
 app deve avisar antes de mandar o trabalho.
+
+## E1. Mapeamento AFC lido do Moonraker (regra de produto)
+
+`PRINT_START TOOL=N` não é "pista N": cada pista tem um `current_map` (T0..T3) lido de
+`AFC_lane CANVAS_n`. Hoje: T0=CANVAS_2 (ciano, ~44 g), T1=CANVAS_1, T2=CANVAS_3, T3=CANVAS_4 (em
+ferramenta). O app deve preencher o seletor de ranhuras com este mapeamento (GET) e o material/cor de cada
+pista, e mostrar qual pista será trocada antes de mandar imprimir.

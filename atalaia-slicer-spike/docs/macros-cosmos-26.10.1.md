@@ -560,3 +560,18 @@ O `PRINT_START` chama `T{tool}` quando existe o objeto `AFC`, portanto a seleç�
 - `T0` é redundante: o `PRINT_START` já faz `T{tool}` com `TOOL=0` quando o AFC existe.
 - Nada de obrigatório falta no G-code do Android para imprimir; faltam as miniaturas e o cabeçalho tem um
   `HEADER_BLOCK_END` duplicado.
+
+## Mapeamento AFC (leitura GET, 17-11)
+
+| Pista | Mapa | Material | Cor | Estado | Peso |
+|---|---|---|---|---|---|
+| CANVAS_1 | T1 | PLA | #E853BA (rosa) | Ready | 134 g |
+| CANVAS_2 | **T0** | PLA | #00BCD4 (ciano) | Ready | **44 g** |
+| CANVAS_3 | T2 | PLA | #FF9800 (laranja) | Ready | 152 g |
+| CANVAS_4 | T3 | PLA | #0028B2 (azul) | **In Tool** | 133 g |
+
+`PRINT_START TOOL=0` vai fazer o AFC descarregar o CANVAS_4 (T3, azul) e carregar o CANVAS_2 (T0, ciano).
+Todas as pistas são PLA (210 °C válido). Nota: o CANVAS_2 só tem ~44 g.
+
+**Spec E1 (produto):** o seletor de ranhuras deve ler `AFC_lane CANVAS_n` (`current_map`, `material`,
+`color`, `filament_status`) e `AFC.current_load` por GET, em vez de assumir T0 = pista 1.
