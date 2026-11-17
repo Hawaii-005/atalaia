@@ -51,3 +51,5 @@ As aspas simples por dentro são obrigatórias: sem elas o `am` parte o valor no
 
 - `apply+process` ~14,6 s · total ~19,1 s · PSS ~545 MB · VmHWM ~693 MB · G-code 19 093 KB.
 - Em segundo plano/ecrã desligado: `apply+process` ~58 s (≈4×), mesmo resultado.
+- Gengar a 0.20 mm, primeiro plano: `apply=6 055 ms`, `process=2 941 ms`, slice_call 2,18 s · PSS 402 MB ·
+  VmHWM 551 MB · G-code 9,8 MB (385 camadas). Ver `docs/ensaio-6-gengar-primeiro-plano.md`.
