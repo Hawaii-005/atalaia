@@ -8,7 +8,8 @@ App de benchmark: pacote `io.github.hawaii005.slicerspike` (NÃO é o `atalaia`)
 adb install -r slicer-spike-app-debug.apk
 ```
 
-APK: execução CI <RUN_ID> (artefacto `slicer-spike-apk-debug`), sha256 `<SHA256>`.
+APK: execução CI 44029810386 (artefacto `slicer-spike-apk-debug`), sha256
+`7b56b09d0c6c967dbb7c8455d5ab866972191204e0a7dce06f5466f4fa02d916`.
 
 Se já houver versão instalada: `adb uninstall io.github.hawaii005.slicerspike` antes (a assinatura de debug
 muda a cada execução do CI e o install falha com `INSTALL_FAILED_UPDATE_INCOMPATIBLE`).
@@ -30,11 +31,14 @@ Perfis: a app escolhe `Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC`, o primei
 primeiro processo compatível. Para o teste justo com o OrcaSlicer, forçar pelo intent:
 
 ```bash
-adb shell am start -n io.github.hawaii005.slicerspike/.MainActivity \
-  --es filament "Generic PLA @Elegoo Centauri" \
-  --es process "0.20mm Standard @Elegoo CC 0.4 nozzle" \
-  --es bed "Textured PEI Plate"
+adb shell "am start -S -n io.github.hawaii005.slicerspike/.MainActivity \
+  --es filament 'Generic PLA @Elegoo Centauri' \
+  --es process '0.20mm Standard @Elegoo CC 0.4 nozzle' \
+  --es bed 'Textured PEI Plate'"
 ```
+
+As aspas simples por dentro são obrigatórias: sem elas o `am` parte o valor nos espaços e a placa não é
+ aplicada.
 
 ## 4. O que trazer
 
