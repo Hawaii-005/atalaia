@@ -1,6 +1,6 @@
 # ADR 0002: Integração do Fatiador libslic3r no Atalaia sob Licença AGPL-3 (Opção A)
 
-* **Status**: Proposto / Em Avaliação (Fase 1)
+* **Status**: Proposto / Em Avaliação (Fase 1 — ensaio de aparelhos feito, teste físico pendente; **Fase 2 não aprovada**)
 * **Data**: 2026-11-15
 * **Decisor**: Bruno Rocha (`Hawaii-005/atalaia`)
 * **Decisão Tomada**: Adoção da **Opção A** (motor `libslic3r` nativo integrado via NDK/JNI num módulo desacoplado `modules/atalaia-slicer/`).
@@ -60,3 +60,26 @@ A licença GNU AGPL-3.0 impõe um dever de copyleft forte ("viral"):
 
 ## 5. Próximos Passos (Transição para Fase 2)
 A implementação em código nativo só terá início após a validação do relatório de viabilidade do spike, aprovação da estratégia de variantes e consentimento explícito do utilizador.
+
+---
+
+## 6. Estado de Validação da Fase 1 e Limitações Conhecidas
+
+**A Fase 1 não está concluída.** O ensaio de aparelhos foi executado; falta o teste físico do cubo fatiado na Centauri Carbon (envio manual pelo utilizador via Mainsail/Fluidd), que é condição de fecho.
+
+Aparelhos ensaiados com o APK do spike (`io.github.hawaii005.slicerspike`, sha256 `31983c99…`):
+
+- Samsung Note 20 Ultra (SM-N986B): cubo 0,68–0,80 s; Gengar (142 376 triângulos, 0,20 mm) 9,0 s em primeiro plano; PSS até 546 MB.
+- Samsung S25 Ultra (SM-S938B, Android 17/API 37): cubo 0,38 s, PSS 211 MB, VmHWM 240 MB; G-code válido (50 camadas, `BED=60`, `TOOL=0`, 1× `HEADER_BLOCK_END`).
+- Galaxy Tab S10 Lite: **NÃO ensaiado, por decisão explícita do utilizador.**
+
+**Risco aberto:** o comportamento em tablet (RAM/CPU e memória disponível durante o fatiamento) não está caracterizado; o tablet é o provável pior caso de memória.
+
+**Regra de distribuição:** a variante `completa` não é distribuída como «validada em tablets». Até existir ensaio num tablet, a documentação de compatibilidade nomeia apenas os dois telemóveis ensaiados e declara explicitamente que tablets não foram ensaiados.
+
+**Exigências de mitigação para a Fase 2/3 (memória):**
+1. Antes de fatiar, ler `ActivityManager.MemoryInfo` (`availMem`, `lowMemory`, `threshold`) e comparar com o pico medido (~550 MB no pior caso). Memória baixa: avisar o utilizador e/ou desativar a ação de fatiar.
+2. `OutOfMemoryError` ou erro nativo de memória durante o fatiamento produz `SLICING_ERROR` com mensagem clara e saída explícita — nunca crash nem ecrã preto.
+3. Incluir a memória disponível no relatório de erro.
+
+**A Fase 2 não é aprovada por esta ADR.** A sua abertura exige decisão separada do utilizador após revisão de licença. Sem aprovação escrita não se alteram `LICENSE`/`NOTICE` nem se adiciona código AGPL ao repositório.

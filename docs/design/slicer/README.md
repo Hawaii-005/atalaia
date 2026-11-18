@@ -4,6 +4,30 @@ Documento de arquitetura, fluxos, acessibilidade, matriz de capacidades, licenci
 
 ---
 
+## 0. Estado da Fase 1 — Ensaio de Aparelhos (não concluída)
+
+**A Fase 1 NÃO está concluída.** O ensaio de aparelhos está feito; falta o **teste físico do cubo** na Centauri Carbon (`GUIA_TESTE_FISICO_PRIMEIRA_IMPRESSAO.md`), que é condição de fecho.
+
+Aparelhos ensaiados com o APK do spike (`io.github.hawaii005.slicerspike`, sha256 `31983c99…`):
+
+- **Samsung Note 20 Ultra (SM-N986B)** — cubo: `apply` 0,68–0,80 s; Gengar 142 k triângulos a 0,20 mm: 9,0 s em primeiro plano; PSS 402–546 MB.
+- **Samsung S25 Ultra (SM-S938B, Android 17/API 37)** — cubo: slice call 0,38 s, PSS 211 MB, VmHWM 240 MB; G-code com 50 camadas, `PRINT_START … BED=60 … TOOL=0`, 1× `HEADER_BLOCK_END`, 0 trocas (ver `atalaia-slicer-spike/docs/ensaio-7-s25-ultra.md`).
+
+- **Samsung Galaxy Tab S10 Lite — NÃO ensaiado, por decisão explícita do utilizador.**
+
+**Risco aberto:** comportamento em tablet (RAM/CPU, memória disponível antes do fatiamento) não está caracterizado. O tablet é o provável pior caso de memória.
+
+**Regra de distribuição:** a variante `completa` **não** é distribuída como «validada em tablets». Até existir ensaio num tablet, qualquer descrição de compatibilidade limita-se aos dois telemóveis acima e diz explicitamente que tablets não foram ensaiados.
+
+**Exigência para a Fase 2/3 (mitigação de memória, a implementar no produto):**
+1. Antes de fatiar, ler `ActivityManager.MemoryInfo` (`availMem`, `lowMemory`, `threshold`) e comparar com o pico observado (≈550 MB no pior caso medido). Memória baixa: avisar o utilizador e/ou desativar o fatiador.
+2. Falhas de memória durante o fatiamento (`OutOfMemoryError` / código de erro nativo) mostram mensagem clara em `SLICING_ERROR` — nunca crash, nunca ecrã preto.
+3. Registar a memória disponível no relatório de erro para diagnóstico.
+
+**A Fase 2 não está aprovada por este documento**: a ADR 0002 mantém-se «Proposto». Sem aprovação escrita do utilizador não se altera `LICENSE`/`NOTICE` nem se adiciona código AGPL ao repositório.
+
+---
+
 ## 1. Alternativas de Arquitetura e Licenciamento (Decisão Pendente)
 
 O Atalaia é um fork do CC-Tool licenciado sob licença **MIT** (permissiva). O fatiamento local baseado em `libslic3r` introduz restrições legais decorrentes da licença **GNU AGPL v3**. Estão definidas três opções formais submetidas à decisão do utilizador:
