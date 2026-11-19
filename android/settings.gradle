@@ -36,4 +36,7 @@ rootProject.name = 'CC Tool'
 expoAutolinking.useExpoVersionCatalog()
 
 include ':app'
+// Módulo do fatiador nativo (AGPL-3.0). Só entra no APK da variante 'completa'.
+include ':atalaia-slicer'
+project(':atalaia-slicer').projectDir = new File(rootDir, '../modules/atalaia-slicer')
 includeBuild(expoAutolinking.reactNativeGradlePlugin)

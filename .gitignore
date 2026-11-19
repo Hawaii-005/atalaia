@@ -203,3 +203,8 @@ fastlane/test_output
 .pnp.*
 # Ligação simbólica criada nos worktrees (não é a pasta, por isso `node_modules/` não a apanha)
 node_modules
+
+# Motor nativo compilado pelo CI (68 MB) — não versionar
+modules/atalaia-slicer/src/main/jniLibs/**
+
+modules/atalaia-slicer/build/

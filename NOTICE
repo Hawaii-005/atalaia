@@ -1,0 +1,78 @@
+===============================================================================
+ATALAIA — AVISO DE ATRIBUIÇÃO E LICENCIAMENTO (VARIANTE COMPLETA)
+===============================================================================
+
+Este software incorpora componentes de código aberto sujeitos a diferentes licenças.
+A distribuição combinada da variante completa do Atalaia é disponibilizada sob os
+termos da GNU Affero General Public License v3.0 (AGPL-3.0-or-later).
+
+O código-fonte correspondente a esta compilação pode ser obtido em:
+https://github.com/Hawaii-005/atalaia
+
+-------------------------------------------------------------------------------
+1. Componentes Principais e Textos Literais de Licença
+-------------------------------------------------------------------------------
+
+• Atalaia
+  Copyright (c) 2026 Bruno Rocha
+  Licença: MIT
+
+• CC-Tool (Upstream)
+  Copyright 2025 FREDERICK
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the “Software”), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+  THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+
+• SlicePilot (Android UI, JNI Bridge & Integration)
+  Copyright (c) 2026 Yemyat Thu
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+
+• libslic3r / PrusaSlicer / Slic3r
+  Copyright (c) 2011-2026 Alessandro Ranellucci, Prusa Research s.r.o., e colaboradores
+  Licença: GNU Affero General Public License v3.0 (AGPL-3.0)
+
+-------------------------------------------------------------------------------
+2. Bibliotecas Nativas Integradas no libslice_core.so
+-------------------------------------------------------------------------------
+
+As seguintes bibliotecas e pacotes estão indicados nos scripts de build e no
+repositório de origem para ligação estática no binário 'libslice_core.so' (arm64-v8a):
+
+• CGAL (Computational Geometry Algorithms Library) v5.6.3
+  Licença Geral: Dual Licensing (LGPL v3+ / GPL v3+)
+  Detalhamento de Pacotes Utilizados:
+  - CGAL Core Kernel & Basic Geometry: LGPL v3+ [Declarado no repositório]
+  - CGAL Surface_mesh: LGPL v3+ [Declarado no repositório]
+  - CGAL Polygon_mesh_processing (PMP): GNU GPL v3+ [Declarado no repositório]
+  - CGAL Triangulation_3: GNU GPL v3+ [Declarado no repositório]
+  - CGAL Convex_hull_3: GNU GPL v3+ [Declarado no repositório]
+  - CGAL Boolean_set_operations_2: GNU GPL v3+ [Declarado no repositório]
+  - Status de Conformidade: Todos os componentes GPL são absorvidos pela AGPL-3.0
+    do módulo 'modules/atalaia-slicer/'.
+  -

@@ -1,6 +1,6 @@
 # ADR 0002: Integração do Fatiador libslic3r no Atalaia sob Licença AGPL-3 (Opção A)
 
-* **Status**: Proposto / Em Avaliação (Fase 1 — ensaio de aparelhos feito, teste físico pendente; **Fase 2 não aprovada**)
+* **Status**: **Aceite** (2026-11-19) — Fase 1 concluída com teste físico aprovado; Fase 2 autorizada pelo decisor
 * **Data**: 2026-11-15
 * **Decisor**: Bruno Rocha (`Hawaii-005/atalaia`)
 * **Decisão Tomada**: Adoção da **Opção A** (motor `libslic3r` nativo integrado via NDK/JNI num módulo desacoplado `modules/atalaia-slicer/`).

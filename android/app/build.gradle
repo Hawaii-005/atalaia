@@ -97,6 +97,21 @@ android {
     }
     def credenciaisReleaseValidas = new File(System.getProperty('user.home'), '.hermes/cctool-release/credenciais.txt').exists()
 
+    // Duas edições: 'lite' mantém o Atalaia integralmente MIT (sem código nem binário
+    // do fatiador); 'completa' inclui o módulo AGPL-3.0 e é distribuída sob AGPL-3.0.
+    flavorDimensions "edicao"
+    productFlavors {
+        lite {
+            dimension "edicao"
+            // Sem sufixo: a edição lite mantém o applicationId e as atualizações existentes.
+        }
+        completa {
+            dimension "edicao"
+            applicationIdSuffix ".completa"
+            versionNameSuffix "-completa"
+        }
+    }
+
     signingConfigs {
         // Assinatura de release: credenciais em ~/.hermes/cctool-release/
         // (fora do repositório). O APK sai assinado com chave própria.
@@ -167,6 +182,8 @@ android {
 }
 
 dependencies {
+    // Fatiador nativo apenas na edição 'completa' (AGPL-3.0).
+    completaImplementation project(':atalaia-slicer')
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
 

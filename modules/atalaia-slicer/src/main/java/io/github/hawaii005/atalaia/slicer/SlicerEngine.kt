@@ -1,0 +1,121 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (c) 2026 Bruno Rocha
+package io.github.hawaii005.atalaia.slicer
+
+import android.content.Context
+import java.io.File
+import world.yemyat.slicepilot.NativeLib
+
+/**
+ * Fachada do motor de fatiamento nativo (libslic3r) para o Atalaia.
+ *
+ * Só está disponível na edição 'completa': na 'lite' esta classe não chega ao APK.
+ * O binário (libslice_core.so, arm64-v8a) é compilado fora do Gradle pelo CI.
+ */
+object SlicerEngine {
+
+    data class Perfil(
+        val impressora: String,
+        val filamento: String,
+        val processo: String,
+    )
+
+    data class Progresso(
+        val passo: Int = 0,
+        val etapa: String = "",
+        val percentagem: Int = 0,
+    )
+
+    private val _progresso = Progresso()
+    /** Callback opcional invocado na thread do motor a cada atualização de progresso. */
+    @Volatile
+    var onProgresso: ((Progresso) -> Unit)? = null
+
+    fun progressoAtual(): Progresso = _progresso
+    @Volatile
+    private var inicializado = false
+
+    /** Caminhos onde o libslic3r guarda dados e recursos de perfis. */
+    private fun dirs(ctx: Context): Pair<File, File> {
+        val base = ctx.getExternalFilesDir(null) ?: ctx.filesDir
+        val data = File(base, "slic3r_data").apply { mkdirs() }
+        val res = File(base, "slic3r_res").apply { mkdirs() }
+        return data to res
+    }
+
+    /** Inicializa o motor. Devolve false se o binário não estiver no APK ou falhar a carregar. */
+    fun inicializar(ctx: Context): Boolean {
+        if (inicializado) return true
+        if (!NativeLib.loadLibrary()) return false
+        val (data, res) = dirs(ctx)
+        return try {
+            NativeLib.nativeInit(data.absolutePath, res.absolutePath)
+            inicializado = true
+            true
+        } catch (e: Throwable) {
+            android.util.Log.e("SlicerEngine", "Falha a inicializar o motor", e)
+            false
+        }
+    }
+
+    fun versao(): String = if (inicializado) NativeLib.nativeGetVersion() else ""
+
+    fun impressoras(): List<String> = jsonLista(NativeLib.nativeGetPrinters())
+
+    fun filamentos(): List<String> = jsonLista(NativeLib.nativeGetFilaments())
+
+    fun processos(): List<String> = jsonLista(NativeLib.nativeGetProcesses())
+
+    fun selecionarImpressora(nome: String): Boolean = NativeLib.nativeSelectPrinter(nome)
+
+    fun selecionarProcesso(nome: String): Boolean = NativeLib.nativeSelectProcess(nome)
+
+    /**
+     * Fatia [modelo] (STL/3MF) para [saida]. Bloqueante: chamar fora da thread principal.
+     * Devolve true quando o motor reporta sucesso.
+     */
+    fun fatiar(modelo: File, perfil: Perfil, saida: File): Boolean {
+        if (!inicializado) return false
+        onProgresso?.invoke(Progresso())
+        val callback = object : NativeLib.SliceCallback {
+            override fun onProgress(step: Int, text: String, percent: Int) {
+                onProgresso?.invoke(Progresso(step, text, percent))
+            }
+        }
+        return try {
+            NativeLib.nativeSliceWithPreset(
+                modelo.absolutePath,
+                perfil.impressora,
+                perfil.filamento,
+                perfil.processo,
+                saida.absolutePath,
+                callback,
+            )
+        } catch (e: Throwable) {
+            android.util.Log.e("SlicerEngine", "Falha no fatiamento", e)
+            false
+        }
+    }
+
+    fun cancelar() {
+        if (inicializado) NativeLib.nativeCancel()
+    }
+
+    fun estaEmCurso(): Boolean = inicializado && NativeLib.nativeIsRunning()
+
+    fun ultimoErro(): String = if (inicializado) NativeLib.nativeGetError() else ""
+
+    // O motor devolve listas em JSON (array de strings ou de objetos com "name").
+    private fun jsonLista(json: String): List<String> = try {
+        val arr = org.json.JSONArray(json)
+        (0 until arr.length()).map { i ->
+            when (val v = arr.get(i)) {
+                is String -> v
+                is org.json.JSONObject -> v.optString("name", v.toString())
+                else -> v.toString()
+            }
+        }
+    } catch (e: Throwable) {
+        emptyList()
+    }
+}
