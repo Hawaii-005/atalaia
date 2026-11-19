@@ -76,6 +76,7 @@ cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK_HOME}/build/cmake/android.toolchain.
     -DANDROID_PLATFORM=android-28 \
     -DANDROID_STL=c++_static \
     -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_SHARED_LINKER_FLAGS="-Wl,-z,max-page-size=16384" \
     ..
 
 cmake --build . -j"${MAX_JOBS}" --target slice_core

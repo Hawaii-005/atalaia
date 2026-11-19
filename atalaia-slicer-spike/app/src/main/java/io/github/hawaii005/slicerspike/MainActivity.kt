@@ -738,11 +738,12 @@ class MainActivity : Activity() {
             if (binario) {
                 triangulos = declarado.toInt()
                 raf.seek(84)
-                val buf = ByteArray(48)
+                // Cada faceta: normal (12 B) + 3 vértices (12 B cada) + atributo (2 B) = 50 bytes.
+                val buf = ByteArray(50)
                 for (i in 0 until triangulos) {
                     raf.readFully(buf)
                     for (v in 0 until 3) {
-                        val base = v * 12
+                        val base = 12 + v * 12 // saltar a normal (12 bytes) antes do v1
                         for (eixo in 0 until 3) {
                             val bits = (buf[base + eixo * 4].toInt() and 0xFF) or
                                     ((buf[base + eixo * 4 + 1].toInt() and 0xFF) shl 8) or
@@ -753,7 +754,6 @@ class MainActivity : Activity() {
                             if (valor > max[eixo]) max[eixo] = valor
                         }
                     }
-                    raf.seek(raf.filePointer + 2) // atributo de 2 bytes no fim de cada faceta
                 }
             } else {
                 // ASCII: contar "facet normal" e ler "vertex x y z"
