@@ -14,6 +14,9 @@ import world.yemyat.slicepilot.NativeLib
  */
 object SlicerEngine {
 
+    /** Muda quando os perfis/assets mudarem, para forçar a reinstalação. */
+    private const val VERSION = "1"
+
     data class Perfil(
         val impressora: String,
         val filamento: String,
@@ -43,12 +46,45 @@ object SlicerEngine {
         return data to res
     }
 
+    /**
+     * O motor não traz presets embutidos: sem os perfis copiados, `perfis()`
+     * vem vazio e a UI fica sem nada para escolher. Copia os assets uma vez
+     * (marcador VERSION) — são 4,4 MB, não vale a pena a cada arranque.
+     */
+    private fun instalarPerfis(ctx: Context, data: File, res: File) {
+        val marca = File(data, ".perfis-${VERSION}")
+        if (marca.exists()) return
+        copiarAssets(ctx, "profiles", File(res, "profiles"))
+        copiarAssets(ctx, "profiles", File(data, "system"))
+        val printerDir = File(data, "user/default/printer").apply { mkdirs() }
+        ctx.assets.list("user_profiles")?.forEach { nome ->
+            File(printerDir, nome).outputStream().use { saida ->
+                ctx.assets.open("user_profiles/$nome").use { it.copyTo(saida) }
+            }
+        }
+        marca.writeText("")
+    }
+
+    private fun copiarAssets(ctx: Context, origem: String, destino: File) {
+        val filhos = ctx.assets.list(origem) ?: return
+        if (filhos.isEmpty()) {
+            destino.parentFile?.mkdirs()
+            ctx.assets.open(origem).use { entrada ->
+                destino.outputStream().use { entrada.copyTo(it) }
+            }
+            return
+        }
+        destino.mkdirs()
+        filhos.forEach { copiarAssets(ctx, "$origem/$it", File(destino, it)) }
+    }
+
     /** Inicializa o motor. Devolve false se o binário não estiver no APK ou falhar a carregar. */
     fun inicializar(ctx: Context): Boolean {
         if (inicializado) return true
         if (!NativeLib.loadLibrary()) return false
         val (data, res) = dirs(ctx)
         return try {
+            instalarPerfis(ctx, data, res)
             NativeLib.nativeInit(data.absolutePath, res.absolutePath)
             inicializado = true
             true

@@ -66,6 +66,9 @@ export const FatiadorScreen: React.FC = () => {
 
   const [passo, setPasso] = useState<Passo>('config');
   const [pronto, setPronto] = useState(false);
+  // true = o motor não arrancou ou não devolveu perfis; a UI explica em vez
+  // de deixar o botão FATIAR desativado sem motivo.
+  const [falhaMotor, setFalhaMotor] = useState(false);
   const [escolha, setEscolha] = useState<Escolha | null>(null);
   const [dimensoes, setDimensoes] = useState<Dimensoes | null>(null);
   const [listas, setListas] = useState({
@@ -95,10 +98,15 @@ export const FatiadorScreen: React.FC = () => {
     let vivo = true;
     (async () => {
       const ok = await inicializar();
-      if (!ok || !vivo) return;
+      if (!vivo) return;
+      if (!ok) {
+        setFalhaMotor(true);
+        return;
+      }
       const l = await perfis();
       if (!vivo) return;
       setListas(l);
+      if (l.impressoras.length === 0) setFalhaMotor(true);
       setImpressora(
         l.impressoras.find(n => n.includes('Cosmos AFC')) ??
           l.impressoras[0] ??
@@ -131,7 +139,9 @@ export const FatiadorScreen: React.FC = () => {
 
   const escolherModelo = useCallback(async () => {
     const picked = await DocumentPicker.getDocumentAsync({
-      type: ['model/stl', 'application/octet-stream', 'model/3mf'],
+      // '*/*' e filtro por extensão: o Android não tem MIME registado para .stl,
+      // por isso filtrar por tipo escondia o ficheiro no seletor.
+      type: '*/*',
       copyToCacheDirectory: true,
     });
     if (picked.canceled) return;
@@ -148,9 +158,11 @@ export const FatiadorScreen: React.FC = () => {
       setDimensoes(null);
       setResultado(null);
       if (f.name.toLowerCase().endsWith('.stl')) {
+        // Ler o ficheiro inteiro: a caixa envolvente só é válida com o número
+        // de triângulos completo (ler só o cabeçalho dava "dimensões
+        // desconhecidas" e bloqueava o botão FATIAR).
         const conteudo = await FileSystem.readAsStringAsync(f.uri, {
           encoding: FileSystem.EncodingType.Base64,
-          length: 84 + 12 * 50, // primeiro pedaço chega para o cabeçalho e as faces pequenas; ler tudo para dimensões reais
         });
         const dados = Uint8Array.from(atob(conteudo), c => c.charCodeAt(0));
         const caixa = caixaEnvolventeSTL(dados);
@@ -256,6 +268,12 @@ export const FatiadorScreen: React.FC = () => {
               />
             </View>
           </TouchableOpacity>
+
+          {falhaMotor ? (
+            <Text style={{ color: hexDe(p.perigo) }}>
+              {t('fatiador.motorIndisponivel')}
+            </Text>
+          ) : null}
 
           {/* [V2] Estados do volume */}
           {escolha && avaliacao.estado !== 'cabe' ? (

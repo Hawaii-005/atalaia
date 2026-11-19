@@ -896,6 +896,8 @@ export default {
   'settings.tema_ametista': 'Azul-noite com roxo. O predefinido.',
   'comum.eliminar': 'Eliminar',
   // ——— Fatiador [E1]–[E3]
+  'fatiador.motorIndisponivel':
+    'O motor de fatiamento não respondeu nesta sessão. Fecha e volta a abrir a app; se continuar, reinstala a edição completa.',
   'fatiador.titulo': 'Fatiar modelo',
   'fatiador.escolherModelo': 'Escolher STL ou 3MF',
   'fatiador.impressora': 'Perfil de máquina',

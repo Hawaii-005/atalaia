@@ -882,6 +882,8 @@ const en = {
   'settings.tema_ametista': 'Midnight blue with purple. The default.',
   'comum.eliminar': 'Remove',
   // ——— Slicer [E1]–[E3]
+  'fatiador.motorIndisponivel':
+    'The slicing engine did not respond this session. Close and reopen the app; if it persists, reinstall the full edition.',
   'fatiador.titulo': 'Slice model',
   'fatiador.escolherModelo': 'Choose an STL or 3MF',
   'fatiador.impressora': 'Machine profile',
