@@ -82,4 +82,8 @@ Aparelhos ensaiados com o APK do spike (`io.github.hawaii005.slicerspike`, sha25
 2. `OutOfMemoryError` ou erro nativo de memória durante o fatiamento produz `SLICING_ERROR` com mensagem clara e saída explícita — nunca crash nem ecrã preto.
 3. Incluir a memória disponível no relatório de erro.
 
+**Nota de 16 KB:** Não existe qualquer linha em `CMakeLists.txt`, `build.gradle`, `docker-build.sh` ou scripts do spike que injete `-Wl,-z,max-page-size=16384` ou `-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON`. Módulos React Native (`expo-modules-core`, `react-native-screens`, `reanimated`, `gesture-handler`) injetam essa flag nos seus próprios `build.gradle`, mas não afetam `libslice_core.so`. O binário extraído do APK CI (`sha256 31983c99…`) tem paginação default de 4 KB; no Android 17 (S25 Ultra) o sistema exibe «app não compatível com 16 KB». Para distribuir em Android 17+, o build de `libslice_core.so` deve incluir `-Wl,-z,max-page-size=16384` (hífen, não underscore) e/ou `-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON` (NDK r27+); NDK r28 já define isto por padrão. Documentado aqui sem recompilar.
+
+**Bug do leitor STL na app de spike:** `obterInfoModeloSTL` interpreta o normal como primeiro vértice (`base = v * 12` em vez de `base = 12 + v * 12`), gerando dimensões erradas (ex.: cubo 20×20×10 mm → 400×400×800 mm). Afeta apenas o visor E1B; o motor nativo calcula AABB corretamente.
+
 **A Fase 2 não é aprovada por esta ADR.** A sua abertura exige decisão separada do utilizador após revisão de licença. Sem aprovação escrita não se alteram `LICENSE`/`NOTICE` nem se adiciona código AGPL ao repositório.
