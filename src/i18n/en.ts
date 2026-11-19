@@ -881,6 +881,34 @@ const en = {
   'secao.controlos': 'Controls',
   'settings.tema_ametista': 'Midnight blue with purple. The default.',
   'comum.eliminar': 'Remove',
+  // ——— Slicer [E1]–[E3]
+  'fatiador.titulo': 'Slice model',
+  'fatiador.escolherModelo': 'Choose an STL or 3MF',
+  'fatiador.impressora': 'Machine profile',
+  'fatiador.filamento': 'Filament',
+  'fatiador.processo': 'Process',
+  'fatiador.estimativasPendentes': 'Time: — · Filament: —',
+  'fatiador.fatiar': 'SLICE',
+  'fatiador.manterAberta': 'Keep the app open while slicing.',
+  'fatiador.cancelarTitulo': 'Cancel slicing?',
+  'fatiador.cancelarCorpo':
+    'The calculation stops and temporary files are deleted.',
+  'fatiador.cancelarNao': 'Continue',
+  'fatiador.cancelarSim': 'Yes, cancel',
+  'fatiador.erroTitulo': 'Slicing failed',
+  'fatiador.erroDesconhecido': 'The engine gave no reason.',
+  'fatiador.voltarInicio': 'Back to start',
+  'fatiador.resultadoTitulo': 'Slicing finished',
+  'fatiador.avisoPerfil':
+    'Generated with the chosen profile (not verified on the printer). On the first print with a new profile, watch the first layers.',
+  'fatiador.fatiarOutro': 'Slice another model',
+  'fatiador.volume.cabe': 'Fits the build volume.',
+  'fatiador.volume.excede':
+    'Larger than the machine build volume. This version has no scale or rotation: pick another model.',
+  'fatiador.volume.volumeIndisponivel':
+    'The profile has no build volume. You can slice, but check the dimensions before printing.',
+  'fatiador.volume.dimensoesDesconhecidas':
+    'The model could not be measured. Choose a valid STL.',
 } as const satisfies Record<keyof typeof pt, string>;
 
 export default en;

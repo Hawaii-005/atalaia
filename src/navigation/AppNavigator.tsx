@@ -21,6 +21,8 @@ import { InventarioScreen } from '../screens/InventarioScreen';
 import { useConsumoFilamento } from '../hooks/useConsumoFilamento';
 import { PrinterTabScreen } from '../screens/PrinterTabScreen';
 import { EditarIpScreen } from '../screens/EditarIpScreen';
+import { fatiadorDisponivel } from '../utils/fatiador/ponte';
+import { FatiadorScreen } from '../screens/fatiador/FatiadorScreen';
 import PrinterIcon from '../components/icons/PrinterIcon';
 import { RailLateral } from '../components/RailLateral';
 import { useJanela } from '../theme/layout';
@@ -161,5 +163,9 @@ export const AppNavigator = () => (
     <Root.Screen name="Resina" component={ResinScreen} />
     <Root.Screen name="Fila" component={FilaScreen} />
     <Root.Screen name="Inventario" component={InventarioScreen} />
+    {/* Só na edição `completa`: a `lite` não tem o motor nativo. */}
+    {fatiadorDisponivel() ? (
+      <Root.Screen name="Fatiador" component={FatiadorScreen} />
+    ) : null}
   </Root.Navigator>
 );

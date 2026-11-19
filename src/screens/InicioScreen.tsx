@@ -26,6 +26,7 @@ import { fonteNumeros } from '../theme/tokensV6';
 import { formatTicksToReadableTime } from '~/utils/FormatUtils';
 import { CartaoFila } from '../components/CartaoFila';
 import { urlMiniatura } from '../utils/miniatura';
+import { fatiadorDisponivel } from '../utils/fatiador/ponte';
 import {
   pausePrintCommand,
   resumePrintCommand,
@@ -266,6 +267,16 @@ export const InicioScreen = ({ navigation }: any) => {
       etiqueta: t('inv.titulo'),
       aoTocar: () => navigation.navigate('Inventario'),
     },
+    // Só entra na edição `completa` (motor nativo presente).
+    ...(fatiadorDisponivel()
+      ? [
+          {
+            icone: 'cut-outline' as const,
+            etiqueta: t('fatiador.titulo'),
+            aoTocar: () => navigation.navigate('Fatiador'),
+          },
+        ]
+      : []),
   ].filter(a => !(a.soFdm && resina));
 
   return (

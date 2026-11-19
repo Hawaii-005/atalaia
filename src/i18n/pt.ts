@@ -895,4 +895,32 @@ export default {
   'secao.controlos': 'Controlos',
   'settings.tema_ametista': 'Azul-noite com roxo. O predefinido.',
   'comum.eliminar': 'Eliminar',
+  // ——— Fatiador [E1]–[E3]
+  'fatiador.titulo': 'Fatiar modelo',
+  'fatiador.escolherModelo': 'Escolher STL ou 3MF',
+  'fatiador.impressora': 'Perfil de máquina',
+  'fatiador.filamento': 'Filamento',
+  'fatiador.processo': 'Processo',
+  'fatiador.estimativasPendentes': 'Tempo: — · Filamento: —',
+  'fatiador.fatiar': 'FATIAR',
+  'fatiador.manterAberta': 'Mantém a app aberta durante o fatiamento.',
+  'fatiador.cancelarTitulo': 'Cancelar o fatiamento?',
+  'fatiador.cancelarCorpo':
+    'O cálculo é interrompido e os ficheiros temporários são apagados.',
+  'fatiador.cancelarNao': 'Continuar',
+  'fatiador.cancelarSim': 'Sim, cancelar',
+  'fatiador.erroTitulo': 'O fatiamento falhou',
+  'fatiador.erroDesconhecido': 'O motor não indicou a causa.',
+  'fatiador.voltarInicio': 'Voltar ao início',
+  'fatiador.resultadoTitulo': 'Fatiamento concluído',
+  'fatiador.avisoPerfil':
+    'Gerado com o perfil escolhido (não verificado na impressora). Primeira impressão com perfil novo: vigia as primeiras camadas.',
+  'fatiador.fatiarOutro': 'Fatiar outro modelo',
+  'fatiador.volume.cabe': 'Cabe no volume útil.',
+  'fatiador.volume.excede':
+    'Excede o volume útil da máquina. Nesta versão não há escala nem rotação: escolhe outro modelo.',
+  'fatiador.volume.volumeIndisponivel':
+    'O perfil não indica o volume útil. Podes fatiar, mas confirma as dimensões antes de imprimir.',
+  'fatiador.volume.dimensoesDesconhecidas':
+    'Não foi possível medir o modelo. Escolhe um STL válido.',
 } as const;
