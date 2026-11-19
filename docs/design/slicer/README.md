@@ -4,9 +4,11 @@ Documento de arquitetura, fluxos, acessibilidade, matriz de capacidades, licenci
 
 ---
 
-## 0. Estado da Fase 1 — Ensaio de Aparelhos (não concluída)
+## 0. Estado da Fase 1 — CONCLUÍDA (2026-11-19)
 
-**A Fase 1 NÃO está concluída.** O ensaio de aparelhos está feito; falta o **teste físico do cubo** na Centauri Carbon (`GUIA_TESTE_FISICO_PRIMEIRA_IMPRESSAO.md`), que é condição de fecho.
+**A Fase 1 está concluída.** O teste físico do cubo foi executado na Centauri Carbon (`saida_Cubo_cosmos_afc_20261119-050951.gcode`, fatiado no Note 20 Ultra pelo motor `libslic3r`): `PRINT_START EXTRUDER=210 BED=60 CHAMBER=0 TOOL=0` aceite, impressão `completed` em 5,4 min (458 mm de filamento, 128 camadas a 0,20 mm, Textured PEI), peça aprovada visualmente pelo utilizador em 2026-11-19.
+
+As duas correções pendentes da Fase 1 foram aplicadas no commit `87585ed`: leitor STL binário (normal de 12 bytes; `Cubo.stl` passa a reportar 10×10×10 mm em vez de 11×11×11) e alinhamento 16 KB do `libslice_core.so` (`-Wl,-z,max-page-size=16384`).
 
 ### Aparelhos ensaiados
 
@@ -27,7 +29,7 @@ A variante `completa` **não** é distribuída como «validada em tablets». At�
 
 ### Bugs conhecidos no leitor de STL da app de spike
 
-O método `obterInfoModeloSTL` (`MainActivity.kt`, linhas 721–783) lê vértices com `base = v * 12` para `v = 0,1,2`, interpretando o **normal** como primeiro vértice. A estrutura real do STL binário é `normal(12 bytes) + v1(12) + v2(12) + v3(12) + atributo(2) = 50 bytes`. O resultado são dimensões completamente erradas (ex.: cubo 20×20×10 mm reportado como 400×400×800 mm). Correção: `base = 12 + v * 12` e ler `ByteArray(50)` em vez de `ByteArray(48)`. Este bug afeta apenas o visor E1B (caixa envolvente); o motor nativo (`libslic3r`) calcula AABB corretamente.
+Resolvido no commit `87585ed`. O método `obterInfoModeloSTL` (`MainActivity.kt`) lia vértices com `base = v * 12` para `v = 0,1,2`, interpretando o **normal** como primeiro vértice. A estrutura real do STL binário é `normal(12 bytes) + v1(12) + v2(12) + v3(12) + atributo(2) = 50 bytes`; a correção usa `ByteArray(50)` e `base = 12 + v * 12`.
 
 ### Exigência para a Fase 2/3 (mitigação de memória)
 
