@@ -15,7 +15,7 @@ import world.yemyat.slicepilot.NativeLib
 object SlicerEngine {
 
     /** Muda quando os perfis/assets mudarem, para forçar a reinstalação. */
-    private const val VERSION = "1"
+    private const val VERSION = "2"
 
     data class Perfil(
         val impressora: String,
@@ -29,7 +29,9 @@ object SlicerEngine {
         val percentagem: Int = 0,
     )
 
-    private val _progresso = Progresso()
+    /** Actualizado na thread do motor; lido pela sonda de progresso da UI. */
+    @Volatile
+    private var _progresso = Progresso()
     /** Callback opcional invocado na thread do motor a cada atualização de progresso. */
     @Volatile
     var onProgresso: ((Progresso) -> Unit)? = null
@@ -56,10 +58,14 @@ object SlicerEngine {
         if (marca.exists()) return
         copiarAssets(ctx, "profiles", File(res, "profiles"))
         copiarAssets(ctx, "profiles", File(data, "system"))
-        val printerDir = File(data, "user/default/printer").apply { mkdirs() }
-        ctx.assets.list("user_profiles")?.forEach { nome ->
-            File(printerDir, nome).outputStream().use { saida ->
-                ctx.assets.open("user_profiles/$nome").use { it.copyTo(saida) }
+        // Presets próprios: a impressora Cosmos AFC e o par PLA + 0.20 mm que
+        // lhe é compatível (o pack Elegoo não os declara para este nome).
+        listOf("printer", "filament", "process").forEach { tipo ->
+            val destino = File(data, "user/default/$tipo").apply { mkdirs() }
+            ctx.assets.list("user_profiles/$tipo")?.forEach { nome ->
+                File(destino, nome).outputStream().use { saida ->
+                    ctx.assets.open("user_profiles/$tipo/$nome").use { it.copyTo(saida) }
+                }
             }
         }
         marca.writeText("")
@@ -98,13 +104,31 @@ object SlicerEngine {
 
     fun impressoras(): List<String> = jsonLista(NativeLib.nativeGetPrinters())
 
-    fun filamentos(): List<String> = jsonLista(NativeLib.nativeGetFilaments())
+    /**
+     * Lista de filamentos compatíveis com a impressora activa. `nativeGetFilaments`
+     * devolve o conjunto do preset bundle (219), grande parte incompatível com a
+     * máquina escolhida; o getter de compatibilidade é o que a UI deve mostrar.
+     */
+    fun filamentos(): List<String> =
+        jsonLista(NativeLib.nativeGetCompatibleFilaments())
+            .ifEmpty { jsonLista(NativeLib.nativeGetFilaments()) }
 
-    fun processos(): List<String> = jsonLista(NativeLib.nativeGetProcesses())
+    fun processos(): List<String> =
+        jsonLista(NativeLib.nativeGetCompatibleProcesses())
+            .ifEmpty { jsonLista(NativeLib.nativeGetProcesses()) }
 
-    fun selecionarImpressora(nome: String): Boolean = NativeLib.nativeSelectPrinter(nome)
+    fun selecionarImpressora(nome: String): Boolean =
+        if (inicializado) NativeLib.nativeSelectPrinter(nome) else false
 
-    fun selecionarProcesso(nome: String): Boolean = NativeLib.nativeSelectProcess(nome)
+    fun selecionarProcesso(nome: String): Boolean =
+        if (inicializado) NativeLib.nativeSelectProcess(nome) else false
+
+    /**
+     * Chapa da máquina. Sem isto o motor assume "Cool Plate" e manda
+     * `first_layer_bed_temperature = 35` no PRINT_START — PLA não agarra numa
+     * Textured PEI a 35 °C. A Centauri Carbon usa Textured PEI a 60 °C.
+     */
+    private const val OVERRIDES = "curr_bed_type = Textured PEI Plate\n"
 
     /**
      * Fatia [modelo] (STL/3MF) para [saida]. Bloqueante: chamar fora da thread principal.
@@ -115,15 +139,18 @@ object SlicerEngine {
         onProgresso?.invoke(Progresso())
         val callback = object : NativeLib.SliceCallback {
             override fun onProgress(step: Int, text: String, percent: Int) {
-                onProgresso?.invoke(Progresso(step, text, percent))
+                _progresso = Progresso(step, text, percent)
+                onProgresso?.invoke(_progresso)
             }
         }
         return try {
-            NativeLib.nativeSliceWithPreset(
+            NativeLib.nativeSliceWithOverrides(
                 modelo.absolutePath,
                 perfil.impressora,
                 perfil.filamento,
                 perfil.processo,
+                OVERRIDES,
+                "",
                 saida.absolutePath,
                 callback,
             )

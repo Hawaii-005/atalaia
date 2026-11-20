@@ -72,6 +72,58 @@ describe('caixaEnvolventeSTL', () => {
     expect(caixaEnvolventeSTL(new Uint8Array(84))).toBeNull();
   });
 
+  it('mede um STL ASCII, que é metade dos ficheiros que andam por aí', () => {
+    const ascii = `solid cubo
+facet normal 0 0 1
+  outer loop
+    vertex 0 0 0
+    vertex 20 0 0
+    vertex 20 20 20
+  endloop
+endfacet
+facet normal 0 0 -1
+  outer loop
+    vertex 0 0 0
+    vertex 20 20 20
+    vertex 0 20 0
+  endloop
+endfacet
+facet normal 1 0 0
+  outer loop
+    vertex 20 0 0
+    vertex 20 20 0
+    vertex 20 20 20
+  endloop
+endfacet
+endsolid cubo
+`;
+    const r = caixaEnvolventeSTL(new TextEncoder().encode(ascii));
+    expect(r).not.toBeNull();
+    expect(r!.triangulos).toBe(3);
+    expect(r!.dimensoes.x).toBeCloseTo(20, 3);
+    expect(r!.dimensoes.y).toBeCloseTo(20, 3);
+    expect(r!.dimensoes.z).toBeCloseTo(20, 3);
+  });
+
+  it('não confunde um STL binário cujo cabeçalho começa por "solid"', () => {
+    const bytes = cuboSTL(20);
+    'solid'.split('').forEach((c, i) => {
+      bytes[i] = c.charCodeAt(0);
+    });
+    const r = caixaEnvolventeSTL(bytes);
+    expect(r).not.toBeNull();
+    expect(r!.triangulos).toBe(12);
+    expect(r!.dimensoes.x).toBeCloseTo(20, 3);
+  });
+
+  it('recusa ASCII sem vértices', () => {
+    expect(
+      caixaEnvolventeSTL(
+        new TextEncoder().encode('solid vazio\nendsolid vazio\n')
+      )
+    ).toBeNull();
+  });
+
   it('não deixa passar dimensões erradas quando a normal é lida como vértice', () => {
     // Um leitor que comece em base 0 devolve 21 num cubo de 20 — a regressão
     // que o spike de viabilidade teve e que aqui fica travada.

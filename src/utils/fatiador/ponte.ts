@@ -16,6 +16,7 @@ type ModuloNativo = {
     filamentos: string[];
     processos: string[];
   }>;
+  selecionarImpressora: (nome: string) => Promise<boolean>;
   prepararModelo: (uri: string, nome: string) => Promise<string>;
   fatiar: (
     modelo: string,
@@ -77,6 +78,18 @@ export const perfis = async (): Promise<Perfis> => {
     };
   } catch {
     return { impressoras: [], filamentos: [], processos: [] };
+  }
+};
+
+/**
+ * Muda a impressora activa no motor, para que `perfis()` devolva os filamentos
+ * e processos compatíveis com a máquina que o utilizador escolheu.
+ */
+export const selecionarImpressora = async (nome: string): Promise<boolean> => {
+  try {
+    return (await modulo()?.selecionarImpressora(nome)) ?? false;
+  } catch {
+    return false;
   }
 };
 

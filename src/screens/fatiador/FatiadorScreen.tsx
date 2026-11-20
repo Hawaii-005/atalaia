@@ -30,6 +30,7 @@ import {
   prepararModelo,
   progresso,
   inicializar,
+  selecionarImpressora,
   ResultadoFatiamento,
 } from '../../utils/fatiador/ponte';
 import {
@@ -43,6 +44,42 @@ type Passo = 'config' | 'aFatiar' | 'resultado' | 'erro';
 type Escolha = { uri: string; nome: string; tamanho: number };
 
 const LARGURA_TOQUE = 48;
+
+/**
+ * Filamentos e processos oferecidos na v1. Vêm do pack Elegoo (os mesmos que o
+ * próprio pack declara compatíveis com "Elegoo Centauri Carbon 0.4 nozzle" e com
+ * o perfil Cosmos AFC), e não dos getters nativos: `nativeGetCompatibleFilaments`
+ * devolve um subconjunto incoerente — só ABS, que numa máquina com PLA é uma
+ * temperatura errada a 260 °C. O motor resolve estes nomes ao fatiar.
+ */
+const FILAMENTOS_ECC = [
+  'Elegoo PLA @ECC',
+  'Elegoo PLA Basic @ECC',
+  'Elegoo PLA Matte @ECC',
+  'Elegoo PLA Silk @ECC',
+  'Elegoo PLA+ @ECC',
+  'Elegoo Rapid PLA+ @ECC',
+  'Elegoo PLA-CF @ECC',
+  'Elegoo PETG @ECC',
+  'Elegoo PETG PRO @ECC',
+  'Elegoo Rapid PETG @ECC',
+  'Elegoo ABS @ECC',
+  'Elegoo ASA @ECC',
+  'Elegoo TPU 95A @ECC',
+  'Elegoo PC @ECC',
+  'Elegoo PAHT-CF @ECC',
+];
+
+const PROCESSOS_CC04 = [
+  '0.12mm Fine @Elegoo CC 0.4 nozzle',
+  '0.16mm Optimal @Elegoo CC 0.4 nozzle',
+  '0.20mm Standard @Elegoo CC 0.4 nozzle',
+  '0.24mm Draft @Elegoo CC 0.4 nozzle',
+  '0.28mm Extra Draft @Elegoo CC 0.4 nozzle',
+];
+
+const FILAMENTO_OMISSAO = 'Elegoo PLA @ECC';
+const PROCESSO_OMISSAO = '0.20mm Standard @Elegoo CC 0.4 nozzle';
 
 const formatarBytes = (n: number): string => {
   if (n < 1024) return `${n} B`;
@@ -94,6 +131,22 @@ export const FatiadorScreen: React.FC = () => {
     [dimensoes, volume]
   );
 
+  // Muda a impressora no motor e recarrega os filamentos/processos que lhe são
+  // compatíveis. Sem isto o motor responde pelas listas da máquina que escolheu
+  // ao arrancar, e a UI mostra uma máquina com os perfis de outra.
+  const aplicarImpressora = useCallback(async (nome: string) => {
+    setImpressora(nome);
+    await selecionarImpressora(nome);
+    const l = await perfis();
+    setListas({
+      impressoras: l.impressoras,
+      filamentos: FILAMENTOS_ECC,
+      processos: PROCESSOS_CC04,
+    });
+    setFilamento(FILAMENTO_OMISSAO);
+    setProcesso(PROCESSO_OMISSAO);
+  }, []);
+
   useEffect(() => {
     let vivo = true;
     (async () => {
@@ -103,25 +156,25 @@ export const FatiadorScreen: React.FC = () => {
         setFalhaMotor(true);
         return;
       }
-      const l = await perfis();
+      const inicial = await perfis();
       if (!vivo) return;
-      setListas(l);
-      if (l.impressoras.length === 0) setFalhaMotor(true);
-      setImpressora(
-        l.impressoras.find(n => n.includes('Cosmos AFC')) ??
-          l.impressoras[0] ??
-          ''
-      );
-      setFilamento(l.filamentos[0] ?? '');
-      setProcesso(
-        l.processos.find(n => n.includes('0.20mm')) ?? l.processos[0] ?? ''
-      );
+      const maquina =
+        inicial.impressoras.find(n => n.includes('Cosmos AFC')) ??
+        inicial.impressoras[0] ??
+        '';
+      if (!maquina) {
+        setFalhaMotor(true);
+        setPronto(true);
+        return;
+      }
+      await aplicarImpressora(maquina);
+      if (!vivo) return;
       setPronto(true);
     })();
     return () => {
       vivo = false;
     };
-  }, []);
+  }, [aplicarImpressora]);
 
   useEffect(
     () => () => {
@@ -277,21 +330,6 @@ export const FatiadorScreen: React.FC = () => {
 
           {/* [V2] Estados do volume */}
           {escolha && avaliacao.estado !== 'cabe' ? (
-            <View
-              style={{
-                borderRadius: raio.interno,
-                padding: 12,
-                backgroundColor: hexDe(avaliacao.bloqueia ? p.perigo : p.aviso),
-                opacity: 0.15,
-                position: 'absolute',
-              }}
-            >
-              <Text style={{ color: hexDe(p.tinta) }}>
-                {t(`fatiador.volume.${avaliacao.estado}`)}
-              </Text>
-            </View>
-          ) : null}
-          {escolha && avaliacao.estado !== 'cabe' ? (
             <Text
               style={{
                 color: hexDe(avaliacao.bloqueia ? p.perigo : p.aviso),
@@ -311,7 +349,7 @@ export const FatiadorScreen: React.FC = () => {
                 <TouchableOpacity
                   key={nome}
                   accessibilityRole="button"
-                  onPress={() => setImpressora(nome)}
+                  onPress={() => aplicarImpressora(nome)}
                   style={{
                     minHeight: LARGURA_TOQUE,
                     justifyContent: 'center',

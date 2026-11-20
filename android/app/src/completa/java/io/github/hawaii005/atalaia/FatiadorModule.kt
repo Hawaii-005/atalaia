@@ -50,6 +50,22 @@ class FatiadorModule(private val contexto: ReactApplicationContext) :
     }
   }
 
+  /**
+   * Muda a impressora activa no motor. Sem isto o motor devolve filamentos e
+   * processos compatíveis com a impressora que ele escolheu ao arrancar, e não
+   * com a que o utilizador vê seleccionada no ecrã.
+   */
+  @ReactMethod
+  fun selecionarImpressora(nome: String, promessa: Promise) {
+    try {
+      val ok = SlicerEngine.selecionarImpressora(nome)
+      android.util.Log.i("Fatiador", "selecionarImpressora('$nome') -> $ok")
+      promessa.resolve(ok)
+    } catch (e: Throwable) {
+      promessa.reject("selecionar_falhou", e)
+    }
+  }
+
   /** Copia o modelo recebido por «Partilhar» para a pasta de trabalho do motor. */
   @ReactMethod
   fun prepararModelo(uri: String, nome: String, promessa: Promise) {

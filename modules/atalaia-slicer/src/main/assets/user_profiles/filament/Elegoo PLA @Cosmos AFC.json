@@ -1,0 +1,14 @@
+{
+    "type": "filament",
+    "name": "Elegoo PLA @Cosmos AFC",
+    "inherits": "Elegoo PLA @ECC",
+    "from": "User",
+    "instantiation": "true",
+    "compatible_printers": [
+        "Elegoo Centauri Carbon 0.4 nozzle - Cosmos AFC",
+        "Elegoo Centauri Carbon 0.4 nozzle"
+    ],
+    "filament_settings_id": [
+        "Elegoo PLA @Cosmos AFC"
+    ]
+}
