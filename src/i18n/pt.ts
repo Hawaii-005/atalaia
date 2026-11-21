@@ -905,10 +905,18 @@ export default {
   'fatiador.filamento': 'Filamento',
   'fatiador.processo': 'Processo',
   'fatiador.afcRiscoTitulo': 'Não imprimas com este filamento',
-  'fatiador.afcRisco':
-    'A pista T0 tem {material} e o G-code pede bico a {bico} °C — acima de ~235 °C o PLA entope ou carboniza. Troca o filamento da pista ou o perfil antes de imprimir.',
-  'fatiador.afcIndisponivel':
-    'Não foi possível confirmar o filamento da pista T0 no AFC — confirma a pista antes de imprimir.',
+  'fatiador.afc.plaLimite':
+    'A pista tem {material} e o G-code pede bico a {bico} °C — acima de ~235 °C o PLA entope ou carboniza.',
+  'fatiador.afc.materialDiferente':
+    'O G-code é {filamento} e a pista tem {material}.',
+  'fatiador.afc.bicoBaixo':
+    'Bico a {bico} °C está abaixo do mínimo para {material} na pista.',
+  'fatiador.afc.mesaBaixa':
+    'Mesa a {mesa} °C é baixa para {material} — risco de descolar.',
+  'fatiador.afc.pistaDesconhecida':
+    'Não há pista do AFC mapeada para a ferramenta deste G-code — não confirmado.',
+  'fatiador.afc.pista': 'Pista: {nome}',
+  'fatiador.afc.conforme': 'Pista e temperaturas conferem com o AFC.',
   'fatiador.chapa': 'Chapa',
   'fatiador.estimativasPendentes': 'Tempo: — · Filamento: —',
   'fatiador.fatiar': 'FATIAR',

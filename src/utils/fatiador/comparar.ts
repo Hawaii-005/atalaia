@@ -1,0 +1,112 @@
+/**
+ * Retrato de um G-code para o comparar com uma referência de outro fatiador.
+ * Só lê o que é comparável: geometria fatiada, consumo declarado no cabeçalho,
+ * temperaturas do PRINT_START, arranque e comandos de ferramenta.
+ */
+
+export type Retrato = {
+  camadas: number;
+  /** `filament used [mm]` do cabeçalho — não a soma de E, que inclui retrações. */
+  filamentMm: number | null;
+  bico: number | null;
+  mesa: number | null;
+  material: string;
+  ferramenta: number | null;
+  /** Comandos `Tn` sozinhos, que mudam de ferramenta a meio. */
+  tSoltos: number;
+  /** `EXCLUDE_OBJECT_DEFINE` antes do PRINT_START: o MK3D precisa disso. */
+  excludeAntes: boolean | null;
+  /** Comandos G/M do arranque, antes da primeira camada. */
+  preambulo: string[];
+};
+
+const numero = (v: string | undefined): number | null => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+};
+
+export const retratar = (texto: string): Retrato => {
+  const linhas = texto.split(/\r?\n/);
+  const primeiraCamada = linhas.findIndex(l => l.startsWith(';LAYER_CHANGE'));
+  const arranque =
+    primeiraCamada === -1 ? linhas : linhas.slice(0, primeiraCamada);
+  const printStart = /^PRINT_START(.*)$/m.exec(texto)?.[1] ?? '';
+
+  const ondeExclude = texto.indexOf('EXCLUDE_OBJECT_DEFINE');
+  const ondePrintStart = texto.search(/^PRINT_START/m);
+
+  return {
+    camadas: Number(
+      /^;\s*total layer number:\s*(\d+)/m.exec(texto)?.[1] ??
+        texto.match(/^;LAYER_CHANGE/gm)?.length ??
+        0
+    ),
+    filamentMm: numero(
+      /^;\s*filament used \[mm\]\s*=\s*([\d.]+)/m.exec(texto)?.[1]
+    ),
+    bico: numero(/EXTRUDER=(\d+(?:\.\d+)?)/.exec(printStart)?.[1]),
+    mesa: numero(/BED=(\d+(?:\.\d+)?)/.exec(printStart)?.[1]),
+    material: (/^;\s*filament_type\s*=\s*(.+)$/m.exec(texto)?.[1] ?? '')
+      .trim()
+      .replace(/^"|"$/g, ''),
+    ferramenta: numero(/TOOL=(\d+)/.exec(printStart)?.[1]),
+    tSoltos: linhas.filter(l => /^T\d+\s*$/.test(l)).length,
+    excludeAntes:
+      ondeExclude === -1 || ondePrintStart === -1
+        ? null
+        : ondeExclude < ondePrintStart,
+    preambulo: arranque.filter(l => /^[GM]\d/.test(l)),
+  };
+};
+
+/**
+ * Diferenças legíveis entre dois G-code. `toleranciaMm` é relativo ao consumo
+ * de referência: fatiadores diferentes não dão o mesmo número ao milímetro.
+ */
+export const comparar = (
+  referencia: string,
+  novo: string,
+  toleranciaMm = 0.01
+): { igual: boolean; diferencas: string[] } => {
+  const a = retratar(referencia);
+  const b = retratar(novo);
+  const diferencas: string[] = [];
+
+  if (a.camadas !== b.camadas) {
+    diferencas.push(`camadas: ${a.camadas} vs ${b.camadas}`);
+  }
+  if (a.bico !== b.bico) {
+    diferencas.push(`bico: ${a.bico} vs ${b.bico} °C`);
+  }
+  if (a.mesa !== b.mesa) {
+    diferencas.push(`mesa: ${a.mesa} vs ${b.mesa} °C`);
+  }
+  if (a.material !== b.material) {
+    diferencas.push(`material: ${a.material} vs ${b.material}`);
+  }
+  if (a.tSoltos !== b.tSoltos) {
+    diferencas.push(`T soltos: ${a.tSoltos} vs ${b.tSoltos}`);
+  }
+  if (a.excludeAntes !== b.excludeAntes) {
+    diferencas.push(
+      `EXCLUDE_OBJECT_DEFINE antes do PRINT_START: ${a.excludeAntes} vs ${b.excludeAntes}`
+    );
+  }
+  if (a.preambulo.join('|') !== b.preambulo.join('|')) {
+    const so = a.preambulo.filter(l => !b.preambulo.includes(l));
+    const falta = b.preambulo.filter(l => !a.preambulo.includes(l));
+    diferencas.push(
+      `preâmbulo: só na referência [${so.join(' , ')}] / só no novo [${falta.join(' , ')}]`
+    );
+  }
+  if (a.filamentMm !== null && b.filamentMm !== null) {
+    const desvio = Math.abs(b.filamentMm - a.filamentMm) / a.filamentMm;
+    if (desvio > toleranciaMm) {
+      diferencas.push(
+        `filament used [mm]: ${a.filamentMm} vs ${b.filamentMm} (${(desvio * 100).toFixed(2)}%)`
+      );
+    }
+  }
+
+  return { igual: diferencas.length === 0, diferencas };
+};

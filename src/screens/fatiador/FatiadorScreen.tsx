@@ -34,7 +34,13 @@ import {
   volumeDaImpressora,
   ResultadoFatiamento,
 } from '../../utils/fatiador/ponte';
-import { lerPistaT0, riscoAfc } from '../../utils/fatiador/afc';
+import {
+  lerPistas,
+  pistaDoTool,
+  avisosAfc,
+  AvisoAfc,
+  Pista,
+} from '../../utils/fatiador/afc';
 import { usePrinterConnections } from '../../contexts/PrinterConnectionsContext';
 import {
   avaliarVolume,
@@ -173,13 +179,9 @@ export const FatiadorScreen: React.FC = () => {
   const [resultado, setResultado] = useState<ResultadoFatiamento | null>(null);
   const [resumo, setResumo] = useState<GcodeResumo | null>(null);
   const { printers } = usePrinterConnections();
-  const [afc, setAfc] = useState<'desconhecido' | 'lisivel' | 'risco'>(
-    'desconhecido'
-  );
-  const [pistaT0, setPistaT0] = useState<{
-    material: string;
-    max: number | null;
-  } | null>(null);
+  const [avisos, setAvisos] = useState<AvisoAfc[]>([]);
+  const [pista, setPista] = useState<Pista | null>(null);
+  const [afcLido, setAfcLido] = useState(false);
   const chaveAfc = useRef('');
   const impressorasRef = useRef(printers);
   impressorasRef.current = printers;
@@ -361,32 +363,37 @@ export const FatiadorScreen: React.FC = () => {
 
   useEffect(() => {
     if (!resumo) {
-      setAfc('desconhecido');
-      setPistaT0(null);
+      setAvisos([]);
+      setPista(null);
+      setAfcLido(false);
       chaveAfc.current = '';
       return;
     }
-    // Uma leitura por (impressoras, bico): o estado da impressora é atualizado
-    // em ciclo e não faz sentido martelar o AFC a cada ciclo.
+    // Uma leitura por (impressoras, ferramenta): o estado da impressora é
+    // atualizado em ciclo e não faz sentido martelar o AFC a cada ciclo.
     const fdm = impressorasRef.current.filter(
       pr => (pr.kind ?? 'fdm') !== 'resin'
     );
     const alvo = fdm.find(pr => /centauri/i.test(pr.printerName)) ?? fdm[0];
     if (!alvo) return;
     const ip = alvo.activeIp || alvo.ipAddress;
-    const chave = `${ip}|${resumo.bico}`;
+    const chave = `${ip}|${resumo.ferramenta}`;
     if (chave === chaveAfc.current) return;
     chaveAfc.current = chave;
     let vivo = true;
-    lerPistaT0(ip).then(pista => {
+    lerPistas(ip).then(pistas => {
       if (!vivo) return;
-      setPistaT0(pista ? { material: pista.material, max: pista.max } : null);
-      setAfc(
-        !pista
-          ? 'desconhecido'
-          : riscoAfc(pista, resumo.bico)
-            ? 'risco'
-            : 'lisivel'
+      // A pista é a que serve a ferramenta do PRINT_START; CANVAS_1 não é T0
+      // por convenção, é só o nome que costuma calhar.
+      const escolhida = pistaDoTool(pistas, resumo.ferramenta);
+      setPista(escolhida);
+      setAfcLido(pistas !== null);
+      setAvisos(
+        avisosAfc(escolhida, {
+          material: resumo.filamento,
+          bico: resumo.bico,
+          mesa: resumo.mesa,
+        })
       );
     });
     return () => {
@@ -894,7 +901,7 @@ export const FatiadorScreen: React.FC = () => {
           />
         </View>
 
-        {afc === 'risco' && pistaT0 ? (
+        {avisos.length > 0 ? (
           <View
             accessibilityRole="alert"
             style={{
@@ -909,14 +916,27 @@ export const FatiadorScreen: React.FC = () => {
             <Text style={{ color: '#C62828', fontWeight: '700' }}>
               {t('fatiador.afcRiscoTitulo')}
             </Text>
-            <Text style={{ color: '#C62828' }}>
-              {t('fatiador.afcRisco', {
-                material: pistaT0.material,
-                bico: resumo?.bico ?? '—',
-              })}
-            </Text>
+            {avisos.map(aviso => (
+              <Text key={aviso} style={{ color: '#C62828' }}>
+                {t(`fatiador.afc.${aviso}`, {
+                  material: pista?.material ?? '—',
+                  bico: resumo?.bico ?? '—',
+                  mesa: resumo?.mesa ?? '—',
+                  filamento: resumo?.filamento || '—',
+                })}
+              </Text>
+            ))}
+            {pista ? (
+              <Text style={{ color: hexDe(p.tintaSoft) }}>
+                {t('fatiador.afc.pista', { nome: pista.nome })}
+              </Text>
+            ) : null}
           </View>
-        ) : afc === 'desconhecido' && resumo ? (
+        ) : afcLido && resumo ? (
+          <Text style={{ color: hexDe(p.tintaSoft) }}>
+            {t('fatiador.afc.conforme')}
+          </Text>
+        ) : resumo ? (
           <Text style={{ color: hexDe(p.tintaSoft) }}>
             {t('fatiador.afcIndisponivel')}
           </Text>

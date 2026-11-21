@@ -22,6 +22,8 @@ export type GcodeResumo = {
   /** Valores do comando PRINT_START, em °C. */
   bico: number | null;
   mesa: number | null;
+  /** Ferramenta pedida no PRINT_START (`TOOL=`), decide a pista do AFC. */
+  ferramenta: number | null;
   /** Filamento com que o ficheiro vai imprimir (do bloco de configuração). */
   filamento: string;
   /** Perfil de filamento aplicado, ex.: "Elegoo PLA @ECC". */
@@ -57,6 +59,7 @@ export const analisarGcode = (texto: string, bytes: number): GcodeResumo => {
     camadas: 0,
     bico: null,
     mesa: null,
+    ferramenta: null,
     filamento: '',
     perfilFilamento: '',
     tempo: '',
@@ -90,6 +93,7 @@ export const analisarGcode = (texto: string, bytes: number): GcodeResumo => {
     camadas,
     bico: numero(/EXTRUDER=(\d+(?:\.\d+)?)/, printStart),
     mesa: numero(/BED=(\d+(?:\.\d+)?)/, printStart),
+    ferramenta: numero(/TOOL=(\d+)/, printStart),
     filamento: /^;\s*filament_type\s*=\s*(.+)$/m.exec(texto)?.[1].trim() ?? '',
     perfilFilamento: (
       /^;\s*filament_settings_id\s*=\s*(.+)$/m.exec(texto)?.[1] ?? ''
