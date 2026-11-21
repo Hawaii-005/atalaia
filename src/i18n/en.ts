@@ -911,6 +911,7 @@ const en = {
   'fatiador.falha.sem_fim': 'Slicing failed: the file ended midway',
   'fatiador.tentarDeNovo': 'Try again',
   'fatiador.tamanhoFicheiro': 'File of {tamanho}',
+  'fatiador.erroLeitura': 'Could not read the generated G-code: {causa}',
   'fatiador.e4.ficheiro': '{nome} · {tamanho}',
   'fatiador.e4.camadas': 'Layers',
   'fatiador.e4.tempo': 'Time',

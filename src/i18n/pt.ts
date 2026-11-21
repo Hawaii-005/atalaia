@@ -925,6 +925,7 @@ export default {
   'fatiador.falha.sem_fim': 'O fatiamento falhou: o ficheiro terminou a meio',
   'fatiador.tentarDeNovo': 'Tentar de novo',
   'fatiador.tamanhoFicheiro': 'Ficheiro com {tamanho}',
+  'fatiador.erroLeitura': 'Não foi possível ler o G-code gerado: {causa}',
   'fatiador.e4.ficheiro': '{nome} · {tamanho}',
   'fatiador.e4.camadas': 'Camadas',
   'fatiador.e4.tempo': 'Tempo',

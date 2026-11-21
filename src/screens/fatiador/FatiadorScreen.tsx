@@ -102,17 +102,19 @@ const JANELA = 200_000;
 const lerGcode = async (
   caminho: string
 ): Promise<{ texto: string; bytes: number }> => {
-  const info = await FileSystem.getInfoAsync(caminho, { size: true });
+  // O motor devolve um caminho absoluto; o expo-file-system quer um URI.
+  const uri = caminho.startsWith('file://') ? caminho : `file://${caminho}`;
+  const info = await FileSystem.getInfoAsync(uri, { size: true });
   const bytes = info.exists ? (info.size ?? 0) : 0;
   if (bytes <= 0) return { texto: '', bytes: 0 };
   if (bytes <= 20 * 1024 * 1024) {
-    return { texto: await FileSystem.readAsStringAsync(caminho), bytes };
+    return { texto: await FileSystem.readAsStringAsync(uri), bytes };
   }
-  const cabeca = await FileSystem.readAsStringAsync(caminho, {
+  const cabeca = await FileSystem.readAsStringAsync(uri, {
     position: 0,
     length: JANELA,
   });
-  const cauda = await FileSystem.readAsStringAsync(caminho, {
+  const cauda = await FileSystem.readAsStringAsync(uri, {
     position: Math.max(0, bytes - JANELA),
     length: JANELA,
   });
@@ -314,11 +316,21 @@ export const FatiadorScreen: React.FC = () => {
       pararSonda();
       // O motor pode dizer «sucesso» antes de o ficheiro estar escrito (foi
       // assim que apareceu «concluído — 0 B»). O ficheiro é que decide.
-      const lido = r.sucesso
-        ? await lerGcode(r.gcode).catch(() => ({ texto: '', bytes: 0 }))
-        : { texto: '', bytes: 0 };
+      let lido = { texto: '', bytes: 0 };
+      let erroLeitura = '';
+      if (r.sucesso) {
+        try {
+          lido = await lerGcode(r.gcode);
+        } catch (e) {
+          erroLeitura = e instanceof Error ? e.message : String(e);
+        }
+      }
       const analise = analisarGcode(lido.texto, lido.bytes || r.bytes);
-      setResultado(r);
+      setResultado(
+        erroLeitura
+          ? { ...r, erro: t('fatiador.erroLeitura', { causa: erroLeitura }) }
+          : r
+      );
       setResumo(analise);
       if (r.sucesso && analise.valido) {
         setPasso('resultado');
