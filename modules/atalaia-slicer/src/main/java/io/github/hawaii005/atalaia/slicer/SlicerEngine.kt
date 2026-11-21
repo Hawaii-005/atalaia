@@ -21,6 +21,8 @@ object SlicerEngine {
         val impressora: String,
         val filamento: String,
         val processo: String,
+        /** Chapa física escolhida no ecrã; o motor assume Cool Plate (35 °C) sem isto. */
+        val placa: String = "Textured PEI Plate",
     )
 
     data class Progresso(
@@ -51,6 +53,10 @@ object SlicerEngine {
         val res = File(base, "slic3r_res").apply { mkdirs() }
         return data to res
     }
+
+    /** Raiz dos presets, guardada na inicialização para a leitura de perfis. */
+    @Volatile
+    private var dataDir: File? = null
 
     /**
      * O motor não traz presets embutidos: sem os perfis copiados, `perfis()`
@@ -96,6 +102,7 @@ object SlicerEngine {
         return try {
             instalarPerfis(ctx, data, res)
             NativeLib.nativeInit(data.absolutePath, res.absolutePath)
+            dataDir = data
             inicializado = true
             true
         } catch (e: Throwable) {
@@ -132,7 +139,7 @@ object SlicerEngine {
      * `first_layer_bed_temperature = 35` no PRINT_START — PLA não agarra numa
      * Textured PEI a 35 °C. A Centauri Carbon usa Textured PEI a 60 °C.
      */
-    private const val OVERRIDES = "curr_bed_type = Textured PEI Plate\n"
+    private fun overrides(placa: String): String = "curr_bed_type = $placa\n"
 
     /**
      * Fatia [modelo] (STL/3MF) para [saida]. Bloqueante: chamar fora da thread principal.
@@ -157,13 +164,14 @@ object SlicerEngine {
                 perfil.impressora,
                 perfil.filamento,
                 perfil.processo,
-                OVERRIDES,
+                overrides(perfil.placa),
                 "",
                 saida.absolutePath,
                 callback,
             )
             if (!ok) return false
             esperarExport(saida)
+            corrigirCabecalho(saida)
             // Tamanho lido só depois do export: antes disso dava 0 bytes e o
             // ecrã anunciava sucesso com «0 B».
             saida.exists() && saida.length() > 0L
@@ -203,6 +211,119 @@ object SlicerEngine {
 
     fun cancelar() {
         if (inicializado) NativeLib.nativeCancel()
+    }
+
+    /**
+     * Volume útil em mm, lido do preset da máquina e das heranças que ele
+     * declara (`inherits`): o Cosmos AFC só traz start/end G-code e herda
+     * `printable_area`/`printable_height` do perfil base. Devolve "null" quando
+     * não consegue provar o valor — o ecrã avisa em vez de inventar.
+     */
+    fun volume(nome: String): String {
+        val base = dataDir ?: return "null"
+        val proprio = procurarPerfil(base, nome) ?: return "null"
+        val campos = resolverPerfil(base, proprio, HashSet())
+        // O preset traz a área como lista de pontos; alguns packs usam uma string.
+        val area = when (val v = campos["printable_area"]) {
+            is org.json.JSONArray -> (0 until v.length()).joinToString(",") { v.optString(it) }
+            is String -> v
+            else -> return "null"
+        }
+        val altura = when (val v = campos["printable_height"]) {
+            is Number -> v.toDouble()
+            is String -> v.toDoubleOrNull()
+            else -> null
+        } ?: return "null"
+        // Formato do preset: "0x0","256x0","256x256","0x256"
+        val pontos = area.split(",").mapNotNull { p ->
+            val xy = p.trim().split("x")
+            if (xy.size != 2) null else {
+                val x = xy[0].toDoubleOrNull()
+                val y = xy[1].toDoubleOrNull()
+                if (x != null && y != null) x to y else null
+            }
+        }
+        if (pontos.size < 2) return "null"
+        val largura = pontos.maxOf { it.first } - pontos.minOf { it.first }
+        val fundo = pontos.maxOf { it.second } - pontos.minOf { it.second }
+        if (largura <= 0.0 || fundo <= 0.0 || altura <= 0.0) return "null"
+        return "{\"x\":$largura,\"y\":$fundo,\"z\":$altura}"
+    }
+
+    /**
+     * Preset do utilizador primeiro; senão, o de sistema com esse nome. Os
+     * presets de sistema vivem em `system/<fabricante>/machine/<série>/`, por
+     * isso a procura é pelo nome do ficheiro e não pela pasta.
+     */
+    private fun procurarPerfil(base: File, nome: String): File? {
+        val ficheiro = if (nome.endsWith(".json")) nome else "$nome.json"
+        File(base, "user/default/printer/$ficheiro").takeIf { it.isFile }?.let { return it }
+        return base.walkTopDown()
+            .filter { it.isFile && it.name == ficheiro }
+            .sortedBy { if (it.path.contains("/machine/")) 0 else 1 }
+            .firstOrNull()
+    }
+
+    /** Junta o preset com a cadeia `inherits`; o filho sobrepõe-se ao pai. */
+    private fun resolverPerfil(
+        base: File,
+        ficheiro: File,
+        vistos: MutableSet<String>,
+    ): Map<String, Any?> {
+        if (!vistos.add(ficheiro.absolutePath)) return emptyMap()
+        val proprio = try {
+            org.json.JSONObject(ficheiro.readText())
+        } catch (e: Throwable) {
+            return emptyMap()
+        }
+        val campos = mutableMapOf<String, Any?>()
+        val pai = proprio.optString("inherits", "")
+        if (pai.isNotEmpty()) {
+            procurarPerfil(base, pai)?.let { campos.putAll(resolverPerfil(base, it, vistos)) }
+        }
+        proprio.keys().forEach { chave ->
+            if (chave != "inherits" && !proprio.isNull(chave)) campos[chave] = proprio.get(chave)
+        }
+        return campos
+    }
+
+    /**
+     * O motor emite dois "; HEADER_BLOCK_END" (o segundo antes de `; filament: N`).
+     * Remove os repetidos, como já fazia o spike, para o cabeçalho ficar válido.
+     */
+    private fun corrigirCabecalho(f: File) {
+        if (!f.exists() || f.length() < 4096) return
+        val cab = ByteArray(4096)
+        java.io.RandomAccessFile(f, "r").use { it.readFully(cab) }
+        if (String(cab).split("HEADER_BLOCK_END").size <= 2) return
+        val tmp = File(f.parentFile, f.name + ".tmp")
+        var vistos = 0
+        try {
+            f.bufferedReader().use { entrada ->
+                tmp.bufferedWriter().use { saida ->
+                    var linha = entrada.readLine()
+                    while (linha != null) {
+                        if (linha.startsWith("; HEADER_BLOCK_END")) {
+                            vistos += 1
+                            if (vistos > 1) {
+                                linha = entrada.readLine()
+                                continue
+                            }
+                        }
+                        saida.write(linha)
+                        saida.newLine()
+                        linha = entrada.readLine()
+                    }
+                }
+            }
+            if (tmp.length() > 0L) {
+                f.delete()
+                tmp.renameTo(f)
+            }
+        } catch (e: Throwable) {
+            android.util.Log.e("SlicerEngine", "Falha a corrigir o cabeçalho", e)
+            tmp.delete()
+        }
     }
 
     fun estaEmCurso(): Boolean = inicializado && NativeLib.nativeIsRunning()

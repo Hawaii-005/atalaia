@@ -31,6 +31,7 @@ import {
   progresso,
   inicializar,
   selecionarImpressora,
+  volumeDaImpressora,
   ResultadoFatiamento,
 } from '../../utils/fatiador/ponte';
 import {
@@ -50,41 +51,22 @@ type Escolha = { uri: string; nome: string; tamanho: number };
 
 const LARGURA_TOQUE = 48;
 
-/**
- * Filamentos e processos oferecidos na v1. Vêm do pack Elegoo (os mesmos que o
- * próprio pack declara compatíveis com "Elegoo Centauri Carbon 0.4 nozzle" e com
- * o perfil Cosmos AFC), e não dos getters nativos: `nativeGetCompatibleFilaments`
- * devolve um subconjunto incoerente — só ABS, que numa máquina com PLA é uma
- * temperatura errada a 260 °C. O motor resolve estes nomes ao fatiar.
- */
-const FILAMENTOS_ECC = [
-  'Elegoo PLA @ECC',
-  'Elegoo PLA Basic @ECC',
-  'Elegoo PLA Matte @ECC',
-  'Elegoo PLA Silk @ECC',
-  'Elegoo PLA+ @ECC',
-  'Elegoo Rapid PLA+ @ECC',
-  'Elegoo PLA-CF @ECC',
-  'Elegoo PETG @ECC',
-  'Elegoo PETG PRO @ECC',
-  'Elegoo Rapid PETG @ECC',
-  'Elegoo ABS @ECC',
-  'Elegoo ASA @ECC',
-  'Elegoo TPU 95A @ECC',
-  'Elegoo PC @ECC',
-  'Elegoo PAHT-CF @ECC',
-];
+/** Chapas que o motor conhece e que a Centauri Carbon pode ter montada. */
+const PLACAS = ['Textured PEI Plate', 'Cool Plate'];
+const PLACA_OMISSAO = 'Textured PEI Plate';
 
-const PROCESSOS_CC04 = [
-  '0.12mm Fine @Elegoo CC 0.4 nozzle',
-  '0.16mm Optimal @Elegoo CC 0.4 nozzle',
-  '0.20mm Standard @Elegoo CC 0.4 nozzle',
-  '0.24mm Draft @Elegoo CC 0.4 nozzle',
-  '0.28mm Extra Draft @Elegoo CC 0.4 nozzle',
-];
+/** Preferências de perfil: o nome exato do pack e, na falta dele, o primeiro PLA. */
+const FILAMENTO_PREFERIDO = 'Generic PLA @Elegoo Centauri';
+const PROCESSO_PREFERIDO = '0.20mm Standard @Elegoo CC 0.4 nozzle';
 
-const FILAMENTO_OMISSAO = 'Elegoo PLA @ECC';
-const PROCESSO_OMISSAO = '0.20mm Standard @Elegoo CC 0.4 nozzle';
+const filamentoOmissao = (lista: string[]): string =>
+  lista.find(n => n === FILAMENTO_PREFERIDO) ??
+  lista.find(n => /plano|PLA/i.test(n)) ??
+  lista[0] ??
+  '';
+
+const processoOmissao = (lista: string[]): string =>
+  lista.find(n => n === PROCESSO_PREFERIDO) ?? lista[0] ?? '';
 
 const formatarBytes = (n: number): string => {
   if (n < 1024) return `${n} B`;
@@ -180,6 +162,8 @@ export const FatiadorScreen: React.FC = () => {
     processos: [] as string[],
   });
   const [impressora, setImpressora] = useState('');
+  const [volume, setVolume] = useState<Dimensoes | null>(null);
+  const [placa, setPlaca] = useState(PLACA_OMISSAO);
   const [filamento, setFilamento] = useState('');
   const [processo, setProcesso] = useState('');
   const [percentagem, setPercentagem] = useState(0);
@@ -189,10 +173,6 @@ export const FatiadorScreen: React.FC = () => {
   const [falha, setFalha] = useState<MotivoInvalido | null>(null);
   const [pedirCancelar, setPedirCancelar] = useState(false);
   const refIntervalo = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // Volume útil: os perfis nativos do motor ainda não expõem printable_area;
-  // quando passarem a expor, aqui se lê em vez de hardcodar.
-  const volume: Dimensoes | null = null;
 
   const avaliacao = useMemo(
     () => avaliarVolume(dimensoes, volume),
@@ -206,13 +186,16 @@ export const FatiadorScreen: React.FC = () => {
     setImpressora(nome);
     await selecionarImpressora(nome);
     const l = await perfis();
+    // Listas do motor: depois de `selecionarImpressora` são as compatíveis com
+    // a máquina escolhida (36 filamentos e 6 processos no Cosmos AFC).
     setListas({
       impressoras: l.impressoras,
-      filamentos: FILAMENTOS_ECC,
-      processos: PROCESSOS_CC04,
+      filamentos: l.filamentos,
+      processos: l.processos,
     });
-    setFilamento(FILAMENTO_OMISSAO);
-    setProcesso(PROCESSO_OMISSAO);
+    setFilamento(filamentoOmissao(l.filamentos));
+    setProcesso(processoOmissao(l.processos));
+    setVolume(await volumeDaImpressora(nome));
   }, []);
 
   useEffect(() => {
@@ -312,7 +295,12 @@ export const FatiadorScreen: React.FC = () => {
         setPercentagem(prog.percentagem);
         setEtapa(prog.etapa);
       }, 500);
-      const r = await fatiar(caminho, { impressora, filamento, processo });
+      const r = await fatiar(caminho, {
+        impressora,
+        filamento,
+        processo,
+        placa,
+      });
       pararSonda();
       // O motor pode dizer «sucesso» antes de o ficheiro estar escrito (foi
       // assim que apareceu «concluído — 0 B»). O ficheiro é que decide.
@@ -349,7 +337,7 @@ export const FatiadorScreen: React.FC = () => {
       setFalha(null);
       setPasso('erro');
     }
-  }, [escolha, impressora, filamento, processo]);
+  }, [escolha, impressora, filamento, processo, placa]);
 
   const cancelarAgora = useCallback(async () => {
     setPedirCancelar(false);
@@ -467,7 +455,7 @@ export const FatiadorScreen: React.FC = () => {
           {listas.filamentos.length > 0 ? (
             <View>
               <Text style={{ color: hexDe(p.tintaSoft), marginBottom: 6 }}>
-                {t('fatiador.filamento')}
+                {t('fatiador.filamento')} ({listas.filamentos.length})
               </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {listas.filamentos.map(nome => (
@@ -495,7 +483,7 @@ export const FatiadorScreen: React.FC = () => {
           {listas.processos.length > 0 ? (
             <View>
               <Text style={{ color: hexDe(p.tintaSoft), marginBottom: 6 }}>
-                {t('fatiador.processo')}
+                {t('fatiador.processo')} ({listas.processos.length})
               </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {listas.processos.map(nome => (
@@ -520,6 +508,34 @@ export const FatiadorScreen: React.FC = () => {
               </ScrollView>
             </View>
           ) : null}
+
+          {/* [4b] Chapa: decide o curr_bed_type que o PRINT_START vai levar */}
+          <View>
+            <Text style={{ color: hexDe(p.tintaSoft), marginBottom: 6 }}>
+              {t('fatiador.chapa')}
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {PLACAS.map(nome => (
+                <TouchableOpacity
+                  key={nome}
+                  accessibilityRole="button"
+                  onPress={() => setPlaca(nome)}
+                  style={{
+                    minHeight: LARGURA_TOQUE,
+                    justifyContent: 'center',
+                    paddingHorizontal: 14,
+                    borderRadius: raio.interno,
+                    borderWidth: 1,
+                    borderColor:
+                      nome === placa ? hexDe(p.acento) : hexDe(p.linha),
+                    marginRight: 8,
+                  }}
+                >
+                  <Text style={{ color: hexDe(p.tinta) }}>{nome}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
 
           {/* [5] Estimativas honestas: sempre — antes do fatiamento */}
           <Text style={{ color: hexDe(p.tintaMuted) }}>

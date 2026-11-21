@@ -7,6 +7,7 @@ import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
+import android.net.Uri
 import io.github.hawaii005.atalaia.slicer.SlicerEngine
 import java.io.File
 
@@ -66,21 +67,46 @@ class FatiadorModule(private val contexto: ReactApplicationContext) :
     }
   }
 
-  /** Copia o modelo recebido por «Partilhar» para a pasta de trabalho do motor. */
+  /**
+   * Copia o modelo recebido por «Partilhar» ou pelo seletor para a pasta de
+   * trabalho do motor. O seletor entrega `content://`, que só se lê pelo
+   * ContentResolver — abrir o caminho como ficheiro falha no Android moderno.
+   */
   @ReactMethod
   fun prepararModelo(uri: String, nome: String, promessa: Promise) {
     try {
-      val origem = File(uri.removePrefix("file://"))
-      if (!origem.isFile) {
-        promessa.reject("modelo_ausente", "Ficheiro não encontrado: $uri")
-        return
-      }
       val destino = dirTrabalho().resolve(nome.substringAfterLast('/'))
-      origem.copyTo(destino, overwrite = true)
+      val origem = Uri.parse(uri)
+      if (origem.scheme == "content") {
+        val entrada = contexto.contentResolver.openInputStream(origem)
+            ?: throw IllegalArgumentException("URI sem leitura: $uri")
+        entrada.use { fluxo ->
+          destino.outputStream().use { saida -> fluxo.copyTo(saida) }
+        }
+      } else {
+        val ficheiro = File(origem.path ?: uri)
+        if (!ficheiro.isFile) {
+          promessa.reject("modelo_ausente", "Ficheiro não encontrado: $uri")
+          return
+        }
+        ficheiro.copyTo(destino, overwrite = true)
+      }
       promessa.resolve(destino.absolutePath)
     } catch (e: Throwable) {
       promessa.reject("modelo_falhou", e)
     }
+  }
+
+  /** Volume útil (printable_area + printable_height) do preset, com heranças. */
+  @ReactMethod
+  fun volume(nome: String, promessa: Promise) {
+    promessa.resolve(
+        try {
+          SlicerEngine.volume(nome)
+        } catch (e: Throwable) {
+          "null"
+        },
+    )
   }
 
   @ReactMethod
@@ -89,6 +115,7 @@ class FatiadorModule(private val contexto: ReactApplicationContext) :
       impressora: String,
       filamento: String,
       processo: String,
+      placa: String,
       promessa: Promise,
   ) {
     if (SlicerEngine.estaEmCurso()) {
@@ -106,7 +133,7 @@ class FatiadorModule(private val contexto: ReactApplicationContext) :
       try {
         val ok = SlicerEngine.fatiar(
             entrada,
-            SlicerEngine.Perfil(impressora, filamento, processo),
+            SlicerEngine.Perfil(impressora, filamento, processo, placa),
             saida,
         )
         val bytes = if (saida.exists()) saida.length() else 0L

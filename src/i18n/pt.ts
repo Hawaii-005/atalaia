@@ -904,6 +904,7 @@ export default {
   'fatiador.impressora': 'Perfil de máquina',
   'fatiador.filamento': 'Filamento',
   'fatiador.processo': 'Processo',
+  'fatiador.chapa': 'Chapa',
   'fatiador.estimativasPendentes': 'Tempo: — · Filamento: —',
   'fatiador.fatiar': 'FATIAR',
   'fatiador.manterAberta': 'Mantém a app aberta durante o fatiamento.',

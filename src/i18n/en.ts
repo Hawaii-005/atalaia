@@ -890,6 +890,7 @@ const en = {
   'fatiador.impressora': 'Machine profile',
   'fatiador.filamento': 'Filament',
   'fatiador.processo': 'Process',
+  'fatiador.chapa': 'Build plate',
   'fatiador.estimativasPendentes': 'Time: — · Filament: —',
   'fatiador.fatiar': 'SLICE',
   'fatiador.manterAberta': 'Keep the app open while slicing.',
