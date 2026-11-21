@@ -890,6 +890,11 @@ const en = {
   'fatiador.impressora': 'Machine profile',
   'fatiador.filamento': 'Filament',
   'fatiador.processo': 'Process',
+  'fatiador.afcRiscoTitulo': "Don't print with this filament",
+  'fatiador.afcRisco':
+    'Lane T0 holds {material} but the G-code asks for {bico} °C — above ~235 °C PLA clogs or burns. Change the lane filament or the profile before printing.',
+  'fatiador.afcIndisponivel':
+    'Could not confirm the filament in AFC lane T0 — check the lane before printing.',
   'fatiador.chapa': 'Build plate',
   'fatiador.estimativasPendentes': 'Time: — · Filament: —',
   'fatiador.fatiar': 'SLICE',

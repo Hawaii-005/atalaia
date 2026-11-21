@@ -34,6 +34,8 @@ import {
   volumeDaImpressora,
   ResultadoFatiamento,
 } from '../../utils/fatiador/ponte';
+import { lerPistaT0, riscoAfc } from '../../utils/fatiador/afc';
+import { usePrinterConnections } from '../../contexts/PrinterConnectionsContext';
 import {
   avaliarVolume,
   caixaEnvolventeSTL,
@@ -170,6 +172,17 @@ export const FatiadorScreen: React.FC = () => {
   const [etapa, setEtapa] = useState('');
   const [resultado, setResultado] = useState<ResultadoFatiamento | null>(null);
   const [resumo, setResumo] = useState<GcodeResumo | null>(null);
+  const { printers } = usePrinterConnections();
+  const [afc, setAfc] = useState<'desconhecido' | 'lisivel' | 'risco'>(
+    'desconhecido'
+  );
+  const [pistaT0, setPistaT0] = useState<{
+    material: string;
+    max: number | null;
+  } | null>(null);
+  const chaveAfc = useRef('');
+  const impressorasRef = useRef(printers);
+  impressorasRef.current = printers;
   const [falha, setFalha] = useState<MotivoInvalido | null>(null);
   const [pedirCancelar, setPedirCancelar] = useState(false);
   const refIntervalo = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -345,6 +358,41 @@ export const FatiadorScreen: React.FC = () => {
     pararSonda();
     setPasso('config');
   }, []);
+
+  useEffect(() => {
+    if (!resumo) {
+      setAfc('desconhecido');
+      setPistaT0(null);
+      chaveAfc.current = '';
+      return;
+    }
+    // Uma leitura por (impressoras, bico): o estado da impressora é atualizado
+    // em ciclo e não faz sentido martelar o AFC a cada ciclo.
+    const fdm = impressorasRef.current.filter(
+      pr => (pr.kind ?? 'fdm') !== 'resin'
+    );
+    const alvo = fdm.find(pr => /centauri/i.test(pr.printerName)) ?? fdm[0];
+    if (!alvo) return;
+    const ip = alvo.activeIp || alvo.ipAddress;
+    const chave = `${ip}|${resumo.bico}`;
+    if (chave === chaveAfc.current) return;
+    chaveAfc.current = chave;
+    let vivo = true;
+    lerPistaT0(ip).then(pista => {
+      if (!vivo) return;
+      setPistaT0(pista ? { material: pista.material, max: pista.max } : null);
+      setAfc(
+        !pista
+          ? 'desconhecido'
+          : riscoAfc(pista, resumo.bico)
+            ? 'risco'
+            : 'lisivel'
+      );
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [resumo]);
 
   const reiniciar = useCallback(() => {
     setResultado(null);
@@ -845,6 +893,34 @@ export const FatiadorScreen: React.FC = () => {
             corValor={hexDe(p.tinta)}
           />
         </View>
+
+        {afc === 'risco' && pistaT0 ? (
+          <View
+            accessibilityRole="alert"
+            style={{
+              borderWidth: 2,
+              borderColor: '#C62828',
+              backgroundColor: hexDe(p.cartao),
+              borderRadius: raio.interno,
+              padding: 14,
+              gap: 6,
+            }}
+          >
+            <Text style={{ color: '#C62828', fontWeight: '700' }}>
+              {t('fatiador.afcRiscoTitulo')}
+            </Text>
+            <Text style={{ color: '#C62828' }}>
+              {t('fatiador.afcRisco', {
+                material: pistaT0.material,
+                bico: resumo?.bico ?? '—',
+              })}
+            </Text>
+          </View>
+        ) : afc === 'desconhecido' && resumo ? (
+          <Text style={{ color: hexDe(p.tintaSoft) }}>
+            {t('fatiador.afcIndisponivel')}
+          </Text>
+        ) : null}
 
         <Text style={{ color: hexDe(p.tintaSoft) }}>
           {t('fatiador.avisoPerfil')}

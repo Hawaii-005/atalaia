@@ -71,6 +71,10 @@ class FatiadorModule(private val contexto: ReactApplicationContext) :
    * Copia o modelo recebido por «Partilhar» ou pelo seletor para a pasta de
    * trabalho do motor. O seletor entrega `content://`, que só se lê pelo
    * ContentResolver — abrir o caminho como ficheiro falha no Android moderno.
+   *
+   * NÃO VERIFICADO no aparelho: com `copyToCacheDirectory` o expo entrega
+   * `file://`, por isso a corrida real exercita o ramo de ficheiro. O ramo
+   * `content://` só corre com um URI SAF direto (partilha de outra app).
    */
   @ReactMethod
   fun prepararModelo(uri: String, nome: String, promessa: Promise) {

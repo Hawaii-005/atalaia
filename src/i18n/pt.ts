@@ -904,6 +904,11 @@ export default {
   'fatiador.impressora': 'Perfil de máquina',
   'fatiador.filamento': 'Filamento',
   'fatiador.processo': 'Processo',
+  'fatiador.afcRiscoTitulo': 'Não imprimas com este filamento',
+  'fatiador.afcRisco':
+    'A pista T0 tem {material} e o G-code pede bico a {bico} °C — acima de ~235 °C o PLA entope ou carboniza. Troca o filamento da pista ou o perfil antes de imprimir.',
+  'fatiador.afcIndisponivel':
+    'Não foi possível confirmar o filamento da pista T0 no AFC — confirma a pista antes de imprimir.',
   'fatiador.chapa': 'Chapa',
   'fatiador.estimativasPendentes': 'Tempo: — · Filamento: —',
   'fatiador.fatiar': 'FATIAR',
