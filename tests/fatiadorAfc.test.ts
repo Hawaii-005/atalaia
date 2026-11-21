@@ -1,11 +1,12 @@
 import {
   avisosAfc,
   bloqueioEnvio,
-  hostPrivado,
+  nivelAviso,
   pistaDoTool,
   Pista,
   LIMITE_PLA,
 } from '../src/utils/fatiador/afc';
+import { hostPrivado, destinoPermitido } from '../src/utils/httpLocal';
 
 const pista = (
   nome: string,
@@ -91,26 +92,70 @@ describe('discordâncias G-code × pista', () => {
   });
 });
 
+describe('mesa depende da chapa', () => {
+  it('PLA a 35 °C é válido na Cool Plate', () => {
+    expect(
+      avisosAfc(pista('x', 'PLA', ['T0']), g('PLA', 210, 35), 'Cool Plate')
+    ).toEqual([]);
+  });
+
+  it('PLA a 35 °C na Textured PEI é aviso de mesa', () => {
+    expect(
+      avisosAfc(
+        pista('x', 'PLA', ['T0']),
+        g('PLA', 210, 35),
+        'Textured PEI Plate'
+      )
+    ).toEqual(['mesaBaixa']);
+  });
+
+  it('PLA-CF a 260 °C não dispara o limite de PLA puro', () => {
+    expect(
+      avisosAfc(pista('x', 'PLA-CF', ['T0']), g('PLA-CF', 260, 60))
+    ).toEqual([]);
+  });
+});
+
 describe('regra do E5', () => {
   it('sem avisos o envio passa', () => {
     expect(bloqueioEnvio([])).toEqual({
+      nivel: 'nenhum',
       bloqueado: false,
+      podeIgnorar: false,
       requerConfirmacao: false,
     });
   });
 
-  it('aviso real bloqueia mas pode ser ignorado', () => {
+  it('crítico bloqueia mas pode ser ignorado', () => {
     expect(bloqueioEnvio(['plaLimite'])).toEqual({
+      nivel: 'critico',
       bloqueado: true,
+      podeIgnorar: true,
       requerConfirmacao: false,
     });
   });
 
-  it('AFC sem resposta exige confirmação', () => {
-    expect(bloqueioEnvio(['pistaDesconhecida'])).toEqual({
-      bloqueado: true,
+  it('aviso de temperatura só pede confirmação', () => {
+    expect(bloqueioEnvio(['mesaBaixa'])).toEqual({
+      nivel: 'aviso',
+      bloqueado: false,
+      podeIgnorar: false,
       requerConfirmacao: true,
     });
+  });
+
+  it('AFC sem resposta bloqueia e não deixa ignorar', () => {
+    expect(bloqueioEnvio(['pistaDesconhecida'])).toEqual({
+      nivel: 'critico',
+      bloqueado: true,
+      podeIgnorar: false,
+      requerConfirmacao: true,
+    });
+  });
+
+  it('crítico e aviso juntos ficam críticos', () => {
+    expect(nivelAviso('materialDiferente')).toBe('critico');
+    expect(bloqueioEnvio(['plaLimite', 'mesaBaixa']).nivel).toBe('critico');
   });
 });
 
@@ -121,14 +166,19 @@ describe('HTTP em claro só em rede privada', () => {
       '192.168.1.6:7125',
       '10.0.0.2',
       '172.20.1.1',
+      '100.91.189.97',
       '127.0.0.1',
       'tv.local',
     ].forEach(h => expect(hostPrivado(h)).toBe(true));
   });
 
   it('recusa endereços públicos e nomes estranhos', () => {
-    ['8.8.8.8', '172.32.0.1', '200.1.2.3', 'example.com'].forEach(h =>
-      expect(hostPrivado(h)).toBe(false)
-    );
+    [
+      '8.8.8.8',
+      '172.32.0.1',
+      '100.128.0.1',
+      '200.1.2.3',
+      'example.com',
+    ].forEach(h => expect(hostPrivado(h)).toBe(false));
   });
 });

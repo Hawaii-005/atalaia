@@ -890,7 +890,8 @@ const en = {
   'fatiador.impressora': 'Machine profile',
   'fatiador.filamento': 'Filament',
   'fatiador.processo': 'Process',
-  'fatiador.afcRiscoTitulo': "Don't print with this filament",
+  'fatiador.afc.tituloCritico': "Don't print with this filament",
+  'fatiador.afc.tituloAviso': 'Check before printing',
   'fatiador.afc.plaLimite':
     'The lane holds {material} but the G-code asks for {bico} °C — above ~235 °C PLA clogs or burns.',
   'fatiador.afc.materialDiferente':

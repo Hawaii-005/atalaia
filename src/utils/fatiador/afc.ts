@@ -5,6 +5,8 @@
  * peça a descolar.
  */
 
+import { pedirJsonLocal, hostPrivado } from '../httpLocal';
+
 export type Pista = {
   nome: string;
   material: string;
@@ -41,38 +43,14 @@ export const FAIXAS: Record<
 const numero = (v: unknown): number | null =>
   typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : null;
 
-/** O HTTP do AFC vai em claro: só se fala com endereços de rede privada. */
-export const hostPrivado = (endereco: string): boolean => {
-  const host = endereco
-    .replace(/^https?:\/\//, '')
-    .split('/')[0]
-    .split(':')[0]
-    .toLowerCase();
-  if (
-    host === 'localhost' ||
-    host.endsWith('.local') ||
-    host.endsWith('.ts.net')
-  ) {
-    return true;
-  }
-  const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host);
-  if (!m) return false;
-  const [a, b] = [Number(m[1]), Number(m[2])];
-  return (
-    a === 127 ||
-    a === 10 ||
-    (a === 192 && b === 168) ||
-    (a === 172 && b >= 16 && b <= 31)
-  );
+/** Mesa mínima por material e por chapa: Cool Plate imprime PLA a 35 °C. */
+export const MESA_MINIMA: Record<string, Record<string, number>> = {
+  PLA: { 'Textured PEI Plate': 55, 'Cool Plate': 30 },
+  PETG: { 'Textured PEI Plate': 70, 'Cool Plate': 70 },
+  ABS: { 'Textured PEI Plate': 90, 'Cool Plate': 90 },
+  ASA: { 'Textured PEI Plate': 90, 'Cool Plate': 90 },
+  TPU: { 'Textured PEI Plate': 30, 'Cool Plate': 30 },
 };
-
-const pedirJson = async (url: string, tempoLimite: number): Promise<any> =>
-  Promise.race([
-    fetch(url).then(r => r.json()),
-    new Promise((_, rejeitar) =>
-      setTimeout(() => rejeitar(new Error('tempo')), tempoLimite)
-    ),
-  ]);
 
 /**
  * Todas as pistas `AFC_lane` do Moonraker. `null` = AFC não respondeu (não se
@@ -84,7 +62,7 @@ export const lerPistas = async (
 ): Promise<Pista[] | null> => {
   if (!hostPrivado(ip)) return null;
   try {
-    const lista = await pedirJson(
+    const lista = await pedirJsonLocal(
       `http://${ip}/printer/objects/list`,
       tempoLimite
     );
@@ -93,7 +71,7 @@ export const lerPistas = async (
     );
     if (!nomes.length) return [];
     const consulta = nomes.map(n => encodeURIComponent(n)).join('&');
-    const resposta = await pedirJson(
+    const resposta = await pedirJsonLocal(
       `http://${ip}/printer/objects/query?${consulta}`,
       tempoLimite
     );
@@ -132,44 +110,72 @@ export const pistaDoTool = (
 const base = (material: string): string =>
   material.toUpperCase().split(/[-_\s]/)[0];
 
+export type NivelAviso = 'critico' | 'aviso';
+
+/** Crítico bloqueia o envio; aviso pede só confirmação. */
+export const nivelAviso = (aviso: AvisoAfc): NivelAviso =>
+  aviso === 'plaLimite' ||
+  aviso === 'materialDiferente' ||
+  aviso === 'pistaDesconhecida'
+    ? 'critico'
+    : 'aviso';
+
 /** Discordâncias entre o G-code e a pista, por ordem de gravidade. */
 export const avisosAfc = (
   pista: Pista | null,
-  gcode: { material: string; bico: number | null; mesa: number | null }
+  gcode: { material: string; bico: number | null; mesa: number | null },
+  chapa = 'Textured PEI Plate'
 ): AvisoAfc[] => {
   if (!pista) return ['pistaDesconhecida'];
   const avisos: AvisoAfc[] = [];
   const material = pista.material.toUpperCase();
-  const faixa = FAIXAS[base(material)] ?? null;
+  const familia = base(material);
+  const faixa = FAIXAS[familia] ?? null;
 
-  if (
-    material.includes('PLA') &&
-    gcode.bico !== null &&
-    gcode.bico > LIMITE_PLA
-  ) {
+  // Só PLA puro: PLA-CF e afins têm bico próprio e o limite de 235 não lhes
+  // pertence (o utilizador pediu-o explicitamente).
+  if (material === 'PLA' && gcode.bico !== null && gcode.bico > LIMITE_PLA) {
     avisos.push('plaLimite');
   }
   const noGcode = base(gcode.material || '');
-  if (noGcode && material && noGcode !== base(material)) {
+  if (noGcode && material && noGcode !== familia) {
     avisos.push('materialDiferente');
   }
   if (faixa && gcode.bico !== null && gcode.bico < faixa.bico[0]) {
     avisos.push('bicoBaixo');
   }
-  if (faixa && gcode.mesa !== null && gcode.mesa < faixa.mesa[0]) {
+  const mesaMinima = MESA_MINIMA[familia]?.[chapa];
+  if (
+    mesaMinima !== undefined &&
+    gcode.mesa !== null &&
+    gcode.mesa < mesaMinima
+  ) {
     avisos.push('mesaBaixa');
   }
   return avisos;
 };
 
 /**
- * Regra do E5 («Enviar e arrancar»): qualquer aviso desativa o botão, com
- * opção explícita de ignorar. Sem resposta do AFC não há como ignorar: exige
- * confirmação consciente.
+ * Regra do E5 («Enviar e arrancar»):
+ * - crítico (PLA acima de 235, material diferente): botão desativado, com
+ *   opção explícita de ignorar;
+ * - aviso (bico ou mesa abaixo do intervalo): pede confirmação;
+ * - AFC mudo: bloqueia e não deixa ignorar — exige confirmação consciente.
  */
 export const bloqueioEnvio = (
   avisos: AvisoAfc[]
-): { bloqueado: boolean; requerConfirmacao: boolean } => ({
-  bloqueado: avisos.length > 0,
-  requerConfirmacao: avisos.includes('pistaDesconhecida'),
-});
+): {
+  nivel: 'nenhum' | NivelAviso;
+  bloqueado: boolean;
+  podeIgnorar: boolean;
+  requerConfirmacao: boolean;
+} => {
+  const critico = avisos.filter(a => nivelAviso(a) === 'critico');
+  const desconhecido = avisos.includes('pistaDesconhecida');
+  return {
+    nivel: critico.length ? 'critico' : avisos.length ? 'aviso' : 'nenhum',
+    bloqueado: critico.length > 0,
+    podeIgnorar: critico.length > 0 && !desconhecido,
+    requerConfirmacao: critico.length > 0 ? desconhecido : avisos.length > 0,
+  };
+};

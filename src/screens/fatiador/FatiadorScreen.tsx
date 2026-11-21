@@ -38,6 +38,8 @@ import {
   lerPistas,
   pistaDoTool,
   avisosAfc,
+  bloqueioEnvio,
+  nivelAviso,
   AvisoAfc,
   Pista,
 } from '../../utils/fatiador/afc';
@@ -193,6 +195,7 @@ export const FatiadorScreen: React.FC = () => {
     () => avaliarVolume(dimensoes, volume),
     [dimensoes, volume]
   );
+  const bloqueio = useMemo(() => bloqueioEnvio(avisos), [avisos]);
 
   // Muda a impressora no motor e recarrega os filamentos/processos que lhe são
   // compatíveis. Sem isto o motor responde pelas listas da máquina que escolheu
@@ -377,7 +380,7 @@ export const FatiadorScreen: React.FC = () => {
     const alvo = fdm.find(pr => /centauri/i.test(pr.printerName)) ?? fdm[0];
     if (!alvo) return;
     const ip = alvo.activeIp || alvo.ipAddress;
-    const chave = `${ip}|${resumo.ferramenta}`;
+    const chave = `${ip}|${resumo.ferramenta}|${placa}`;
     if (chave === chaveAfc.current) return;
     chaveAfc.current = chave;
     let vivo = true;
@@ -389,17 +392,21 @@ export const FatiadorScreen: React.FC = () => {
       setPista(escolhida);
       setAfcLido(pistas !== null);
       setAvisos(
-        avisosAfc(escolhida, {
-          material: resumo.filamento,
-          bico: resumo.bico,
-          mesa: resumo.mesa,
-        })
+        avisosAfc(
+          escolhida,
+          {
+            material: resumo.filamento,
+            bico: resumo.bico,
+            mesa: resumo.mesa,
+          },
+          placa
+        )
       );
     });
     return () => {
       vivo = false;
     };
-  }, [resumo]);
+  }, [resumo, placa]);
 
   const reiniciar = useCallback(() => {
     setResultado(null);
@@ -901,23 +908,36 @@ export const FatiadorScreen: React.FC = () => {
           />
         </View>
 
-        {avisos.length > 0 ? (
+        {avisos.length > 0 && bloqueio.nivel !== 'nenhum' ? (
           <View
             accessibilityRole="alert"
             style={{
               borderWidth: 2,
-              borderColor: '#C62828',
+              borderColor: bloqueio.nivel === 'critico' ? '#C62828' : '#B26A00',
               backgroundColor: hexDe(p.cartao),
               borderRadius: raio.interno,
               padding: 14,
               gap: 6,
             }}
           >
-            <Text style={{ color: '#C62828', fontWeight: '700' }}>
-              {t('fatiador.afcRiscoTitulo')}
+            <Text
+              style={{
+                color: bloqueio.nivel === 'critico' ? '#C62828' : '#B26A00',
+                fontWeight: '700',
+              }}
+            >
+              {bloqueio.nivel === 'critico'
+                ? t('fatiador.afc.tituloCritico')
+                : t('fatiador.afc.tituloAviso')}
             </Text>
             {avisos.map(aviso => (
-              <Text key={aviso} style={{ color: '#C62828' }}>
+              <Text
+                key={aviso}
+                style={{
+                  color:
+                    nivelAviso(aviso) === 'critico' ? '#C62828' : '#B26A00',
+                }}
+              >
                 {t(`fatiador.afc.${aviso}`, {
                   material: pista?.material ?? '—',
                   bico: resumo?.bico ?? '—',
