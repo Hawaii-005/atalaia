@@ -36,6 +36,10 @@ object SlicerEngine {
     @Volatile
     var onProgresso: ((Progresso) -> Unit)? = null
 
+    /** O motor avisou que escreveu o G-code. Zerado a cada fatiamento. */
+    @Volatile
+    private var exportado = false
+
     fun progressoAtual(): Progresso = _progresso
     @Volatile
     private var inicializado = false
@@ -132,19 +136,23 @@ object SlicerEngine {
 
     /**
      * Fatia [modelo] (STL/3MF) para [saida]. Bloqueante: chamar fora da thread principal.
-     * Devolve true quando o motor reporta sucesso.
+     * Devolve true quando o motor reporta sucesso **e** o ficheiro está completo.
      */
     fun fatiar(modelo: File, perfil: Perfil, saida: File): Boolean {
         if (!inicializado) return false
+        exportado = false
         onProgresso?.invoke(Progresso())
         val callback = object : NativeLib.SliceCallback {
             override fun onProgress(step: Int, text: String, percent: Int) {
+                if (text.contains("exported", ignoreCase = true) || percent >= 100) {
+                    exportado = true
+                }
                 _progresso = Progresso(step, text, percent)
                 onProgresso?.invoke(_progresso)
             }
         }
         return try {
-            NativeLib.nativeSliceWithOverrides(
+            val ok = NativeLib.nativeSliceWithOverrides(
                 modelo.absolutePath,
                 perfil.impressora,
                 perfil.filamento,
@@ -154,9 +162,42 @@ object SlicerEngine {
                 saida.absolutePath,
                 callback,
             )
+            if (!ok) return false
+            esperarExport(saida)
+            // Tamanho lido só depois do export: antes disso dava 0 bytes e o
+            // ecrã anunciava sucesso com «0 B».
+            saida.exists() && saida.length() > 0L
         } catch (e: Throwable) {
             android.util.Log.e("SlicerEngine", "Falha no fatiamento", e)
             false
+        }
+    }
+
+    /**
+     * A chamada nativa retorna antes de o motor acabar de escrever o ficheiro.
+     * Sinal principal: o callback «exported» ou o motor parado. Alternativa: o
+     * tamanho repetir-se em quatro amostras. Limite de 5 minutos, para não
+     * deixar a promessa pendurada.
+     */
+    private fun esperarExport(saida: File) {
+        val limite = android.os.SystemClock.elapsedRealtime() + 300_000
+        var anterior = -1L
+        var estaveis = 0
+        while (android.os.SystemClock.elapsedRealtime() < limite) {
+            val tamanho = if (saida.exists()) saida.length() else 0L
+            if (tamanho > 0L && (exportado || !NativeLib.nativeIsRunning())) return
+            if (tamanho > 0L && tamanho == anterior) {
+                estaveis += 1
+                if (estaveis >= 4) return
+            } else {
+                estaveis = 0
+            }
+            anterior = tamanho
+            try {
+                Thread.sleep(250)
+            } catch (e: InterruptedException) {
+                return
+            }
         }
     }
 

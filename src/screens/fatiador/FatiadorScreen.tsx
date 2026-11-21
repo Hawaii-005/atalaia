@@ -38,6 +38,11 @@ import {
   caixaEnvolventeSTL,
   Dimensoes,
 } from '../../utils/fatiador/volume';
+import {
+  analisarGcode,
+  GcodeResumo,
+  MotivoInvalido,
+} from '../../utils/fatiador/gcode';
 
 type Passo = 'config' | 'aFatiar' | 'resultado' | 'erro';
 
@@ -87,6 +92,65 @@ const formatarBytes = (n: number): string => {
   return `${(n / (1024 * 1024)).toFixed(1)} MB`;
 };
 
+/** Janela de leitura quando o G-code é grande demais para ler inteiro. */
+const JANELA = 200_000;
+
+/**
+ * Lê o G-code gerado. Um ficheiro grande só é lido nas pontas: o cabeçalho e o
+ * resumo com tempo/gramas estão nos extremos, nunca a meio.
+ */
+const lerGcode = async (
+  caminho: string
+): Promise<{ texto: string; bytes: number }> => {
+  const info = await FileSystem.getInfoAsync(caminho, { size: true });
+  const bytes = info.exists ? (info.size ?? 0) : 0;
+  if (bytes <= 0) return { texto: '', bytes: 0 };
+  if (bytes <= 20 * 1024 * 1024) {
+    return { texto: await FileSystem.readAsStringAsync(caminho), bytes };
+  }
+  const cabeca = await FileSystem.readAsStringAsync(caminho, {
+    position: 0,
+    length: JANELA,
+  });
+  const cauda = await FileSystem.readAsStringAsync(caminho, {
+    position: Math.max(0, bytes - JANELA),
+    length: JANELA,
+  });
+  return { texto: `${cabeca}\n${cauda}`, bytes };
+};
+
+const chaveDoMotivo = (motivo: MotivoInvalido): string =>
+  `fatiador.falha.${motivo}`;
+
+/** Linha rótulo → valor dos cartões do resultado [E4]. */
+const LinhaResumo = ({
+  rotulo,
+  valor,
+  cor,
+  corValor,
+}: {
+  rotulo: string;
+  valor: string;
+  cor: string;
+  corValor: string;
+}) => (
+  <View
+    style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}
+  >
+    <Text style={{ color: cor }}>{rotulo}</Text>
+    <Text
+      style={{
+        color: corValor,
+        fontWeight: '600',
+        flexShrink: 1,
+        textAlign: 'right',
+      }}
+    >
+      {valor}
+    </Text>
+  </View>
+);
+
 /**
  * [E1]–[E3] do fatiador: escolher modelo e perfil, fatiar, mostrar resultado.
  *
@@ -119,6 +183,8 @@ export const FatiadorScreen: React.FC = () => {
   const [percentagem, setPercentagem] = useState(0);
   const [etapa, setEtapa] = useState('');
   const [resultado, setResultado] = useState<ResultadoFatiamento | null>(null);
+  const [resumo, setResumo] = useState<GcodeResumo | null>(null);
+  const [falha, setFalha] = useState<MotivoInvalido | null>(null);
   const [pedirCancelar, setPedirCancelar] = useState(false);
   const refIntervalo = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -234,6 +300,9 @@ export const FatiadorScreen: React.FC = () => {
     setPasso('aFatiar');
     setPercentagem(0);
     setEtapa('');
+    setResultado(null);
+    setResumo(null);
+    setFalha(null);
     try {
       const caminho = await prepararModelo(escolha.uri, escolha.nome);
       refIntervalo.current = setInterval(async () => {
@@ -243,8 +312,20 @@ export const FatiadorScreen: React.FC = () => {
       }, 500);
       const r = await fatiar(caminho, { impressora, filamento, processo });
       pararSonda();
+      // O motor pode dizer «sucesso» antes de o ficheiro estar escrito (foi
+      // assim que apareceu «concluído — 0 B»). O ficheiro é que decide.
+      const lido = r.sucesso
+        ? await lerGcode(r.gcode).catch(() => ({ texto: '', bytes: 0 }))
+        : { texto: '', bytes: 0 };
+      const analise = analisarGcode(lido.texto, lido.bytes || r.bytes);
       setResultado(r);
-      setPasso(r.sucesso ? 'resultado' : 'erro');
+      setResumo(analise);
+      if (r.sucesso && analise.valido) {
+        setPasso('resultado');
+        return;
+      }
+      setFalha(r.sucesso ? (analise.motivo ?? 'vazio') : null);
+      setPasso('erro');
     } catch (e) {
       pararSonda();
       setResultado({
@@ -253,6 +334,7 @@ export const FatiadorScreen: React.FC = () => {
         bytes: 0,
         erro: e instanceof Error ? e.message : String(e),
       });
+      setFalha(null);
       setPasso('erro');
     }
   }, [escolha, impressora, filamento, processo]);
@@ -266,6 +348,8 @@ export const FatiadorScreen: React.FC = () => {
 
   const reiniciar = useCallback(() => {
     setResultado(null);
+    setResumo(null);
+    setFalha(null);
     setEscolha(null);
     setDimensoes(null);
     setPasso('config');
@@ -588,7 +672,7 @@ export const FatiadorScreen: React.FC = () => {
           justifyContent: 'center',
         }}
       >
-        {/* [9] Diagnóstico */}
+        {/* [9] Diagnóstico: motivo provado no ficheiro + causa do motor */}
         <Ionicons name="alert-circle" size={48} color={hexDe(p.perigo)} />
         <Text
           style={{
@@ -598,24 +682,47 @@ export const FatiadorScreen: React.FC = () => {
             marginTop: 12,
           }}
         >
-          {t('fatiador.erroTitulo')}
+          {falha ? t(chaveDoMotivo(falha)) : t('fatiador.erroTitulo')}
         </Text>
         <Text style={{ color: hexDe(p.tintaSoft), marginTop: 8 }}>
           {resultado?.erro || t('fatiador.erroDesconhecido')}
         </Text>
+        {resumo && resumo.bytes > 0 ? (
+          <Text style={{ color: hexDe(p.tintaMuted), marginTop: 8 }}>
+            {t('fatiador.tamanhoFicheiro', {
+              tamanho: formatarBytes(resumo.bytes),
+            })}
+          </Text>
+        ) : null}
+        {escolha && impressora ? (
+          <TouchableOpacity
+            accessibilityRole="button"
+            onPress={arrancar}
+            style={{
+              minHeight: LARGURA_TOQUE,
+              borderRadius: raio.interno,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: hexDe(p.acento),
+              marginTop: 24,
+            }}
+          >
+            <Text style={{ color: hexDe(p.tinta), fontWeight: '700' }}>
+              {t('fatiador.tentarDeNovo')}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
         <TouchableOpacity
           accessibilityRole="button"
           onPress={reiniciar}
           style={{
             minHeight: LARGURA_TOQUE,
-            borderRadius: raio.interno,
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: hexDe(p.acento),
-            marginTop: 24,
+            marginTop: 8,
           }}
         >
-          <Text style={{ color: hexDe(p.tinta), fontWeight: '700' }}>
+          <Text style={{ color: hexDe(p.tintaSoft) }}>
             {t('fatiador.voltarInicio')}
           </Text>
         </TouchableOpacity>
@@ -623,8 +730,8 @@ export const FatiadorScreen: React.FC = () => {
     );
   }
 
-  // [E4] Resultado — a vista 2D de camadas e os destinos entram no passo
-  // seguinte (F2.4b); aqui ficam os dados reais e o aviso de perfil novo.
+  // [E4] Resultado — só chega aqui com o ficheiro provado (ver `analisarGcode`):
+  // tamanho real, camadas, tempo, gramas e o que o PRINT_START manda fazer.
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: hexDe(p.fundo) }}>
       <Header title={t('fatiador.resultadoTitulo')} onBack={reiniciar} />
@@ -634,15 +741,86 @@ export const FatiadorScreen: React.FC = () => {
             borderRadius: raio.interno,
             backgroundColor: hexDe(p.cartao),
             padding: 16,
+            gap: 8,
           }}
         >
-          <Text style={{ color: hexDe(p.tinta), fontWeight: '700' }}>
-            {resultado ? formatarBytes(resultado.bytes) : '—'}
+          <Text
+            style={{ color: hexDe(p.tinta), fontSize: 26, fontWeight: '700' }}
+          >
+            {resumo ? formatarBytes(resumo.bytes) : '—'}
           </Text>
-          <Text style={{ color: hexDe(p.tintaSoft), marginTop: 4 }}>
-            {t('fatiador.avisoPerfil')}
+          <Text style={{ color: hexDe(p.tintaSoft) }}>
+            {t('fatiador.e4.ficheiro', {
+              nome: escolha?.nome ?? '—',
+              tamanho: resumo ? formatarBytes(resumo.bytes) : '—',
+            })}
           </Text>
+          <LinhaResumo
+            rotulo={t('fatiador.e4.camadas')}
+            valor={resumo && resumo.camadas > 0 ? String(resumo.camadas) : '—'}
+            cor={hexDe(p.tintaSoft)}
+            corValor={hexDe(p.tinta)}
+          />
+          <LinhaResumo
+            rotulo={t('fatiador.e4.tempo')}
+            valor={resumo?.tempo || '—'}
+            cor={hexDe(p.tintaSoft)}
+            corValor={hexDe(p.tinta)}
+          />
+          <LinhaResumo
+            rotulo={t('fatiador.e4.gramas')}
+            valor={
+              resumo?.gramas != null ? `${resumo.gramas.toFixed(2)} g` : '—'
+            }
+            cor={hexDe(p.tintaSoft)}
+            corValor={hexDe(p.tinta)}
+          />
+          <LinhaResumo
+            rotulo={t('fatiador.filamento')}
+            valor={
+              [resumo?.filamento, resumo?.perfilFilamento]
+                .filter(Boolean)
+                .join(' · ') || '—'
+            }
+            cor={hexDe(p.tintaSoft)}
+            corValor={hexDe(p.tinta)}
+          />
         </View>
+
+        <View
+          style={{
+            borderRadius: raio.interno,
+            backgroundColor: hexDe(p.cartao),
+            padding: 16,
+            gap: 8,
+          }}
+        >
+          <Text style={{ color: hexDe(p.tinta), fontWeight: '600' }}>
+            {t('fatiador.e4.printStart')}
+          </Text>
+          <LinhaResumo
+            rotulo={t('fatiador.e4.bico')}
+            valor={resumo?.bico != null ? `${resumo.bico} °C` : '—'}
+            cor={hexDe(p.tintaSoft)}
+            corValor={hexDe(p.tinta)}
+          />
+          <LinhaResumo
+            rotulo={t('fatiador.e4.mesa')}
+            valor={resumo?.mesa != null ? `${resumo.mesa} °C` : '—'}
+            cor={hexDe(p.tintaSoft)}
+            corValor={hexDe(p.tinta)}
+          />
+          <LinhaResumo
+            rotulo={t('fatiador.e4.filamentoPrintStart')}
+            valor={resumo?.filamento || '—'}
+            cor={hexDe(p.tintaSoft)}
+            corValor={hexDe(p.tinta)}
+          />
+        </View>
+
+        <Text style={{ color: hexDe(p.tintaSoft) }}>
+          {t('fatiador.avisoPerfil')}
+        </Text>
       </ScrollView>
       <View style={{ padding: 16 }}>
         <TouchableOpacity

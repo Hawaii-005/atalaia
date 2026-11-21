@@ -345,6 +345,12 @@ export const SettingsScreen = () => {
         palavras: ['build', 'numero'],
       },
       {
+        id: 'sobre.compilacao',
+        secao: 'sobre',
+        titulo: t('settings.compilacao'),
+        palavras: ['build', 'commit', 'hash', 'versao'],
+      },
+      {
         id: 'sobre.github',
         secao: 'sobre',
         titulo: 'GitHub',

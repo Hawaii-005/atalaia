@@ -3,6 +3,7 @@ import { Text, View } from 'react-native';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { hexDe } from '../../../theme/temas';
 import { t } from '../../../i18n';
+import { BUILD_COMMIT, BUILD_ID } from '../../../buildInfo';
 import { Cartao, Linha, Vazio } from '../componentes';
 import { PropsSecao } from '../tipos';
 
@@ -10,6 +11,7 @@ export const SecaoSobre = ({ ctx, visivel }: PropsSecao) => {
   const { tema } = useTheme();
   const nada =
     !visivel('sobre.versao') &&
+    !visivel('sobre.compilacao') &&
     !visivel('sobre.github') &&
     !visivel('sobre.issues') &&
     !visivel('sobre.licenca');
@@ -27,6 +29,19 @@ export const SecaoSobre = ({ ctx, visivel }: PropsSecao) => {
             icone="pricetag-outline"
             rotulo={t('settings.versaoApp')}
             valor={ctx.versao || '—'}
+            ultimo={
+              !visivel('sobre.compilacao') &&
+              !visivel('sobre.github') &&
+              !visivel('sobre.issues') &&
+              !visivel('sobre.licenca')
+            }
+          />
+        )}
+        {visivel('sobre.compilacao') && (
+          <Linha
+            icone="construct-outline"
+            rotulo={t('settings.compilacao')}
+            valor={`${BUILD_ID} · ${BUILD_COMMIT}`}
             ultimo={
               !visivel('sobre.github') &&
               !visivel('sobre.issues') &&

@@ -109,11 +109,20 @@ class FatiadorModule(private val contexto: ReactApplicationContext) :
             SlicerEngine.Perfil(impressora, filamento, processo),
             saida,
         )
+        val bytes = if (saida.exists()) saida.length() else 0L
         val resultado = Arguments.createMap()
         resultado.putBoolean("sucesso", ok)
         resultado.putString("gcode", if (ok) saida.absolutePath else "")
-        resultado.putDouble("bytes", saida.length().toDouble())
-        resultado.putString("erro", if (ok) "" else SlicerEngine.ultimoErro())
+        // Já lido depois do export: se ainda for 0, o motor não escreveu nada.
+        resultado.putDouble("bytes", bytes.toDouble())
+        resultado.putString(
+            "erro",
+            when {
+              ok -> ""
+              bytes <= 0L -> "O motor terminou sem escrever o G-code."
+              else -> SlicerEngine.ultimoErro()
+            },
+        )
         promessa.resolve(resultado)
       } catch (e: Throwable) {
         promessa.reject("fatiar_falhou", e)

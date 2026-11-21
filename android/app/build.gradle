@@ -211,3 +211,29 @@ dependencies {
         implementation jscFlavor
     }
 }
+
+// ——— Identidade do build ———
+// Grava o hash do commit e um id de build em src/buildInfo.ts antes do bundle
+// JS, para que «Definições → Sobre» mostre exactamente o que está no APK.
+def gerarBuildInfo = tasks.register("gerarBuildInfo") {
+    def saida = file("$projectRoot/src/buildInfo.ts")
+    def commit = providers.exec {
+        commandLine 'git', 'rev-parse', '--short', 'HEAD'
+        workingDir projectRoot
+        ignoreExitValue = true
+    }.standardOutput.asText.get().trim()
+    def build = new Date().format('yyyyMMdd-HHmmss')
+    outputs.file(saida)
+    outputs.upToDateWhen { false }
+    doLast {
+        saida.text = "// Gerado no build — não editar à mão.\n" +
+            "export const BUILD_COMMIT = '${commit ?: 'desconhecido'}';\n" +
+            "export const BUILD_ID = '${build}';\n"
+    }
+}
+
+tasks.configureEach { t ->
+    if (t.name.startsWith('createBundle') && t.name.endsWith('JsAndAssets')) {
+        t.dependsOn(gerarBuildInfo)
+    }
+}
