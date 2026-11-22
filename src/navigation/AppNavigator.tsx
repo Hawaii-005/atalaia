@@ -23,6 +23,8 @@ import { PrinterTabScreen } from '../screens/PrinterTabScreen';
 import { EditarIpScreen } from '../screens/EditarIpScreen';
 import { fatiadorDisponivel } from '../utils/fatiador/ponte';
 import { FatiadorScreen } from '../screens/fatiador/FatiadorScreen';
+import { E5SentScreen } from '../screens/E5SentScreen';
+import { ModalArranqueBloqueadoScreen } from '../screens/ModalArranqueBloqueadoScreen';
 import PrinterIcon from '../components/icons/PrinterIcon';
 import { RailLateral } from '../components/RailLateral';
 import { useJanela } from '../theme/layout';
@@ -167,5 +169,8 @@ export const AppNavigator = () => (
     {fatiadorDisponivel() ? (
       <Root.Screen name="Fatiador" component={FatiadorScreen} />
     ) : null}
+    {/* Fase 2: telas E5 e modal 05b */}
+    <Root.Screen name="E5Sent" component={E5SentScreen} />
+    <Root.Screen name="Modal05b" component={ModalArranqueBloqueadoScreen} />
   </Root.Navigator>
 );

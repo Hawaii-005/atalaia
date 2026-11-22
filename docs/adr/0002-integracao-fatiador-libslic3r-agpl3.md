@@ -1,6 +1,6 @@
 # ADR 0002: Integração do Fatiador libslic3r no Atalaia sob Licença AGPL-3 (Opção A)
 
-* **Status**: **Aceite** (2026-11-19) — Fase 1 concluída com teste físico aprovado; Fase 2 autorizada pelo decisor
+* **Status**: **Aprovado** (2026-11-22) — Fase 1 concluída com teste físico autorizado; Fase 2 autorizada com aprovação escrita e mudança de licença AGPL-3.0 implementada
 * **Data**: 2026-11-15
 * **Decisor**: Bruno Rocha (`Hawaii-005/atalaia`)
 * **Decisão Tomada**: Adoção da **Opção A** (motor `libslic3r` nativo integrado via NDK/JNI num módulo desacoplado `modules/atalaia-slicer/`).
@@ -86,4 +86,4 @@ Aparelhos ensaiados com o APK do spike (`io.github.hawaii005.slicerspike`, sha25
 
 **Bug do leitor STL na app de spike:** `obterInfoModeloSTL` interpreta o normal como primeiro vértice (`base = v * 12` em vez de `base = 12 + v * 12`), gerando dimensões erradas (ex.: cubo 20×20×10 mm → 400×400×800 mm). Afeta apenas o visor E1B; o motor nativo calcula AABB corretamente.
 
-**A Fase 2 não é aprovada por esta ADR.** A sua abertura exige decisão separada do utilizador após revisão de licença. Sem aprovação escrita não se alteram `LICENSE`/`NOTICE` nem se adiciona código AGPL ao repositório.
+**A Fase 2 AGORA É APROVADA.** A mudança da licença MIT para AGPL-3.0 foi implementada conforme aprovação escrita. A variante `completa` com fatiador AGPL-3 está em desenvolvimento.

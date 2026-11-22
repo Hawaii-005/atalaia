@@ -963,4 +963,14 @@ export default {
     'O perfil não indica o volume útil. Podes fatiar, mas confirma as dimensões antes de imprimir.',
   'fatiador.volume.dimensoesDesconhecidas':
     'Não foi possível medir o modelo. Escolhe um STL válido.',
+  // ——— E5 - Impressão Enviada
+  'e5.enviado_com_sucesso': 'Enviado com sucesso',
+  'e5.impressao_na_fila': 'A impressão está na fila da impressora',
+  'e5.informacoes': 'Informações',
+  'e5.ver_historico': 'Ver histórico',
+  ver_historico: 'Histórico',
+  'e5.cancelar': 'Cancelar',
+  // ——— Modal 05b - Arranque Bloqueado
+  'modal05b.titulo': 'Arranque Bloqueado',
+  'modal05b.subtitulo': 'A função está temporariamente indisponível',
 } as const;

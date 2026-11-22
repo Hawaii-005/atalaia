@@ -949,6 +949,16 @@ const en = {
     'The profile has no build volume. You can slice, but check the dimensions before printing.',
   'fatiador.volume.dimensoesDesconhecidas':
     'The model could not be measured. Choose a valid STL.',
+  // ——— E5 - Sent
+  'e5.enviado_com_sucesso': 'Sent successfully',
+  'e5.impressao_na_fila': 'The print is in the printer queue',
+  'e5.informacoes': 'Information',
+  'e5.ver_historico': 'View history',
+  ver_historico: 'History',
+  'e5.cancelar': 'Cancel',
+  // ——— Modal 05b - Blocked Start
+  'modal05b.titulo': 'Blocked Start',
+  'modal05b.subtitulo': 'This function is temporarily unavailable',
 } as const satisfies Record<keyof typeof pt, string>;
 
 export default en;
