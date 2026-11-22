@@ -144,10 +144,10 @@ describe('regra do E5', () => {
     });
   });
 
-  it('AFC sem resposta bloqueia e não deixa ignorar', () => {
+  it('AFC mudo não bloqueia: pede confirmação e deixa seguir', () => {
     expect(bloqueioEnvio(['pistaDesconhecida'])).toEqual({
-      nivel: 'critico',
-      bloqueado: true,
+      nivel: 'aviso',
+      bloqueado: false,
       podeIgnorar: false,
       requerConfirmacao: true,
     });

@@ -178,6 +178,7 @@ export const bloqueioEnvio = (
     nivel: critico.length ? 'critico' : avisos.length ? 'aviso' : 'nenhum',
     bloqueado: critico.length > 0,
     podeIgnorar: critico.length > 0,
-    requerConfirmacao: avisos.length > 0,
+    // Crítico bloqueia (a saída é ignorar); só o aviso pede confirmação.
+    requerConfirmacao: critico.length === 0 && avisos.length > 0,
   };
 };
