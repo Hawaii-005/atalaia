@@ -359,10 +359,14 @@ export const CameraScreen = ({ navigation, route }: any) => {
         },
         printer.firmware === 'moonraker'
       );
-      Alert.alert(
-        t('camera.enviado'),
-        t('camera.enviadoMsg', { nome: asset.name })
-      );
+      // E5: envio aceite pela impressora.
+      navigation.navigate('E5Sent', {
+        impressao: {
+          nome: asset.name,
+          impressora: printer.printerName,
+          status: t('e5.enviado_com_sucesso'),
+        },
+      });
     } catch (error) {
       Alert.alert(t('camera.falhouEnvio'), String(error));
     } finally {

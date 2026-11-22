@@ -4,8 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, RouteProp, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Header } from '../components/Header';
-import { useTheme } from '../contexts/ThemeContext';
-import { hexDe } from '../theme/temas';
 import { t } from '../i18n';
 
 type E5SentRouteProp = RouteProp<{ [key: string]: any }, 'E5Sent'>;
@@ -13,22 +11,21 @@ type E5SentRouteProp = RouteProp<{ [key: string]: any }, 'E5Sent'>;
 export function E5SentScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<E5SentRouteProp>();
-  const tema = useTheme();
-  const paleta = tema.paleta;
 
-  // Mock data - replace with real data from context/params
-  const impressao = route.params?.impressao || {
-    nome: 'cubo_teste.gcode',
-    tamanho: '1.2 MB',
-    camadas: 50,
-    tempo: '1h 25min',
-    impressora: 'Centauri Carbon',
-    status: 'Enviado',
+  // Sem parâmetros, mostra travessões em vez de dados inventados.
+  const recebida = route.params?.impressao;
+  const impressao = {
+    nome: recebida?.nome ?? '—',
+    tamanho: recebida?.tamanho ?? '—',
+    camadas: recebida?.camadas ?? '—',
+    tempo: recebida?.tempo ?? '—',
+    impressora: recebida?.impressora ?? '—',
+    status: recebida?.status ?? t('e5.enviado_com_sucesso'),
   };
 
-  const cancelar = () => {
-    // TODO: Implement cancelar impressão via Moonraker
-  };
+  // O cancelamento real via Moonraker ainda não está implementado: fechar em vez
+  // de deixar um botão que não faz nada.
+  const fechar = () => navigation.goBack();
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
@@ -94,9 +91,9 @@ export function E5SentScreen() {
 
           <TouchableOpacity
             className="flex-1 bg-gradient-to-r from-[#667eea] to-[#764ba2] rounded-xl py-4 items-center"
-            onPress={cancelar}
+            onPress={fechar}
           >
-            <Text className="text-white font-medium">{t('cancelar')}</Text>
+            <Text className="text-white font-medium">{t('comum.fechar')}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

@@ -638,7 +638,12 @@ export const FilesScreen = ({
               const response = await request(printer.id, comando, 15000);
               const ack = ackDaResposta(response) ?? 0;
               if (ack !== 0) {
-                Alert.alert(t('files.naoArrancou'), descreverAck(ack));
+                // 05b: arranque recusado pela máquina — modal com o motivo real.
+                navigation.navigate('Modal05b', {
+                  bloqueados: [
+                    { id: 'arranque', nome: label, razao: descreverAck(ack) },
+                  ],
+                });
                 return;
               }
               await guardarArranque(
@@ -685,50 +690,14 @@ export const FilesScreen = ({
           printer.firmware === 'moonraker'
         );
         await load();
-        Alert.alert(
-          t('files.enviado'),
-          t('files.enviadoMsg', { nome: nomeFinal }),
-          [
-            { text: t('comum.nao'), style: 'cancel' },
-            {
-              text: t('files.imprimirAgora'),
-              onPress: async () => {
-                try {
-                  // O nome tem de ser o que a máquina devolve no Cmd 258.
-                  const lista = await listarTodosOsFicheiros();
-                  const alvo = lista.find(f =>
-                    f.name.endsWith(`/${nomeFinal}`)
-                  );
-                  if (!alvo) {
-                    Alert.alert(
-                      t('files.naoArrancou'),
-                      t('files.naoEncontrado')
-                    );
-                    return;
-                  }
-                  const comando = startPrintCommand(alvo.name, {
-                    nivelar: bedLevel,
-                    lado: plateSide,
-                    timelapse: (await lerTimelapse(printer.id)) ? 1 : 0,
-                  });
-                  const resposta = await request(printer.id, comando, 15000);
-                  const ack = ackDaResposta(resposta) ?? 0;
-                  if (ack !== 0) {
-                    Alert.alert(t('files.naoArrancou'), descreverAck(ack));
-                    return;
-                  }
-                  Alert.alert(
-                    t('files.aArrancar'),
-                    t('files.aArrancarMsg', { nome: nomeFinal })
-                  );
-                  navigation.navigate('Impressora');
-                } catch (e) {
-                  Alert.alert(t('files.naoArrancou'), mensagemDeErro(e));
-                }
-              },
-            },
-          ]
-        );
+        // E5: o envio foi aceite pela impressora — confirmação com os dados reais.
+        navigation.navigate('E5Sent', {
+          impressao: {
+            nome: nomeFinal,
+            impressora: printer.printerName,
+            status: t('e5.enviado_com_sucesso'),
+          },
+        });
       } catch (e) {
         Alert.alert(t('files.falhouEnvio'), mensagemDeErro(e));
       } finally {
