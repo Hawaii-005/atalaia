@@ -223,11 +223,21 @@ def gerarBuildInfo = tasks.register("gerarBuildInfo") {
         ignoreExitValue = true
     }.standardOutput.asText.get().trim()
     def build = new Date().format('yyyyMMdd-HHmmss')
+    // Um APK construído com alterações por commitar não pode dizer que está no
+    // commit X sem mais: leva «-sujo». `buildInfo.ts` é gerado por este task e
+    // fica de fora do teste, senão todo o build seguinte parecia sujo.
+    def sujos = providers.exec {
+        commandLine 'git', 'status', '--porcelain', '--', '.',
+            ':(exclude)src/buildInfo.ts'
+        workingDir projectRoot
+        ignoreExitValue = true
+    }.standardOutput.asText.get().trim()
     outputs.file(saida)
     outputs.upToDateWhen { false }
     doLast {
+        def marca = (commit ?: 'desconhecido') + (sujos ? '-sujo' : '')
         saida.text = "// Gerado no build — não editar à mão.\n" +
-            "export const BUILD_COMMIT = '${commit ?: 'desconhecido'}';\n" +
+            "export const BUILD_COMMIT = '${marca}';\n" +
             "export const BUILD_ID = '${build}';\n"
     }
 }
