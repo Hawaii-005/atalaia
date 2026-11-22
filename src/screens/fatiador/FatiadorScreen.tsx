@@ -19,6 +19,7 @@ import * as FileSystem from 'expo-file-system';
 import { Ionicons } from '@expo/vector-icons';
 import { Header } from '../../components/Header';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useSelectedPrinter } from '../../contexts/SelectedPrinterContext';
 import { hexDe } from '../../theme/temas';
 import { raio } from '../../theme/tokensV6';
 import { t } from '../../i18n';
@@ -181,6 +182,7 @@ export const FatiadorScreen: React.FC = () => {
   const [resultado, setResultado] = useState<ResultadoFatiamento | null>(null);
   const [resumo, setResumo] = useState<GcodeResumo | null>(null);
   const { printers } = usePrinterConnections();
+  const { maquina } = useSelectedPrinter();
   const [avisos, setAvisos] = useState<AvisoAfc[]>([]);
   const [pista, setPista] = useState<Pista | null>(null);
   const [afcLido, setAfcLido] = useState(false);
@@ -376,7 +378,11 @@ export const FatiadorScreen: React.FC = () => {
     const fdm = impressorasRef.current.filter(
       pr => (pr.kind ?? 'fdm') !== 'resin' && pr.firmware === 'moonraker'
     );
-    const alvo = fdm.find(pr => /centauri/i.test(pr.printerName)) ?? fdm[0];
+    // A pista tem de ser a da máquina em uso; o nome é só o palpite de recurso.
+    const alvo =
+      (maquina && fdm.find(pr => pr.id === maquina.id)) ??
+      fdm.find(pr => /centauri/i.test(pr.printerName)) ??
+      fdm[0];
     if (!alvo) return;
     const ip = alvo.activeIp || alvo.ipAddress;
     const chave = `${ip}|${resumo.ferramenta}|${placa}`;
@@ -406,7 +412,7 @@ export const FatiadorScreen: React.FC = () => {
     return () => {
       vivo = false;
     };
-  }, [resumo, placa]);
+  }, [resumo, placa, maquina?.id]);
 
   const reiniciar = useCallback(() => {
     setResultado(null);
