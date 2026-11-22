@@ -389,26 +389,36 @@ export const FatiadorScreen: React.FC = () => {
     if (chave === chaveAfc.current) return;
     chaveAfc.current = chave;
     let vivo = true;
-    lerPistas(ip).then(pistas => {
-      if (!vivo) return;
-      // A pista é a que serve a ferramenta do PRINT_START; CANVAS_1 não é T0
-      // por convenção, é só o nome que costuma calhar.
-      const escolhida = pistaDoTool(pistas, resumo.ferramenta);
-      setPista(escolhida);
-      setAfcLido(pistas !== null);
-      setAvisos(
-        avisosAfc(
-          escolhida,
-          {
-            material: resumo.filamento,
-            bico: resumo.bico,
-            mesa: resumo.mesa,
-          },
-          placa,
-          pistas !== null
-        )
-      );
-    });
+    lerPistas(ip)
+      .then(pistas => {
+        if (!vivo) return;
+        // A pista é a que serve a ferramenta do PRINT_START; CANVAS_1 não é T0
+        // por convenção, é só o nome que costuma calhar.
+        const escolhida = pistaDoTool(pistas, resumo.ferramenta);
+        setPista(escolhida);
+        setAfcLido(pistas !== null);
+        setAvisos(
+          avisosAfc(
+            escolhida,
+            {
+              material: resumo.filamento,
+              bico: resumo.bico,
+              mesa: resumo.mesa,
+            },
+            placa,
+            pistas !== null
+          )
+        );
+      })
+      .catch(e => {
+        if (!vivo) return;
+        const codigo = e instanceof Error ? e.message : String(e);
+        // Log próprio: a recusa é uma decisão nossa, não uma avaria da rede.
+        console.warn(`[afc] redireccionamento recusado: ${codigo} (${ip})`);
+        setPista(null);
+        setAfcLido(false);
+        setAvisos(['afcRecusado']);
+      });
     return () => {
       vivo = false;
     };

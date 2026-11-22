@@ -26,7 +26,9 @@ export type AvisoAfc =
   /** O AFC não respondeu: não se sabe o que está na pista. */
   | 'afcMudo'
   /** O AFC respondeu, mas nenhuma pista serve a ferramenta do PRINT_START. */
-  | 'pistaNaoMapeada';
+  | 'pistaNaoMapeada'
+  /** O AFC respondeu com um redirect para fora da rede; foi recusado. */
+  | 'afcRecusado';
 
 /** Acima disto o PLA carboniza dentro do bico. */
 export const LIMITE_PLA = 235;
@@ -95,7 +97,11 @@ export const lerPistas = async (
         carregada: !!l.load,
       };
     });
-  } catch {
+  } catch (e) {
+    // Recusa de redirect não é «AFC mudo»: o pedido foi travado de propósito e
+    // o utilizador tem de saber a diferença (ver aviso `afcRecusado`).
+    const codigo = e instanceof Error ? e.message : '';
+    if (codigo.startsWith('redirect_')) throw e;
     return null;
   }
 };

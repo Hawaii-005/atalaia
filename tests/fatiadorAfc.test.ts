@@ -1,4 +1,10 @@
+jest.mock('../src/utils/httpLocal', () => ({
+  ...jest.requireActual('../src/utils/httpLocal'),
+  pedirJsonLocal: jest.fn(),
+}));
+
 import {
+  lerPistas,
   avisosAfc,
   bloqueioEnvio,
   nivelAviso,
@@ -6,7 +12,11 @@ import {
   Pista,
   LIMITE_PLA,
 } from '../src/utils/fatiador/afc';
-import { hostPrivado, destinoPermitido } from '../src/utils/httpLocal';
+import {
+  hostPrivado,
+  destinoPermitido,
+  pedirJsonLocal,
+} from '../src/utils/httpLocal';
 
 const pista = (
   nome: string,
@@ -196,5 +206,31 @@ describe('HTTP em claro só em rede privada', () => {
       '200.1.2.3',
       'example.com',
     ].forEach(h => expect(hostPrivado(h)).toBe(false));
+  });
+});
+
+describe('lerPistas: recusa de redirect não é AFC mudo', () => {
+  const pedir = pedirJsonLocal as jest.Mock;
+
+  test('redirect para fora da rede propaga o código (o ecrã mostra aviso próprio)', async () => {
+    pedir.mockRejectedValueOnce(new Error('redirect_fora_da_rede'));
+    await expect(lerPistas('192.168.1.195:8099')).rejects.toThrow(
+      'redirect_fora_da_rede'
+    );
+  });
+
+  test('avaria de rede devolve null (AFC mudo)', async () => {
+    pedir.mockRejectedValueOnce(new Error('Network request failed'));
+    await expect(lerPistas('192.168.1.195:8099')).resolves.toBeNull();
+  });
+
+  test('o aviso de recusa não bloqueia, mas pede confirmação', () => {
+    expect(nivelAviso('afcRecusado')).toBe('aviso');
+    expect(bloqueioEnvio(['afcRecusado'])).toEqual({
+      nivel: 'aviso',
+      bloqueado: false,
+      podeIgnorar: false,
+      requerConfirmacao: true,
+    });
   });
 });

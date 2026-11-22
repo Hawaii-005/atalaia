@@ -902,6 +902,8 @@ const en = {
     'Bed at {mesa} °C is low for {material} — it may come off.',
   'fatiador.afc.afcMudo':
     'The AFC did not answer — the lane cannot be confirmed. Check the filament before sending.',
+  'fatiador.afc.afcRecusado':
+    'The AFC answered with a redirect outside the network — refused. Check the filament before sending.',
   'fatiador.afc.pistaNaoMapeada':
     'The AFC answered, but no lane serves this G-code tool — set the lane map in the AFC.',
   'fatiador.afc.pista': 'Lane: {nome}',

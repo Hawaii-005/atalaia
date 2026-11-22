@@ -35,4 +35,6 @@ A garantia acima só cobre o AFC. Estas chamadas continuam a usar `fetch()` dire
 | `src/utils/inventario.ts` | inventário |
 | `src/utils/PrinterDiscovery.ts` | descoberta (`/server/info`) |
 
+**Ordem de migração:** `src/utils/gcodeUpload.ts` primeiro (faz parte do E5 — enviar para a impressora é a operação com mais consequência); os restantes ficam para depois.
+
 Até serem migradas, um 302 vindo de um host privado pode levar o pedido para fora da rede. O caminho do AFC já não tem este problema: usa o módulo nativo `HttpLocal` (`instanceFollowRedirects = false`) e a decisão do salto é feita em JS, que recusa destinos fora da rede privada.

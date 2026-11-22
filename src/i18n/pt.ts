@@ -916,6 +916,8 @@ export default {
     'Mesa a {mesa} °C é baixa para {material} — risco de descolar.',
   'fatiador.afc.afcMudo':
     'O AFC não respondeu — não é possível confirmar a pista. Confirma o filamento antes de enviar.',
+  'fatiador.afc.afcRecusado':
+    'O AFC respondeu com um redireccionamento para fora da rede — recusado. Confirma o filamento antes de enviar.',
   'fatiador.afc.pistaNaoMapeada':
     'O AFC respondeu, mas nenhuma pista serve a ferramenta deste G-code — confirma a pista no AFC.',
   'fatiador.afc.pista': 'Pista: {nome}',
