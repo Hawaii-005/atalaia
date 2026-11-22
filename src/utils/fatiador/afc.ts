@@ -23,7 +23,10 @@ export type AvisoAfc =
   | 'materialDiferente'
   | 'bicoBaixo'
   | 'mesaBaixa'
-  | 'pistaDesconhecida';
+  /** O AFC não respondeu: não se sabe o que está na pista. */
+  | 'afcMudo'
+  /** O AFC respondeu, mas nenhuma pista serve a ferramenta do PRINT_START. */
+  | 'pistaNaoMapeada';
 
 /** Acima disto o PLA carboniza dentro do bico. */
 export const LIMITE_PLA = 235;
@@ -114,21 +117,21 @@ export type NivelAviso = 'critico' | 'aviso';
 
 /**
  * Crítico bloqueia o envio; aviso pede só confirmação.
- * AFC mudo (`pistaDesconhecida`) é aviso: não se sabe, logo não se afirma que
+ * AFC mudo (`afcMudo`) é aviso: não se sabe, logo não se afirma que
  * está mal — pede-se confirmação explícita e deixa-se seguir.
  */
 export const nivelAviso = (aviso: AvisoAfc): NivelAviso =>
-  aviso === 'plaLimite' || aviso === 'materialDiferente'
-    ? 'critico'
-    : 'aviso';
+  aviso === 'plaLimite' || aviso === 'materialDiferente' ? 'critico' : 'aviso';
 
 /** Discordâncias entre o G-code e a pista, por ordem de gravidade. */
 export const avisosAfc = (
   pista: Pista | null,
   gcode: { material: string; bico: number | null; mesa: number | null },
-  chapa = 'Textured PEI Plate'
+  chapa = 'Textured PEI Plate',
+  /** O AFC respondeu? Distingue «mudo» de «sem pista mapeada». */
+  respondeu = true
 ): AvisoAfc[] => {
-  if (!pista) return ['pistaDesconhecida'];
+  if (!pista) return [respondeu ? 'pistaNaoMapeada' : 'afcMudo'];
   const avisos: AvisoAfc[] = [];
   const material = pista.material.toUpperCase();
   const familia = base(material);
@@ -162,7 +165,8 @@ export const avisosAfc = (
  * - crítico (PLA acima de 235, material diferente): botão desativado, com
  *   opção explícita de ignorar;
  * - aviso (bico ou mesa abaixo do intervalo): pede confirmação;
- * - AFC mudo (`pistaDesconhecida`): não bloqueia — só pede confirmação
+ * - AFC mudo (`afcMudo`) e sem pista mapeada (`pistaNaoMapeada`): não
+ *   bloqueiam — só pedem confirmação
  *   explícita antes de enviar.
  */
 export const bloqueioEnvio = (

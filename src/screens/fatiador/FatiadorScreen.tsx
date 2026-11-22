@@ -398,7 +398,8 @@ export const FatiadorScreen: React.FC = () => {
             bico: resumo.bico,
             mesa: resumo.mesa,
           },
-          placa
+          placa,
+          pistas !== null
         )
       );
     });

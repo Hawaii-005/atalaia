@@ -26,6 +26,7 @@ class MainApplication : Application(), ReactApplication {
             // Packages that cannot be autolinked yet can be added manually here, for example:
             packages.add(MonitorPackage())
             packages.add(PartilhaPackage())
+            packages.add(HttpLocalPackage())
             // A edição 'completa' traz o FatiadorPackage (AGPL). A 'lite' não tem a
             // classe no APK, por isso o registo é opcional e não cria dependência.
             runCatching {

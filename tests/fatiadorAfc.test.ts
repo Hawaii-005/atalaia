@@ -49,8 +49,15 @@ describe('pista que serve a ferramenta', () => {
     expect(pistaDoTool(pistas, null)).toBeNull();
   });
 
-  it('AFC sem resposta dá pistaDesconhecida', () => {
-    expect(avisosAfc(null, g('PLA', 210, 60))).toEqual(['pistaDesconhecida']);
+  it('AFC mudo e AFC sem pista mapeada são avisos distintos', () => {
+    // (a) não respondeu: não se sabe o que está na pista.
+    expect(avisosAfc(null, g('PLA', 210, 60), undefined, false)).toEqual([
+      'afcMudo',
+    ]);
+    // (b) respondeu, mas nenhuma pista serve o T{TOOL}.
+    expect(avisosAfc(null, g('PLA', 210, 60), undefined, true)).toEqual([
+      'pistaNaoMapeada',
+    ]);
   });
 });
 
@@ -145,7 +152,16 @@ describe('regra do E5', () => {
   });
 
   it('AFC mudo não bloqueia: pede confirmação e deixa seguir', () => {
-    expect(bloqueioEnvio(['pistaDesconhecida'])).toEqual({
+    expect(bloqueioEnvio(['afcMudo'])).toEqual({
+      nivel: 'aviso',
+      bloqueado: false,
+      podeIgnorar: false,
+      requerConfirmacao: true,
+    });
+  });
+
+  it('AFC sem pista mapeada também só pede confirmação', () => {
+    expect(bloqueioEnvio(['pistaNaoMapeada'])).toEqual({
       nivel: 'aviso',
       bloqueado: false,
       podeIgnorar: false,

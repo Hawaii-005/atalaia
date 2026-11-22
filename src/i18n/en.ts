@@ -900,8 +900,10 @@ const en = {
     'Nozzle at {bico} °C is below the minimum for {material} in the lane.',
   'fatiador.afc.mesaBaixa':
     'Bed at {mesa} °C is low for {material} — it may come off.',
-  'fatiador.afc.pistaDesconhecida':
-    'No AFC lane is mapped to this G-code tool — not confirmed.',
+  'fatiador.afc.afcMudo':
+    'The AFC did not answer — the lane cannot be confirmed. Check the filament before sending.',
+  'fatiador.afc.pistaNaoMapeada':
+    'The AFC answered, but no lane serves this G-code tool — set the lane map in the AFC.',
   'fatiador.afc.pista': 'Lane: {nome}',
   'fatiador.afc.conforme': 'Lane and temperatures match the AFC.',
   'fatiador.chapa': 'Build plate',

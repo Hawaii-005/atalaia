@@ -1,2 +1,8 @@
 npx lint-staged
-npm test
+
+# Só os testes que dependem do que vai no commit. A suite completa corre no CI:
+# correr tudo aqui estourava o tempo e levava a saltar o hook com --no-verify.
+ficheiros=$(git diff --cached --name-only --diff-filter=ACMR |
+  grep -E '\.(ts|tsx|js|jsx)$' | tr '\n' ' ')
+[ -z "$ficheiros" ] && exit 0
+npx jest --findRelatedTests --passWithNoTests $ficheiros

@@ -4,13 +4,12 @@
  * qualquer host — por isso a garantia tem de estar aqui: nada sai para fora da
  * rede privada, nem por redireccionamento.
  *
- * PONYTAIL: redirect:'manual' no fetch do React Native não é suportado (Android
- * OkHttp / iOS NSURLSession ignoram esta opção e seguem redirects automaticamente).
- * A proteção atual contra redirects para fora da rede privada só funciona se o
- * motor nativo respeitar a opção — o que não acontece. Quando for necessário,
- * mover a verificação para um módulo nativo (OkHttp followRedirects=false ou
- * NSURLSession delegate). Até lá, os testes manuais confirmam que não há
- * interceptadores DNS ou redirects perigosos na prática.
+ * PONYTAIL: o `fetch` do React Native é `whatwg-fetch` sobre o XHR nativo e
+ * ignora `redirect: 'manual'` (verificado no código do RN 0.79: o polyfill não
+ * lê essa opção e o OkHttp segue por omissão). Por isso o JSON em Android vai
+ * pelo módulo nativo `HttpLocal` (HttpURLConnection com
+ * instanceFollowRedirects=false) e o salto é decidido em JS. O caminho `fetch`
+ * abaixo fica só como recurso fora do Android: continua **por verificar**.
  */
 
 /** RFC1918 + loopback + CGNAT do Tailscale (100.64.0.0/10) + nomes locais. */
@@ -95,4 +94,31 @@ export const pedirLocal = async (
 export const pedirJsonLocal = async (
   url: string,
   tempoLimite = 4000
-): Promise<any> => (await pedirLocal(url, {}, tempoLimite)).json();
+): Promise<any> => {
+  // `require` preguiçoso: importar 'react-native' no topo quebra o Jest (ESM).
+  const nativo = (() => {
+    try {
+      return require('react-native').NativeModules?.HttpLocal;
+    } catch {
+      return undefined;
+    }
+  })();
+  // Android: o salto é decidido aqui porque o módulo nativo não segue o 302
+  // (HttpURLConnection com instanceFollowRedirects=false).
+  if (nativo?.pedirJson) {
+    let atual = url;
+    for (let salto = 0; salto <= SALTO_MAX; salto += 1) {
+      if (!hostPrivado(atual)) throw new Error('host_fora_da_rede');
+      const r = await nativo.pedirJson(atual, tempoLimite);
+      if (r.status < 300 || r.status >= 400)
+        return JSON.parse(r.body || 'null');
+      if (!r.location) throw new Error('redirect_sem_destino');
+      if (!destinoPermitido(atual, r.location)) {
+        throw new Error('redirect_fora_da_rede');
+      }
+      atual = new URL(r.location, atual).toString();
+    }
+    throw new Error('demasiados_redireccionamentos');
+  }
+  return (await pedirLocal(url, {}, tempoLimite)).json();
+};

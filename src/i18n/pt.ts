@@ -914,8 +914,10 @@ export default {
     'Bico a {bico} °C está abaixo do mínimo para {material} na pista.',
   'fatiador.afc.mesaBaixa':
     'Mesa a {mesa} °C é baixa para {material} — risco de descolar.',
-  'fatiador.afc.pistaDesconhecida':
-    'Não há pista do AFC mapeada para a ferramenta deste G-code — não confirmado.',
+  'fatiador.afc.afcMudo':
+    'O AFC não respondeu — não é possível confirmar a pista. Confirma o filamento antes de enviar.',
+  'fatiador.afc.pistaNaoMapeada':
+    'O AFC respondeu, mas nenhuma pista serve a ferramenta deste G-code — confirma a pista no AFC.',
   'fatiador.afc.pista': 'Pista: {nome}',
   'fatiador.afc.conforme': 'Pista e temperaturas conferem com o AFC.',
   'fatiador.chapa': 'Chapa',
