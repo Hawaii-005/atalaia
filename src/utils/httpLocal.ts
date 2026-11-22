@@ -3,6 +3,14 @@
  * (LAN, Tailscale) e o `network_security_config` deixa passar cleartext para
  * qualquer host — por isso a garantia tem de estar aqui: nada sai para fora da
  * rede privada, nem por redireccionamento.
+ *
+ * PONYTAIL: redirect:'manual' no fetch do React Native não é suportado (Android
+ * OkHttp / iOS NSURLSession ignoram esta opção e seguem redirects automaticamente).
+ * A proteção atual contra redirects para fora da rede privada só funciona se o
+ * motor nativo respeitar a opção — o que não acontece. Quando for necessário,
+ * mover a verificação para um módulo nativo (OkHttp followRedirects=false ou
+ * NSURLSession delegate). Até lá, os testes manuais confirmam que não há
+ * interceptadores DNS ou redirects perigosos na prática.
  */
 
 /** RFC1918 + loopback + CGNAT do Tailscale (100.64.0.0/10) + nomes locais. */
