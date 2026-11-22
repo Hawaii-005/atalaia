@@ -372,10 +372,9 @@ export const FatiadorScreen: React.FC = () => {
       chaveAfc.current = '';
       return;
     }
-    // Uma leitura por (impressoras, ferramenta): o estado da impressora é
-    // atualizado em ciclo e não faz sentido martelar o AFC a cada ciclo.
+    // AFC só existe em COSMOS (Moonraker/Klipper); SDCP não tem AFC.
     const fdm = impressorasRef.current.filter(
-      pr => (pr.kind ?? 'fdm') !== 'resin'
+      pr => (pr.kind ?? 'fdm') !== 'resin' && pr.firmware === 'moonraker'
     );
     const alvo = fdm.find(pr => /centauri/i.test(pr.printerName)) ?? fdm[0];
     if (!alvo) return;

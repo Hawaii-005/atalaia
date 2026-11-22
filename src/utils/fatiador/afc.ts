@@ -112,11 +112,13 @@ const base = (material: string): string =>
 
 export type NivelAviso = 'critico' | 'aviso';
 
-/** Crítico bloqueia o envio; aviso pede só confirmação. */
+/**
+ * Crítico bloqueia o envio; aviso pede só confirmação.
+ * AFC mudo (`pistaDesconhecida`) é aviso: não se sabe, logo não se afirma que
+ * está mal — pede-se confirmação explícita e deixa-se seguir.
+ */
 export const nivelAviso = (aviso: AvisoAfc): NivelAviso =>
-  aviso === 'plaLimite' ||
-  aviso === 'materialDiferente' ||
-  aviso === 'pistaDesconhecida'
+  aviso === 'plaLimite' || aviso === 'materialDiferente'
     ? 'critico'
     : 'aviso';
 
