@@ -1,3 +1,3 @@
 // Gerado no build — não editar à mão.
-export const BUILD_COMMIT = '548a87b-sujo';
-export const BUILD_ID = '20261122-230726';
+export const BUILD_COMMIT = 'c264779-sujo';
+export const BUILD_ID = '20261122-234327';
