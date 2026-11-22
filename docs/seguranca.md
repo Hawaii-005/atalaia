@@ -20,3 +20,19 @@
   2. `base-config` a `false` e whitelist de IPs — quebra com DHCP e obriga a reconfigurar quando a máquina muda de endereço;
   3. manter cleartext e migrar **todas** as chamadas para `pedirLocal` (driver Moonraker, thumbnails, SDCP), ficando a fronteira garantida no código.
 - Não alterar o `network_security_config` sem aprovação explícita.
+
+### Lacuna conhecida: chamadas fora do `pedirLocal` (2026-11-22)
+
+A garantia acima só cobre o AFC. Estas chamadas continuam a usar `fetch()` directo e **seguem redireccionamentos** (o `fetch` do React Native ignora `redirect: 'manual'` — é `whatwg-fetch` sobre o XHR nativo, e o OkHttp segue por omissão):
+
+| Ficheiro | Uso |
+|---|---|
+| `src/components/ConsolaModal.tsx` | consola G-code (`/server/gcode_store`, `/printer/gcode/script`) |
+| `src/hooks/useGcodePreview.ts` | pré-visualização do G-code |
+| `src/screens/ficheiros/Camadas.tsx` | leitura de camadas do ficheiro |
+| `src/utils/gcodeUpload.ts` | upload de G-code |
+| `src/utils/miniatura.ts` | miniaturas |
+| `src/utils/inventario.ts` | inventário |
+| `src/utils/PrinterDiscovery.ts` | descoberta (`/server/info`) |
+
+Até serem migradas, um 302 vindo de um host privado pode levar o pedido para fora da rede. O caminho do AFC já não tem este problema: usa o módulo nativo `HttpLocal` (`instanceFollowRedirects = false`) e a decisão do salto é feita em JS, que recusa destinos fora da rede privada.

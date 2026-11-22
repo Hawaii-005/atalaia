@@ -1,12 +1,22 @@
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import { comparar, retratar, identidade } from '../src/utils/fatiador/comparar';
 
 const FIXTURES = path.join(__dirname, 'fixtures');
 const NOSSO = path.join(FIXTURES, 'atalaia_cubo25_6.gcode');
 
-/** Referência do OrcaSlicer 2.5.1 (cubo 25,6 mm, 128 camadas, 12m27s). */
-const ORCA = path.join(FIXTURES, 'ECC_0_4_Cubo_Generic_PLA__0_2_12m27s.gcode');
+/**
+ * Referência do OrcaSlicer 2.5.1 (cubo 25,6 mm, 128 camadas, 12m27s).
+ * Procura-se em `ORCA_GCODE`, em tests/fixtures/ e em ~/Downloads; sem ela o
+ * teste de paridade fica em skip (nunca inventar a referência).
+ */
+const NOME_ORCA = 'ECC_0_4_Cubo_Generic_PLA__0_2_12m27s.gcode';
+const ORCA = [
+  process.env.ORCA_GCODE,
+  path.join(FIXTURES, NOME_ORCA),
+  path.join(os.homedir(), 'Downloads', NOME_ORCA),
+].find((p): p is string => !!p && fs.existsSync(p));
 
 const ler = (p: string) => fs.readFileSync(p, 'utf8');
 
@@ -52,11 +62,11 @@ describe('retrato do G-code da app', () => {
  * Sem ela o teste fica em «skip» com o motivo visível, em vez de passar à
  * socapa.
  */
-const temOrca = fs.existsSync(ORCA);
+const temOrca = !!ORCA;
 
 (temOrca ? describe : describe.skip)('paridade com o OrcaSlicer 2.5.1', () => {
   it('mesma geometria, temperaturas, arranque e exclusão de objeto', () => {
-    const { diferencas } = comparar(ler(ORCA), ler(NOSSO));
+    const { diferencas } = comparar(ler(ORCA!), ler(NOSSO));
     expect(diferencas).toEqual([]);
   });
 });
@@ -88,6 +98,7 @@ describe('identidade do G-code sem o carimbo', () => {
 
 if (!temOrca) {
   test.skip('referência do OrcaSlicer em falta', () => {
-    // Copiar ECC_0_4_Cubo_Generic_PLA__0_2_12m27s.gcode para tests/fixtures/.
+    // Pôr ECC_0_4_Cubo_Generic_PLA__0_2_12m27s.gcode em tests/fixtures/
+    // (ou em ~/Downloads, ou apontar ORCA_GCODE).
   });
 }
