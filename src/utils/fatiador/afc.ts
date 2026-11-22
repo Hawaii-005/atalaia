@@ -160,7 +160,8 @@ export const avisosAfc = (
  * - crítico (PLA acima de 235, material diferente): botão desativado, com
  *   opção explícita de ignorar;
  * - aviso (bico ou mesa abaixo do intervalo): pede confirmação;
- * - AFC mudo: bloqueia e não deixa ignorar — exige confirmação consciente.
+ * - AFC mudo (`pistaDesconhecida`): não bloqueia — só pede confirmação
+ *   explícita antes de enviar.
  */
 export const bloqueioEnvio = (
   avisos: AvisoAfc[]
@@ -171,11 +172,10 @@ export const bloqueioEnvio = (
   requerConfirmacao: boolean;
 } => {
   const critico = avisos.filter(a => nivelAviso(a) === 'critico');
-  const desconhecido = avisos.includes('pistaDesconhecida');
   return {
     nivel: critico.length ? 'critico' : avisos.length ? 'aviso' : 'nenhum',
     bloqueado: critico.length > 0,
-    podeIgnorar: critico.length > 0 && !desconhecido,
-    requerConfirmacao: critico.length > 0 ? desconhecido : avisos.length > 0,
+    podeIgnorar: critico.length > 0,
+    requerConfirmacao: avisos.length > 0,
   };
 };
